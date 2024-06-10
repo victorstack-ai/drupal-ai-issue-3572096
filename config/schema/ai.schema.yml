@@ -1,0 +1,473 @@
+ai.settings:
+  type: mapping
+  label: 'AI Provider Manager Settings'
+  mapping:
+    known_providers:
+      type: mapping
+      label: 'Known contributed providers'
+      mapping:
+        huggingface:
+          type: mapping
+          label: 'HuggingFace settings'
+          mapping:
+            chat:
+              type: mapping
+              label: 'LLM Completion model configuration.'
+              mapping:
+                input:
+                  type: mapping
+                  label: 'Input messages'
+                  mapping:
+                    description:
+                      type: string
+                      label: 'Description'
+                    type:
+                      type: string
+                      label: 'Data Type'
+                    default:
+                      type: string
+                      label: 'Default Value'
+                    required:
+                      type: bool
+                      label: 'Required'
+                authentication:
+                  type: mapping
+                  label: 'Authentication token'
+                  mapping:
+                    description:
+                      type: string
+                      label: 'Description'
+                    type:
+                      type: string
+                      label: 'Data Type'
+                    default:
+                      type: string
+                      label: 'Default Value'
+                    required:
+                      type: bool
+                      label: 'Required'
+                configuration:
+                  type: mapping
+                  label: 'Call configuration'
+                  mapping:
+                    model:
+                      type: mapping
+                      label: 'Model configuration'
+                      mapping:
+                        top_k:
+                          type: mapping
+                          label: 'The number of highest probability vocabulary tokens'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: int
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
+                        top_p:
+                          type: mapping
+                          label: 'Nucleus sampling'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: float
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
+                        temperature:
+                          type: mapping
+                          label: 'Sampling temperature'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: float
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
+                        repetition_penalty:
+                          type: mapping
+                          label: 'Penalty for token presence'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: array
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
+                        max_new_tokens:
+                          type: mapping
+                          label: 'The maximum number of tokens'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            required:
+                              type: bool
+                              label: 'Required'
+                        do_sample:
+                          type: mapping
+                          label: 'True for sampling, False for greedy decoding'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: bool
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
+                        return_full_text:
+                          type: mapping
+                          label: 'Return text including input on True'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: bool
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
+                        stream:
+                          type: mapping
+                          label: 'Enable/disable stream'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: bool
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
+                    api:
+                      type: mapping
+                      label: 'API configuration'
+                      mapping:
+                        namespace:
+                          type: mapping
+                          label: 'Model namespace'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: string
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
+                        name:
+                          type: mapping
+                          label: 'Model name in menu'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: string
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
+                        use_cache:
+                          type: mapping
+                          label: 'Return result from cache if available'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: bool
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
+                        wait_for_model:
+                          type: mapping
+                          label: 'Wait for model or allow connection interruption'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: bool
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
+            summarization:
+              type: mapping
+              label: 'LLM Completion model configuration.'
+              mapping:
+                input:
+                  type: mapping
+                  label: 'Input messages'
+                  mapping:
+                    description:
+                      type: string
+                      label: 'Description'
+                    type:
+                      type: string
+                      label: 'Data Type'
+                    default:
+                      type: string
+                      label: 'Default Value'
+                    required:
+                      type: bool
+                      label: 'Required'
+                authentication:
+                  type: mapping
+                  label: 'Authentication token'
+                  mapping:
+                    description:
+                      type: string
+                      label: 'Description'
+                    type:
+                      type: string
+                      label: 'Data Type'
+                    default:
+                      type: string
+                      label: 'Default Value'
+                    required:
+                      type: bool
+                      label: 'Required'
+                configuration:
+                  type: mapping
+                  label: 'Call configuration'
+                  mapping:
+                    model:
+                      type: mapping
+                      label: 'Model configuration'
+                      mapping:
+                        top_k:
+                          type: mapping
+                          label: 'The number of highest probability vocabulary tokens'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: int
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
+                        top_p:
+                          type: mapping
+                          label: 'Nucleus sampling'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: float
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
+                        temperature:
+                          type: mapping
+                          label: 'Sampling temperature'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: float
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
+                        repetition_penalty:
+                          type: mapping
+                          label: 'Penalty for token presence'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: float
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
+                        max_length:
+                          type: mapping
+                          label: 'Max length of the output'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: int
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
+                        min_length:
+                          type: mapping
+                          label: 'Min length of the output'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: int
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
+                          do_sample:
+                            type: mapping
+                            label: 'True for sampling, False for greedy decoding'
+                            mapping:
+                              description:
+                                type: string
+                                label: 'Description'
+                              type:
+                                type: string
+                                label: 'Data Type'
+                              default:
+                                type: bool
+                                label: 'Default Value'
+                              required:
+                                type: bool
+                                label: 'Required'
+                    api:
+                      type: mapping
+                      label: 'API configuration'
+                      mapping:
+                        namespace:
+                          type: mapping
+                          label: 'Model namespace'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: string
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
+                        name:
+                          type: mapping
+                          label: 'Model name in menu'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: string
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
+                        use_cache:
+                          type: mapping
+                          label: 'Return result from cache if available'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: bool
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
+                        wait_for_model:
+                          type: mapping
+                          label: 'Wait for model or allow connection interruption'
+                          mapping:
+                            description:
+                              type: string
+                              label: 'Description'
+                            type:
+                              type: string
+                              label: 'Data Type'
+                            default:
+                              type: bool
+                              label: 'Default Value'
+                            required:
+                              type: bool
+                              label: 'Required'
