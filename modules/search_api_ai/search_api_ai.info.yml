@@ -1,0 +1,7 @@
+name: 'Search API AI'
+type: module
+description: 'Provides AI integrations using Search API as a backend.'
+package: Search
+core_version_requirement: ^10.3 || ^11
+dependencies:
+  - search_api:search_api
