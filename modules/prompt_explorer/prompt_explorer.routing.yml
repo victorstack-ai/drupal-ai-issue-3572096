@@ -1,0 +1,14 @@
+prompt_explorer.prompt_form:
+  path: '/admin/config/ai-prompt'
+  defaults:
+    _title: 'AI Prompt Explorer'
+    _form: 'Drupal\prompt_explorer\Form\PromptForm'
+  requirements:
+    _permission: 'access ai prompt'
+prompt_explorer.image_generation_form:
+  path: '/admin/config/ai-image-generation'
+  defaults:
+    _title: 'AI Image Generation Explorer'
+    _form: 'Drupal\prompt_explorer\Form\ImageGenerationForm'
+  requirements:
+    _permission: 'access ai prompt'

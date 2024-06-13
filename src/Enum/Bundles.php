@@ -6,11 +6,16 @@ namespace Drupal\ai\Enum;
  * Enum for available LLM bundles (types).
  */
 enum Bundles: string {
-  case Chat = 'Chat';
-  case TextToImage = 'Text To Image';
-  case Embedding = 'Text Embedding';
-  case Tokenizer = 'Tokenizer';
-  case Summarization = 'Summarization';
+  case Chat = 'chat';
+  case TextCompletion = 'text_completion';
+  case TextClassification = 'text_classification';
+  case TextToImage = 'text_to_image';
+  case ImageToText = 'image_to_text';
+  case Embedding = 'text_embedding';
+  case Tokenizer = 'tokenizer';
+  case Summarization = 'summarization';
+  case SpeechToText = 'speech_to_text';
+  case TextToSpeech = 'text_to_speech';
 
   /**
    * Returns the enum instance matching the provided name or null.

@@ -1,0 +1,9 @@
+name: OpenAI Provider
+description: This enables the use of OpenAI for the AI module.
+package: AI
+type: module
+core_version_requirement: ^10.3 || ^11
+
+dependencies:
+  - ai:ai
+  - key:key

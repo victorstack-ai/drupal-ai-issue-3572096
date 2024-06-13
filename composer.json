@@ -1,0 +1,9 @@
+{
+  "name": "drupal/ai",
+  "description": "AI module for Drupal",
+  "type": "drupal-module",
+  "require": {
+    "openai-php/client": ">=v0.10.1",
+    "drupal/key": "^1.18"
+  }
+}

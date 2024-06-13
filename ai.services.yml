@@ -1,9 +1,7 @@
 services:
-  ai.huggingface_provider:
-    class: Drupal\ai\Provider\HuggingFaceProvider
-    factory: [ 'Drupal\ai\Factory\HuggingFaceProviderFactory', 'create' ]
-    arguments: [ '@service_container' ]
-
-  ai.manager:
-    class: Drupal\ai\Service\AiManager
-    arguments: ['@module_handler', '@ai.huggingface_provider']
+  plugin.manager.llm_provider:
+    class: Drupal\ai\LlmProviderPluginManager
+    parent: default_plugin_manager
+  ai.form_helper:
+    class: Drupal\ai\Service\LlmFormProviderHelper
+    arguments: ['@plugin.manager.llm_provider']

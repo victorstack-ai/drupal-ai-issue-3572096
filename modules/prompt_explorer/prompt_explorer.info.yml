@@ -1,0 +1,7 @@
+name: AI Prompt Completion Explorer
+type: module
+description: Adds a form in the admin to enter a prompt and get a response back from different AI providers.
+package: AI
+core_version_requirement: ^10
+dependencies:
+  - ai:ai

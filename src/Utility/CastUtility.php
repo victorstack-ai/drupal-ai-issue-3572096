@@ -21,6 +21,7 @@ class CastUtility {
   public static function typeCast(string $type, mixed $value): mixed {
     switch ($type) {
       case 'int':
+      case 'integer':
         $value = (int) $value;
         break;
 

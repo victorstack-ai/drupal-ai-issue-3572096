@@ -1,0 +1,7 @@
+provider_openai.settings:
+  type: mapping
+  label: 'OpenAI Settings'
+  mapping:
+    api_key:
+      type: string
+      label: 'The API key for OpenAI via Key module'
