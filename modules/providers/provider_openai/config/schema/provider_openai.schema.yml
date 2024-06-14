@@ -5,3 +5,6 @@ provider_openai.settings:
     api_key:
       type: string
       label: 'The API key for OpenAI via Key module'
+    moderation:
+      type: boolean
+      label: 'Enable moderation requests before each request.'

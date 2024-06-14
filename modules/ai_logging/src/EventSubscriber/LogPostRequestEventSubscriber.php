@@ -68,7 +68,7 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
    */
   public function logPostRequest(PostGenerateResponseEvent $event) {
     // If logging is enabled, log the prompt and response.
-    if ($this->shouldLoggingHappen($event->getTags())) {
+    if ($this->shouldLoggingHappen($event->getBundle(), $event->getTags())) {
       $context = [
         '@provider' => $event->getProviderId(),
         '@model' => $event->getModelId(),
@@ -90,14 +90,21 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
   /**
    * Function to check if logging should happen.
    *
+   * @param \Drupal\ai\Enum\Bundles $bundle
+   *   The bundle to check against.
    * @param array $tags
    *   Tags to check against.
    *
    * @return bool
    *   If logging should happen.
    */
-  protected function shouldLoggingHappen(array $tags): bool {
+  protected function shouldLoggingHappen(Bundles $bundle, array $tags): bool {
     if (empty($this->aiSettings->get('prompt_logging'))) {
+      return FALSE;
+    }
+    // Check if the bundles is correct.
+    $prompt_logging_bundles = $this->aiSettings->get('prompt_logging_bundles');
+    if (!in_array($bundle->value, $prompt_logging_bundles)) {
       return FALSE;
     }
     // Check if the tags are empty.

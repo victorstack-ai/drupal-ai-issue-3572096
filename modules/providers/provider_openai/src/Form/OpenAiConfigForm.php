@@ -51,21 +51,7 @@ class OpenAiConfigForm extends ConfigFormBase {
     ];
 
     $form['advanced']['moderation'] = [
-      '#type' => 'select',
-      '#options' => [
-        0 => $this->t('Disabled'),
-        1 => $this->t('Enabled'),
-      ],
-      '#title' => $this->t('Moderation Call'),
-      '#description' => $this->t('Decide if you want to enable or disable doing a moderation call before each normal call.'),
-      '#default_value' => $config->get('moderation'),
-    ];
-
-    $form['advanced']['checkbox'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('I Understand'),
-      '#description' => $this->t('I understand that disabling the moderation call, while it might save me money, might get me suspended.'),
-      '#default_value' => $config->get('checkbox'),
+      '#markup' => '<p>' . $this->t('Moderation is always on by default for any text based call. You can disable it for each request either via code or by changing manually in provider_openai.settings.yml.') . '</p>',
     ];
 
     return parent::buildForm($form, $form_state);

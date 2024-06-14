@@ -1,0 +1,13 @@
+provider_anthropic.settings:
+  type: mapping
+  label: 'Anthropic Settings'
+  mapping:
+    api_key:
+      type: string
+      label: 'The API key for Anthropic via Key module'
+    moderation:
+      type: boolean
+      label: 'Enable moderation requests before each request.'
+    version:
+      type: string
+      label: 'The version of Anthropic API to use.'

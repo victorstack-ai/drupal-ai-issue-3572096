@@ -4,3 +4,8 @@ ai.admin_settings:
   parent: system.admin_config
   route_name: ai.settings_form
   weight: -99
+ai.admin_providers:
+  title: 'Provider Settings'
+  description: 'Configure the core Provider Settings.'
+  parent: ai.admin_settings
+  route_name: ai.settings_form

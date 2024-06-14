@@ -182,21 +182,6 @@ class OpenAiProvider extends LlmProviderClientBase {
       case Bundles::SpeechToText:
         return $this->speechToText($model_id, $input, $normalise_io);
     }
-    try {
-      $payload = [
-        'model' => $model_id,
-        'messages' => $input,
-      ] + $this->configuration;
-      $response = $this->client->chat()->create($payload)->toArray();
-      if ($normalise_io) {
-        return $response['choices'][0]['message']['content'] ? trim($response['choices'][0]['message']['content']) : 'No response content found.';
-      }
-      return $response;
-    }
-    catch (\Exception $e) {
-      $this->loggerFactory->get('lmstudio')->error($e->getMessage());
-      return 'An error occurred while processing your request.';
-    }
   }
 
   /**

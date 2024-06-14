@@ -5,6 +5,7 @@
  * The AI Logging module.
  */
 
+use Drupal\ai\Enum\Bundles;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
@@ -12,25 +13,47 @@ use Drupal\Core\Form\FormStateInterface;
  */
 function ai_logging_form_ai_settings_alter(&$form, FormStateInterface $form_state) {
   $config = \Drupal::config('ai_logging.settings');
-  $form['prompt_logging'] = [
+  $form['logging'] = [
+    '#type' => 'details',
+    '#title' => t('Logging'),
+    '#open' => TRUE,
+  ];
+  $form['logging']['prompt_logging'] = [
     '#type' => 'checkbox',
     '#title' => t('Log prompts'),
     '#description' => t('Log all or selective prompts and responses in the database.'),
     '#default_value' => $config->get('prompt_logging'),
   ];
 
-  $form['prompt_logging_output'] = [
+  $form['logging']['prompt_logging_output'] = [
     '#type' => 'checkbox',
     '#title' => t('Log prompt output'),
     '#description' => t('Also log the output of the AI requests.'),
     '#default_value' => $config->get('prompt_logging_output'),
   ];
 
-  $form['prompt_logging_tags'] = [
+  $form['logging']['prompt_logging_tags'] = [
     '#type' => 'textfield',
     '#title' => t('Prompt Tags'),
-    '#description' => t('Log prompts and responses with these tags in the database. Separate tags with commas.'),
+    '#description' => t('Log prompts and responses with these tags in the database. Separate tags with commas. Empty means all.'),
     '#default_value' => $config->get('prompt_logging_tags'),
+    '#states' => [
+      'visible' => [
+        ':input[name="prompt_logging"]' => ['checked' => TRUE],
+      ],
+    ],
+  ];
+
+  $options = [];
+  foreach (Bundles::cases() as $bundle) {
+    $options[$bundle->value] = $bundle->name;
+  }
+  $form['logging']['prompt_logging_bundles'] = [
+    '#type' => 'checkboxes',
+    '#title' => t('Log prompts for bundles'),
+    '#description' => t('Log prompts and responses for these bundles in the database. Has to be set'),
+    '#options' => $options,
+    '#default_value' => $config->get('prompt_logging_bundles') ?? [],
     '#states' => [
       'visible' => [
         ':input[name="prompt_logging"]' => ['checked' => TRUE],
@@ -50,5 +73,6 @@ function ai_logging_settings_submit($form, FormStateInterface $form_state) {
   $config->set('prompt_logging', $form_state->getValue('prompt_logging'))
     ->set('prompt_logging_tags', $form_state->getValue('prompt_logging_tags'))
     ->set('prompt_logging_output', $form_state->getValue('prompt_logging_output'))
+    ->set('prompt_logging_bundles', $form_state->getValue('prompt_logging_bundles'))
     ->save();
 }
