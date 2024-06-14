@@ -102,13 +102,8 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
     if (empty($this->aiSettings->get('prompt_logging'))) {
       return FALSE;
     }
-    // Check if the bundles is correct.
-    $prompt_logging_bundles = $this->aiSettings->get('prompt_logging_bundles');
-    if (!in_array($bundle->value, $prompt_logging_bundles)) {
-      return FALSE;
-    }
     // Check if the tags are empty.
-    $prompt_logging_tags = $this->aiSettings->get('prompt_logging_tags');
+    $prompt_logging_tags = $this->aiSettings->get('ai_api_explorer');
     if (empty($prompt_logging_tags)) {
       return TRUE;
     }
@@ -137,8 +132,17 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
   protected function getContextLink(PostGenerateResponseEvent $event): string {
     $route = 'prompt_explorer.prompt_form';
     switch ($event->getBundle()) {
+      case Bundles::Chat:
+        $route = 'ai_api_explorer.text_completion_form';
+        break;
       case Bundles::TextToImage:
-        $route = 'prompt_explorer.image_generation_form';
+        $route = 'ai_api_explorer.image_generation_form';
+        break;
+      case Bundles::TextToSpeech:
+        $route = 'ai_api_explorer.text_to_speech_form';
+        break;
+      case Bundles::SpeechToText:
+        $route = 'ai_api_explorer.speech_to_text_form';
         break;
     }
     $url = Url::fromRoute($route, [], ['query' => [
