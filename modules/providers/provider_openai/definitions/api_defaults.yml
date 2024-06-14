@@ -146,13 +146,50 @@ text_to_speech:
           - flac
           - wav
           - pcm
-    speed:
-      label: 'Speed'
-      description: 'The speed of the speech.'
-      type: 'float'
-      default: 1
+speech_to_text:
+  input:
+    description: 'Binary of audio file to be transcribed.'
+    type: 'string'
+    default: ''
+    required: true
+  authentication:
+    description: 'OpenAI API Key.'
+    type: 'string'
+    default: ''
+    required: true
+  configuration:
+    language:
+      label: 'Language'
+      description: 'The language of the audio file. Supplying the input language in ISO-639-1 format will improve accuracy and latency.'
+      type: 'string'
+      default: ''
+      required: false
+    prompt:
+      label: 'Prompt'
+      description: An optional text to guide the model's style or continue a previous audio segment. The prompt should match the audio language.
+      type: 'string_long'
+      default: ''
+      required: false
+    response_format:
+      label: 'Response Format'
+      description: 'The format in which the transcribed text is returned.'
+      type: 'string'
+      default: 'json'
       required: false
       constraints:
-        min: 0.25
-        max: 4
+        options:
+          - text
+          - json
+          - srt
+          - verbose_json
+          - vtt
+    temperature:
+      label: 'Temperature'
+      description: 'Sampling temperature 0-1. Higher values mean more random output.'
+      type: 'float'
+      default: 0
+      required: false
+      constraints:
+        min: 0
+        max: 1
         step: 0.1

@@ -1,5 +1,5 @@
 ai.settings_form:
-  path: '/admin/config/system/ai'
+  path: '/admin/config/ai'
   defaults:
     _form: '\Drupal\ai\Form\AiSettingsForm'
     _title: 'AI Settings'

@@ -16,6 +16,7 @@ use Drupal\ai\Event\PostGenerateResponseEvent;
 use Drupal\ai\Event\PreGenerateResponseEvent;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\key\KeyRepository;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
@@ -84,6 +85,13 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
   protected EventDispatcherInterface $eventDispatcher;
 
   /**
+   * The file system.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
+  protected FileSystemInterface $fileSystem;
+
+  /**
    * The API definition.
    *
    * @var array
@@ -146,6 +154,10 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
    *   The key repository.
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   The module handler.
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   *   The event dispatcher.
+   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   *   The file system.
    *
    */
   public function __construct(
@@ -158,7 +170,8 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
     CacheBackendInterface $cache_backend,
     KeyRepository $key_repository,
     ModuleHandlerInterface $module_handler,
-    EventDispatcherInterface $event_dispatcher
+    EventDispatcherInterface $event_dispatcher,
+    FileSystemInterface $file_system
   ) {
     $this->providerName = $plugin_definition['label'];
     $this->pluginId = $plugin_id;
@@ -171,6 +184,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
     $this->cacheBackend = $cache_backend;
     $this->keyRepository = $key_repository;
     $this->eventDispatcher = $event_dispatcher;
+    $this->fileSystem = $file_system;
     $this->aiSettings = $this->configFactory->get('ai.settings');
   }
 
@@ -188,7 +202,8 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
       $container->get('cache.default'),
       $container->get('key.repository'),
       $container->get('module_handler'),
-      $container->get('event_dispatcher')
+      $container->get('event_dispatcher'),
+      $container->get('file_system')
     );
   }
 
@@ -304,6 +319,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
   public function invokeModelResponse(Bundles $bundle, string $model_id, mixed $input, array $tags = [], bool $normalise_io = TRUE): mixed {
     // Normalize the configuration.
     $this->configuration = $this->normalizeConfiguration($bundle, $model_id);
+
     // Invoke the pre generate response event.
     $pre_generate_event = new PreGenerateResponseEvent($this->getProviderId(), $this->configuration, $bundle, $model_id, $input, $tags, $normalise_io);
     $this->eventDispatcher->dispatch($pre_generate_event, PreGenerateResponseEvent::EVENT_NAME);

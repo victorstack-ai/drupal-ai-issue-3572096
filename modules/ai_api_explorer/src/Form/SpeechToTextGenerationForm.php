@@ -1,0 +1,151 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Drupal\ai_api_explorer\Form;
+
+use Drupal\ai\Enum\Bundles;
+use Drupal\ai\Service\LlmProviderFormHelper;
+use Drupal\Core\Form\FormBase;
+use Drupal\Core\Form\FormStateInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+
+/**
+ * Provides a form to prompt AI for transcriptions.
+ */
+class SpeechToTextGenerationForm extends FormBase {
+
+  /**
+   * The AI LLM Provider Helper.
+   *
+   * @var \Drupal\ai\LlmProviderHelper
+   */
+  protected $llmProviderHelper;
+
+  /**
+   * The current request stack.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  protected $requestStack;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFormId() {
+    return 'ai_api_explorer_speech_to_text_prompt';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    $instance = parent::create($container);
+    $instance->llmProviderHelper = $container->get('ai.form_helper');
+    $instance->requestStack = $container->get('request_stack');
+    return $instance;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function buildForm(array $form, FormStateInterface $form_state) {
+    // Get the query string for provider_id, model_id.
+    $request = \Drupal::request();
+    if ($request->query->get('provider_id')) {
+      $form_state->setValue('stt_llm_provider', $request->query->get('provider_id'));
+    }
+    if ($request->query->get('model_id')) {
+      $form_state->setValue('stt_ai_model', $request->query->get('model_id'));
+    }
+
+    $form['#attached']['library'][] = 'ai_api_explorer/explorer';
+
+    $form['file'] = [
+      '#prefix' => '<div class="ai-left-side">',
+      '#type' => 'file',
+      // Only mp3 files are allowed in this case, since that covers most models.
+      '#accept' => '.mp3',
+      '#title' => $this->t('Upload your file here. When submitted, your provider will generate a response. Please note that each query counts against your API usage if your provider is a paid provider.'),
+      '#description' => $this->t('Based on the complexity of your prompt, traffic, and other factors, a response can take time to complete. Please allow the operation to finish.'),
+      '#required' => TRUE,
+    ];
+
+    // Load the LLM configurations.
+    $this->llmProviderHelper->generateLlmProvidersForm($form, $form_state, Bundles::SpeechToText, 'stt', LlmProviderFormHelper::FORM_CONFIGURATION_FULL);
+
+    $form['actions'] = [
+      '#type' => 'actions',
+    ];
+
+    $form['actions']['submit'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Generate an Text'),
+      '#ajax' => [
+        'callback' => '::getResponse',
+        'wrapper' => 'ai-text-response',
+      ],
+      '#suffix' => '</div>',
+    ];
+
+
+    $form['response'] = [
+      '#prefix' => '<div id="ai-text-response" class="ai-right-side">',
+      '#suffix' => '</div>',
+      '#type' => 'inline_template',
+      '#template' => '{{ texts|raw }}',
+      '#weight' => 1000,
+      '#context' => [
+        'texts' => '<h2>Texts will appear here.</h2>',
+      ],
+    ];
+
+    return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getResponse(array &$form, FormStateInterface $form_state) {
+    $provider = $this->llmProviderHelper->generateLlmProviderFromFormSubmit($form, $form_state, Bundles::SpeechToText, 'stt');
+    $tags = [
+      'ai_api_explorer',
+      'ai_api_explorer_speech_to_text_generation',
+    ];
+    $files = $this->requestStack->getCurrentRequest()->files->all();
+    $file = reset($files);
+    $raw_file = file_get_contents($file['file']->getPathname());
+
+    $response = $provider->invokeModelResponse(Bundles::SpeechToText, $form_state->getValue('stt_ai_model'), $raw_file, $tags, TRUE);
+
+    // Generation code.
+    $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
+    $code .= "use Drupal\ai\Enum\Bundles;<br><br>";
+    $code .= '$audio = file_get_contents("' . $file['file']->getClientOriginalName() . '");<br>';
+    $code .= '$config = [<br>';
+    foreach ($provider->getConfiguration() as $key => $value) {
+      if (is_string($value)) {
+        $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '";<br>';
+      } else {
+        $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ';<br>';
+      }
+    }
+
+    $code .= ']<br><br>';
+    $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('stt_llm_provider') . '\');<br>';
+    $code .= "\$ai_provider->setConfiguration(\$config);<br>";
+    $code .= "\$response = \$ai_provider->invokeModelResponse(Bundles::SpeechToText, '" . $form_state->getValue('stt_ai_model') . '\', $audio, ["tag_1", "tag_2"], TRUE);';
+    $code .= "</code></details>";
+
+    $form['response']['#context'] = [
+      'texts' => '<div id="ai-text-response"><h2>Texts will appear here.</h2>' . $response . $code . '</div>',
+    ];
+    return $form['response'];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+  }
+}

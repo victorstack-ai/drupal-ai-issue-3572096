@@ -1,0 +1,29 @@
+ai_api_explorer.main:
+  title: AI API Explorer
+  description: Development mode to test out different API's.
+  parent: ai.admin_settings
+  route_name: ai_api_explorer.text_completion_form
+ai_api_explorer.text_completion_form:
+  title: Text Completion Explorer
+  description: Contains a form where you can experiment and test the AI text generator with prompts.
+  parent: ai_api_explorer.main
+  route_name: ai_api_explorer.text_completion_form
+  weight: 0
+ai_api_explorer.image_generation_form:
+  title: Image Generation Explorer
+  description: Contains a form where you can experiment and test the AI image generator with prompts.
+  parent: ai_api_explorer.main
+  route_name: ai_api_explorer.image_generation_form
+  weight: 1
+ai_api_explorer.text_to_speech_form:
+  title: Text-To-Speech Generation Explorer
+  description: Contains a form where you can experiment and test the AI text-to-speech generator with prompts.
+  parent: ai_api_explorer.main
+  route_name: ai_api_explorer.text_to_speech_form
+  weight: 2
+ai_api_explorer.speech_to_text_form:
+  title: Speech-To-Text Generation Explorer
+  description: Contains a form where you can experiment and test the AI speech-to-text generator with prompts.
+  parent: ai_api_explorer.main
+  route_name: ai_api_explorer.speech_to_text_form
+  weight: 3

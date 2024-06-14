@@ -7,6 +7,7 @@ use Drupal\ai\Base\LlmProviderClientBase;
 use Drupal\ai\Enum\Bundles;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\File\FileSystemInterface;
 use \OpenAi;
 use OpenAI\Client;
 use Symfony\Component\Yaml\Yaml;
@@ -339,6 +340,44 @@ class OpenAiProvider extends LlmProviderClientBase {
     $response = $this->client->audio()->speech($payload);
     if ($normalise_io) {
       return [$response];
+    }
+    return $response;
+  }
+
+  /**
+   * Speech to text.
+   *
+   * @param string $model_id
+   *   The model ID.
+   * @param mixed $input
+   *   The input.
+   * @param bool $normalise_io
+   *   Should the output be normalised.
+   *
+   * @return mixed
+   *   The response.
+   */
+  protected function speechToText(string $model_id, mixed $input, bool $normalise_io = TRUE): mixed {
+    // The raw file has to become a file resource, so we save a temporary file first.
+    $path = $this->fileSystem->saveData($input, 'temporary://speech_to_text.mp3', FileSystemInterface::EXISTS_REPLACE);
+    $input = fopen($path, 'r');
+    $payload = [
+      'model' => $model_id,
+      'file' => $input,
+    ] + $this->configuration;
+    $response = $this->client->audio()->transcribe($payload)->toArray();
+
+    // Remove the file.
+    $this->fileSystem->delete($path);
+    if ($normalise_io) {
+      if (!empty($this->configuration['response_format'])) {
+        switch ($this->configuration['response_format']) {
+          case 'text':
+            return $response['text'];
+          case 'json':
+            return $response['text'];
+        }
+      }
     }
     return $response;
   }

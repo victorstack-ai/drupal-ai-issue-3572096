@@ -1,0 +1,4 @@
+explorer:
+  css:
+    theme:
+      css/api_explorer.css: {}

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Drupal\prompt_explorer\Form;
+namespace Drupal\ai_api_explorer\Form;
 
 use Drupal\ai\Enum\Bundles;
 use Drupal\ai\Service\LlmProviderFormHelper;
@@ -13,7 +13,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Provides a form to prompt AI for answers.
  */
-class PromptForm extends FormBase {
+class TextCompletionForm extends FormBase {
 
   /**
    * The AI LLM Provider Helper.
@@ -26,7 +26,7 @@ class PromptForm extends FormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'prompt_explorer_prompt';
+    return 'ai_api_explorer_prompt';
   }
 
   /**
@@ -42,26 +42,18 @@ class PromptForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    $form['#attached']['library'][] = 'ai_api_explorer/explorer';
+
     $form['prompt'] = [
+      '#prefix' => '<div class="ai-left-side">',
       '#type' => 'textarea',
       '#title' => $this->t('Enter your prompt here. When submitted, your provider will generate a response. Please note that each query counts against your API usage if your provider is a paid provider.'),
       '#description' => $this->t('Based on the complexity of your prompt, traffic, and other factors, a response can take time to complete. Please allow the operation to finish.'),
       '#required' => TRUE,
     ];
 
-    $form['response'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('Response from the Provider'),
-      '#attributes' => [
-        'readonly' => 'readonly',
-      ],
-      '#prefix' => '<div id="ai-prompt-response">',
-      '#suffix' => '</div>',
-      '#description' => $this->t('The response from the provider will appear in the textbox above.')
-    ];
-
     // Load the LLM configurations.
-    $this->llmProviderHelper->generateLlmProvidersForm($form, $form_state, Bundles::Chat, 'prompt_explorer', LlmProviderFormHelper::FORM_CONFIGURATION_FULL);
+    $this->llmProviderHelper->generateLlmProvidersForm($form, $form_state, Bundles::Chat, 'ai_api_explorer', LlmProviderFormHelper::FORM_CONFIGURATION_FULL);
 
     $form['actions'] = [
       '#type' => 'actions',
@@ -74,6 +66,19 @@ class PromptForm extends FormBase {
         'callback' => '::getResponse',
         'wrapper' => 'ai-prompt-response',
       ],
+      '#suffix' => '</div>',
+    ];
+
+    $form['response'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Response from the Provider'),
+      '#attributes' => [
+        'readonly' => 'readonly',
+      ],
+      '#weight' => 1000,
+      '#prefix' => '<div id="ai-prompt-response" class="ai-right-side">',
+      '#suffix' => '</div>',
+      '#description' => $this->t('The response from the provider will appear in the textbox above.')
     ];
 
     return $form;
@@ -83,7 +88,7 @@ class PromptForm extends FormBase {
    * {@inheritdoc}
    */
   public function getResponse(array &$form, FormStateInterface $form_state) {
-    $provider = $this->llmProviderHelper->generateLlmProviderFromFormSubmit($form, $form_state, Bundles::Chat, 'prompt_explorer');
+    $provider = $this->llmProviderHelper->generateLlmProviderFromFormSubmit($form, $form_state, Bundles::Chat, 'ai_api_explorer');
     $messages = [
       [
         'role' => 'user',
@@ -91,10 +96,10 @@ class PromptForm extends FormBase {
       ]
     ];
     $tags = [
-      'prompt_explorer',
-      'prompt_explorer_chat',
+      'ai_api_explorer',
+      'ai_api_explorer_chat',
     ];
-    $response = $provider->invokeModelResponse(Bundles::Chat, $form_state->getValue('prompt_explorer_ai_model'), $messages, $tags, TRUE);
+    $response = $provider->invokeModelResponse(Bundles::Chat, $form_state->getValue('ai_api_explorer_ai_model'), $messages, $tags, TRUE);
 
     $form['response']['#value'] = trim($response) ?? $this->t('No answer was provided.');
     return $form['response'];

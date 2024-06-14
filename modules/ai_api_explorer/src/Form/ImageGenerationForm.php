@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Drupal\prompt_explorer\Form;
+namespace Drupal\ai_api_explorer\Form;
 
 use Drupal\ai\Enum\Bundles;
 use Drupal\ai\Service\LlmProviderFormHelper;
@@ -26,7 +26,7 @@ class ImageGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'prompt_explorer_image_prompt';
+    return 'ai_api_explorer_image_prompt';
   }
 
   /**
@@ -44,19 +44,18 @@ class ImageGenerationForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     // Get the query string for provider_id, model_id.
     $request = \Drupal::request();
-    $form_state->setValue('image_generator_llm_provider', $request->query->get('provider_id'));
-    $form_state->setValue('image_generator_ai_model', $request->query->get('model_id'));
+    if ($request->query->get('provider_id')) {
+      $form_state->setValue('image_generator_llm_provider', $request->query->get('provider_id'));
+    }
+    if ($request->query->get('model_id')) {
+      $form_state->setValue('image_generator_ai_model', $request->query->get('model_id'));
+    }
     $input = json_decode($request->query->get('input', '[]'));
 
-    $form['prefixed'] = [
-      '#type' => 'inline_template',
-      '#template' => '{{ prefix|raw }}',
-      '#context' => [
-        'prefix' => '<div style="float: left; width: 40%; border-right: 2px solid #aaa; margin-right: 5%; padding-right: 5%">',
-      ],
-    ];
+    $form['#attached']['library'][] = 'ai_api_explorer/explorer';
 
     $form['prompt'] = [
+      '#prefix' => '<div class="ai-left-side">',
       '#type' => 'textarea',
       '#title' => $this->t('Enter your prompt here. When submitted, your provider will generate a response. Please note that each query counts against your API usage if your provider is a paid provider.'),
       '#description' => $this->t('Based on the complexity of your prompt, traffic, and other factors, a response can take time to complete. Please allow the operation to finish.'),
@@ -79,32 +78,18 @@ class ImageGenerationForm extends FormBase {
         'callback' => '::getResponse',
         'wrapper' => 'ai-image-response',
       ],
+      '#suffix' => '</div>',
     ];
 
-    $form['middle'] = [
-      '#type' => 'inline_template',
-      '#template' => '{{ middle|raw }}',
-      '#weight' => 100,
-      '#context' => [
-        'middle' => '</div><div style="float: left; width: 40%;">',
-      ],
-    ];
 
     $form['response'] = [
+      '#prefix' => '<div id="ai-image-response" class="ai-right-side">',
+      '#suffix' => '</div>',
       '#type' => 'inline_template',
       '#template' => '{{ images|raw }}',
-      '#weight' => 101,
+      '#weight' => 1000,
       '#context' => [
-        'images' => '<div id="ai-image-response"><h2>Image will appear here.</h2></div>',
-      ],
-    ];
-
-    $form['end'] = [
-      '#type' => 'inline_template',
-      '#template' => '{{ end|raw }}',
-      '#weight' => 102,
-      '#context' => [
-        'end' => '</div>',
+        'images' => '<h2>Image will appear here.</h2>',
       ],
     ];
 
@@ -117,8 +102,8 @@ class ImageGenerationForm extends FormBase {
   public function getResponse(array &$form, FormStateInterface $form_state) {
     $provider = $this->llmProviderHelper->generateLlmProviderFromFormSubmit($form, $form_state, Bundles::TextToImage, 'image_generator');
     $tags = [
-      'prompt_explorer',
-      'prompt_explorer_image_generation',
+      'ai_api_explorer',
+      'ai_api_explorer_image_generation',
     ];
     $images = $provider->invokeModelResponse(Bundles::TextToImage, $form_state->getValue('image_generator_ai_model'), $form_state->getValue('prompt'), $tags, TRUE);
     $response = '';

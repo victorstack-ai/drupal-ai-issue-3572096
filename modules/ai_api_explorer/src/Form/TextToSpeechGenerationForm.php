@@ -2,14 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Drupal\prompt_explorer\Form;
+namespace Drupal\ai_api_explorer\Form;
 
 use Drupal\ai\Enum\Bundles;
 use Drupal\ai\Service\LlmProviderFormHelper;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -28,7 +27,7 @@ class TextToSpeechGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'prompt_explorer_text_to_speech_prompt';
+    return 'ai_api_explorer_text_to_speech_prompt';
   }
 
   /**
@@ -46,19 +45,18 @@ class TextToSpeechGenerationForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     // Get the query string for provider_id, model_id.
     $request = \Drupal::request();
-    $form_state->setValue('tts__llm_provider', $request->query->get('provider_id'));
-    $form_state->setValue('tts__ai_model', $request->query->get('model_id'));
+    if ($request->query->get('provider_id')) {
+      $form_state->setValue('tts_llm_provider', $request->query->get('provider_id'));
+    }
+    if ($request->query->get('model_id')) {
+      $form_state->setValue('tts_ai_model', $request->query->get('model_id'));
+    }
     $input = json_decode($request->query->get('input', '[]'));
 
-    $form['prefixed'] = [
-      '#type' => 'inline_template',
-      '#template' => '{{ prefix|raw }}',
-      '#context' => [
-        'prefix' => '<div style="float: left; width: 40%; border-right: 2px solid #aaa; margin-right: 5%; padding-right: 5%">',
-      ],
-    ];
+    $form['#attached']['library'][] = 'ai_api_explorer/explorer';
 
     $form['prompt'] = [
+      '#prefix' => '<div class="ai-left-side">',
       '#type' => 'textarea',
       '#title' => $this->t('Enter your prompt here. When submitted, your provider will generate a response. Please note that each query counts against your API usage if your provider is a paid provider.'),
       '#description' => $this->t('Based on the complexity of your prompt, traffic, and other factors, a response can take time to complete. Please allow the operation to finish.'),
@@ -81,32 +79,17 @@ class TextToSpeechGenerationForm extends FormBase {
         'callback' => '::getResponse',
         'wrapper' => 'ai-audio-response',
       ],
-    ];
-
-    $form['middle'] = [
-      '#type' => 'inline_template',
-      '#template' => '{{ middle|raw }}',
-      '#weight' => 100,
-      '#context' => [
-        'middle' => '</div><div style="float: left; width: 40%;">',
-      ],
+      '#suffix' => '</div>',
     ];
 
     $form['response'] = [
+      '#prefix' => '<div id="ai-audio-response" class="ai-right-side">',
+      '#suffix' => '</div>',
       '#type' => 'inline_template',
       '#template' => '{{ audios|raw }}',
       '#weight' => 101,
       '#context' => [
-        'audios' => '<div id="ai-audio-response"><h2>Audio will appear here.</h2></div>',
-      ],
-    ];
-
-    $form['end'] = [
-      '#type' => 'inline_template',
-      '#template' => '{{ end|raw }}',
-      '#weight' => 102,
-      '#context' => [
-        'end' => '</div>',
+        'audios' => '<h2>Audio will appear here.</h2>',
       ],
     ];
 
@@ -117,10 +100,10 @@ class TextToSpeechGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function getResponse(array &$form, FormStateInterface $form_state) {
-    $provider = $this->llmProviderHelper->generateLlmProviderFromFormSubmit($form, $form_state, Bundles::TextToImage, 'tts_');
+    $provider = $this->llmProviderHelper->generateLlmProviderFromFormSubmit($form, $form_state, Bundles::TextToSpeech, 'tts_');
     $tags = [
-      'prompt_explorer',
-      'prompt_explorer_image_generation',
+      'ai_api_explorer',
+      'ai_api_explorer_image_generation',
     ];
     $audios = $provider->invokeModelResponse(Bundles::TextToSpeech, $form_state->getValue('tts_ai_model'), $form_state->getValue('prompt'), $tags, TRUE);
     $response = '';
@@ -150,7 +133,7 @@ class TextToSpeechGenerationForm extends FormBase {
     $code .= "</code></details>";
 
     $form['response']['#context'] = [
-      'audios' => '<div id="ai-audio-response"><h2>Audio will appear here.</h2>' . $response . $code . '</div>',
+      'audios' => '<h2>Audio will appear here.</h2>' . $response . $code,
     ];
     return $form['response'];
   }
