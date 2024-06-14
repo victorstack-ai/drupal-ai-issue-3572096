@@ -80,7 +80,7 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
         $context['@response'] = json_encode($event->getOutput());
       }
       // Check if the prompt explorer is installed.
-      if ($this->moduleHandler->moduleExists('prompt_explorer')) {
+      if ($this->moduleHandler->moduleExists('ai_api_explorer')) {
         $context['link'] = $this->getContextLink($event);
       }
       $this->loggerFactory->get('ai')->info("Provider: @provider||Model: @model||Configuration: @config||Prompt: @prompt||Response: @response", $context);
@@ -103,7 +103,7 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
       return FALSE;
     }
     // Check if the tags are empty.
-    $prompt_logging_tags = $this->aiSettings->get('ai_api_explorer');
+    $prompt_logging_tags = $this->aiSettings->get('prompt_logging_tags');
     if (empty($prompt_logging_tags)) {
       return TRUE;
     }
