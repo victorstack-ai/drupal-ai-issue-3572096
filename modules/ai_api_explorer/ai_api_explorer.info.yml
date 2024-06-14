@@ -1,6 +1,6 @@
-name: AI Prompt Completion Explorer
+name: AI API Explorer
 type: module
-description: Adds a form in the admin to enter a prompt and get a response back from different AI providers.
+description: Adds multiple developers explorers where you can test different settings.
 package: AI
 core_version_requirement: ^10
 dependencies:
