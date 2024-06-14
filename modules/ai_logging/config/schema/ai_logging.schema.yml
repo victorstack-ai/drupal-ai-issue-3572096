@@ -1,0 +1,10 @@
+ai_logging.settings:
+  type: mapping
+  label: 'AI Logging Settings'
+  mapping:
+    prompt_logging:
+      type: boolean
+      label: 'If the AI should log prompts'
+    prompt_logging_tags:
+      type: string
+      label: 'Tags to log prompts with'

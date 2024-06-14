@@ -7,14 +7,20 @@ use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\ai\Enum\Bundles;
+use Drupal\ai\Exception\AiRequestErrorException;
+use Drupal\ai\Exception\AiResponseErrorException;
+use Drupal\ai\Exception\AiUnsafePromptException;
 use Drupal\ai\LlmProviderInterface;
 use Drupal\ai\Utility\CastUtility;
-use Drupal\ai\Utility\StringUtility;
+use Drupal\ai\Event\PostGenerateResponseEvent;
+use Drupal\ai\Event\PreGenerateResponseEvent;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\key\KeyRepository;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Service to handle API requests server.
@@ -71,6 +77,13 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
   protected ModuleHandlerInterface $moduleHandler;
 
   /**
+   * The event dispatcher.
+   *
+   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+   */
+  protected EventDispatcherInterface $eventDispatcher;
+
+  /**
    * The API definition.
    *
    * @var array
@@ -85,11 +98,32 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
   protected array $configuration = [];
 
   /**
+   * The tags for the prompt.
+   *
+   * @var array
+   */
+  protected array $tags = [];
+
+  /**
+   * Get the general AI settings.
+   *
+   * @var ImmutableConfig
+   */
+  protected ImmutableConfig $aiSettings;
+
+  /**
    * The provider name.
    *
    * @var string
    */
   protected string $providerName;
+
+  /**
+   * The plugin ID.
+   *
+   * @var string
+   */
+  protected string $pluginId;
 
   /**
    * Constructs a new AiClientBase abstract class.
@@ -123,9 +157,11 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
     LoggerChannelFactoryInterface $logger_factory,
     CacheBackendInterface $cache_backend,
     KeyRepository $key_repository,
-    ModuleHandlerInterface $module_handler
+    ModuleHandlerInterface $module_handler,
+    EventDispatcherInterface $event_dispatcher
   ) {
     $this->providerName = $plugin_definition['label'];
+    $this->pluginId = $plugin_id;
     $this->httpClient = $http_client;
     $this->configFactory = $config_factory;
     $this->loggerFactory = $logger_factory;
@@ -134,6 +170,8 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
     $this->apiDefinition = $this->getApiDefinition();
     $this->cacheBackend = $cache_backend;
     $this->keyRepository = $key_repository;
+    $this->eventDispatcher = $event_dispatcher;
+    $this->aiSettings = $this->configFactory->get('ai.settings');
   }
 
   /**
@@ -149,14 +187,15 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
       $container->get('logger.factory'),
       $container->get('cache.default'),
       $container->get('key.repository'),
-      $container->get('module_handler')
+      $container->get('module_handler'),
+      $container->get('event_dispatcher')
     );
   }
 
   /**
    * Returns configuration of the Client.
    *
-   * @return array
+   * @return \Drupal\Core\Config\ImmutableConfig
    *   Configuration of module.
    */
   abstract public function getConfig(): ImmutableConfig;
@@ -188,10 +227,24 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
   }
 
   /**
+   * {@inheritDoc}
+   */
+  public function getProviderId(): string {
+    return $this->pluginId;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function setConfiguration(array $configuration): void {
     $this->configuration = $configuration;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getConfiguration(): array {
+    return $this->configuration;
   }
 
   /**
@@ -232,13 +285,64 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
   }
 
   /**
-   * {@inheritdoc}
+   * Sends a request to the LLM provider to generate a response.
+   *
+   * @param \Drupal\ai\Enum\Bundles $bundle
+   *   The bundle type to generate a response for.
+   * @param string $model_id
+   *   ID of model as set in getConfiguredLlms().
+   * @param array $input
+   *   Input for the LLM.
+   * @param bool $normalise_io
+   *   Provide only the output expected for this LLM bundle.
+   *
+   * @return mixed
+   *   Text output returned from LLM API.
+   *
+   * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public function invokeModelResponse(Bundles $bundle, string $model_id, mixed $input, bool $normalise_io = TRUE): mixed {
+  public function invokeModelResponse(Bundles $bundle, string $model_id, mixed $input, array $tags = [], bool $normalise_io = TRUE): mixed {
     // Normalize the configuration.
     $this->configuration = $this->normalizeConfiguration($bundle, $model_id);
-    // Trigger the provider.
-    return $this->generateResponse($bundle, $model_id, $input, $normalise_io);
+    // Invoke the pre generate response event.
+    $pre_generate_event = new PreGenerateResponseEvent($this->getProviderId(), $this->configuration, $bundle, $model_id, $input, $tags, $normalise_io);
+    $this->eventDispatcher->dispatch($pre_generate_event, PreGenerateResponseEvent::EVENT_NAME);
+    // Get the possible new auth, configuration and input from the event.
+    $this->configuration = $pre_generate_event->getConfiguration();
+    $input = $pre_generate_event->getInput();
+    // Only set the authentication if it is set.
+    if ($pre_generate_event->getAuthentication()) {
+      $this->setAuthentication($pre_generate_event->getAuthentication());
+    }
+
+    // Trigger the provider and try to catch where it went wrong.
+    try {
+      $response = $this->generateResponse($bundle, $model_id, $input, $normalise_io);
+    }
+    // Response is wrong.
+    catch (GuzzleException | AiResponseErrorException $e) {
+      $this->loggerFactory->get('ai')->error('Error invoking model response: @error', ['@error' => $e->getMessage()]);
+      throw new AiResponseErrorException('Error invoking model response: ' . $e->getMessage());
+    }
+    // Its not safe.
+    catch (AiUnsafePromptException $e) {
+      $this->loggerFactory->get('ai')->error('The Prompt is unsafe: @error', ['@error' => $e->getMessage()]);
+      throw new AiUnsafePromptException('The Prompt is unsafe: ' . $e->getMessage());
+    }
+    // Anything else is probably due to a bad request.
+    catch (\Exception $e) {
+      $this->loggerFactory->get('ai')->error('Error invoking model response: @error', ['@error' => $e->getMessage()]);
+      throw new AiRequestErrorException('Error invoking model response: ' . $e->getMessage());
+    }
+
+    // Invoke the post generate response event.
+    $post_generate_event = new PostGenerateResponseEvent($this->getProviderId(), $this->configuration, $bundle, $model_id, $input, $response, $tags, $normalise_io);
+    $this->eventDispatcher->dispatch($post_generate_event, PostGenerateResponseEvent::EVENT_NAME);
+    // Get a potential new response from the event.
+    $response = $post_generate_event->getOutput();
+
+    // Return the response.
+    return $response;
   }
 
   /**
@@ -274,6 +378,6 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
    *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  abstract protected function generateResponse(Bundles $bundle, string $model_id, mixed $input, bool $normalise_io = TRUE): mixed;
+  abstract public function generateResponse(Bundles $bundle, string $model_id, mixed $input, bool $normalise_io = TRUE): mixed;
 
 }

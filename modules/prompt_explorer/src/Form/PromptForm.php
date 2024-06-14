@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Drupal\prompt_explorer\Form;
 
 use Drupal\ai\Enum\Bundles;
-use Drupal\ai\Service\LlmFormProviderHelper;
+use Drupal\ai\Service\LlmProviderFormHelper;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -61,7 +61,7 @@ class PromptForm extends FormBase {
     ];
 
     // Load the LLM configurations.
-    $this->llmProviderHelper->generateLlmProvidersForm($form, $form_state, Bundles::Chat, 'prompt_explorer', LlmFormProviderHelper::FORM_CONFIGURATION_FULL);
+    $this->llmProviderHelper->generateLlmProvidersForm($form, $form_state, Bundles::Chat, 'prompt_explorer', LlmProviderFormHelper::FORM_CONFIGURATION_FULL);
 
     $form['actions'] = [
       '#type' => 'actions',
@@ -90,7 +90,11 @@ class PromptForm extends FormBase {
         'content' => $form_state->getValue('prompt'),
       ]
     ];
-    $response = $provider->invokeModelResponse(Bundles::Chat, $form_state->getValue('prompt_explorer_ai_model'), $messages, TRUE);
+    $tags = [
+      'prompt_explorer',
+      'prompt_explorer_chat',
+    ];
+    $response = $provider->invokeModelResponse(Bundles::Chat, $form_state->getValue('prompt_explorer_ai_model'), $messages, $tags, TRUE);
 
     $form['response']['#value'] = trim($response) ?? $this->t('No answer was provided.');
     return $form['response'];

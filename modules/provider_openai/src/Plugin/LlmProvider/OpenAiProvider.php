@@ -167,7 +167,7 @@ class OpenAiProvider extends LlmProviderClientBase {
   /**
    * {@inheritdoc}
    */
-  protected function generateResponse(Bundles $bundle, string $model_id, mixed $input, bool $normalise_io = TRUE): mixed {
+  public function generateResponse(Bundles $bundle, string $model_id, mixed $input, bool $normalise_io = TRUE): mixed {
     $this->loadClient();
     switch ($bundle) {
       // Text to image is the same thing as chat, just fewer models.
@@ -267,21 +267,15 @@ class OpenAiProvider extends LlmProviderClientBase {
    *   The response.
    */
   protected function chat(string $model_id, mixed $input, bool $normalise_io = TRUE): mixed {
-    try {
-      $payload = [
-        'model' => $model_id,
-        'messages' => $input,
-      ] + $this->configuration;
-      $response = $this->client->chat()->create($payload)->toArray();
-      if ($normalise_io) {
-        return $response['choices'][0]['message']['content'] ? trim($response['choices'][0]['message']['content']) : 'No response content found.';
-      }
-      return $response;
+    $payload = [
+      'model' => $model_id,
+      'messages' => $input,
+    ] + $this->configuration;
+    $response = $this->client->chat()->create($payload)->toArray();
+    if ($normalise_io) {
+      return $response['choices'][0]['message']['content'] ? trim($response['choices'][0]['message']['content']) : 'No response content found.';
     }
-    catch (\Exception $e) {
-      $this->loggerFactory->get('provider_openai')->error($e->getMessage());
-      return 'An error occurred while processing your request.';
-    }
+    return $response;
   }
 
   /**
@@ -298,36 +292,55 @@ class OpenAiProvider extends LlmProviderClientBase {
    *   The response.
    */
   protected function textToImage(string $model_id, mixed $input, bool $normalise_io = TRUE): mixed {
-    try {
-      $payload = [
-        'model' => $model_id,
-        'prompt' => $input,
-      ] + $this->configuration;
-      $response = $this->client->images()->create($payload)->toArray();
-      if ($normalise_io) {
-        // Base64 encoded image.
-        $images = [];
-        if ($this->configuration['response_format'] === 'url') {
-          if (empty($response['data'][0])) {
-            return 'No response content found.';
+    $payload = [
+      'model' => $model_id,
+      'prompt' => $input,
+    ] + $this->configuration;
+    $response = $this->client->images()->create($payload)->toArray();
+    if ($normalise_io) {
+      // Base64 encoded image.
+      $images = [];
+      if ($this->configuration['response_format'] === 'url') {
+        if (empty($response['data'][0])) {
+          return 'No response content found.';
+        }
+        foreach ($response['data'] as $data) {
+          if ($this->configuration['response_format'] === 'url') {
+            $images[] = base64_encode(file_get_contents($data['url']));
           }
-          foreach ($response['data'] as $data) {
-            if ($this->configuration['response_format'] === 'url') {
-              $images[] = base64_encode(file_get_contents($data['url']));
-            }
-            else {
-              $images[] = $data['b64_json'];
-            }
+          else {
+            $images[] = $data['b64_json'];
           }
         }
-        return $images;
       }
-      return $response;
+      return $images;
     }
-    catch (\Exception $e) {
-      $this->loggerFactory->get('provider_openai')->error($e->getMessage());
-      return 'An error occurred while processing your request.';
+    return $response;
+  }
+
+  /**
+   * Text to speech.
+   *
+   * @param string $model_id
+   *   The model ID.
+   * @param mixed $input
+   *   The input.
+   * @param bool $normalise_io
+   *   Should the output be normalised.
+   *
+   * @return mixed
+   *   The response.
+   */
+  protected function textToSpeech(string $model_id, mixed $input, bool $normalise_io = TRUE): mixed {
+    $payload = [
+      'model' => $model_id,
+      'input' => $input,
+    ] + $this->configuration;
+    $response = $this->client->audio()->speech($payload);
+    if ($normalise_io) {
+      return [$response];
     }
+    return $response;
   }
 
   /**

@@ -18,6 +18,14 @@ interface LlmProviderInterface {
   public function getProviderName(): string;
 
   /**
+   * Returns a unique ID of the LLM provider, e.g. huggingface.
+   *
+   * @return string
+   *   Returns ID of the actual LLM Provider.
+   */
+  public function getProviderId(): string;
+
+  /**
    * Provides associative array with a list of models' IDs.
    *
    * Keyed with human-readable names and optionally filtered by bundle.
@@ -118,7 +126,15 @@ interface LlmProviderInterface {
   public function setConfiguration(array $configuration): void;
 
   /**
-   * Sends a request to the LLM provider to generate a response.
+   * Get configuration data for the LLM provider.
+   *
+   * @return array
+   *   Configuration data.
+   */
+  public function getConfiguration(): array;
+
+  /**
+   * Method for the provider to use to send the response.
    *
    * @param \Drupal\ai\Enum\Bundles $bundle
    *   The bundle type to generate a response for.
@@ -130,10 +146,10 @@ interface LlmProviderInterface {
    *   Provide only the output expected for this LLM bundle.
    *
    * @return mixed
-   *   Text output returned from LLM API.
+   *   The output returned from the API, normalized or other.
    *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public function invokeModelResponse(Bundles $bundle, string $model_id, mixed $input, bool $normalise_io = TRUE): mixed;
+  public function generateResponse(Bundles $bundle, string $model_id, mixed $input, bool $normalise_io = TRUE): mixed;
 
 }

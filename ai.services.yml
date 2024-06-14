@@ -1,7 +1,7 @@
 services:
-  plugin.manager.llm_provider:
+  ai.provider:
     class: Drupal\ai\LlmProviderPluginManager
     parent: default_plugin_manager
   ai.form_helper:
-    class: Drupal\ai\Service\LlmFormProviderHelper
-    arguments: ['@plugin.manager.llm_provider']
+    class: Drupal\ai\Service\LlmProviderFormHelper
+    arguments: ['@ai.provider']

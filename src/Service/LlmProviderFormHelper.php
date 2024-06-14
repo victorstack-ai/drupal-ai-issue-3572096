@@ -12,7 +12,7 @@ use Drupal\ai\Utility\CastUtility;
 /**
  * Helper class for modules that implements LLM Providers.
  */
-class LlmFormProviderHelper {
+class LlmProviderFormHelper {
 
   use StringTranslationTrait;
 
@@ -64,7 +64,7 @@ class LlmFormProviderHelper {
    * @param string $provider_id
    *   If you already have the provider id and only want to show the models.
    */
-  public function generateLlmProvidersForm(array &$form, FormStateInterface $form_state, Bundles $bundle, string $prefix = '', int $config_level = LlmFormProviderHelper::FORM_CONFIGURATION_NONE, string $provider_id = '') {
+  public function generateLlmProvidersForm(array &$form, FormStateInterface $form_state, Bundles $bundle, string $prefix = '', int $config_level = LlmProviderFormHelper::FORM_CONFIGURATION_NONE, string $provider_id = '') {
     $providers = $this->getLlmProvidersOptions();
     // Make sure the prefix is properly formatted.
     $prefix = $prefix ? rtrim($prefix, '_') . '_' : '';
@@ -81,7 +81,7 @@ class LlmFormProviderHelper {
         '#default_value' => $provider,
         '#required' => TRUE,
         '#ajax' => [
-          'callback' => '\Drupal\ai\Service\LlmFormProviderHelper::loadModelsAjaxCallback',
+          'callback' => '\Drupal\ai\Service\LlmProviderFormHelper::loadModelsAjaxCallback',
           'wrapper' => $prefix . 'ajax_wrapper',
         ],
       ];
@@ -112,7 +112,7 @@ class LlmFormProviderHelper {
         '#default_value' => $model,
         '#required' => TRUE,
         '#ajax' => [
-          'callback' => '\Drupal\ai\Service\LlmFormProviderHelper::loadModelsAjaxCallback',
+          'callback' => '\Drupal\ai\Service\LlmProviderFormHelper::loadModelsAjaxCallback',
           'wrapper' => $prefix . 'ajax_wrapper',
         ],
       ];
@@ -241,12 +241,12 @@ class LlmFormProviderHelper {
    */
   private function generateFormElements(string $prefix, array &$form, int $config_level, array $schema): void {
     // If there isn't a configuration or shouldn't be, return.
-    if (!isset($schema) || $config_level == LlmFormProviderHelper::FORM_CONFIGURATION_NONE) {
+    if (!isset($schema) || $config_level == LlmProviderFormHelper::FORM_CONFIGURATION_NONE) {
       return;
     }
     foreach ($schema as $key => $definition) {
       // We skip it if it's not required and we only want required.
-      if ($config_level == LlmFormProviderHelper::FORM_CONFIGURATION_REQUIRED && empty($definition['required'])) {
+      if ($config_level == LlmProviderFormHelper::FORM_CONFIGURATION_REQUIRED && empty($definition['required'])) {
         continue;
       }
       $set_key = $prefix .'_configuration_' . $key . "\n";

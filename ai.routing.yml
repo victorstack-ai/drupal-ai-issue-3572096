@@ -1,7 +1,8 @@
 ai.settings_form:
-  path: '/admin/config/system/llm-provider-manager-settings'
+  path: '/admin/config/system/ai'
   defaults:
     _form: '\Drupal\ai\Form\AiSettingsForm'
-    _title: 'LLM Provider Manager Models'
+    _title: 'AI Settings'
   requirements:
-    _permission: 'administer site configuration'
+    _permission: 'administer ai'
+

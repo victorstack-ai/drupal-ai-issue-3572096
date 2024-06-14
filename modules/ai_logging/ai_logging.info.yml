@@ -1,0 +1,8 @@
+name: AI Logging
+description: This enables you to log any AI request and response.
+package: AI
+type: module
+core_version_requirement: ^10.3 || ^11
+
+dependencies:
+  - ai:ai

@@ -1,0 +1,6 @@
+services:
+  ai_logging.post_request_subscriber:
+    class: '\Drupal\ai_logging\EventSubscriber\LogPostRequestEventSubscriber'
+    arguments: ['@logger.factory', '@config.factory', '@module_handler']
+    tags:
+      - { name: 'event_subscriber' }

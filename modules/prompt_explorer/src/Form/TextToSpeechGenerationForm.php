@@ -6,14 +6,16 @@ namespace Drupal\prompt_explorer\Form;
 
 use Drupal\ai\Enum\Bundles;
 use Drupal\ai\Service\LlmProviderFormHelper;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Provides a form to prompt AI for images.
+ * Provides a form to prompt AI for audios.
  */
-class ImageGenerationForm extends FormBase {
+class TextToSpeechGenerationForm extends FormBase {
 
   /**
    * The AI LLM Provider Helper.
@@ -26,7 +28,7 @@ class ImageGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'prompt_explorer_image_prompt';
+    return 'prompt_explorer_text_to_speech_prompt';
   }
 
   /**
@@ -44,8 +46,8 @@ class ImageGenerationForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     // Get the query string for provider_id, model_id.
     $request = \Drupal::request();
-    $form_state->setValue('image_generator_llm_provider', $request->query->get('provider_id'));
-    $form_state->setValue('image_generator_ai_model', $request->query->get('model_id'));
+    $form_state->setValue('tts__llm_provider', $request->query->get('provider_id'));
+    $form_state->setValue('tts__ai_model', $request->query->get('model_id'));
     $input = json_decode($request->query->get('input', '[]'));
 
     $form['prefixed'] = [
@@ -66,7 +68,7 @@ class ImageGenerationForm extends FormBase {
 
 
     // Load the LLM configurations.
-    $this->llmProviderHelper->generateLlmProvidersForm($form, $form_state, Bundles::TextToImage, 'image_generator', LlmProviderFormHelper::FORM_CONFIGURATION_FULL);
+    $this->llmProviderHelper->generateLlmProvidersForm($form, $form_state, Bundles::TextToSpeech, 'tts_', LlmProviderFormHelper::FORM_CONFIGURATION_FULL);
 
     $form['actions'] = [
       '#type' => 'actions',
@@ -74,10 +76,10 @@ class ImageGenerationForm extends FormBase {
 
     $form['actions']['submit'] = [
       '#type' => 'submit',
-      '#value' => $this->t('Generate an Image'),
+      '#value' => $this->t('Generate an Audio Response'),
       '#ajax' => [
         'callback' => '::getResponse',
-        'wrapper' => 'ai-image-response',
+        'wrapper' => 'ai-audio-response',
       ],
     ];
 
@@ -92,10 +94,10 @@ class ImageGenerationForm extends FormBase {
 
     $form['response'] = [
       '#type' => 'inline_template',
-      '#template' => '{{ images|raw }}',
+      '#template' => '{{ audios|raw }}',
       '#weight' => 101,
       '#context' => [
-        'images' => '<div id="ai-image-response"><h2>Image will appear here.</h2></div>',
+        'audios' => '<div id="ai-audio-response"><h2>Audio will appear here.</h2></div>',
       ],
     ];
 
@@ -115,15 +117,17 @@ class ImageGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function getResponse(array &$form, FormStateInterface $form_state) {
-    $provider = $this->llmProviderHelper->generateLlmProviderFromFormSubmit($form, $form_state, Bundles::TextToImage, 'image_generator');
+    $provider = $this->llmProviderHelper->generateLlmProviderFromFormSubmit($form, $form_state, Bundles::TextToImage, 'tts_');
     $tags = [
       'prompt_explorer',
       'prompt_explorer_image_generation',
     ];
-    $images = $provider->invokeModelResponse(Bundles::TextToImage, $form_state->getValue('image_generator_ai_model'), $form_state->getValue('prompt'), $tags, TRUE);
+    $audios = $provider->invokeModelResponse(Bundles::TextToSpeech, $form_state->getValue('tts_ai_model'), $form_state->getValue('prompt'), $tags, TRUE);
     $response = '';
-    foreach ($images as $image) {
-      $response .= '<img src="data:image/png;charset=utf-8;base64,' . $image . '" />';
+    foreach ($audios as $audio) {
+      // Save the binary data to a file.
+      $file_url = \Drupal::service('file_system')->saveData($audio, 'public://tmplisten.mp3', FileSystemInterface::EXISTS_REPLACE);
+      $response .= '<audio controls><source src="' . \Drupal::service('file_url_generator')->generateAbsoluteString($file_url) . '" type="audio/mpeg"></audio>';
     }
 
     // Generation code.
@@ -134,20 +138,19 @@ class ImageGenerationForm extends FormBase {
     foreach ($provider->getConfiguration() as $key => $value) {
       if (is_string($value)) {
         $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '";<br>';
-      }
-      else {
+      } else {
         $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ';<br>';
       }
     }
 
     $code .= ']<br><br>';
-    $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('image_generator_llm_provider') . '\');<br>';
+    $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('tts_llm_provider') . '\');<br>';
     $code .= "\$ai_provider->setConfiguration(\$config);<br>";
-    $code .= "\$response = \$ai_provider->invokeModelResponse(Bundles::TextToImage, '" . $form_state->getValue('image_generator_ai_model') . '\', $prompt, ["tag_1", "tag_2"], TRUE);';
+    $code .= "\$response = \$ai_provider->invokeModelResponse(Bundles::TextToSpeech, '" . $form_state->getValue('tts_ai_model') . '\', $prompt, ["tag_1", "tag_2"], TRUE);';
     $code .= "</code></details>";
 
     $form['response']['#context'] = [
-      'images' => '<div id="ai-image-response"><h2>Image will appear here.</h2>' . $response . $code . '</div>',
+      'audios' => '<div id="ai-audio-response"><h2>Audio will appear here.</h2>' . $response . $code . '</div>',
     ];
     return $form['response'];
   }

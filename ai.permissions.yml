@@ -1,2 +1,8 @@
+adminster ai:
+  title: 'Administer AI'
+  description: 'Administer AI settings'
+  restrict access: true
 administer llm providers:
   title: 'Administer LLM Providers'
+  description: 'Administer the inidiual LLM providers'
+  restrict access: true

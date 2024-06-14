@@ -12,3 +12,10 @@ prompt_explorer.image_generation_form:
     _form: 'Drupal\prompt_explorer\Form\ImageGenerationForm'
   requirements:
     _permission: 'access ai prompt'
+prompt_explorer.text_to_speech_form:
+  path: '/admin/config/ai-text-to-speech'
+  defaults:
+    _title: 'AI Text To Speech Generation Explorer'
+    _form: 'Drupal\prompt_explorer\Form\TextToSpeechGenerationForm'
+  requirements:
+    _permission: 'access ai prompt'

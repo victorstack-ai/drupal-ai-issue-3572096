@@ -106,3 +106,53 @@ text_to_image:
           - '256x256'
           - '512x512'
           - '1024x1024'
+text_to_speech:
+  input:
+    description: 'Textual representation of the speech.'
+    type: 'string'
+    default: 'Once upon a time in London.'
+    required: true
+  authentication:
+    description: 'OpenAI API Key.'
+    type: 'string'
+    default: ''
+    required: true
+  configuration:
+    voice:
+      label: 'Voice'
+      description: 'The voice for the text to speech.'
+      type: 'string'
+      default: 'alloy'
+      required: true
+      constraints:
+        options:
+          - alloy
+          - echo
+          - fable
+          - onyx
+          - nova
+          - shimmer
+    response_format:
+      label: 'Response Format'
+      description: 'The format in which the generated audio is returned.'
+      type: 'string'
+      default: 'mp3'
+      required: false
+      constraints:
+        options:
+          - mp3
+          - opus
+          - aac
+          - flac
+          - wav
+          - pcm
+    speed:
+      label: 'Speed'
+      description: 'The speed of the speech.'
+      type: 'float'
+      default: 1
+      required: false
+      constraints:
+        min: 0.25
+        max: 4
+        step: 0.1

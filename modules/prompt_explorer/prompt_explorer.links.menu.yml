@@ -8,3 +8,8 @@ prompt_explorer.image_generation_form:
   description: Contains a form where you can experiment and test the AI image generator with prompts.
   parent: system.admin_config_development
   route_name: prompt_explorer.image_generation_form
+prompt_explorer.text_to_speech_form:
+  title: AI Text-To-Speech Generation Explorer
+  description: Contains a form where you can experiment and test the AI text-to-speech generator with prompts.
+  parent: system.admin_config_development
+  route_name: prompt_explorer.text_to_speech_form
