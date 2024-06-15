@@ -113,11 +113,11 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
   protected array $tags = [];
 
   /**
-   * The provider name.
+   * The plugin definition.
    *
-   * @var string
+   * @var \Drupal\Core\Plugin\PluginDefinitionInterface|array
    */
-  protected string $providerName;
+  protected $pluginDefinition;
 
   /**
    * The plugin ID.
@@ -166,7 +166,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
     EventDispatcherInterface $event_dispatcher,
     FileSystemInterface $file_system
   ) {
-    $this->providerName = $plugin_definition['label'];
+    $this->pluginDefinition = $plugin_definition;
     $this->pluginId = $plugin_id;
     $this->httpClient = $http_client;
     $this->configFactory = $config_factory;
@@ -227,17 +227,17 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
   abstract public function getModelSettings(string $model_id): array;
 
   /**
-   * {@inheritdoc}
+   * {@inheritDoc}
    */
-  public function getProviderName(): string {
-    return $this->providerName;
+  public function getPluginId(): string {
+    return $this->pluginId;
   }
 
   /**
    * {@inheritDoc}
    */
-  public function getProviderId(): string {
-    return $this->pluginId;
+  public function getPluginDefinition() {
+    return $this->pluginDefinition;
   }
 
   /**
@@ -313,7 +313,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
     $this->configuration = $this->normalizeConfiguration($bundle, $model_id);
 
     // Invoke the pre generate response event.
-    $pre_generate_event = new PreGenerateResponseEvent($this->getProviderId(), $this->configuration, $bundle, $model_id, $input, $tags, $normalise_io);
+    $pre_generate_event = new PreGenerateResponseEvent($this->getPluginId(), $this->configuration, $bundle, $model_id, $input, $tags, $normalise_io);
     $this->eventDispatcher->dispatch($pre_generate_event, PreGenerateResponseEvent::EVENT_NAME);
     // Get the possible new auth, configuration and input from the event.
     $this->configuration = $pre_generate_event->getConfiguration();
@@ -344,7 +344,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
     }
 
     // Invoke the post generate response event.
-    $post_generate_event = new PostGenerateResponseEvent($this->getProviderId(), $this->configuration, $bundle, $model_id, $input, $response, $tags, $normalise_io);
+    $post_generate_event = new PostGenerateResponseEvent($this->getPluginId(), $this->configuration, $bundle, $model_id, $input, $response, $tags, $normalise_io);
     $this->eventDispatcher->dispatch($post_generate_event, PostGenerateResponseEvent::EVENT_NAME);
     // Get a potential new response from the event.
     $response = $post_generate_event->getOutput();

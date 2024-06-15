@@ -3,27 +3,12 @@
 namespace Drupal\ai;
 
 use Drupal\ai\Enum\Bundles;
+use Drupal\Component\Plugin\PluginInspectionInterface;
 
 /**
  * Defines an interface for LLM provider services.
  */
-interface LlmProviderInterface {
-
-  /**
-   * Returns a name of the LLM provider, e.g. HuggingFace.
-   *
-   * @return string
-   *   Returns name of the actual LLM Provider.
-   */
-  public function getProviderName(): string;
-
-  /**
-   * Returns a unique ID of the LLM provider, e.g. huggingface.
-   *
-   * @return string
-   *   Returns ID of the actual LLM Provider.
-   */
-  public function getProviderId(): string;
+interface LlmProviderInterface extends PluginInspectionInterface {
 
   /**
    * Provides associative array with a list of models' IDs.
