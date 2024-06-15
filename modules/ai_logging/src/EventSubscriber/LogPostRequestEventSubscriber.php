@@ -70,7 +70,7 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
     // If logging is enabled, log the prompt and response.
     if ($this->shouldLoggingHappen($event->getBundle(), $event->getTags())) {
       $context = [
-        '@provider' => $event->getPluginId(),
+        '@provider' => $event->getProviderId(),
         '@model' => $event->getModelId(),
         '@prompt' => json_encode($event->getInput()),
         '@config' => json_encode($event->getConfiguration()),
@@ -147,7 +147,7 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
     }
     $url = Url::fromRoute($route, [], ['query' => [
       'input' => json_encode($event->getInput()),
-      'provider_id' => $event->getPluginId(),
+      'provider_id' => $event->getProviderId(),
       'model_id' => $event->getModelId(),
       'config' => json_encode($event->getConfiguration()),
     ]]);

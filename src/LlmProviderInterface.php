@@ -35,6 +35,14 @@ interface LlmProviderInterface extends PluginInspectionInterface {
   public function isUsable(Bundles $bundle): bool;
 
   /**
+   * Returns the supported bundles for this provider.
+   *
+   * @return \Drupal\ai\Enum\Bundles[]
+   *   List of supported bundles.
+   */
+  public function getSupportedBundles(): array;
+
+  /**
    * Returns array of available configuration parameters for given bundle.
    *
    * @param \Drupal\ai\Enum\Bundles $bundle
@@ -72,14 +80,6 @@ interface LlmProviderInterface extends PluginInspectionInterface {
    *   Example of input variable for given model.
    */
   public function getInputExample(Bundles $bundle, string $model_id): mixed;
-
-  /**
-   * Returns the supported bundles for this provider.
-   *
-   * @return \Drupal\ai\Enum\Bundles[]
-   *   List of supported bundles.
-   */
-  public function getSupportedBundles(): array;
 
   /**
    * Returns authentication data structure for given model.
