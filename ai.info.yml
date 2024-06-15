@@ -3,3 +3,6 @@ description: This module provides and abstraction layer for AI services.
 package: AI
 type: module
 core_version_requirement: ^10.3 || ^11
+
+dependencies:
+  - key:key

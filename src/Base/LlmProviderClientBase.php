@@ -113,13 +113,6 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
   protected array $tags = [];
 
   /**
-   * Get the general AI settings.
-   *
-   * @var ImmutableConfig
-   */
-  protected ImmutableConfig $aiSettings;
-
-  /**
    * The provider name.
    *
    * @var string
@@ -185,7 +178,6 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
     $this->keyRepository = $key_repository;
     $this->eventDispatcher = $event_dispatcher;
     $this->fileSystem = $file_system;
-    $this->aiSettings = $this->configFactory->get('ai.settings');
   }
 
   /**
