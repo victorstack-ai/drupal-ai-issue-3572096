@@ -225,7 +225,10 @@ class OpenAiProvider extends LlmProviderClientBase {
       if (!$this->apiKey) {
         $this->setAuthentication($this->loadApiKey());
       }
-      $this->client = OpenAi::client($this->apiKey);
+      $this->client = OpenAi::factory()
+        ->withApiKey($this->apiKey)
+        ->withHttpClient(\Drupal::httpClient())
+        ->make();
     }
   }
 
