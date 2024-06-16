@@ -7,6 +7,7 @@ use Drupal\ai\Base\LlmProviderClientBase;
 use Drupal\ai\Enum\Bundles;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use OpenAI\Client;
 use Symfony\Component\Yaml\Yaml;
@@ -18,7 +19,7 @@ use Symfony\Component\Yaml\Yaml;
   id: 'openai',
   label: new TranslatableMarkup('OpenAI'),
 )]
-class OpenAiProvider extends LlmProviderClientBase {
+class OpenAiProvider extends LlmProviderClientBase implements ContainerFactoryPluginInterface {
 
   /**
    * The OpenAI Client.
@@ -166,22 +167,22 @@ class OpenAiProvider extends LlmProviderClientBase {
   /**
    * {@inheritdoc}
    */
-  protected function generateResponse(Bundles $bundle, string $model_id, mixed $input, bool $normalise_io = TRUE): mixed {
+  protected function generateResponse(Bundles $bundle, string $model_id, mixed $input, bool $normalize_io = TRUE): mixed {
     $this->loadClient();
     switch ($bundle) {
       // Text to image is the same thing as chat, just fewer models.
       case Bundles::Chat:
       case Bundles::ImageToText:
-        return $this->chat($model_id, $input, $normalise_io);
+        return $this->chat($model_id, $input, $normalize_io);
 
       case Bundles::TextToImage:
-        return $this->textToImage($model_id, $input, $normalise_io);
+        return $this->textToImage($model_id, $input, $normalize_io);
 
       case Bundles::TextToSpeech:
-        return $this->textToSpeech($model_id, $input, $normalise_io);
+        return $this->textToSpeech($model_id, $input, $normalize_io);
 
       case Bundles::SpeechToText:
-        return $this->speechToText($model_id, $input, $normalise_io);
+        return $this->speechToText($model_id, $input, $normalize_io);
     }
     return NULL;
   }
@@ -227,7 +228,7 @@ class OpenAiProvider extends LlmProviderClientBase {
       }
       $this->client = \OpenAI::factory()
         ->withApiKey($this->apiKey)
-        ->withHttpClient(\Drupal::httpClient())
+        ->withHttpClient($this->httpClient)
         ->make();
     }
   }
@@ -249,19 +250,19 @@ class OpenAiProvider extends LlmProviderClientBase {
    *   The model ID.
    * @param mixed $input
    *   The input.
-   * @param bool $normalise_io
-   *   Should the output be normalised.
+   * @param bool $normalize_io
+   *   Should the output be normalized.
    *
    * @return mixed
    *   The response.
    */
-  protected function chat(string $model_id, mixed $input, bool $normalise_io = TRUE): mixed {
+  protected function chat(string $model_id, mixed $input, bool $normalize_io = TRUE): mixed {
     $payload = [
       'model' => $model_id,
       'messages' => $input,
     ] + $this->configuration;
     $response = $this->client->chat()->create($payload)->toArray();
-    if ($normalise_io) {
+    if ($normalize_io) {
       return $response['choices'][0]['message']['content'] ? trim($response['choices'][0]['message']['content']) : 'No response content found.';
     }
     return $response;
@@ -274,19 +275,19 @@ class OpenAiProvider extends LlmProviderClientBase {
    *   The model ID.
    * @param mixed $input
    *   The input.
-   * @param bool $normalise_io
-   *   Should the output be normalised.
+   * @param bool $normalize_io
+   *   Should the output be normalized.
    *
    * @return mixed
    *   The response.
    */
-  protected function textToImage(string $model_id, mixed $input, bool $normalise_io = TRUE): mixed {
+  protected function textToImage(string $model_id, mixed $input, bool $normalize_io = TRUE): mixed {
     $payload = [
       'model' => $model_id,
       'prompt' => $input,
     ] + $this->configuration;
     $response = $this->client->images()->create($payload)->toArray();
-    if ($normalise_io) {
+    if ($normalize_io) {
       // Base64 encoded image.
       $images = [];
       if ($this->configuration['response_format'] === 'url') {
@@ -314,19 +315,19 @@ class OpenAiProvider extends LlmProviderClientBase {
    *   The model ID.
    * @param mixed $input
    *   The input.
-   * @param bool $normalise_io
-   *   Should the output be normalised.
+   * @param bool $normalize_io
+   *   Should the output be normalized.
    *
    * @return mixed
    *   The response.
    */
-  protected function textToSpeech(string $model_id, mixed $input, bool $normalise_io = TRUE): mixed {
+  protected function textToSpeech(string $model_id, mixed $input, bool $normalize_io = TRUE): mixed {
     $payload = [
       'model' => $model_id,
       'input' => $input,
     ] + $this->configuration;
     $response = $this->client->audio()->speech($payload);
-    if ($normalise_io) {
+    if ($normalize_io) {
       return [$response];
     }
     return $response;
@@ -339,13 +340,13 @@ class OpenAiProvider extends LlmProviderClientBase {
    *   The model ID.
    * @param mixed $input
    *   The input.
-   * @param bool $normalise_io
-   *   Should the output be normalised.
+   * @param bool $normalize_io
+   *   Should the output be normalized.
    *
    * @return mixed
    *   The response.
    */
-  protected function speechToText(string $model_id, mixed $input, bool $normalise_io = TRUE): mixed {
+  protected function speechToText(string $model_id, mixed $input, bool $normalize_io = TRUE): mixed {
     // The raw file has to become a resource, so we save a temporary file first.
     $path = $this->fileSystem->saveData($input, 'temporary://speech_to_text.mp3', FileSystemInterface::EXISTS_REPLACE);
     $input = fopen($path, 'r');
@@ -357,7 +358,7 @@ class OpenAiProvider extends LlmProviderClientBase {
 
     // Remove the file.
     $this->fileSystem->delete($path);
-    if ($normalise_io) {
+    if ($normalize_io) {
       if (!empty($this->configuration['response_format'])) {
         switch ($this->configuration['response_format']) {
           case 'text':

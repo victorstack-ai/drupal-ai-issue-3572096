@@ -113,13 +113,13 @@ class AnthropicProvider extends LlmProviderClientBase {
   /**
    * {@inheritdoc}
    */
-  protected function generateResponse(Bundles $bundle, string $model_id, mixed $input, bool $normalise_io = TRUE): mixed {
+  protected function generateResponse(Bundles $bundle, string $model_id, mixed $input, bool $normalize_io = TRUE): mixed {
     $this->loadClient();
     switch ($bundle) {
       // Text to image is the same thing as chat, just fewer models.
       case Bundles::Chat:
       case Bundles::ImageToText:
-        return $this->chat($model_id, $input, $normalise_io);
+        return $this->chat($model_id, $input, $normalize_io);
     }
     return NULL;
   }
@@ -184,13 +184,13 @@ class AnthropicProvider extends LlmProviderClientBase {
    *   The model ID.
    * @param mixed $input
    *   The input.
-   * @param bool $normalise_io
-   *   Should the output be normalised.
+   * @param bool $normalize_io
+   *   Should the output be normalized.
    *
    * @return mixed
    *   The response.
    */
-  protected function chat(string $model_id, mixed $input, bool $normalise_io = TRUE): mixed {
+  protected function chat(string $model_id, mixed $input, bool $normalize_io = TRUE): mixed {
     $payload = [
       'model' => $model_id,
       'messages' => $input,
@@ -200,7 +200,7 @@ class AnthropicProvider extends LlmProviderClientBase {
     unset($payload['max_tokens']);
     $response = $this->client->messages()->maxTokens($max_tokens)->create($payload)->content;
 
-    if ($normalise_io) {
+    if ($normalize_io) {
       return $response[0]['text'] ? trim($response[0]['text']) : 'No response content found.';
     }
     return $response;

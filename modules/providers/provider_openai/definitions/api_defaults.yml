@@ -30,11 +30,11 @@ chat:
         step: 0.1
     frequency_penalty:
       label: 'Frequency Penalty'
-      description: 'Number between -2.0 and 2.0. Positive values penalize new tokens based on existing frequence in the text so far.'
+      description: 'Number between -2.0 and 2.0. Positive values penalize new tokens based on existing frequency in the text so far.'
       type: 'integer'
       default: 0
       required: false
-      contraints:
+      constraints:
         min: -2
         max: 2
         step: 0.1
@@ -44,7 +44,7 @@ chat:
       type: 'integer'
       default: 0
       required: false
-      contraints:
+      constraints:
         min: -2
         max: 2
         step: 0.1

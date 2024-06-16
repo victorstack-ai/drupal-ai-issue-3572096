@@ -132,12 +132,12 @@ interface LlmProviderInterface extends PluginInspectionInterface {
    *   Input for the LLM.
    * @param array $tags
    *   Tags to be used for the request.
-   * @param bool $normalise_io
+   * @param bool $normalize_io
    *   Provide only the output expected for this LLM bundle.
    *
    * @return mixed
    *   The output returned from the API, normalized or other.
    */
-  public function invokeModelResponse(Bundles $bundle, string $model_id, mixed $input, array $tags = [], bool $normalise_io = TRUE): mixed;
+  public function invokeModelResponse(Bundles $bundle, string $model_id, mixed $input, array $tags = [], bool $normalize_io = TRUE): mixed;
 
 }

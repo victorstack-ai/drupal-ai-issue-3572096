@@ -67,7 +67,7 @@ class PreGenerateResponseEvent extends Event {
    *
    * @var bool
    */
-  protected $normaliseIo;
+  protected $normalizeIo;
 
   /**
    * The authentication.
@@ -91,17 +91,17 @@ class PreGenerateResponseEvent extends Event {
    *   The input for the request.
    * @param array $tags
    *   The tags for the request.
-   * @param bool $normaliseIo
+   * @param bool $normalizeIo
    *   Should the response be normalized.
    */
-  public function __construct(String $providerId, array $configuration, Bundles $bundle, string $modelId, mixed $input, array $tags = [], bool $normaliseIo = TRUE) {
+  public function __construct(String $providerId, array $configuration, Bundles $bundle, string $modelId, mixed $input, array $tags = [], bool $normalizeIo = TRUE) {
     $this->providerId = $providerId;
     $this->configuration = $configuration;
     $this->bundle = $bundle;
     $this->modelId = $modelId;
     $this->input = $input;
     $this->tags = $tags;
-    $this->normaliseIo = $normaliseIo;
+    $this->normalizeIo = $normalizeIo;
   }
 
   /**
@@ -165,13 +165,13 @@ class PreGenerateResponseEvent extends Event {
   }
 
   /**
-   * Gets the normalise IO.
+   * Gets the normalize IO.
    *
    * @return bool
-   *   The normalise IO.
+   *   The normalize IO.
    */
   public function getNormaliseIo() {
-    return $this->normaliseIo;
+    return $this->normalizeIo;
   }
 
   /**

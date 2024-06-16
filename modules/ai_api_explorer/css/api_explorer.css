@@ -1,13 +1,13 @@
 .ai-left-side {
-  width: 35%;
   float: left;
-  background: #c5c5c5;
-  border: 1px solid #000;
+  width: 35%;
   padding: 10px;
+  border: 1px solid #000;
+  background: #c5c5c5;
 }
 
 .ai-right-side {
-  width: 60%;
   float: left;
+  width: 60%;
   padding: 10px;
 }

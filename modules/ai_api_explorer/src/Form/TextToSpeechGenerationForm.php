@@ -131,7 +131,7 @@ class TextToSpeechGenerationForm extends FormBase {
     $response = '';
     foreach ($audios as $audio) {
       // Save the binary data to a file.
-      $file_url = $this->fileSystem->saveData($audio, 'public://tmplisten.mp3', FileSystemInterface::EXISTS_REPLACE);
+      $file_url = $this->fileSystem->saveData($audio, 'public://text-to-speech-test.mp3', FileSystemInterface::EXISTS_REPLACE);
       $response .= '<audio controls><source src="' . $this->fileUrlGenerator->generateAbsoluteString($file_url) . '" type="audio/mpeg"></audio>';
     }
 

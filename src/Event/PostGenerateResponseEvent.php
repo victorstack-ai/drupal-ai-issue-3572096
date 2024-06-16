@@ -67,7 +67,7 @@ class PostGenerateResponseEvent extends Event {
    *
    * @var bool
    */
-  protected $normaliseIo;
+  protected $normalizeIo;
 
   /**
    * Constructs the object.
@@ -86,10 +86,10 @@ class PostGenerateResponseEvent extends Event {
    *   The output for the request.
    * @param array $tags
    *   The tags for the request.
-   * @param bool $normaliseIo
+   * @param bool $normalizeIo
    *   Should the response be normalized.
    */
-  public function __construct(String $providerId, array $configuration, Bundles $bundle, string $modelId, mixed $input, mixed $output, array $tags = [], bool $normaliseIo = TRUE) {
+  public function __construct(String $providerId, array $configuration, Bundles $bundle, string $modelId, mixed $input, mixed $output, array $tags = [], bool $normalizeIo = TRUE) {
     $this->providerId = $providerId;
     $this->configuration = $configuration;
     $this->bundle = $bundle;
@@ -97,7 +97,7 @@ class PostGenerateResponseEvent extends Event {
     $this->input = $input;
     $this->output = $output;
     $this->tags = $tags;
-    $this->normaliseIo = $normaliseIo;
+    $this->normalizeIo = $normalizeIo;
   }
 
   /**
@@ -171,13 +171,13 @@ class PostGenerateResponseEvent extends Event {
   }
 
   /**
-   * Gets the normalise IO.
+   * Gets the normalize IO.
    *
    * @return bool
-   *   The normalise IO.
+   *   The normalize IO.
    */
   public function getNormaliseIo() {
-    return $this->normaliseIo;
+    return $this->normalizeIo;
   }
 
   /**

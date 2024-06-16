@@ -18,8 +18,8 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\key\KeyRepositoryInterface;
-use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
+use Psr\Http\Client\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -38,7 +38,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
   /**
    * The HTTP client.
    *
-   * @var \GuzzleHttp\ClientInterface
+   * @var \Psr\Http\Client\ClientInterface
    */
   protected ClientInterface $httpClient;
 
@@ -182,7 +182,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
   /**
    * Load from dependency injection container.
    */
-  final public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+ public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
       $configuration,
       $plugin_id,
@@ -301,7 +301,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
    *   Input for the LLM.
    * @param array $tags
    *   Tags for the request.
-   * @param bool $normalise_io
+   * @param bool $normalize_io
    *   Provide only the output expected for this LLM bundle.
    *
    * @return mixed
@@ -309,12 +309,12 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
    *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  final public function invokeModelResponse(Bundles $bundle, string $model_id, mixed $input, array $tags = [], bool $normalise_io = TRUE): mixed {
+  final public function invokeModelResponse(Bundles $bundle, string $model_id, mixed $input, array $tags = [], bool $normalize_io = TRUE): mixed {
     // Normalize the configuration.
     $this->configuration = $this->normalizeConfiguration($bundle, $model_id);
 
     // Invoke the pre generate response event.
-    $pre_generate_event = new PreGenerateResponseEvent($this->getPluginId(), $this->configuration, $bundle, $model_id, $input, $tags, $normalise_io);
+    $pre_generate_event = new PreGenerateResponseEvent($this->getPluginId(), $this->configuration, $bundle, $model_id, $input, $tags, $normalize_io);
     $this->eventDispatcher->dispatch($pre_generate_event, PreGenerateResponseEvent::EVENT_NAME);
     // Get the possible new auth, configuration and input from the event.
     $this->configuration = $pre_generate_event->getConfiguration();
@@ -326,7 +326,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
 
     // Trigger the provider and try to catch where it went wrong.
     try {
-      $response = $this->generateResponse($bundle, $model_id, $input, $normalise_io);
+      $response = $this->generateResponse($bundle, $model_id, $input, $normalize_io);
     }
     // Response is wrong.
     catch (GuzzleException | AiResponseErrorException $e) {
@@ -345,7 +345,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
     }
 
     // Invoke the post generate response event.
-    $post_generate_event = new PostGenerateResponseEvent($this->getPluginId(), $this->configuration, $bundle, $model_id, $input, $response, $tags, $normalise_io);
+    $post_generate_event = new PostGenerateResponseEvent($this->getPluginId(), $this->configuration, $bundle, $model_id, $input, $response, $tags, $normalize_io);
     $this->eventDispatcher->dispatch($post_generate_event, PostGenerateResponseEvent::EVENT_NAME);
     // Get a potential new response from the event.
     $response = $post_generate_event->getOutput();
@@ -379,7 +379,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
    *   ID of model as set in getConfiguredLlms().
    * @param array $input
    *   Input for the LLM.
-   * @param bool $normalise_io
+   * @param bool $normalize_io
    *   Provide only the output expected for this LLM bundle.
    *
    * @return mixed
@@ -387,6 +387,6 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
    *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  abstract protected function generateResponse(Bundles $bundle, string $model_id, mixed $input, bool $normalise_io = TRUE): mixed;
+  abstract protected function generateResponse(Bundles $bundle, string $model_id, mixed $input, bool $normalize_io = TRUE): mixed;
 
 }
