@@ -5,6 +5,7 @@ namespace Drupal\ai\Base;
 use Drupal\ai\Enum\Bundles;
 use Drupal\ai\Event\PostGenerateResponseEvent;
 use Drupal\ai\Event\PreGenerateResponseEvent;
+use Drupal\ai\Exception\AiBadRequestException;
 use Drupal\ai\Exception\AiRequestErrorException;
 use Drupal\ai\Exception\AiResponseErrorException;
 use Drupal\ai\Exception\AiUnsafePromptException;
@@ -18,7 +19,7 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\key\KeyRepositoryInterface;
-use GuzzleHttp\Exception\GuzzleException;
+use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -329,14 +330,24 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
       $response = $this->generateResponse($bundle, $model_id, $input, $normalize_io);
     }
     // Response is wrong.
-    catch (GuzzleException | AiResponseErrorException $e) {
+    catch (ClientExceptionInterface $e) {
+      $this->loggerFactory->get('ai')->error('Error invoking client: @error', ['@error' => $e->getMessage()]);
+      throw new AiBadRequestException('Error invoking client: ' . $e->getMessage());
+    }
+    // If the provider does an responser error.
+    catch (AiResponseErrorException $e) {
       $this->loggerFactory->get('ai')->error('Error invoking model response: @error', ['@error' => $e->getMessage()]);
-      throw new AiResponseErrorException('Error invoking model response: ' . $e->getMessage());
+      throw $e;
     }
     // Its not safe.
     catch (AiUnsafePromptException $e) {
       $this->loggerFactory->get('ai')->error('The Prompt is unsafe: @error', ['@error' => $e->getMessage()]);
-      throw new AiUnsafePromptException('The Prompt is unsafe: ' . $e->getMessage());
+      throw $e;
+    }
+    // If an request error happens.
+    catch (AiRequestErrorException $e) {
+      $this->loggerFactory->get('ai')->error('Error invoking model response: @error', ['@error' => $e->getMessage()]);
+      throw $e;
     }
     // Anything else is probably due to a bad request.
     catch (\Exception $e) {
