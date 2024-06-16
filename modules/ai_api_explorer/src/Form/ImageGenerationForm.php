@@ -23,6 +23,13 @@ class ImageGenerationForm extends FormBase {
   protected $llmProviderHelper;
 
   /**
+   * The request stack.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  protected $requestStack;
+
+  /**
    * {@inheritdoc}
    */
   public function getFormId() {
@@ -35,6 +42,7 @@ class ImageGenerationForm extends FormBase {
   public static function create(ContainerInterface $container) {
     $instance = parent::create($container);
     $instance->llmProviderHelper = $container->get('ai.form_helper');
+    $instance->requestStack = $container->get('request_stack');
     return $instance;
   }
 
@@ -43,7 +51,7 @@ class ImageGenerationForm extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     // Get the query string for provider_id, model_id.
-    $request = \Drupal::request();
+    $request = $this->requestStack->getCurrentRequest();
     if ($request->query->get('provider_id')) {
       $form_state->setValue('image_generator_llm_provider', $request->query->get('provider_id'));
     }
@@ -63,7 +71,6 @@ class ImageGenerationForm extends FormBase {
       '#required' => TRUE,
     ];
 
-
     // Load the LLM configurations.
     $this->llmProviderHelper->generateLlmProvidersForm($form, $form_state, Bundles::TextToImage, 'image_generator', LlmProviderFormHelper::FORM_CONFIGURATION_FULL);
 
@@ -80,7 +87,6 @@ class ImageGenerationForm extends FormBase {
       ],
       '#suffix' => '</div>',
     ];
-
 
     $form['response'] = [
       '#prefix' => '<div id="ai-image-response" class="ai-right-side">',
@@ -142,4 +148,5 @@ class ImageGenerationForm extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
   }
+
 }

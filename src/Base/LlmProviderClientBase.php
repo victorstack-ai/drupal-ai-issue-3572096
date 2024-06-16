@@ -2,21 +2,21 @@
 
 namespace Drupal\ai\Base;
 
-use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Config\ImmutableConfig;
-use Drupal\Core\Logger\LoggerChannelFactoryInterface;
-use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\ai\Enum\Bundles;
+use Drupal\ai\Event\PostGenerateResponseEvent;
+use Drupal\ai\Event\PreGenerateResponseEvent;
 use Drupal\ai\Exception\AiRequestErrorException;
 use Drupal\ai\Exception\AiResponseErrorException;
 use Drupal\ai\Exception\AiUnsafePromptException;
 use Drupal\ai\LlmProviderInterface;
 use Drupal\ai\Utility\CastUtility;
-use Drupal\ai\Event\PostGenerateResponseEvent;
-use Drupal\ai\Event\PreGenerateResponseEvent;
 use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\key\KeyRepository;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
@@ -151,7 +151,6 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
    *   The event dispatcher.
    * @param \Drupal\Core\File\FileSystemInterface $file_system
    *   The file system.
-   *
    */
   public function __construct(
     array $configuration,
@@ -164,7 +163,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
     KeyRepository $key_repository,
     ModuleHandlerInterface $module_handler,
     EventDispatcherInterface $event_dispatcher,
-    FileSystemInterface $file_system
+    FileSystemInterface $file_system,
   ) {
     $this->pluginDefinition = $plugin_definition;
     $this->pluginId = $plugin_id;
@@ -300,6 +299,8 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
    *   ID of model as set in getConfiguredLlms().
    * @param array $input
    *   Input for the LLM.
+   * @param array $tags
+   *   Tags for the request.
    * @param bool $normalise_io
    *   Provide only the output expected for this LLM bundle.
    *
@@ -308,7 +309,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
    *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public final function invokeModelResponse(Bundles $bundle, string $model_id, mixed $input, array $tags = [], bool $normalise_io = TRUE): mixed {
+  final public function invokeModelResponse(Bundles $bundle, string $model_id, mixed $input, array $tags = [], bool $normalise_io = TRUE): mixed {
     // Normalize the configuration.
     $this->configuration = $this->normalizeConfiguration($bundle, $model_id);
 

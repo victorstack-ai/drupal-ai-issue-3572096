@@ -5,10 +5,9 @@ namespace Drupal\provider_openai\Plugin\LlmProvider;
 use Drupal\ai\Attribute\LlmProvider;
 use Drupal\ai\Base\LlmProviderClientBase;
 use Drupal\ai\Enum\Bundles;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\File\FileSystemInterface;
-use \OpenAi;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use OpenAI\Client;
 use Symfony\Component\Yaml\Yaml;
 
@@ -41,7 +40,6 @@ class OpenAiProvider extends LlmProviderClientBase {
    * @var bool
    */
   protected bool $moderation = TRUE;
-
 
   /**
    * {@inheritdoc}
@@ -175,10 +173,13 @@ class OpenAiProvider extends LlmProviderClientBase {
       case Bundles::Chat:
       case Bundles::ImageToText:
         return $this->chat($model_id, $input, $normalise_io);
+
       case Bundles::TextToImage:
         return $this->textToImage($model_id, $input, $normalise_io);
+
       case Bundles::TextToSpeech:
         return $this->textToSpeech($model_id, $input, $normalise_io);
+
       case Bundles::SpeechToText:
         return $this->speechToText($model_id, $input, $normalise_io);
     }
@@ -201,8 +202,6 @@ class OpenAiProvider extends LlmProviderClientBase {
   /**
    * Gets the raw client.
    *
-   * @param array|null $config
-   *   A new configuration if wanted.
    * @param string $api_key
    *   If the API key should be hot swapped.
    *
@@ -346,7 +345,7 @@ class OpenAiProvider extends LlmProviderClientBase {
    *   The response.
    */
   protected function speechToText(string $model_id, mixed $input, bool $normalise_io = TRUE): mixed {
-    // The raw file has to become a file resource, so we save a temporary file first.
+    // The raw file has to become a resource, so we save a temporary file first.
     $path = $this->fileSystem->saveData($input, 'temporary://speech_to_text.mp3', FileSystemInterface::EXISTS_REPLACE);
     $input = fopen($path, 'r');
     $payload = [
@@ -362,6 +361,7 @@ class OpenAiProvider extends LlmProviderClientBase {
         switch ($this->configuration['response_format']) {
           case 'text':
             return $response['text'];
+
           case 'json':
             return $response['text'];
         }
@@ -373,8 +373,8 @@ class OpenAiProvider extends LlmProviderClientBase {
   /**
    * Obtains a list of models from OpenAI and caches the result.
    *
-   * This method does its best job to filter out deprecated or unused models. The
-   * OpenAI API endpoint does not have a way to filter those out yet.
+   * This method does its best job to filter out deprecated or unused models.
+   * The OpenAI API endpoint does not have a way to filter those out yet.
    *
    * @param \Drupal\ai\Enum\Bundles $bundle
    *   The bundle to filter models by.

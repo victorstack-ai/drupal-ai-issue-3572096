@@ -51,7 +51,7 @@ class SpeechToTextGenerationForm extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     // Get the query string for provider_id, model_id.
-    $request = \Drupal::request();
+    $request = $this->requestStack->getCurrentRequest();
     if ($request->query->get('provider_id')) {
       $form_state->setValue('stt_llm_provider', $request->query->get('provider_id'));
     }
@@ -87,7 +87,6 @@ class SpeechToTextGenerationForm extends FormBase {
       ],
       '#suffix' => '</div>',
     ];
-
 
     $form['response'] = [
       '#prefix' => '<div id="ai-text-response" class="ai-right-side">',
@@ -126,7 +125,8 @@ class SpeechToTextGenerationForm extends FormBase {
     foreach ($provider->getConfiguration() as $key => $value) {
       if (is_string($value)) {
         $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '";<br>';
-      } else {
+      }
+      else {
         $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ';<br>';
       }
     }
@@ -148,4 +148,5 @@ class SpeechToTextGenerationForm extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
   }
+
 }

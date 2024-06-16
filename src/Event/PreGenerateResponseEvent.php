@@ -28,13 +28,6 @@ class PreGenerateResponseEvent extends Event {
   protected $configuration;
 
   /**
-   * The authentication of the provider.
-   *
-   * @var mixed
-   */
-  protected $authentication = NULL;
-
-  /**
    * The bundle for the request.
    *
    * @var \Drupal\ai\Enum\Bundles
@@ -42,7 +35,7 @@ class PreGenerateResponseEvent extends Event {
   protected $bundle;
 
   /**
-   * The model ID for the request.
+   * The model id.
    *
    * @var string
    */
@@ -201,8 +194,10 @@ class PreGenerateResponseEvent extends Event {
    * the default authentication.
    *
    * @return mixed
+   *   The authentication.
    */
   public function getAuthentication() {
     return $this->authentication;
   }
+
 }

@@ -5,11 +5,10 @@ namespace Drupal\provider_anthropic\Plugin\LlmProvider;
 use Drupal\ai\Attribute\LlmProvider;
 use Drupal\ai\Base\LlmProviderClientBase;
 use Drupal\ai\Enum\Bundles;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Config\ImmutableConfig;
-use Drupal\Core\File\FileSystemInterface;
-use WpAi\Anthropic\AnthropicAPI;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Symfony\Component\Yaml\Yaml;
+use WpAi\Anthropic\AnthropicAPI;
 
 /**
  * Plugin implementation of the 'anthropic' provider.
@@ -40,7 +39,6 @@ class AnthropicProvider extends LlmProviderClientBase {
    * @var bool
    */
   protected bool $moderation = TRUE;
-
 
   /**
    * {@inheritdoc}
@@ -141,8 +139,6 @@ class AnthropicProvider extends LlmProviderClientBase {
   /**
    * Gets the raw client.
    *
-   * @param array|null $config
-   *   A new configuration if wanted.
    * @param string $api_key
    *   If the API key should be hot swapped.
    *

@@ -199,4 +199,5 @@ class PostGenerateResponseEvent extends Event {
   public function setOutput(mixed $output) {
     $this->output = $output;
   }
+
 }

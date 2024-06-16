@@ -4,10 +4,10 @@ namespace Drupal\ai\Service;
 
 use Drupal\ai\Enum\Bundles;
 use Drupal\ai\LlmProviderInterface;
-use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\ai\LlmProviderPluginManager;
 use Drupal\ai\Utility\CastUtility;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 
 /**
  * Helper class for modules that implements LLM Providers.
@@ -60,7 +60,7 @@ class LlmProviderFormHelper {
    * @param string $prefix
    *   If you want to add a prefix to the form parts generated.
    * @param int $config_level
-   *   What level of configuration you want to show
+   *   What level of configuration you want to show.
    * @param string $provider_id
    *   If you already have the provider id and only want to show the models.
    */
@@ -136,7 +136,6 @@ class LlmProviderFormHelper {
    * @param string $prefix
    *   If you want to add a prefix to the form parts generated.
    *
-   *
    * @return \Drupal\ai\Provider\LlmProviderInterface
    *   The provider instance.
    */
@@ -158,8 +157,6 @@ class LlmProviderFormHelper {
    *   The form state.
    * @param \Drupal\ai\Enum\Bundles $bundle
    *   The bundle to get the models for.
-   * @param string $model
-   *   The model to get the configuration for.
    * @param string $prefix
    *   If you want to add a prefix to the form parts generated.
    *
@@ -193,7 +190,7 @@ class LlmProviderFormHelper {
    *
    * @param array $form
    *   The form array.
-   * @param \Drupal\Core\Form\FormStateInterface$form_state
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
    *
    * @return array
@@ -226,7 +223,6 @@ class LlmProviderFormHelper {
     return $options;
   }
 
-
   /**
    * Helper function to generate form elements from schema.
    *
@@ -249,7 +245,7 @@ class LlmProviderFormHelper {
       if ($config_level == LlmProviderFormHelper::FORM_CONFIGURATION_REQUIRED && empty($definition['required'])) {
         continue;
       }
-      $set_key = $prefix .'_configuration_' . $key . "\n";
+      $set_key = $prefix . '_configuration_' . $key . "\n";
       $form[$prefix][$set_key]['#type'] = $this->mapSchemaTypeToFormType($definition);
       $form[$prefix][$set_key]['#required'] = $definition['required'] ?? FALSE;
       $form[$prefix][$set_key]['#title'] = $definition['label'] ?? $key;
@@ -284,9 +280,11 @@ class LlmProviderFormHelper {
     switch ($definition['type']) {
       case 'boolean':
         return 'checkbox';
+
       case 'int':
       case 'float':
         return 'number';
+
       case 'string':
       default:
         return 'textfield';

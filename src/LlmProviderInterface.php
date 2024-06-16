@@ -130,6 +130,8 @@ interface LlmProviderInterface extends PluginInspectionInterface {
    *   ID of model as set in getConfiguredLlms().
    * @param array $input
    *   Input for the LLM.
+   * @param array $tags
+   *   Tags to be used for the request.
    * @param bool $normalise_io
    *   Provide only the output expected for this LLM bundle.
    *

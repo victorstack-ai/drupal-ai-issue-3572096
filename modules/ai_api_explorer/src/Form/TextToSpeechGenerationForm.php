@@ -24,6 +24,27 @@ class TextToSpeechGenerationForm extends FormBase {
   protected $llmProviderHelper;
 
   /**
+   * The request stack.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  protected $requestStack;
+
+  /**
+   * The file url generator.
+   *
+   * @var \Drupal\Core\File\FileUrlGenerator
+   */
+  protected $fileUrlGenerator;
+
+  /**
+   * The file system.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
+  protected $fileSystem;
+
+  /**
    * {@inheritdoc}
    */
   public function getFormId() {
@@ -36,6 +57,8 @@ class TextToSpeechGenerationForm extends FormBase {
   public static function create(ContainerInterface $container) {
     $instance = parent::create($container);
     $instance->llmProviderHelper = $container->get('ai.form_helper');
+    $instance->requestStack = $container->get('request_stack');
+    $instance->fileUrlGenerator = $container->get('file_url_generator');
     return $instance;
   }
 
@@ -44,7 +67,7 @@ class TextToSpeechGenerationForm extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     // Get the query string for provider_id, model_id.
-    $request = \Drupal::request();
+    $request = $this->requestStack->getCurrentRequest();
     if ($request->query->get('provider_id')) {
       $form_state->setValue('tts_llm_provider', $request->query->get('provider_id'));
     }
@@ -63,7 +86,6 @@ class TextToSpeechGenerationForm extends FormBase {
       '#default_value' => $input,
       '#required' => TRUE,
     ];
-
 
     // Load the LLM configurations.
     $this->llmProviderHelper->generateLlmProvidersForm($form, $form_state, Bundles::TextToSpeech, 'tts_', LlmProviderFormHelper::FORM_CONFIGURATION_FULL);
@@ -109,8 +131,8 @@ class TextToSpeechGenerationForm extends FormBase {
     $response = '';
     foreach ($audios as $audio) {
       // Save the binary data to a file.
-      $file_url = \Drupal::service('file_system')->saveData($audio, 'public://tmplisten.mp3', FileSystemInterface::EXISTS_REPLACE);
-      $response .= '<audio controls><source src="' . \Drupal::service('file_url_generator')->generateAbsoluteString($file_url) . '" type="audio/mpeg"></audio>';
+      $file_url = $this->fileSystem->saveData($audio, 'public://tmplisten.mp3', FileSystemInterface::EXISTS_REPLACE);
+      $response .= '<audio controls><source src="' . $this->fileUrlGenerator->generateAbsoluteString($file_url) . '" type="audio/mpeg"></audio>';
     }
 
     // Generation code.
@@ -121,7 +143,8 @@ class TextToSpeechGenerationForm extends FormBase {
     foreach ($provider->getConfiguration() as $key => $value) {
       if (is_string($value)) {
         $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '";<br>';
-      } else {
+      }
+      else {
         $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ';<br>';
       }
     }
@@ -143,4 +166,5 @@ class TextToSpeechGenerationForm extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
   }
+
 }

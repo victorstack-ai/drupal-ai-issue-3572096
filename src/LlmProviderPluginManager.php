@@ -9,7 +9,6 @@ use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
 
-
 /**
  * Large Language Model plugin manager.
  */
@@ -23,4 +22,5 @@ final class LlmProviderPluginManager extends DefaultPluginManager {
     $this->alterInfo('llm_provider_info');
     $this->setCacheBackend($cache_backend, 'llm_provider_plugins');
   }
+
 }

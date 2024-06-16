@@ -78,7 +78,7 @@ class TextCompletionForm extends FormBase {
       '#weight' => 1000,
       '#prefix' => '<div id="ai-prompt-response" class="ai-right-side">',
       '#suffix' => '</div>',
-      '#description' => $this->t('The response from the provider will appear in the textbox above.')
+      '#description' => $this->t('The response from the provider will appear in the textbox above.'),
     ];
 
     return $form;
@@ -93,7 +93,7 @@ class TextCompletionForm extends FormBase {
       [
         'role' => 'user',
         'content' => $form_state->getValue('prompt'),
-      ]
+      ],
     ];
     $tags = [
       'ai_api_explorer',

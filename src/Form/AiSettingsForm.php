@@ -35,9 +35,6 @@ class AiSettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    // This does nothing at the moment.
-    $config = $this->config(static::CONFIG_NAME);
-
     $form = [];
 
     return parent::buildForm($form, $form_state);
@@ -53,4 +50,5 @@ class AiSettingsForm extends ConfigFormBase {
 
     parent::submitForm($form, $form_state);
   }
+
 }
