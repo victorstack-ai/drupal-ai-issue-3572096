@@ -53,6 +53,7 @@ class AnthropicProvider extends LlmProviderClientBase {
         'claude-3-haiku-' . $version => 'Claude 3 Haiku',
       ];
     }
+    return [];
   }
 
   /**
@@ -120,6 +121,7 @@ class AnthropicProvider extends LlmProviderClientBase {
       case Bundles::ImageToText:
         return $this->chat($model_id, $input, $normalise_io);
     }
+    return NULL;
   }
 
   /**

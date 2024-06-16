@@ -17,7 +17,7 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\key\KeyRepository;
+use Drupal\key\KeyRepositoryInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -66,9 +66,9 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
   /**
    * Key repository.
    *
-   * @var \Drupal\key\KeyRepository
+   * @var \Drupal\key\KeyRepositoryInterface
    */
-  protected KeyRepository $keyRepository;
+  protected KeyRepositoryInterface $keyRepository;
 
   /**
    * Module Handler.
@@ -143,7 +143,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
    *   The config factory.
    * @param \Drupal\Core\Cache\CacheBackendInterface $cache_backend
    *   The cache backend.
-   * @param \Drupal\key\KeyRepository $key_repository
+   * @param \Drupal\key\KeyRepositoryInterface $key_repository
    *   The key repository.
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   The module handler.
@@ -152,7 +152,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
    * @param \Drupal\Core\File\FileSystemInterface $file_system
    *   The file system.
    */
-  public function __construct(
+  final public function __construct(
     array $configuration,
     $plugin_id,
     $plugin_definition,
@@ -160,7 +160,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
     ConfigFactoryInterface $config_factory,
     LoggerChannelFactoryInterface $logger_factory,
     CacheBackendInterface $cache_backend,
-    KeyRepository $key_repository,
+    KeyRepositoryInterface $key_repository,
     ModuleHandlerInterface $module_handler,
     EventDispatcherInterface $event_dispatcher,
     FileSystemInterface $file_system,
@@ -182,7 +182,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
   /**
    * Load from dependency injection container.
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+  final public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
       $configuration,
       $plugin_id,
@@ -280,7 +280,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
    * {@inheritdoc}
    */
   public function getInputExample(Bundles $bundle, string $model_id): mixed {
-    $this->config->get('api_defaults')[$bundle->value]['input'] ?? '';
+    return $this->config->get('api_defaults')[$bundle->value]['input'] ?? '';
   }
 
   /**

@@ -183,6 +183,7 @@ class OpenAiProvider extends LlmProviderClientBase {
       case Bundles::SpeechToText:
         return $this->speechToText($model_id, $input, $normalise_io);
     }
+    return NULL;
   }
 
   /**
@@ -224,7 +225,7 @@ class OpenAiProvider extends LlmProviderClientBase {
       if (!$this->apiKey) {
         $this->setAuthentication($this->loadApiKey());
       }
-      $this->client = OpenAi::factory()
+      $this->client = \OpenAI::factory()
         ->withApiKey($this->apiKey)
         ->withHttpClient(\Drupal::httpClient())
         ->make();

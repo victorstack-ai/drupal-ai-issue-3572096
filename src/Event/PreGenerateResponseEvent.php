@@ -70,6 +70,13 @@ class PreGenerateResponseEvent extends Event {
   protected $normaliseIo;
 
   /**
+   * The authentication.
+   *
+   * @var mixed
+   */
+  protected $authentication;
+
+  /**
    * Constructs the object.
    *
    * @param string $providerId

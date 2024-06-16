@@ -237,7 +237,7 @@ class LlmProviderFormHelper {
    */
   private function generateFormElements(string $prefix, array &$form, int $config_level, array $schema): void {
     // If there isn't a configuration or shouldn't be, return.
-    if (!isset($schema) || $config_level == LlmProviderFormHelper::FORM_CONFIGURATION_NONE) {
+    if (empty($schema) || $config_level == LlmProviderFormHelper::FORM_CONFIGURATION_NONE) {
       return;
     }
     foreach ($schema as $key => $definition) {
