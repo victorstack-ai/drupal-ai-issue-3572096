@@ -1,8 +1,9 @@
 (function (Drupal) {
   // Load on document ready, vanilla js.
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     // Listener to the checkbox on id edit-moderation-checkbox.
-    document.getElementById('edit-moderation-checkbox').addEventListener('change', function() {
+    document.getElementById('edit-moderation-checkbox')
+      .addEventListener('change', function() {
       // If it is checked, set the button to disabled for 10 seconds.
       if (this.checked) {
         let timer = 10000;
