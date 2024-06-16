@@ -168,7 +168,7 @@ class OpenAiProvider extends LlmProviderClientBase {
   /**
    * {@inheritdoc}
    */
-  public function generateResponse(Bundles $bundle, string $model_id, mixed $input, bool $normalise_io = TRUE): mixed {
+  protected function generateResponse(Bundles $bundle, string $model_id, mixed $input, bool $normalise_io = TRUE): mixed {
     $this->loadClient();
     switch ($bundle) {
       // Text to image is the same thing as chat, just fewer models.

@@ -308,7 +308,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
    *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public function invokeModelResponse(Bundles $bundle, string $model_id, mixed $input, array $tags = [], bool $normalise_io = TRUE): mixed {
+  public final function invokeModelResponse(Bundles $bundle, string $model_id, mixed $input, array $tags = [], bool $normalise_io = TRUE): mixed {
     // Normalize the configuration.
     $this->configuration = $this->normalizeConfiguration($bundle, $model_id);
 
@@ -368,5 +368,24 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
     }
     return $values;
   }
+
+  /**
+   * Method for the provider to use to send the response.
+   *
+   * @param \Drupal\ai\Enum\Bundles $bundle
+   *   The bundle type to generate a response for.
+   * @param string $model_id
+   *   ID of model as set in getConfiguredLlms().
+   * @param array $input
+   *   Input for the LLM.
+   * @param bool $normalise_io
+   *   Provide only the output expected for this LLM bundle.
+   *
+   * @return mixed
+   *   Text output returned from LLM API.
+   *
+   * @throws \GuzzleHttp\Exception\GuzzleException
+   */
+  abstract protected function generateResponse(Bundles $bundle, string $model_id, mixed $input, bool $normalise_io = TRUE): mixed;
 
 }

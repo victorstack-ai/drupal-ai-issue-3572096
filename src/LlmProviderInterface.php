@@ -119,7 +119,10 @@ interface LlmProviderInterface extends PluginInspectionInterface {
   public function getConfiguration(): array;
 
   /**
-   * Method for the provider to use to send the response.
+   * Method for the base class to use to send the response.
+   *
+   * Always use the LlmProviderClientBase to setup a plugin, do not implement
+   * this method directly.
    *
    * @param \Drupal\ai\Enum\Bundles $bundle
    *   The bundle type to generate a response for.
@@ -132,9 +135,7 @@ interface LlmProviderInterface extends PluginInspectionInterface {
    *
    * @return mixed
    *   The output returned from the API, normalized or other.
-   *
-   * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public function generateResponse(Bundles $bundle, string $model_id, mixed $input, bool $normalise_io = TRUE): mixed;
+  public function invokeModelResponse(Bundles $bundle, string $model_id, mixed $input, array $tags = [], bool $normalise_io = TRUE): mixed;
 
 }

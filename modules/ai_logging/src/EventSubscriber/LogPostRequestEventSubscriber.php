@@ -12,7 +12,7 @@ use Drupal\Core\Url;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Class LogPostRequestEventSubscriber.
+ * The event that is triggered after a response is generated.
  *
  * @package Drupal\ai_logging\EventSubscriber
  */
@@ -135,22 +135,28 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
       case Bundles::Chat:
         $route = 'ai_api_explorer.text_completion_form';
         break;
+
       case Bundles::TextToImage:
         $route = 'ai_api_explorer.image_generation_form';
         break;
+
       case Bundles::TextToSpeech:
         $route = 'ai_api_explorer.text_to_speech_form';
         break;
+
       case Bundles::SpeechToText:
         $route = 'ai_api_explorer.speech_to_text_form';
         break;
     }
-    $url = Url::fromRoute($route, [], ['query' => [
-      'input' => json_encode($event->getInput()),
-      'provider_id' => $event->getProviderId(),
-      'model_id' => $event->getModelId(),
-      'config' => json_encode($event->getConfiguration()),
-    ]]);
+    $url = Url::fromRoute($route, [], [
+      'query' => [
+        'input' => json_encode($event->getInput()),
+        'provider_id' => $event->getProviderId(),
+        'model_id' => $event->getModelId(),
+        'config' => json_encode($event->getConfiguration()),
+      ],
+    ]);
     return Link::fromTextAndUrl('Test AI Request', $url)->toString();
   }
+
 }
