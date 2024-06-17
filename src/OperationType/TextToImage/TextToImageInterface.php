@@ -1,0 +1,27 @@
+<?php
+
+namespace Drupal\ai\OperationType\TextToImage;
+
+use Drupal\ai\OperationType\OperationTypeInterface;
+
+/**
+ * Interface for text to speech models.
+ */
+interface TextToImageInterface extends OperationTypeInterface {
+
+  /**
+   * Generate audio from text.
+   *
+   * @param string|\Drupal\ai\Operation\TextToImage\TextToImageInput $input
+   *   The text to generate images from or a DTO.
+   * @param string $model_id
+   *   The model id to use.
+   * @param array $tags
+   *   Extra tags to set.
+   *
+   * @return \Drupal\ai\OperationType\TextToImage\TextToImageDto
+   *   The output DTO.
+   */
+  public function textToImage(string|TextToImageInput $input, string $model_id, array $tags = []): TextToImageDto;
+
+}

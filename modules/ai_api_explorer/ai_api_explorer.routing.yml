@@ -9,7 +9,7 @@ ai_api_explorer.image_generation_form:
   path: '/admin/config/development/ai-image-generation'
   defaults:
     _title: 'AI Image Generation Explorer'
-    _form: 'Drupal\ai_api_explorer\Form\ImageGenerationForm'
+    _form: 'Drupal\ai_api_explorer\Form\TextToImageGenerationForm'
   requirements:
     _permission: 'access ai prompt'
 ai_api_explorer.text_to_speech_form:

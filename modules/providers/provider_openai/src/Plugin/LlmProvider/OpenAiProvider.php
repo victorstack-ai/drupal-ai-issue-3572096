@@ -4,9 +4,13 @@ namespace Drupal\provider_openai\Plugin\LlmProvider;
 
 use Drupal\ai\Attribute\LlmProvider;
 use Drupal\ai\Base\LlmProviderClientBase;
+use Drupal\ai\Exception\AiResponseErrorException;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextDto;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInput;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInterface;
+use Drupal\ai\OperationType\TextToImage\TextToImageDto;
+use Drupal\ai\OperationType\TextToImage\TextToImageInput;
+use Drupal\ai\OperationType\TextToImage\TextToImageInterface;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechDto;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInterface;
@@ -27,7 +31,8 @@ use Symfony\Component\Yaml\Yaml;
 class OpenAiProvider extends LlmProviderClientBase implements
   ContainerFactoryPluginInterface,
   TextToSpeechInterface,
-  SpeechToTextInterface {
+  SpeechToTextInterface,
+  TextToImageInterface {
 
   /**
    * The OpenAI Client.
@@ -77,6 +82,7 @@ class OpenAiProvider extends LlmProviderClientBase implements
    */
   public function getSupportedBundles(): array {
     return [
+      'text_to_image',
       'text_to_speech',
       'speech_to_text',
     ];
@@ -251,43 +257,35 @@ class OpenAiProvider extends LlmProviderClientBase implements
   }
 
   /**
-   * Image to text.
-   *
-   * @param string $model_id
-   *   The model ID.
-   * @param mixed $input
-   *   The input.
-   * @param bool $normalize_io
-   *   Should the output be normalized.
-   *
-   * @return mixed
-   *   The response.
+   * {@inheritdoc}
    */
-  protected function textToImage(string $model_id, mixed $input, bool $normalize_io = TRUE): mixed {
+  public function textToImage(string|TextToImageInput $input, string $model_id, array $tags = []): TextToImageDto {
+    $this->loadClient();
+    // Normalize the input if needed.
+    if ($input instanceof TextToImageInput) {
+      $input = $input->getText();
+    }
     $payload = [
       'model' => $model_id,
       'prompt' => $input,
     ] + $this->configuration;
     $response = $this->client->images()->create($payload)->toArray();
-    if ($normalize_io) {
-      // Base64 encoded image.
-      $images = [];
-      if ($this->configuration['response_format'] === 'url') {
-        if (empty($response['data'][0])) {
-          return 'No response content found.';
+
+    $images = [];
+    if ($this->configuration['response_format'] === 'url') {
+      if (empty($response['data'][0])) {
+        throw new AiResponseErrorException('No image data found in the response.');
+      }
+      foreach ($response['data'] as $data) {
+        if ($this->configuration['response_format'] === 'url') {
+          $images[] = base64_encode(file_get_contents($data['url']));
         }
-        foreach ($response['data'] as $data) {
-          if ($this->configuration['response_format'] === 'url') {
-            $images[] = base64_encode(file_get_contents($data['url']));
-          }
-          else {
-            $images[] = $data['b64_json'];
-          }
+        else {
+          $images[] = $data['b64_json'];
         }
       }
-      return $images;
     }
-    return $response;
+    return new TextToImageDto($images, $response, []);
   }
 
   /**

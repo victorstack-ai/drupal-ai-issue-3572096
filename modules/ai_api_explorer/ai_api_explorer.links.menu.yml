@@ -10,7 +10,7 @@ ai_api_explorer.text_completion_form:
   route_name: ai_api_explorer.text_completion_form
   weight: 0
 ai_api_explorer.image_generation_form:
-  title: Image Generation Explorer
+  title: Text-To-Image Generation Explorer
   description: Contains a form where you can experiment and test the AI image generator with prompts.
   parent: ai_api_explorer.main
   route_name: ai_api_explorer.image_generation_form

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Form;
 
-use Drupal\ai\Enum\Bundles;
 use Drupal\ai\Service\LlmProviderFormHelper;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -13,7 +12,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Provides a form to prompt AI for images.
  */
-class ImageGenerationForm extends FormBase {
+class TextToImageGenerationForm extends FormBase {
 
   /**
    * The AI LLM Provider Helper.
@@ -72,7 +71,7 @@ class ImageGenerationForm extends FormBase {
     ];
 
     // Load the LLM configurations.
-    $this->llmProviderHelper->generateLlmProvidersForm($form, $form_state, Bundles::TextToImage, 'image_generator', LlmProviderFormHelper::FORM_CONFIGURATION_FULL);
+    $this->llmProviderHelper->generateLlmProvidersForm($form, $form_state, 'text_to_image', 'image_generator', LlmProviderFormHelper::FORM_CONFIGURATION_FULL);
 
     $form['actions'] = [
       '#type' => 'actions',
@@ -106,14 +105,10 @@ class ImageGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function getResponse(array &$form, FormStateInterface $form_state) {
-    $provider = $this->llmProviderHelper->generateLlmProviderFromFormSubmit($form, $form_state, Bundles::TextToImage, 'image_generator');
-    $tags = [
-      'ai_api_explorer',
-      'ai_api_explorer_image_generation',
-    ];
-    $images = $provider->invokeModelResponse(Bundles::TextToImage, $form_state->getValue('image_generator_ai_model'), $form_state->getValue('prompt'), $tags, TRUE);
+    $provider = $this->llmProviderHelper->generateLlmProviderFromFormSubmit($form, $form_state, 'text_to_image', 'image_generator');
+    $images = $provider->textToImage($form_state->getValue('prompt'), $form_state->getValue('image_generator_ai_model'), ['ai_api_explorer']);
     $response = '';
-    foreach ($images as $image) {
+    foreach ($images->getNormalized() as $image) {
       $response .= '<img src="data:image/png;charset=utf-8;base64,' . $image . '" />';
     }
 
