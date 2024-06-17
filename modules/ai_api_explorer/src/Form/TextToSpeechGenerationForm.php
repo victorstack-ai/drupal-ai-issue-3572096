@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Form;
 
-use Drupal\ai\Enum\Bundles;
 use Drupal\ai\Service\LlmProviderFormHelper;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormBase;
@@ -59,6 +58,7 @@ class TextToSpeechGenerationForm extends FormBase {
     $instance->llmProviderHelper = $container->get('ai.form_helper');
     $instance->requestStack = $container->get('request_stack');
     $instance->fileUrlGenerator = $container->get('file_url_generator');
+    $instance->fileSystem = $container->get('file_system');
     return $instance;
   }
 
@@ -88,7 +88,7 @@ class TextToSpeechGenerationForm extends FormBase {
     ];
 
     // Load the LLM configurations.
-    $this->llmProviderHelper->generateLlmProvidersForm($form, $form_state, Bundles::TextToSpeech, 'tts_', LlmProviderFormHelper::FORM_CONFIGURATION_FULL);
+    $this->llmProviderHelper->generateLlmProvidersForm($form, $form_state, 'text_to_speech', 'tts_', LlmProviderFormHelper::FORM_CONFIGURATION_FULL);
 
     $form['actions'] = [
       '#type' => 'actions',
@@ -122,22 +122,15 @@ class TextToSpeechGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function getResponse(array &$form, FormStateInterface $form_state) {
-    $provider = $this->llmProviderHelper->generateLlmProviderFromFormSubmit($form, $form_state, Bundles::TextToSpeech, 'tts_');
-    $tags = [
-      'ai_api_explorer',
-      'ai_api_explorer_image_generation',
-    ];
-    $audios = $provider->invokeModelResponse(Bundles::TextToSpeech, $form_state->getValue('tts_ai_model'), $form_state->getValue('prompt'), $tags, TRUE);
+    $provider = $this->llmProviderHelper->generateLlmProviderFromFormSubmit($form, $form_state, 'text_to_speech', 'tts_');
+    $audio = $provider->textToSpeech($form_state->getValue('prompt'), $form_state->getValue('tts_ai_model'))->getNormalized();
     $response = '';
-    foreach ($audios as $audio) {
-      // Save the binary data to a file.
-      $file_url = $this->fileSystem->saveData($audio, 'public://text-to-speech-test.mp3', FileSystemInterface::EXISTS_REPLACE);
-      $response .= '<audio controls><source src="' . $this->fileUrlGenerator->generateAbsoluteString($file_url) . '" type="audio/mpeg"></audio>';
-    }
+    // Save the binary data to a file.
+    $file_url = $this->fileSystem->saveData($audio, 'public://text-to-speech-test.mp3', FileSystemInterface::EXISTS_REPLACE);
+    $response .= '<audio controls><source src="' . $this->fileUrlGenerator->generateAbsoluteString($file_url) . '" type="audio/mpeg"></audio>';
 
     // Generation code.
     $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
-    $code .= "use Drupal\ai\Enum\Bundles;<br><br>";
     $code .= '$prompt = "' . $form_state->getValue('prompt') . '";<br>';
     $code .= '$config = [<br>';
     foreach ($provider->getConfiguration() as $key => $value) {
@@ -152,7 +145,7 @@ class TextToSpeechGenerationForm extends FormBase {
     $code .= ']<br><br>';
     $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('tts_llm_provider') . '\');<br>';
     $code .= "\$ai_provider->setConfiguration(\$config);<br>";
-    $code .= "\$response = \$ai_provider->invokeModelResponse(Bundles::TextToSpeech, '" . $form_state->getValue('tts_ai_model') . '\', $prompt, ["tag_1", "tag_2"], TRUE);';
+    $code .= "\$response = \$ai_provider->textToSpeech(\$prompt, '" . $form_state->getValue('tts_ai_model') . '\')->getNormalized();';
     $code .= "</code></details>";
 
     $form['response']['#context'] = [

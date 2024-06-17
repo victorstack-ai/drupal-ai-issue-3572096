@@ -5,6 +5,9 @@ namespace Drupal\provider_openai\Plugin\LlmProvider;
 use Drupal\ai\Attribute\LlmProvider;
 use Drupal\ai\Base\LlmProviderClientBase;
 use Drupal\ai\Enum\Bundles;
+use Drupal\ai\OperationType\TextToSpeech\TextToSpeechDto;
+use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInput;
+use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInterface;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
@@ -19,7 +22,9 @@ use Symfony\Component\Yaml\Yaml;
   id: 'openai',
   label: new TranslatableMarkup('OpenAI'),
 )]
-class OpenAiProvider extends LlmProviderClientBase implements ContainerFactoryPluginInterface {
+class OpenAiProvider extends LlmProviderClientBase implements
+  ContainerFactoryPluginInterface,
+  TextToSpeechInterface {
 
   /**
    * The OpenAI Client.
@@ -45,23 +50,23 @@ class OpenAiProvider extends LlmProviderClientBase implements ContainerFactoryPl
   /**
    * {@inheritdoc}
    */
-  public function getConfiguredLlms(Bundles $bundle = NULL): array {
+  public function getConfiguredLlms(string $operation_type = NULL): array {
     // Load all models, and since OpenAI does not provide information about
     // which models does what, we need to hard code it in a helper function.
     $this->loadClient();
-    return $this->getModels($bundle);
+    return $this->getModels($operation_type);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function isUsable(Bundles $bundle = NULL): bool {
+  public function isUsable(string $operation_type = NULL): bool {
     // If its not configured, it is not usable.
     if (!$this->getConfig()->get('api_key')) {
       return FALSE;
     }
     // If its one of the bundles that OpenAI supports its usable.
-    return in_array($bundle, $this->getSupportedBundles());
+    return in_array($operation_type, $this->getSupportedBundles());
   }
 
   /**
@@ -69,11 +74,7 @@ class OpenAiProvider extends LlmProviderClientBase implements ContainerFactoryPl
    */
   public function getSupportedBundles(): array {
     return [
-      Bundles::Chat,
-      Bundles::TextToImage,
-      Bundles::ImageToText,
-      Bundles::TextToSpeech,
-      Bundles::SpeechToText,
+      'text_to_speech',
     ];
   }
 
@@ -177,9 +178,6 @@ class OpenAiProvider extends LlmProviderClientBase implements ContainerFactoryPl
 
       case Bundles::TextToImage:
         return $this->textToImage($model_id, $input, $normalize_io);
-
-      case Bundles::TextToSpeech:
-        return $this->textToSpeech($model_id, $input, $normalize_io);
 
       case Bundles::SpeechToText:
         return $this->speechToText($model_id, $input, $normalize_io);
@@ -309,28 +307,22 @@ class OpenAiProvider extends LlmProviderClientBase implements ContainerFactoryPl
   }
 
   /**
-   * Text to speech.
-   *
-   * @param string $model_id
-   *   The model ID.
-   * @param mixed $input
-   *   The input.
-   * @param bool $normalize_io
-   *   Should the output be normalized.
-   *
-   * @return mixed
-   *   The response.
+   * {@inheritdoc}
    */
-  protected function textToSpeech(string $model_id, mixed $input, bool $normalize_io = TRUE): mixed {
+  public function textToSpeech(string|TextToSpeechInput $input, string $model_id, array $tags = []): TextToSpeechDto {
+    $this->loadClient();
+    // Normalize the input if needed.
+    if ($input instanceof TextToSpeechInput) {
+      $input = $input->getText();
+    }
+    // Send the resuest.
     $payload = [
       'model' => $model_id,
       'input' => $input,
     ] + $this->configuration;
     $response = $this->client->audio()->speech($payload);
-    if ($normalize_io) {
-      return [$response];
-    }
-    return $response;
+    // Return a normalized response.
+    return new TextToSpeechDto($response, $response, []);
   }
 
   /**
@@ -378,16 +370,16 @@ class OpenAiProvider extends LlmProviderClientBase implements ContainerFactoryPl
    * This method does its best job to filter out deprecated or unused models.
    * The OpenAI API endpoint does not have a way to filter those out yet.
    *
-   * @param \Drupal\ai\Enum\Bundles $bundle
+   * @param string $operation_type
    *   The bundle to filter models by.
    *
    * @return array
    *   A filtered list of public models.
    */
-  public function getModels(Bundles $bundle): array {
+  public function getModels(string $operation_type): array {
     $models = [];
 
-    $cache_data = $this->cacheBackend->get('openai_models_' . $bundle->value, $models);
+    $cache_data = $this->cacheBackend->get('openai_models_' . $operation_type, $models);
 
     if (!empty($cache_data)) {
       return $cache_data->data;
@@ -414,32 +406,32 @@ class OpenAiProvider extends LlmProviderClientBase implements ContainerFactoryPl
       }
 
       // Bundle specific logic.
-      switch ($bundle) {
-        case Bundles::Chat:
+      switch ($operation_type) {
+        case 'chat':
           if (!preg_match('/^(gpt|text)/i', $model['id'])) {
             continue 2;
           }
           break;
 
-        case Bundles::ImageToText:
+        case 'image_to_text':
           if (!preg_match('/^(gpt-4o|gpt-4-turbo|vision)/i', $model['id'])) {
             continue 2;
           }
           break;
 
-        case Bundles::TextToImage:
+        case 'text_to_image':
           if (!preg_match('/^(dall-e|clip)/i', $model['id'])) {
             continue 2;
           }
           break;
 
-        case Bundles::SpeechToText:
+        case 'speech_to_text':
           if (!preg_match('/^(whisper)/i', $model['id'])) {
             continue 2;
           }
           break;
 
-        case Bundles::TextToSpeech:
+        case 'text_to_speech':
           if (!preg_match('/^(tts)/i', $model['id'])) {
             continue 2;
           }
@@ -451,7 +443,7 @@ class OpenAiProvider extends LlmProviderClientBase implements ContainerFactoryPl
 
     if (!empty($models)) {
       asort($models);
-      $this->cacheBackend->set('openai_models_' . $bundle->value, $models);
+      $this->cacheBackend->set('openai_models_' . $operation_type, $models);
     }
 
     return $models;

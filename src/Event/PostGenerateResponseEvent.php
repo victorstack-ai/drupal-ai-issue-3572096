@@ -2,7 +2,6 @@
 
 namespace Drupal\ai\Event;
 
-use Drupal\ai\Enum\Bundles;
 use Drupal\Component\EventDispatcher\Event;
 
 /**
@@ -28,11 +27,11 @@ class PostGenerateResponseEvent extends Event {
   protected $configuration;
 
   /**
-   * The bundle for the request.
+   * The operation type for the request.
    *
-   * @var \Drupal\ai\Enum\Bundles
+   * @var string
    */
-  protected $bundle;
+  protected $operationType;
 
   /**
    * The model ID for the request.
@@ -63,41 +62,31 @@ class PostGenerateResponseEvent extends Event {
   protected $tags;
 
   /**
-   * Should the response be normalized.
-   *
-   * @var bool
-   */
-  protected $normalizeIo;
-
-  /**
    * Constructs the object.
    *
-   * @param string $providerId
+   * @param string $provider_id
    *   The provider to process.
+   * @param string $operation_type
+   *   The operation type for the request.
    * @param array $configuration
    *   The configuration of the provider.
-   * @param \Drupal\ai\Enum\Bundles $bundle
-   *   The bundle for the request.
-   * @param string $modelId
-   *   The model ID for the request.
    * @param mixed $input
    *   The input for the request.
+   * @param string $model_id
+   *   The model ID for the request.
    * @param mixed $output
    *   The output for the request.
    * @param array $tags
    *   The tags for the request.
-   * @param bool $normalizeIo
-   *   Should the response be normalized.
    */
-  public function __construct(String $providerId, array $configuration, Bundles $bundle, string $modelId, mixed $input, mixed $output, array $tags = [], bool $normalizeIo = TRUE) {
-    $this->providerId = $providerId;
+  public function __construct(string $provider_id, string $operation_type, array $configuration, mixed $input, string $model_id, mixed $output, array $tags = []) {
+    $this->providerId = $provider_id;
     $this->configuration = $configuration;
-    $this->bundle = $bundle;
-    $this->modelId = $modelId;
+    $this->operationType = $operation_type;
+    $this->modelId = $model_id;
     $this->input = $input;
     $this->output = $output;
     $this->tags = $tags;
-    $this->normalizeIo = $normalizeIo;
   }
 
   /**
@@ -121,13 +110,13 @@ class PostGenerateResponseEvent extends Event {
   }
 
   /**
-   * Gets the bundle.
+   * Gets the operation type.
    *
-   * @return \Drupal\ai\Enum\Bundles
-   *   The bundle.
+   * @return string
+   *   The operation type.
    */
-  public function getBundle() {
-    return $this->bundle;
+  public function getOperationType() {
+    return $this->operationType;
   }
 
   /**
@@ -168,16 +157,6 @@ class PostGenerateResponseEvent extends Event {
    */
   public function getTags() {
     return $this->tags;
-  }
-
-  /**
-   * Gets the normalize IO.
-   *
-   * @return bool
-   *   The normalize IO.
-   */
-  public function getNormaliseIo() {
-    return $this->normalizeIo;
   }
 
   /**

@@ -2,7 +2,6 @@
 
 namespace Drupal\ai_logging\EventSubscriber;
 
-use Drupal\ai\Enum\Bundles;
 use Drupal\ai\Event\PostGenerateResponseEvent;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -68,10 +67,11 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
    */
   public function logPostRequest(PostGenerateResponseEvent $event) {
     // If logging is enabled, log the prompt and response.
-    if ($this->shouldLoggingHappen($event->getBundle(), $event->getTags())) {
+    if ($this->shouldLoggingHappen($event->getOperationType(), $event->getTags())) {
       $context = [
         '@provider' => $event->getProviderId(),
         '@model' => $event->getModelId(),
+        '@type' => $event->getOperationType(),
         '@prompt' => json_encode($event->getInput()),
         '@config' => json_encode($event->getConfiguration()),
         '@response' => 'Not logged',
@@ -83,22 +83,22 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
       if ($this->moduleHandler->moduleExists('ai_api_explorer')) {
         $context['link'] = $this->getContextLink($event);
       }
-      $this->loggerFactory->get('ai')->info("Provider: @provider||Model: @model||Configuration: @config||Prompt: @prompt||Response: @response", $context);
+      $this->loggerFactory->get('ai')->info("Provider: @provider||Model: @model||Operation Type: @type||Configuration: @config||Prompt: @prompt||Response: @response", $context);
     }
   }
 
   /**
    * Function to check if logging should happen.
    *
-   * @param \Drupal\ai\Enum\Bundles $bundle
-   *   The bundle to check against.
+   * @param string $operation_type
+   *   The operation type.
    * @param array $tags
    *   Tags to check against.
    *
    * @return bool
    *   If logging should happen.
    */
-  protected function shouldLoggingHappen(Bundles $bundle, array $tags): bool {
+  protected function shouldLoggingHappen(string $operation_type, array $tags): bool {
     if (empty($this->aiSettings->get('prompt_logging'))) {
       return FALSE;
     }
@@ -131,20 +131,20 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
    */
   protected function getContextLink(PostGenerateResponseEvent $event): string {
     $route = 'prompt_explorer.prompt_form';
-    switch ($event->getBundle()) {
-      case Bundles::Chat:
+    switch ($event->getOperationType()) {
+      case 'chat':
         $route = 'ai_api_explorer.text_completion_form';
         break;
 
-      case Bundles::TextToImage:
+      case 'text_to_image':
         $route = 'ai_api_explorer.image_generation_form';
         break;
 
-      case Bundles::TextToSpeech:
+      case 'text_to_speech':
         $route = 'ai_api_explorer.text_to_speech_form';
         break;
 
-      case Bundles::SpeechToText:
+      case 'speech_to_text':
         $route = 'ai_api_explorer.speech_to_text_form';
         break;
     }

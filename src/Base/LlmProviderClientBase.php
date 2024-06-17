@@ -2,13 +2,6 @@
 
 namespace Drupal\ai\Base;
 
-use Drupal\ai\Enum\Bundles;
-use Drupal\ai\Event\PostGenerateResponseEvent;
-use Drupal\ai\Event\PreGenerateResponseEvent;
-use Drupal\ai\Exception\AiBadRequestException;
-use Drupal\ai\Exception\AiRequestErrorException;
-use Drupal\ai\Exception\AiResponseErrorException;
-use Drupal\ai\Exception\AiUnsafePromptException;
 use Drupal\ai\LlmProviderInterface;
 use Drupal\ai\Utility\CastUtility;
 use Drupal\Core\Cache\CacheBackendInterface;
@@ -19,7 +12,6 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\key\KeyRepositoryInterface;
-use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -104,7 +96,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
    *
    * @var array
    */
-  protected array $configuration = [];
+  public array $configuration = [];
 
   /**
    * The tags for the prompt.
@@ -257,8 +249,8 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
   /**
    * {@inheritdoc}
    */
-  public function getAvailableConfiguration(Bundles $bundle, string $model_id): array {
-    $generalConfig = $this->getApiDefinition()[$bundle->value]['configuration'] ?? [];
+  public function getAvailableConfiguration(string $operation_type, string $model_id): array {
+    $generalConfig = $this->getApiDefinition()[$operation_type]['configuration'] ?? [];
     $modelConfig = $this->getModelSettings($model_id);
     return empty($modelConfig) ? $generalConfig : array_replace_recursive($generalConfig, $modelConfig);
   }
@@ -266,8 +258,8 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
   /**
    * {@inheritdoc}
    */
-  public function getDefaultConfigurationValues(Bundles $bundle, string $model_id): array {
-    $configs = $this->getAvailableConfiguration($bundle, $model_id);
+  public function getDefaultConfigurationValues(string $operation_type, string $model_id): array {
+    $configs = $this->getAvailableConfiguration($operation_type, $model_id);
     $defaults = [];
     foreach ($configs as $key => $values) {
       if (isset($values['default']) && !empty($values['required'])) {
@@ -280,124 +272,31 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
   /**
    * {@inheritdoc}
    */
-  public function getInputExample(Bundles $bundle, string $model_id): mixed {
-    return $this->config->get('api_defaults')[$bundle->value]['input'] ?? '';
+  public function getInputExample(string $operation_type, string $model_id): mixed {
+    return $this->config->get('api_defaults')[$operation_type]['input'] ?? '';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getAuthenticationExample(Bundles $bundle, string $model_id): mixed {
-    return $this->config->get('api_defaults')[$bundle->value]['authentication'] ?? '';
-  }
-
-  /**
-   * Sends a request to the LLM provider to generate a response.
-   *
-   * @param \Drupal\ai\Enum\Bundles $bundle
-   *   The bundle type to generate a response for.
-   * @param string $model_id
-   *   ID of model as set in getConfiguredLlms().
-   * @param array $input
-   *   Input for the LLM.
-   * @param array $tags
-   *   Tags for the request.
-   * @param bool $normalize_io
-   *   Provide only the output expected for this LLM bundle.
-   *
-   * @return mixed
-   *   Text output returned from LLM API.
-   *
-   * @throws \GuzzleHttp\Exception\GuzzleException
-   */
-  final public function invokeModelResponse(Bundles $bundle, string $model_id, mixed $input, array $tags = [], bool $normalize_io = TRUE): mixed {
-    // Normalize the configuration.
-    $this->configuration = $this->normalizeConfiguration($bundle, $model_id);
-
-    // Invoke the pre generate response event.
-    $pre_generate_event = new PreGenerateResponseEvent($this->getPluginId(), $this->configuration, $bundle, $model_id, $input, $tags, $normalize_io);
-    $this->eventDispatcher->dispatch($pre_generate_event, PreGenerateResponseEvent::EVENT_NAME);
-    // Get the possible new auth, configuration and input from the event.
-    $this->configuration = $pre_generate_event->getConfiguration();
-    $input = $pre_generate_event->getInput();
-    // Only set the authentication if it is set.
-    if ($pre_generate_event->getAuthentication()) {
-      $this->setAuthentication($pre_generate_event->getAuthentication());
-    }
-
-    // Trigger the provider and try to catch where it went wrong.
-    try {
-      $response = $this->generateResponse($bundle, $model_id, $input, $normalize_io);
-    }
-    // Response is wrong.
-    catch (ClientExceptionInterface $e) {
-      $this->loggerFactory->get('ai')->error('Error invoking client: @error', ['@error' => $e->getMessage()]);
-      throw new AiBadRequestException('Error invoking client: ' . $e->getMessage());
-    }
-    // If the provider does an responser error.
-    catch (AiResponseErrorException $e) {
-      $this->loggerFactory->get('ai')->error('Error invoking model response: @error', ['@error' => $e->getMessage()]);
-      throw $e;
-    }
-    // Its not safe.
-    catch (AiUnsafePromptException $e) {
-      $this->loggerFactory->get('ai')->error('The Prompt is unsafe: @error', ['@error' => $e->getMessage()]);
-      throw $e;
-    }
-    // If an request error happens.
-    catch (AiRequestErrorException $e) {
-      $this->loggerFactory->get('ai')->error('Error invoking model response: @error', ['@error' => $e->getMessage()]);
-      throw $e;
-    }
-    // Anything else is probably due to a bad request.
-    catch (\Exception $e) {
-      $this->loggerFactory->get('ai')->error('Error invoking model response: @error', ['@error' => $e->getMessage()]);
-      throw new AiRequestErrorException('Error invoking model response: ' . $e->getMessage());
-    }
-
-    // Invoke the post generate response event.
-    $post_generate_event = new PostGenerateResponseEvent($this->getPluginId(), $this->configuration, $bundle, $model_id, $input, $response, $tags, $normalize_io);
-    $this->eventDispatcher->dispatch($post_generate_event, PostGenerateResponseEvent::EVENT_NAME);
-    // Get a potential new response from the event.
-    $response = $post_generate_event->getOutput();
-
-    // Return the response.
-    return $response;
+  public function getAuthenticationExample(string $operation_type, string $model_id): mixed {
+    return $this->config->get('api_defaults')[$operation_type]['authentication'] ?? '';
   }
 
   /**
    * Normalize the configuration before runtime.
    *
-   * @param \Drupal\ai\Enum\Bundles $bundle
-   *   The bundle type to generate a response for.
+   * @param string $operation_type
+   *   The operation type to generate a response for.
    * @param string $model_id
    *   ID of model as set in getConfiguredLlms().
    */
-  protected function normalizeConfiguration(Bundles $bundle, $model_id): array {
-    $values = $this->getDefaultConfigurationValues($bundle, $model_id);
+  public function normalizeConfiguration(string $operation_type, $model_id): array {
+    $values = $this->getDefaultConfigurationValues($operation_type, $model_id);
     foreach ($this->configuration as $key => $value) {
       $values[$key] = $value;
     }
     return $values;
   }
-
-  /**
-   * Method for the provider to use to send the response.
-   *
-   * @param \Drupal\ai\Enum\Bundles $bundle
-   *   The bundle type to generate a response for.
-   * @param string $model_id
-   *   ID of model as set in getConfiguredLlms().
-   * @param array $input
-   *   Input for the LLM.
-   * @param bool $normalize_io
-   *   Provide only the output expected for this LLM bundle.
-   *
-   * @return mixed
-   *   Text output returned from LLM API.
-   *
-   * @throws \GuzzleHttp\Exception\GuzzleException
-   */
-  abstract protected function generateResponse(Bundles $bundle, string $model_id, mixed $input, bool $normalize_io = TRUE): mixed;
 
 }

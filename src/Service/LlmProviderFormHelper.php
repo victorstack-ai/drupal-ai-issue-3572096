@@ -2,9 +2,9 @@
 
 namespace Drupal\ai\Service;
 
-use Drupal\ai\Enum\Bundles;
 use Drupal\ai\LlmProviderInterface;
 use Drupal\ai\LlmProviderPluginManager;
+use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\ai\Utility\CastUtility;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -55,8 +55,8 @@ class LlmProviderFormHelper {
    *   The form array to add the configuration to, passed by reference.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
-   * @param \Drupal\ai\Enum\Bundles $bundle
-   *   The bundle to get the models for.
+   * @param string $operation_type
+   *   The operation type.
    * @param string $prefix
    *   If you want to add a prefix to the form parts generated.
    * @param int $config_level
@@ -64,8 +64,8 @@ class LlmProviderFormHelper {
    * @param string $provider_id
    *   If you already have the provider id and only want to show the models.
    */
-  public function generateLlmProvidersForm(array &$form, FormStateInterface $form_state, Bundles $bundle, string $prefix = '', int $config_level = LlmProviderFormHelper::FORM_CONFIGURATION_NONE, string $provider_id = '') {
-    $providers = $this->getLlmProvidersOptions();
+  public function generateLlmProvidersForm(array &$form, FormStateInterface $form_state, string $operation_type, string $prefix = '', int $config_level = LlmProviderFormHelper::FORM_CONFIGURATION_NONE, string $provider_id = '') {
+    $providers = $this->getLlmProvidersOptions($operation_type);
     // Make sure the prefix is properly formatted.
     $prefix = $prefix ? rtrim($prefix, '_') . '_' : '';
     $form_state->set('llm_prefix', $prefix);
@@ -108,7 +108,7 @@ class LlmProviderFormHelper {
         '#type' => 'select',
         '#title' => $this->t('Model'),
         // Only get chat models.
-        '#options' => $llmInstance->getConfiguredLlms($bundle),
+        '#options' => $llmInstance->getConfiguredLlms($operation_type),
         '#default_value' => $model,
         '#required' => TRUE,
         '#ajax' => [
@@ -118,7 +118,7 @@ class LlmProviderFormHelper {
       ];
 
       if ($model) {
-        $configuration = $llmInstance->getAvailableConfiguration($bundle, $model);
+        $configuration = $llmInstance->getAvailableConfiguration($operation_type, $model);
         $this->generateFormElements($prefix . 'ajax_prefix', $form, $config_level, $configuration);
       }
     }
@@ -131,18 +131,18 @@ class LlmProviderFormHelper {
    *   The form array to add the configuration to, passed by reference.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
-   * @param \Drupal\ai\Enum\Bundles $bundle
-   *   The bundle to get the models for.
+   * @param string $operation_type
+   *   The operation type.
    * @param string $prefix
    *   If you want to add a prefix to the form parts generated.
    *
-   * @return \Drupal\ai\Provider\LlmProviderInterface
-   *   The provider instance.
+   * @return \Drupal\ai\Provider\LlmProviderInterface|\Drupal\ai\Plugin\ProviderProxy
+   *   The provider instance or a proxy.
    */
-  public function generateLlmProviderFromFormSubmit(array &$form, FormStateInterface $form_state, Bundles $bundle, string $prefix): LlmProviderInterface {
+  public function generateLlmProviderFromFormSubmit(array &$form, FormStateInterface $form_state, string $operation_type, string $prefix): LlmProviderInterface|ProviderProxy {
     $prefix = $prefix ? rtrim($prefix, '_') . '_' : '';
     $provider = $form_state->getValue($prefix . 'llm_provider');
-    $configuration = $this->generateLlmProvidersConfigurationFromForm($form, $form_state, $bundle, $prefix);
+    $configuration = $this->generateLlmProvidersConfigurationFromForm($form, $form_state, $operation_type, $prefix);
     $provider = $this->llmProviderPluginManager->createInstance($provider);
     $provider->setConfiguration($configuration);
     return $provider;
@@ -155,21 +155,21 @@ class LlmProviderFormHelper {
    *   The form array to add the configuration to, passed by reference.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
-   * @param \Drupal\ai\Enum\Bundles $bundle
-   *   The bundle to get the models for.
+   * @param string $operation_type
+   *   The operation type.
    * @param string $prefix
    *   If you want to add a prefix to the form parts generated.
    *
    * @return array
    *   The configuration array.
    */
-  public function generateLlmProvidersConfigurationFromForm(array &$form, FormStateInterface $form_state, Bundles $bundle, string $prefix): array {
+  public function generateLlmProvidersConfigurationFromForm(array &$form, FormStateInterface $form_state, string $operation_type, string $prefix): array {
     // Make sure the prefix is properly formatted.
     $prefix = $prefix ? rtrim($prefix, '_') . '_' : '';
     $provider = $form_state->getValue($prefix . 'llm_provider');
     $model = $form_state->getValue($prefix . 'ai_model');
     $llmInstance = $this->llmProviderPluginManager->createInstance($provider);
-    $schema = $llmInstance->getAvailableConfiguration($bundle, $model);
+    $schema = $llmInstance->getAvailableConfiguration($operation_type, $model);
     $prefix = $prefix ? rtrim($prefix, '_') . '_' : '';
     // Hopefully safe namespace.
     $prefix .= 'ajax_prefix_configuration_';
@@ -204,10 +204,13 @@ class LlmProviderFormHelper {
   /**
    * Helper function to generate a full options list of available LLM providers.
    *
+   * @param string $operation_type
+   *   The operation type.
+   *
    * @return array
    *   The list of available LLM providers.
    */
-  private function getLlmProvidersOptions() {
+  private function getLlmProvidersOptions(string $operation_type) {
     $providers = $this->llmProviderPluginManager->getDefinitions();
     $options = [
       '' => $this->t('Select a provider'),
@@ -215,7 +218,7 @@ class LlmProviderFormHelper {
     foreach ($providers as $id => $provider) {
       // Check so its setup.
       $providerInstance = $this->llmProviderPluginManager->createInstance($id);
-      if ($providerInstance->isUsable(Bundles::Chat)) {
+      if ($providerInstance->isUsable($operation_type)) {
         $options[$id] = $provider['label'];
       }
 

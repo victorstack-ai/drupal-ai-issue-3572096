@@ -2,6 +2,7 @@ services:
   ai.provider:
     class: Drupal\ai\LlmProviderPluginManager
     parent: default_plugin_manager
+    arguments: ['@service_container', '@module_handler', '@cache.discovery', '@logger.channel.default']
   ai.form_helper:
     class: Drupal\ai\Service\LlmProviderFormHelper
     arguments: ['@ai.provider']
