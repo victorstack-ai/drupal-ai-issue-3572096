@@ -34,4 +34,5 @@ class TextToSpeechInput implements InputInterface {
   public function getText(): string {
     return $this->text;
   }
+
 }

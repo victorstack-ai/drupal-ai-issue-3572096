@@ -4,7 +4,9 @@ namespace Drupal\provider_openai\Plugin\LlmProvider;
 
 use Drupal\ai\Attribute\LlmProvider;
 use Drupal\ai\Base\LlmProviderClientBase;
-use Drupal\ai\Enum\Bundles;
+use Drupal\ai\OperationType\SpeechToText\SpeechToTextDto;
+use Drupal\ai\OperationType\SpeechToText\SpeechToTextInput;
+use Drupal\ai\OperationType\SpeechToText\SpeechToTextInterface;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechDto;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInterface;
@@ -24,7 +26,8 @@ use Symfony\Component\Yaml\Yaml;
 )]
 class OpenAiProvider extends LlmProviderClientBase implements
   ContainerFactoryPluginInterface,
-  TextToSpeechInterface {
+  TextToSpeechInterface,
+  SpeechToTextInterface {
 
   /**
    * The OpenAI Client.
@@ -75,6 +78,7 @@ class OpenAiProvider extends LlmProviderClientBase implements
   public function getSupportedBundles(): array {
     return [
       'text_to_speech',
+      'speech_to_text',
     ];
   }
 
@@ -163,26 +167,6 @@ class OpenAiProvider extends LlmProviderClientBase implements
     // Set the new API key and reset the client.
     $this->apiKey = $authentication;
     $this->client = NULL;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function generateResponse(Bundles $bundle, string $model_id, mixed $input, bool $normalize_io = TRUE): mixed {
-    $this->loadClient();
-    switch ($bundle) {
-      // Text to image is the same thing as chat, just fewer models.
-      case Bundles::Chat:
-      case Bundles::ImageToText:
-        return $this->chat($model_id, $input, $normalize_io);
-
-      case Bundles::TextToImage:
-        return $this->textToImage($model_id, $input, $normalize_io);
-
-      case Bundles::SpeechToText:
-        return $this->speechToText($model_id, $input, $normalize_io);
-    }
-    return NULL;
   }
 
   /**
@@ -326,19 +310,14 @@ class OpenAiProvider extends LlmProviderClientBase implements
   }
 
   /**
-   * Speech to text.
-   *
-   * @param string $model_id
-   *   The model ID.
-   * @param mixed $input
-   *   The input.
-   * @param bool $normalize_io
-   *   Should the output be normalized.
-   *
-   * @return mixed
-   *   The response.
+   * {@inheritdoc}
    */
-  protected function speechToText(string $model_id, mixed $input, bool $normalize_io = TRUE): mixed {
+  public function speechToText(string|SpeechToTextInput $input, string $model_id, array $tags = []): SpeechToTextDto {
+    $this->loadClient();
+    // Normalize the input if needed.
+    if ($input instanceof SpeechToTextInput) {
+      $input = $input->getBinary();
+    }
     // The raw file has to become a resource, so we save a temporary file first.
     $path = $this->fileSystem->saveData($input, 'temporary://speech_to_text.mp3', FileSystemInterface::EXISTS_REPLACE);
     $input = fopen($path, 'r');
@@ -348,20 +327,7 @@ class OpenAiProvider extends LlmProviderClientBase implements
     ] + $this->configuration;
     $response = $this->client->audio()->transcribe($payload)->toArray();
 
-    // Remove the file.
-    $this->fileSystem->delete($path);
-    if ($normalize_io) {
-      if (!empty($this->configuration['response_format'])) {
-        switch ($this->configuration['response_format']) {
-          case 'text':
-            return $response['text'];
-
-          case 'json':
-            return $response['text'];
-        }
-      }
-    }
-    return $response;
+    return new SpeechToTextDto($response['text'], $response, []);
   }
 
   /**

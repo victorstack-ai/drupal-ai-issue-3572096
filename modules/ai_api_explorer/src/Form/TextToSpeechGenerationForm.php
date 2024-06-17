@@ -123,7 +123,7 @@ class TextToSpeechGenerationForm extends FormBase {
    */
   public function getResponse(array &$form, FormStateInterface $form_state) {
     $provider = $this->llmProviderHelper->generateLlmProviderFromFormSubmit($form, $form_state, 'text_to_speech', 'tts_');
-    $audio = $provider->textToSpeech($form_state->getValue('prompt'), $form_state->getValue('tts_ai_model'))->getNormalized();
+    $audio = $provider->textToSpeech($form_state->getValue('prompt'), $form_state->getValue('tts_ai_model'), ['ai_api_explorer'])->getNormalized();
     $response = '';
     // Save the binary data to a file.
     $file_url = $this->fileSystem->saveData($audio, 'public://text-to-speech-test.mp3', FileSystemInterface::EXISTS_REPLACE);
@@ -145,7 +145,8 @@ class TextToSpeechGenerationForm extends FormBase {
     $code .= ']<br><br>';
     $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('tts_llm_provider') . '\');<br>';
     $code .= "\$ai_provider->setConfiguration(\$config);<br>";
-    $code .= "\$response = \$ai_provider->textToSpeech(\$prompt, '" . $form_state->getValue('tts_ai_model') . '\')->getNormalized();';
+    $code .= "// \$response will be a string with the audio binary.<br>";
+    $code .= "\$response = \$ai_provider->textToSpeech(\$prompt, '" . $form_state->getValue('tts_ai_model') . '\', ["your_module_name"])->getNormalized();';
     $code .= "</code></details>";
 
     $form['response']['#context'] = [

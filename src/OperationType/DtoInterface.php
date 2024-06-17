@@ -40,4 +40,3 @@ interface DtoInterface {
   public function toArray(): array;
 
 }
-
