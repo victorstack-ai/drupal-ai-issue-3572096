@@ -26,3 +26,10 @@ ai_api_explorer.speech_to_text_form:
     _form: 'Drupal\ai_api_explorer\Form\SpeechToTextGenerationForm'
   requirements:
     _permission: 'access ai prompt'
+ai_api_explorer.embeddings_form:
+  path: '/admin/config/development/ai-embeddings'
+  defaults:
+    _title: 'AI Embeddings Generation Explorer'
+    _form: 'Drupal\ai_api_explorer\Form\EmbeddingsGenerationForm'
+  requirements:
+    _permission: 'access ai prompt'

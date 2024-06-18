@@ -136,6 +136,10 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
         $route = 'ai_api_explorer.chat_generation_form';
         break;
 
+      case 'embeddings':
+        $route = 'ai_api_explorer.embeddings_form';
+        break;
+
       case 'text_to_image':
         $route = 'ai_api_explorer.image_generation_form';
         break;
@@ -146,6 +150,9 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
 
       case 'speech_to_text':
         $route = 'ai_api_explorer.speech_to_text_form';
+        break;
+
+      default:
         break;
     }
     $url = Url::fromRoute($route, [], [

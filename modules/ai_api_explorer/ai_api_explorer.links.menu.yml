@@ -27,3 +27,9 @@ ai_api_explorer.chat_generation_form:
   parent: ai_api_explorer.main
   route_name: ai_api_explorer.chat_generation_form
   weight: -1
+ai_api_explorer.embeddings_form:
+  title: Embeddings Generation Explorer
+  description: Contains a form where you can experiment and test the AI embeddings generator with prompts.
+  parent: ai_api_explorer.main
+  route_name: ai_api_explorer.embeddings_form
+  weight: 4
