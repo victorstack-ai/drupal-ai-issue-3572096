@@ -6,7 +6,6 @@ namespace Drupal\ai_api_explorer\Form;
 
 use Drupal\ai\Service\LlmProviderFormHelper;
 use Drupal\Core\File\FileExists;
-use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -45,6 +44,20 @@ class TextToSpeechGenerationForm extends FormBase {
   protected $fileSystem;
 
   /**
+   * The module handler.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
+
+  /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
    * {@inheritdoc}
    */
   public function getFormId() {
@@ -60,6 +73,8 @@ class TextToSpeechGenerationForm extends FormBase {
     $instance->requestStack = $container->get('request_stack');
     $instance->fileUrlGenerator = $container->get('file_url_generator');
     $instance->fileSystem = $container->get('file_system');
+    $instance->moduleHandler = $container->get('module_handler');
+    $instance->entityTypeManager = $container->get('entity_type.manager');
     return $instance;
   }
 
@@ -90,6 +105,23 @@ class TextToSpeechGenerationForm extends FormBase {
 
     // Load the LLM configurations.
     $this->llmProviderHelper->generateLlmProvidersForm($form, $form_state, 'text_to_speech', 'tts_', LlmProviderFormHelper::FORM_CONFIGURATION_FULL);
+
+    // If media module exists.
+    if ($this->moduleHandler->moduleExists('media')) {
+      $media_types = $this->entityTypeManager->getStorage('media_type')->loadMultiple();
+      $media_options = [
+        '' => $this->t('None'),
+      ];
+      foreach ($media_types as $media_type) {
+        $media_options[$media_type->id()] = $media_type->label();
+      }
+      $form['save_as_media'] = [
+        '#type' => 'select',
+        '#title' => $this->t('Save as media'),
+        '#options' => $media_options,
+        '#description' => $this->t('If you want to save the audio as media, select the media type.'),
+      ];
+    }
 
     $form['actions'] = [
       '#type' => 'actions',
@@ -124,10 +156,14 @@ class TextToSpeechGenerationForm extends FormBase {
    */
   public function getResponse(array &$form, FormStateInterface $form_state) {
     $provider = $this->llmProviderHelper->generateLlmProviderFromFormSubmit($form, $form_state, 'text_to_speech', 'tts_');
-    $audio = $provider->textToSpeech($form_state->getValue('prompt'), $form_state->getValue('tts_ai_model'), ['ai_api_explorer'])->getNormalized();
+    $audio = $provider->textToSpeech($form_state->getValue('prompt'), $form_state->getValue('tts_ai_model'), ['ai_api_explorer']);
     $response = '';
+    if ($form_state->getValue('save_as_media')) {
+      $audio->getAsMediaReference($form_state->getValue('save_as_media'), 'text-to-speech.mp3');
+    }
+    $audio_normalized = $audio->getNormalized();
     // Save the binary data to a file.
-    $file_url = $this->fileSystem->saveData($audio[0], 'public://text-to-speech-test.mp3', FileExists::Replace);
+    $file_url = $this->fileSystem->saveData($audio_normalized[0], 'public://text-to-speech-test.mp3', FileExists::Replace);
     $response .= '<audio controls><source src="' . $this->fileUrlGenerator->generateAbsoluteString($file_url) . '" type="audio/mpeg"></audio>';
 
     // Generation code.
@@ -148,6 +184,10 @@ class TextToSpeechGenerationForm extends FormBase {
     $code .= "\$ai_provider->setConfiguration(\$config);<br>";
     $code .= "// \$response will be a string with the audio binary.<br>";
     $code .= "\$response = \$ai_provider->textToSpeech(\$prompt, '" . $form_state->getValue('tts_ai_model') . '\', ["your_module_name"])->getNormalized();';
+    if ($form_state->getValue('save_as_media')) {
+      $code .= "<br>// We save it as media.";
+      $code .= "<br>\$media = \$response->getAsMediaReference('" . $form_state->getValue('save_as_media') . "', 'audio.mp3');";
+    }
     $code .= "</code></details>";
 
     $form['response']['#context'] = [

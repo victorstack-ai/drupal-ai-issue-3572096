@@ -29,6 +29,20 @@ class TextToImageGenerationForm extends FormBase {
   protected $requestStack;
 
   /**
+   * The module handler.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
+
+  /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
    * {@inheritdoc}
    */
   public function getFormId() {
@@ -42,6 +56,8 @@ class TextToImageGenerationForm extends FormBase {
     $instance = parent::create($container);
     $instance->llmProviderHelper = $container->get('ai.form_helper');
     $instance->requestStack = $container->get('request_stack');
+    $instance->moduleHandler = $container->get('module_handler');
+    $instance->entityTypeManager = $container->get('entity_type.manager');
     return $instance;
   }
 
@@ -72,6 +88,23 @@ class TextToImageGenerationForm extends FormBase {
 
     // Load the LLM configurations.
     $this->llmProviderHelper->generateLlmProvidersForm($form, $form_state, 'text_to_image', 'image_generator', LlmProviderFormHelper::FORM_CONFIGURATION_FULL);
+
+    // If media module exists.
+    if ($this->moduleHandler->moduleExists('media')) {
+      $media_types = $this->entityTypeManager->getStorage('media_type')->loadMultiple();
+      $media_options = [
+        '' => $this->t('None'),
+      ];
+      foreach ($media_types as $media_type) {
+        $media_options[$media_type->id()] = $media_type->label();
+      }
+      $form['save_as_media'] = [
+        '#type' => 'select',
+        '#title' => $this->t('Save as media'),
+        '#options' => $media_options,
+        '#description' => $this->t('If you want to save the audio as media, select the media type.'),
+      ];
+    }
 
     $form['actions'] = [
       '#type' => 'actions',
@@ -111,6 +144,9 @@ class TextToImageGenerationForm extends FormBase {
     foreach ($images->getAsBase64EncodedString() as $image) {
       $response .= '<img src="data:image/png;charset=utf-8;base64,' . $image . '" />';
     }
+    if ($form_state->getValue('save_as_media')) {
+      $images->getAsMediaReference($form_state->getValue('save_as_media'), 'image.png');
+    }
 
     // Generation code.
     $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
@@ -130,6 +166,10 @@ class TextToImageGenerationForm extends FormBase {
     $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('image_generator_llm_provider') . '\');<br>';
     $code .= "\$ai_provider->setConfiguration(\$config);<br>";
     $code .= "\$response = \$ai_provider->invokeModelResponse(Bundles::TextToImage, '" . $form_state->getValue('image_generator_ai_model') . '\', $prompt, ["tag_1", "tag_2"], TRUE);';
+    if ($form_state->getValue('save_as_media')) {
+      $code .= "<br>// We save it as media.";
+      $code .= "<br>\$response->getAsMediaReference('" . $form_state->getValue('save_as_media') . "', 'image.png');";
+    }
     $code .= "</code></details>";
 
     $form['response']['#context'] = [
