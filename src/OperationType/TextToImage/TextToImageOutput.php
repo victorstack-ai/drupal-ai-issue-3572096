@@ -2,12 +2,12 @@
 
 namespace Drupal\ai\OperationType\TextToImage;
 
-use Drupal\ai\OperationType\DtoInterface;
+use Drupal\ai\OperationType\OutputInterface;
 
 /**
  * Data transfer output object for text to speech output.
  */
-class TextToImageDto implements DtoInterface {
+class TextToImageOutput implements OutputInterface {
   /**
    * The normalized image binaries.
    *

@@ -2,12 +2,12 @@
 
 namespace Drupal\ai\OperationType\Chat;
 
-use Drupal\ai\OperationType\DtoInterface;
+use Drupal\ai\OperationType\OutputInterface;
 
 /**
  * Data transfer output object for text to speech output.
  */
-class ChatOutput implements DtoInterface {
+class ChatOutput implements OutputInterface {
 
   /**
    * The chat message.

@@ -13,15 +13,15 @@ interface TextToImageInterface extends OperationTypeInterface {
    * Generate audio from text.
    *
    * @param string|\Drupal\ai\Operation\TextToImage\TextToImageInput $input
-   *   The text to generate images from or a DTO.
+   *   The text to generate images from or a Output.
    * @param string $model_id
    *   The model id to use.
    * @param array $tags
    *   Extra tags to set.
    *
-   * @return \Drupal\ai\OperationType\TextToImage\TextToImageDto
-   *   The output DTO.
+   * @return \Drupal\ai\OperationType\TextToImage\TextToImageOutput
+   *   The output Output.
    */
-  public function textToImage(string|TextToImageInput $input, string $model_id, array $tags = []): TextToImageDto;
+  public function textToImage(string|TextToImageInput $input, string $model_id, array $tags = []): TextToImageOutput;
 
 }

@@ -1,16 +1,15 @@
 <?php
 
-namespace Drupal\ai\OperationType\SpeechToText;
+namespace Drupal\ai\OperationType\TextToSpeech;
 
-use Drupal\ai\OperationType\DtoInterface;
+use Drupal\ai\OperationType\OutputInterface;
 
 /**
  * Data transfer output object for text to speech output.
  */
-class SpeechToTextDto implements DtoInterface {
-
+class TextToSpeechOutput implements OutputInterface {
   /**
-   * The text.
+   * The normalized audio binary.
    *
    * @var string
    */
@@ -30,17 +29,17 @@ class SpeechToTextDto implements DtoInterface {
    */
   private mixed $metadata;
 
-  public function __construct(string $normalized, mixed $rawOutput, mixed $metadata) {
+  public function __construct(mixed $normalized, mixed $rawOutput, mixed $metadata) {
     $this->normalized = $normalized;
     $this->rawOutput = $rawOutput;
     $this->metadata = $metadata;
   }
 
   /**
-   * Returns a string of the text.
+   * Returns a binary string of the audio.
    *
    * @return string
-   *   The text string.
+   *   The audio binary.
    */
   public function getNormalized(): string {
     return $this->normalized;

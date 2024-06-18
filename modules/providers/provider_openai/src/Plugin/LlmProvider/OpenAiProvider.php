@@ -9,13 +9,13 @@ use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\ChatOutput;
-use Drupal\ai\OperationType\SpeechToText\SpeechToTextDto;
+use Drupal\ai\OperationType\SpeechToText\SpeechToTextOutput;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInput;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInterface;
-use Drupal\ai\OperationType\TextToImage\TextToImageDto;
+use Drupal\ai\OperationType\TextToImage\TextToImageOutput;
 use Drupal\ai\OperationType\TextToImage\TextToImageInput;
 use Drupal\ai\OperationType\TextToImage\TextToImageInterface;
-use Drupal\ai\OperationType\TextToSpeech\TextToSpeechDto;
+use Drupal\ai\OperationType\TextToSpeech\TextToSpeechOutput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInterface;
 use Drupal\Core\Config\ImmutableConfig;
@@ -266,7 +266,7 @@ class OpenAiProvider extends LlmProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function textToImage(string|TextToImageInput $input, string $model_id, array $tags = []): TextToImageDto {
+  public function textToImage(string|TextToImageInput $input, string $model_id, array $tags = []): TextToImageOutput {
     $this->loadClient();
     // Normalize the input if needed.
     if ($input instanceof TextToImageInput) {
@@ -292,13 +292,13 @@ class OpenAiProvider extends LlmProviderClientBase implements
         }
       }
     }
-    return new TextToImageDto($images, $response, []);
+    return new TextToImageOutput($images, $response, []);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function textToSpeech(string|TextToSpeechInput $input, string $model_id, array $tags = []): TextToSpeechDto {
+  public function textToSpeech(string|TextToSpeechInput $input, string $model_id, array $tags = []): TextToSpeechOutput {
     $this->loadClient();
     // Normalize the input if needed.
     if ($input instanceof TextToSpeechInput) {
@@ -311,13 +311,13 @@ class OpenAiProvider extends LlmProviderClientBase implements
     ] + $this->configuration;
     $response = $this->client->audio()->speech($payload);
     // Return a normalized response.
-    return new TextToSpeechDto($response, $response, []);
+    return new TextToSpeechOutput($response, $response, []);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function speechToText(string|SpeechToTextInput $input, string $model_id, array $tags = []): SpeechToTextDto {
+  public function speechToText(string|SpeechToTextInput $input, string $model_id, array $tags = []): SpeechToTextOutput {
     $this->loadClient();
     // Normalize the input if needed.
     if ($input instanceof SpeechToTextInput) {
@@ -332,7 +332,7 @@ class OpenAiProvider extends LlmProviderClientBase implements
     ] + $this->configuration;
     $response = $this->client->audio()->transcribe($payload)->toArray();
 
-    return new SpeechToTextDto($response['text'], $response, []);
+    return new SpeechToTextOutput($response['text'], $response, []);
   }
 
   /**

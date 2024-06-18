@@ -5,13 +5,13 @@ namespace Drupal\ai\OperationType;
 /**
  * Data transfer object interface.
  */
-interface DtoInterface {
+interface OutputInterface {
 
   /**
    * Get the normalized output.
    *
    * @return mixed
-   *   The normalized output. Mixed or a parent DTO.
+   *   The normalized output. Mixed or a parent Output.
    */
   public function getNormalized();
 
@@ -27,7 +27,7 @@ interface DtoInterface {
    * Get the metadata.
    *
    * @return mixed
-   *   The metadata. Mixed or a parent DTO.
+   *   The metadata. Mixed or a parent Output.
    */
   public function getMetadata();
 

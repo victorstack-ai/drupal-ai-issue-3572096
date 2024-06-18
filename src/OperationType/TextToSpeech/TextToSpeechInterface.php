@@ -17,15 +17,15 @@ interface TextToSpeechInterface extends OperationTypeInterface {
    * event triggering is working correctly.
    *
    * @param string|\Drupal\ai\Operation\TextToSpeech\TextToSpeechInput $input
-   *   The text to generate audio from or a DTO.
+   *   The text to generate audio from or a Output.
    * @param string $model_id
    *   The model id to use.
    * @param array $tags
    *   Extra tags to set.
    *
-   * @return \Drupal\ai\OperationType\TextToSpeech\TextToSpeechDto
-   *   The output DTO.
+   * @return \Drupal\ai\OperationType\TextToSpeech\TextToSpeechOutput
+   *   The output Output.
    */
-  public function textToSpeech(string|TextToSpeechInput $input, string $model_id, array $tags = []): TextToSpeechDto;
+  public function textToSpeech(string|TextToSpeechInput $input, string $model_id, array $tags = []): TextToSpeechOutput;
 
 }

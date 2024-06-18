@@ -2,8 +2,6 @@
 
 namespace Drupal\ai;
 
-use Drupal\ai\OperationType\DtoInterface;
-use Drupal\ai\Enum\Bundles;
 use Drupal\Component\Plugin\PluginInspectionInterface;
 
 /**
