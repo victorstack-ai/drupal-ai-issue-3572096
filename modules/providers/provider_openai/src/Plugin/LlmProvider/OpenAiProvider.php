@@ -9,15 +9,15 @@ use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\ChatOutput;
-use Drupal\ai\OperationType\SpeechToText\SpeechToTextOutput;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInput;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInterface;
-use Drupal\ai\OperationType\TextToImage\TextToImageOutput;
+use Drupal\ai\OperationType\SpeechToText\SpeechToTextOutput;
 use Drupal\ai\OperationType\TextToImage\TextToImageInput;
 use Drupal\ai\OperationType\TextToImage\TextToImageInterface;
-use Drupal\ai\OperationType\TextToSpeech\TextToSpeechOutput;
+use Drupal\ai\OperationType\TextToImage\TextToImageOutput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInterface;
+use Drupal\ai\OperationType\TextToSpeech\TextToSpeechOutput;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
@@ -285,10 +285,10 @@ class OpenAiProvider extends LlmProviderClientBase implements
       }
       foreach ($response['data'] as $data) {
         if ($this->configuration['response_format'] === 'url') {
-          $images[] = base64_encode(file_get_contents($data['url']));
+          $images[] = file_get_contents($data['url']);
         }
         else {
-          $images[] = $data['b64_json'];
+          $images[] = base64_decode($data['b64_json']);
         }
       }
     }

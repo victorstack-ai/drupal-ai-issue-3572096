@@ -108,7 +108,7 @@ class TextToImageGenerationForm extends FormBase {
     $provider = $this->llmProviderHelper->generateLlmProviderFromFormSubmit($form, $form_state, 'text_to_image', 'image_generator');
     $images = $provider->textToImage($form_state->getValue('prompt'), $form_state->getValue('image_generator_ai_model'), ['ai_api_explorer']);
     $response = '';
-    foreach ($images->getNormalized() as $image) {
+    foreach ($images->getAsBase64EncodedString() as $image) {
       $response .= '<img src="data:image/png;charset=utf-8;base64,' . $image . '" />';
     }
 

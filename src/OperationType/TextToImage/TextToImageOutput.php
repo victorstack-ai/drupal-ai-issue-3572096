@@ -3,11 +3,20 @@
 namespace Drupal\ai\OperationType\TextToImage;
 
 use Drupal\ai\OperationType\OutputInterface;
+use Drupal\ai\Traits\File\GenerateBase64Trait;
+use Drupal\ai\Traits\File\GenerateImageTrait;
+use Drupal\ai\Traits\File\GenerateMediaTrait;
 
 /**
  * Data transfer output object for text to speech output.
  */
 class TextToImageOutput implements OutputInterface {
+
+  // We want to be able to generate into media, images and base64.
+  use GenerateMediaTrait;
+  use GenerateImageTrait;
+  use GenerateBase64Trait;
+
   /**
    * The normalized image binaries.
    *
