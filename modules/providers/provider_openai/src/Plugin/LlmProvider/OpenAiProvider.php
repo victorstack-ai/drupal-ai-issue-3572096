@@ -9,6 +9,9 @@ use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\ChatOutput;
+use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
+use Drupal\ai\OperationType\Embeddings\EmbeddingsInterface;
+use Drupal\ai\OperationType\Embeddings\EmbeddingsOutput;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInput;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInterface;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextOutput;
@@ -35,6 +38,7 @@ use Symfony\Component\Yaml\Yaml;
 class OpenAiProvider extends LlmProviderClientBase implements
   ContainerFactoryPluginInterface,
   ChatInterface,
+  EmbeddingsInterface,
   TextToSpeechInterface,
   SpeechToTextInterface,
   TextToImageInterface {
@@ -88,6 +92,7 @@ class OpenAiProvider extends LlmProviderClientBase implements
   public function getSupportedBundles(): array {
     return [
       'chat',
+      'embeddings',
       'text_to_image',
       'text_to_speech',
       'speech_to_text',
@@ -336,6 +341,24 @@ class OpenAiProvider extends LlmProviderClientBase implements
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function embeddings(string|EmbeddingsInput $input, string $model_id, array $tags = []): EmbeddingsOutput {
+    $this->loadClient();
+    // Normalize the input if needed.
+    if ($input instanceof EmbeddingsInput) {
+      $input = $input->getPrompt();
+    }
+    $payload = [
+      'model' => $model_id,
+      'input' => $input,
+    ] + $this->configuration;
+    $response = $this->client->embeddings()->create($payload)->toArray();
+
+    return new EmbeddingsOutput($response['data'][0]['embedding'], $response, []);
+  }
+
+  /**
    * Obtains a list of models from OpenAI and caches the result.
    *
    * This method does its best job to filter out deprecated or unused models.
@@ -357,18 +380,17 @@ class OpenAiProvider extends LlmProviderClientBase implements
     }
 
     $list = $this->client->models()->list()->toArray();
-
     foreach ($list['data'] as $model) {
       if ($model['owned_by'] === 'openai-dev') {
         continue;
       }
 
-      if (!preg_match('/^(gpt|text|tts|whisper|dall-e)/i', $model['id'])) {
+      if (!preg_match('/^(gpt|text|embed|tts|whisper|dall-e)/i', $model['id'])) {
         continue;
       }
 
       // Skip unused. hidden, or deprecated models.
-      if (preg_match('/(search|similarity|edit|1p|instruct|embed)/i', $model['id'])) {
+      if (preg_match('/(search|similarity|edit|1p|instruct)/i', $model['id'])) {
         continue;
       }
 
@@ -380,6 +402,12 @@ class OpenAiProvider extends LlmProviderClientBase implements
       switch ($operation_type) {
         case 'chat':
           if (!preg_match('/^(gpt|text)/i', $model['id'])) {
+            continue 2;
+          }
+          break;
+
+        case 'embeddings':
+          if (!preg_match('/^(text-embedding)/i', trim($model['id']))) {
             continue 2;
           }
           break;
