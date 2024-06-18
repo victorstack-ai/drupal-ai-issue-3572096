@@ -10,6 +10,7 @@ use Drupal\ai\Exception\AiRequestErrorException;
 use Drupal\ai\Exception\AiResponseErrorException;
 use Drupal\ai\Exception\AiUnsafePromptException;
 use Drupal\ai\OperationType\OperationTypeInterface;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Psr\Http\Client\ClientExceptionInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -33,16 +34,26 @@ class ProviderProxy {
   protected $eventDispatcher;
 
   /**
+   * The logger factory.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
+   */
+  protected $loggerFactory;
+
+  /**
    * PluginLoggingProxy constructor.
    *
    * @param \Drupal\ai\Base\LlmProviderClientBase $plugin
    *   The plugin to proxy.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   The event dispatcher.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
+   *   The logger factory.
    */
-  public function __construct(LlmProviderClientBase $plugin, EventDispatcherInterface $event_dispatcher) {
+  public function __construct(LlmProviderClientBase $plugin, EventDispatcherInterface $event_dispatcher, LoggerChannelFactoryInterface $logger_factory) {
     $this->plugin = $plugin;
     $this->eventDispatcher = $event_dispatcher;
+    $this->loggerFactory = $logger_factory;
   }
 
   /**

@@ -5,6 +5,10 @@ namespace Drupal\provider_openai\Plugin\LlmProvider;
 use Drupal\ai\Attribute\LlmProvider;
 use Drupal\ai\Base\LlmProviderClientBase;
 use Drupal\ai\Exception\AiResponseErrorException;
+use Drupal\ai\OperationType\Chat\ChatInput;
+use Drupal\ai\OperationType\Chat\ChatInterface;
+use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai\OperationType\Chat\ChatOutput;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextDto;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInput;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInterface;
@@ -30,6 +34,7 @@ use Symfony\Component\Yaml\Yaml;
 )]
 class OpenAiProvider extends LlmProviderClientBase implements
   ContainerFactoryPluginInterface,
+  ChatInterface,
   TextToSpeechInterface,
   SpeechToTextInterface,
   TextToImageInterface {
@@ -82,6 +87,7 @@ class OpenAiProvider extends LlmProviderClientBase implements
    */
   public function getSupportedBundles(): array {
     return [
+      'chat',
       'text_to_image',
       'text_to_speech',
       'speech_to_text',
@@ -232,28 +238,29 @@ class OpenAiProvider extends LlmProviderClientBase implements
   }
 
   /**
-   * Chat message.
-   *
-   * @param string $model_id
-   *   The model ID.
-   * @param mixed $input
-   *   The input.
-   * @param bool $normalize_io
-   *   Should the output be normalized.
-   *
-   * @return mixed
-   *   The response.
+   * {@inheritdoc}
    */
-  protected function chat(string $model_id, mixed $input, bool $normalize_io = TRUE): mixed {
+  public function chat(array|ChatInput $input, string $model_id, array $tags = []): ChatOutput {
+    $this->loadClient();
+    // Normalize the input if needed.
+    $chat_input = $input;
+    if ($input instanceof ChatInput) {
+      $chat_input = [];
+      foreach ($input->getMessages() as $message) {
+        $chat_input[] = [
+          'role' => $message->getRole(),
+          'content' => $message->getMessage(),
+        ];
+      }
+    }
     $payload = [
       'model' => $model_id,
-      'messages' => $input,
+      'messages' => $chat_input,
     ] + $this->configuration;
     $response = $this->client->chat()->create($payload)->toArray();
-    if ($normalize_io) {
-      return $response['choices'][0]['message']['content'] ? trim($response['choices'][0]['message']['content']) : 'No response content found.';
-    }
-    return $response;
+
+    $message = new ChatMessage($response['choices'][0]['message']['role'], $response['choices'][0]['message']['content']);
+    return new ChatOutput($message, $response, []);
   }
 
   /**

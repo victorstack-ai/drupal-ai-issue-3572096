@@ -5,4 +5,4 @@ namespace Drupal\ai\OperationType;
 /**
  * Base Input Interface class.
  */
-class InputInterface {}
+interface InputInterface {}

@@ -24,6 +24,13 @@ final class LlmProviderPluginManager extends DefaultPluginManager {
   protected $eventDispatcher;
 
   /**
+   * The logger channel factory.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
+   */
+  protected $loggerFactory;
+
+  /**
    * Constructs the object.
    */
   public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, ModuleHandlerInterface $module_handler, ContainerInterface $container) {
@@ -31,6 +38,7 @@ final class LlmProviderPluginManager extends DefaultPluginManager {
     $this->alterInfo('llm_provider_info');
     $this->setCacheBackend($cache_backend, 'llm_provider_plugins');
     $this->eventDispatcher = $container->get('event_dispatcher');
+    $this->loggerFactory = $container->get('logger.factory');
   }
 
   /**
@@ -38,7 +46,7 @@ final class LlmProviderPluginManager extends DefaultPluginManager {
    */
   public function createInstance($plugin_id, array $configuration = []) {
     $plugin = parent::createInstance($plugin_id, $configuration);
-    return new ProviderProxy($plugin, $this->eventDispatcher);
+    return new ProviderProxy($plugin, $this->eventDispatcher, $this->loggerFactory);
   }
 
 }

@@ -1,3 +1,10 @@
+ai_api_explorer.chat_generation_form:
+  path: '/admin/config/ai/development/chat-generation'
+  defaults:
+    _title: 'AI Chat Explorer'
+    _form: 'Drupal\ai_api_explorer\Form\ChatGenerationForm'
+  requirements:
+    _permission: 'access ai prompt'
 ai_api_explorer.text_completion_form:
   path: '/admin/config/ai/development/ai-text-completion'
   defaults:
