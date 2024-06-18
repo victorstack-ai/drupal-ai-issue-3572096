@@ -3,17 +3,24 @@
 namespace Drupal\ai\OperationType\TextToSpeech;
 
 use Drupal\ai\OperationType\OutputInterface;
+use Drupal\ai\Traits\File\GenerateFileTrait;
+use Drupal\ai\Traits\File\GenerateMediaTrait;
 
 /**
  * Data transfer output object for text to speech output.
  */
 class TextToSpeechOutput implements OutputInterface {
+
+  // We want to be able to store as media and file.
+  use GenerateMediaTrait;
+  use GenerateFileTrait;
+
   /**
    * The normalized audio binary.
    *
-   * @var string
+   * @var array
    */
-  private string $normalized;
+  private array $normalized;
 
   /**
    * The raw output from the AI provider.
@@ -36,12 +43,12 @@ class TextToSpeechOutput implements OutputInterface {
   }
 
   /**
-   * Returns a binary string of the audio.
+   * Returns an array of binary strings of audios.
    *
-   * @return string
-   *   The audio binary.
+   * @return array
+   *   The audio binary strings.
    */
-  public function getNormalized(): string {
+  public function getNormalized(): array {
     return $this->normalized;
   }
 
