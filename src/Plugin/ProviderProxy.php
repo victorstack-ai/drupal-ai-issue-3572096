@@ -6,6 +6,7 @@ use Drupal\ai\Base\LlmProviderClientBase;
 use Drupal\ai\Event\PostGenerateResponseEvent;
 use Drupal\ai\Event\PreGenerateResponseEvent;
 use Drupal\ai\Exception\AiBadRequestException;
+use Drupal\ai\Exception\AiOperationTypeMissingException;
 use Drupal\ai\Exception\AiRequestErrorException;
 use Drupal\ai\Exception\AiResponseErrorException;
 use Drupal\ai\Exception\AiUnsafePromptException;
@@ -78,7 +79,10 @@ class ProviderProxy {
       }
     }
 
-    throw new \BadMethodCallException("Method {$name} does not exist.");
+    if (!method_exists($this->plugin, $name)) {
+      throw new AiOperationTypeMissingException("Method {$name} does not exist on provider " . $this->plugin->getPluginId());
+    }
+
   }
 
   /**
