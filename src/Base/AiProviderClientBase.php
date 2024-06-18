@@ -2,7 +2,7 @@
 
 namespace Drupal\ai\Base;
 
-use Drupal\ai\LlmProviderInterface;
+use Drupal\ai\AiProviderInterface;
 use Drupal\ai\Utility\CastUtility;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -19,7 +19,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 /**
  * Service to handle API requests server.
  */
-abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerFactoryPluginInterface {
+abstract class AiProviderClientBase implements AiProviderInterface, ContainerFactoryPluginInterface {
 
   /**
    * Logger factory.
@@ -289,7 +289,7 @@ abstract class LlmProviderClientBase implements LlmProviderInterface, ContainerF
    * @param string $operation_type
    *   The operation type to generate a response for.
    * @param string $model_id
-   *   ID of model as set in getConfiguredLlms().
+   *   ID of model as set in getConfiguredModels().
    */
   public function normalizeConfiguration(string $operation_type, $model_id): array {
     $values = $this->getDefaultConfigurationValues($operation_type, $model_id);

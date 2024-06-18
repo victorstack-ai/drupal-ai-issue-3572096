@@ -1,9 +1,9 @@
 <?php
 
-namespace Drupal\provider_openai\Plugin\LlmProvider;
+namespace Drupal\provider_openai\Plugin\AiProvider;
 
-use Drupal\ai\Attribute\LlmProvider;
-use Drupal\ai\Base\LlmProviderClientBase;
+use Drupal\ai\Attribute\AiProvider;
+use Drupal\ai\Base\AiProviderClientBase;
 use Drupal\ai\Exception\AiResponseErrorException;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
@@ -31,11 +31,11 @@ use Symfony\Component\Yaml\Yaml;
 /**
  * Plugin implementation of the 'openai' provider.
  */
-#[LlmProvider(
+#[AiProvider(
   id: 'openai',
   label: new TranslatableMarkup('OpenAI'),
 )]
-class OpenAiProvider extends LlmProviderClientBase implements
+class OpenAiProvider extends AiProviderClientBase implements
   ContainerFactoryPluginInterface,
   ChatInterface,
   EmbeddingsInterface,
@@ -67,7 +67,7 @@ class OpenAiProvider extends LlmProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function getConfiguredLlms(string $operation_type = NULL): array {
+  public function getConfiguredModels(string $operation_type = NULL): array {
     // Load all models, and since OpenAI does not provide information about
     // which models does what, we need to hard code it in a helper function.
     $this->loadClient();

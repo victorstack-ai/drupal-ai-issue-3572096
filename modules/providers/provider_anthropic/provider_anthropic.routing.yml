@@ -4,5 +4,5 @@ provider_anthropic.settings_form:
     _form: '\Drupal\provider_anthropic\Form\AnthropicConfigForm'
     _title: 'Setup Anthropic Authentication'
   requirements:
-    _permission: 'administer llm providers'
+    _permission: 'administer ai providers'
 

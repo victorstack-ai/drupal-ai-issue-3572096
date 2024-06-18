@@ -11,10 +11,10 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  * The embedding_engine attribute.
  */
 #[\Attribute(\Attribute::TARGET_CLASS)]
-final class LlmProvider extends AttributeBase {
+final class AiProvider extends AttributeBase {
 
   /**
-   * Constructs a new LlmProvider instance.
+   * Constructs a new AiProvider instance.
    *
    * @param string $id
    *   The plugin ID. There are some implementation bugs that make the plugin

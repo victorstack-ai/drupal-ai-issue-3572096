@@ -2,8 +2,8 @@
 
 namespace Drupal\ai\Service;
 
-use Drupal\ai\LlmProviderInterface;
-use Drupal\ai\LlmProviderPluginManager;
+use Drupal\ai\AiProviderInterface;
+use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\ai\Utility\CastUtility;
 use Drupal\Core\Form\FormStateInterface;
@@ -12,7 +12,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 /**
  * Helper class for modules that implements LLM Providers.
  */
-class LlmProviderFormHelper {
+class AiProviderFormHelper {
 
   use StringTranslationTrait;
 
@@ -34,18 +34,18 @@ class LlmProviderFormHelper {
   /**
    * The LLM Providers plugin manager.
    *
-   * @var \Drupal\ai\LlmProviderPluginManager
+   * @var \Drupal\ai\AiProviderPluginManager
    */
-  protected $llmProviderPluginManager;
+  protected $aiProviderPluginManager;
 
   /**
-   * Constructs a new LlmProviderHelper object.
+   * Constructs a new AiProviderHelper object.
    *
-   * @param \Drupal\ai\LlmProviderPluginManager $llmProviderPluginManager
+   * @param \Drupal\ai\AiProviderPluginManager $aiProviderPluginManager
    *   The LLM Providers plugin manager.
    */
-  public function __construct(LlmProviderPluginManager $llmProviderPluginManager) {
-    $this->llmProviderPluginManager = $llmProviderPluginManager;
+  public function __construct(AiProviderPluginManager $aiProviderPluginManager) {
+    $this->aiProviderPluginManager = $aiProviderPluginManager;
   }
 
   /**
@@ -64,8 +64,9 @@ class LlmProviderFormHelper {
    * @param string $provider_id
    *   If you already have the provider id and only want to show the models.
    */
-  public function generateLlmProvidersForm(array &$form, FormStateInterface $form_state, string $operation_type, string $prefix = '', int $config_level = LlmProviderFormHelper::FORM_CONFIGURATION_NONE, string $provider_id = '') {
-    $providers = $this->getLlmProvidersOptions($operation_type);
+  public function generateAiProvidersForm(array &$form, FormStateInterface $form_state, string $operation_type, string $prefix = '', int $config_level = AiProviderFormHelper::FORM_CONFIGURATION_NONE, string $provider_id = '') {
+    $providers = $this->getAiProvidersOptions($operation_type);
+
     // Make sure the prefix is properly formatted.
     $prefix = $prefix ? rtrim($prefix, '_') . '_' : '';
     $form_state->set('llm_prefix', $prefix);
@@ -73,15 +74,15 @@ class LlmProviderFormHelper {
     // Don't load the provider selection if a provider is already selected.
     $provider = $provider_id;
     if (!$provider_id) {
-      $provider = $form_state->getValue($prefix . 'llm_provider');
-      $form[$prefix . 'llm_provider'] = [
+      $provider = $form_state->getValue($prefix . 'ai_provider');
+      $form[$prefix . 'ai_provider'] = [
         '#type' => 'select',
         '#title' => $this->t('LLM Provider'),
         '#options' => $providers,
         '#default_value' => $provider,
         '#required' => TRUE,
         '#ajax' => [
-          'callback' => '\Drupal\ai\Service\LlmProviderFormHelper::loadModelsAjaxCallback',
+          'callback' => '\Drupal\ai\Service\AiProviderFormHelper::loadModelsAjaxCallback',
           'wrapper' => $prefix . 'ajax_wrapper',
         ],
       ];
@@ -96,23 +97,23 @@ class LlmProviderFormHelper {
       ],
       '#states' => [
         'visible' => [
-          ':input[name="' . $prefix . 'llm_provider"]' => ['!value' => ''],
+          ':input[name="' . $prefix . 'ai_provider"]' => ['!value' => ''],
         ],
       ],
     ];
 
     if ($provider) {
-      $llmInstance = $this->llmProviderPluginManager->createInstance($provider);
+      $llmInstance = $this->aiProviderPluginManager->createInstance($provider);
       $model = $form_state->getValue($prefix . 'ai_model');
       $form[$prefix . 'ajax_prefix'][$prefix . 'ai_model'] = [
         '#type' => 'select',
         '#title' => $this->t('Model'),
         // Only get chat models.
-        '#options' => $llmInstance->getConfiguredLlms($operation_type),
+        '#options' => $llmInstance->getConfiguredModels($operation_type),
         '#default_value' => $model,
         '#required' => TRUE,
         '#ajax' => [
-          'callback' => '\Drupal\ai\Service\LlmProviderFormHelper::loadModelsAjaxCallback',
+          'callback' => '\Drupal\ai\Service\AiProviderFormHelper::loadModelsAjaxCallback',
           'wrapper' => $prefix . 'ajax_wrapper',
         ],
       ];
@@ -136,14 +137,14 @@ class LlmProviderFormHelper {
    * @param string $prefix
    *   If you want to add a prefix to the form parts generated.
    *
-   * @return \Drupal\ai\Provider\LlmProviderInterface|\Drupal\ai\Plugin\ProviderProxy
+   * @return \Drupal\ai\Provider\AiProviderInterface|\Drupal\ai\Plugin\ProviderProxy
    *   The provider instance or a proxy.
    */
-  public function generateLlmProviderFromFormSubmit(array &$form, FormStateInterface $form_state, string $operation_type, string $prefix): LlmProviderInterface|ProviderProxy {
+  public function generateAiProviderFromFormSubmit(array &$form, FormStateInterface $form_state, string $operation_type, string $prefix): AiProviderInterface|ProviderProxy {
     $prefix = $prefix ? rtrim($prefix, '_') . '_' : '';
-    $provider = $form_state->getValue($prefix . 'llm_provider');
-    $configuration = $this->generateLlmProvidersConfigurationFromForm($form, $form_state, $operation_type, $prefix);
-    $provider = $this->llmProviderPluginManager->createInstance($provider);
+    $provider = $form_state->getValue($prefix . 'ai_provider');
+    $configuration = $this->generateAiProvidersConfigurationFromForm($form, $form_state, $operation_type, $prefix);
+    $provider = $this->aiProviderPluginManager->createInstance($provider);
     $provider->setConfiguration($configuration);
     return $provider;
   }
@@ -163,12 +164,12 @@ class LlmProviderFormHelper {
    * @return array
    *   The configuration array.
    */
-  public function generateLlmProvidersConfigurationFromForm(array &$form, FormStateInterface $form_state, string $operation_type, string $prefix): array {
+  public function generateAiProvidersConfigurationFromForm(array &$form, FormStateInterface $form_state, string $operation_type, string $prefix): array {
     // Make sure the prefix is properly formatted.
     $prefix = $prefix ? rtrim($prefix, '_') . '_' : '';
-    $provider = $form_state->getValue($prefix . 'llm_provider');
+    $provider = $form_state->getValue($prefix . 'ai_provider');
     $model = $form_state->getValue($prefix . 'ai_model');
-    $llmInstance = $this->llmProviderPluginManager->createInstance($provider);
+    $llmInstance = $this->aiProviderPluginManager->createInstance($provider);
     $schema = $llmInstance->getAvailableConfiguration($operation_type, $model);
     $prefix = $prefix ? rtrim($prefix, '_') . '_' : '';
     // Hopefully safe namespace.
@@ -210,14 +211,14 @@ class LlmProviderFormHelper {
    * @return array
    *   The list of available LLM providers.
    */
-  private function getLlmProvidersOptions(string $operation_type) {
-    $providers = $this->llmProviderPluginManager->getDefinitions();
+  private function getAiProvidersOptions(string $operation_type) {
+    $providers = $this->aiProviderPluginManager->getDefinitions();
     $options = [
       '' => $this->t('Select a provider'),
     ];
     foreach ($providers as $id => $provider) {
       // Check so its setup.
-      $providerInstance = $this->llmProviderPluginManager->createInstance($id);
+      $providerInstance = $this->aiProviderPluginManager->createInstance($id);
       if ($providerInstance->isUsable($operation_type)) {
         $options[$id] = $provider['label'];
       }
@@ -240,12 +241,12 @@ class LlmProviderFormHelper {
    */
   private function generateFormElements(string $prefix, array &$form, int $config_level, array $schema): void {
     // If there isn't a configuration or shouldn't be, return.
-    if (empty($schema) || $config_level == LlmProviderFormHelper::FORM_CONFIGURATION_NONE) {
+    if (empty($schema) || $config_level == AiProviderFormHelper::FORM_CONFIGURATION_NONE) {
       return;
     }
     foreach ($schema as $key => $definition) {
       // We skip it if it's not required and we only want required.
-      if ($config_level == LlmProviderFormHelper::FORM_CONFIGURATION_REQUIRED && empty($definition['required'])) {
+      if ($config_level == AiProviderFormHelper::FORM_CONFIGURATION_REQUIRED && empty($definition['required'])) {
         continue;
       }
       $set_key = $prefix . '_configuration_' . $key . "\n";

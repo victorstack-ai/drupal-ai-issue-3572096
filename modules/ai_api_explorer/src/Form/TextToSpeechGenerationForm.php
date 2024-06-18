@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Form;
 
-use Drupal\ai\Service\LlmProviderFormHelper;
+use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\Core\File\FileExists;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -18,9 +18,9 @@ class TextToSpeechGenerationForm extends FormBase {
   /**
    * The AI LLM Provider Helper.
    *
-   * @var \Drupal\ai\LlmProviderHelper
+   * @var \Drupal\ai\AiProviderHelper
    */
-  protected $llmProviderHelper;
+  protected $aiProviderHelper;
 
   /**
    * The request stack.
@@ -69,7 +69,7 @@ class TextToSpeechGenerationForm extends FormBase {
    */
   public static function create(ContainerInterface $container) {
     $instance = parent::create($container);
-    $instance->llmProviderHelper = $container->get('ai.form_helper');
+    $instance->aiProviderHelper = $container->get('ai.form_helper');
     $instance->requestStack = $container->get('request_stack');
     $instance->fileUrlGenerator = $container->get('file_url_generator');
     $instance->fileSystem = $container->get('file_system');
@@ -85,7 +85,7 @@ class TextToSpeechGenerationForm extends FormBase {
     // Get the query string for provider_id, model_id.
     $request = $this->requestStack->getCurrentRequest();
     if ($request->query->get('provider_id')) {
-      $form_state->setValue('tts_llm_provider', $request->query->get('provider_id'));
+      $form_state->setValue('tts_ai_provider', $request->query->get('provider_id'));
     }
     if ($request->query->get('model_id')) {
       $form_state->setValue('tts_ai_model', $request->query->get('model_id'));
@@ -104,7 +104,7 @@ class TextToSpeechGenerationForm extends FormBase {
     ];
 
     // Load the LLM configurations.
-    $this->llmProviderHelper->generateLlmProvidersForm($form, $form_state, 'text_to_speech', 'tts_', LlmProviderFormHelper::FORM_CONFIGURATION_FULL);
+    $this->aiProviderHelper->generateAiProvidersForm($form, $form_state, 'text_to_speech', 'tts_', AiProviderFormHelper::FORM_CONFIGURATION_FULL);
 
     // If media module exists.
     if ($this->moduleHandler->moduleExists('media')) {
@@ -155,7 +155,7 @@ class TextToSpeechGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function getResponse(array &$form, FormStateInterface $form_state) {
-    $provider = $this->llmProviderHelper->generateLlmProviderFromFormSubmit($form, $form_state, 'text_to_speech', 'tts_');
+    $provider = $this->aiProviderHelper->generateAiProviderFromFormSubmit($form, $form_state, 'text_to_speech', 'tts_');
     $audio = $provider->textToSpeech($form_state->getValue('prompt'), $form_state->getValue('tts_ai_model'), ['ai_api_explorer']);
     $response = '';
     if ($form_state->getValue('save_as_media')) {
@@ -180,7 +180,7 @@ class TextToSpeechGenerationForm extends FormBase {
     }
 
     $code .= ']<br><br>';
-    $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('tts_llm_provider') . '\');<br>';
+    $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('tts_ai_provider') . '\');<br>';
     $code .= "\$ai_provider->setConfiguration(\$config);<br>";
     $code .= "// \$response will be a string with the audio binary.<br>";
     $code .= "\$response = \$ai_provider->textToSpeech(\$prompt, '" . $form_state->getValue('tts_ai_model') . '\', ["your_module_name"])->getNormalized();';

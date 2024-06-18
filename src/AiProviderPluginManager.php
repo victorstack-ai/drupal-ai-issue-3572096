@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\ai;
 
-use Drupal\ai\Attribute\LlmProvider;
+use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -14,7 +14,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Large Language Model plugin manager.
  */
-final class LlmProviderPluginManager extends DefaultPluginManager {
+final class AiProviderPluginManager extends DefaultPluginManager {
 
   /**
    * The event dispatcher.
@@ -34,9 +34,9 @@ final class LlmProviderPluginManager extends DefaultPluginManager {
    * Constructs the object.
    */
   public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, ModuleHandlerInterface $module_handler, ContainerInterface $container) {
-    parent::__construct('Plugin/LlmProvider', $namespaces, $module_handler, LlmProviderInterface::class, LlmProvider::class);
-    $this->alterInfo('llm_provider_info');
-    $this->setCacheBackend($cache_backend, 'llm_provider_plugins');
+    parent::__construct('Plugin/AiProvider', $namespaces, $module_handler, AiProviderInterface::class, AiProvider::class);
+    $this->alterInfo('ai_provider_info');
+    $this->setCacheBackend($cache_backend, 'ai_provider_plugins');
     $this->eventDispatcher = $container->get('event_dispatcher');
     $this->loggerFactory = $container->get('logger.factory');
   }

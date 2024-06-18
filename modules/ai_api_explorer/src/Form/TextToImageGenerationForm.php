@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Form;
 
-use Drupal\ai\Service\LlmProviderFormHelper;
+use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -17,9 +17,9 @@ class TextToImageGenerationForm extends FormBase {
   /**
    * The AI LLM Provider Helper.
    *
-   * @var \Drupal\ai\LlmProviderHelper
+   * @var \Drupal\ai\AiProviderHelper
    */
-  protected $llmProviderHelper;
+  protected $aiProviderHelper;
 
   /**
    * The request stack.
@@ -54,7 +54,7 @@ class TextToImageGenerationForm extends FormBase {
    */
   public static function create(ContainerInterface $container) {
     $instance = parent::create($container);
-    $instance->llmProviderHelper = $container->get('ai.form_helper');
+    $instance->aiProviderHelper = $container->get('ai.form_helper');
     $instance->requestStack = $container->get('request_stack');
     $instance->moduleHandler = $container->get('module_handler');
     $instance->entityTypeManager = $container->get('entity_type.manager');
@@ -68,7 +68,7 @@ class TextToImageGenerationForm extends FormBase {
     // Get the query string for provider_id, model_id.
     $request = $this->requestStack->getCurrentRequest();
     if ($request->query->get('provider_id')) {
-      $form_state->setValue('image_generator_llm_provider', $request->query->get('provider_id'));
+      $form_state->setValue('image_generator_ai_provider', $request->query->get('provider_id'));
     }
     if ($request->query->get('model_id')) {
       $form_state->setValue('image_generator_ai_model', $request->query->get('model_id'));
@@ -87,7 +87,7 @@ class TextToImageGenerationForm extends FormBase {
     ];
 
     // Load the LLM configurations.
-    $this->llmProviderHelper->generateLlmProvidersForm($form, $form_state, 'text_to_image', 'image_generator', LlmProviderFormHelper::FORM_CONFIGURATION_FULL);
+    $this->aiProviderHelper->generateAiProvidersForm($form, $form_state, 'text_to_image', 'image_generator', AiProviderFormHelper::FORM_CONFIGURATION_FULL);
 
     // If media module exists.
     if ($this->moduleHandler->moduleExists('media')) {
@@ -138,7 +138,7 @@ class TextToImageGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function getResponse(array &$form, FormStateInterface $form_state) {
-    $provider = $this->llmProviderHelper->generateLlmProviderFromFormSubmit($form, $form_state, 'text_to_image', 'image_generator');
+    $provider = $this->aiProviderHelper->generateAiProviderFromFormSubmit($form, $form_state, 'text_to_image', 'image_generator');
     $images = $provider->textToImage($form_state->getValue('prompt'), $form_state->getValue('image_generator_ai_model'), ['ai_api_explorer']);
     $response = '';
     foreach ($images->getAsBase64EncodedString() as $image) {
@@ -163,7 +163,7 @@ class TextToImageGenerationForm extends FormBase {
     }
 
     $code .= ']<br><br>';
-    $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('image_generator_llm_provider') . '\');<br>';
+    $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('image_generator_ai_provider') . '\');<br>';
     $code .= "\$ai_provider->setConfiguration(\$config);<br>";
     $code .= "\$response = \$ai_provider->invokeModelResponse(Bundles::TextToImage, '" . $form_state->getValue('image_generator_ai_model') . '\', $prompt, ["tag_1", "tag_2"], TRUE);';
     if ($form_state->getValue('save_as_media')) {

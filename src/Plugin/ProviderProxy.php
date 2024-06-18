@@ -2,7 +2,7 @@
 
 namespace Drupal\ai\Plugin;
 
-use Drupal\ai\Base\LlmProviderClientBase;
+use Drupal\ai\Base\AiProviderClientBase;
 use Drupal\ai\Event\PostGenerateResponseEvent;
 use Drupal\ai\Event\PreGenerateResponseEvent;
 use Drupal\ai\Exception\AiBadRequestException;
@@ -44,14 +44,14 @@ class ProviderProxy {
   /**
    * PluginLoggingProxy constructor.
    *
-   * @param \Drupal\ai\Base\LlmProviderClientBase $plugin
+   * @param \Drupal\ai\Base\AiProviderClientBase $plugin
    *   The plugin to proxy.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   The event dispatcher.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
    *   The logger factory.
    */
-  public function __construct(LlmProviderClientBase $plugin, EventDispatcherInterface $event_dispatcher, LoggerChannelFactoryInterface $logger_factory) {
+  public function __construct(AiProviderClientBase $plugin, EventDispatcherInterface $event_dispatcher, LoggerChannelFactoryInterface $logger_factory) {
     $this->plugin = $plugin;
     $this->eventDispatcher = $event_dispatcher;
     $this->loggerFactory = $logger_factory;

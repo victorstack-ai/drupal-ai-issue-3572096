@@ -4,5 +4,5 @@ provider_openai.settings_form:
     _form: '\Drupal\provider_openai\Form\OpenAiConfigForm'
     _title: 'Setup OpenAI Authentication'
   requirements:
-    _permission: 'administer llm providers'
+    _permission: 'administer ai providers'
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Form;
 
-use Drupal\ai\Service\LlmProviderFormHelper;
+use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -17,9 +17,9 @@ class SpeechToTextGenerationForm extends FormBase {
   /**
    * The AI LLM Provider Helper.
    *
-   * @var \Drupal\ai\LlmProviderHelper
+   * @var \Drupal\ai\AiProviderHelper
    */
-  protected $llmProviderHelper;
+  protected $aiProviderHelper;
 
   /**
    * The current request stack.
@@ -40,7 +40,7 @@ class SpeechToTextGenerationForm extends FormBase {
    */
   public static function create(ContainerInterface $container) {
     $instance = parent::create($container);
-    $instance->llmProviderHelper = $container->get('ai.form_helper');
+    $instance->aiProviderHelper = $container->get('ai.form_helper');
     $instance->requestStack = $container->get('request_stack');
     return $instance;
   }
@@ -52,7 +52,7 @@ class SpeechToTextGenerationForm extends FormBase {
     // Get the query string for provider_id, model_id.
     $request = $this->requestStack->getCurrentRequest();
     if ($request->query->get('provider_id')) {
-      $form_state->setValue('stt_llm_provider', $request->query->get('provider_id'));
+      $form_state->setValue('stt_ai_provider', $request->query->get('provider_id'));
     }
     if ($request->query->get('model_id')) {
       $form_state->setValue('stt_ai_model', $request->query->get('model_id'));
@@ -71,7 +71,7 @@ class SpeechToTextGenerationForm extends FormBase {
     ];
 
     // Load the LLM configurations.
-    $this->llmProviderHelper->generateLlmProvidersForm($form, $form_state, 'speech_to_text', 'stt', LlmProviderFormHelper::FORM_CONFIGURATION_FULL);
+    $this->aiProviderHelper->generateAiProvidersForm($form, $form_state, 'speech_to_text', 'stt', AiProviderFormHelper::FORM_CONFIGURATION_FULL);
 
     $form['actions'] = [
       '#type' => 'actions',
@@ -105,7 +105,7 @@ class SpeechToTextGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function getResponse(array &$form, FormStateInterface $form_state) {
-    $provider = $this->llmProviderHelper->generateLlmProviderFromFormSubmit($form, $form_state, 'speech_to_text', 'stt');
+    $provider = $this->aiProviderHelper->generateAiProviderFromFormSubmit($form, $form_state, 'speech_to_text', 'stt');
     $files = $this->requestStack->getCurrentRequest()->files->all();
     $file = reset($files);
     $raw_file = file_get_contents($file['file']->getPathname());
@@ -126,7 +126,7 @@ class SpeechToTextGenerationForm extends FormBase {
     }
 
     $code .= ']<br><br>';
-    $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('stt_llm_provider') . '\');<br>';
+    $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('stt_ai_provider') . '\');<br>';
     $code .= "\$ai_provider->setConfiguration(\$config);<br>";
     $code .= "// \$response will be a string with the text.<br>";
     $code .= "\$response = \$ai_provider->speechToText(\$audio, '" . $form_state->getValue('stt_ai_model') . '\', ["your_module_name"]);';

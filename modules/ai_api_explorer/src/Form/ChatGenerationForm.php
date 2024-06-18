@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Form;
 
-use Drupal\ai\LlmProviderInterface;
+use Drupal\ai\AiProviderInterface;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\Plugin\ProviderProxy;
-use Drupal\ai\Service\LlmProviderFormHelper;
+use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -21,9 +21,9 @@ class ChatGenerationForm extends FormBase {
   /**
    * The AI LLM Provider Helper.
    *
-   * @var \Drupal\ai\LlmProviderHelper
+   * @var \Drupal\ai\AiProviderHelper
    */
-  protected $llmProviderHelper;
+  protected $aiProviderHelper;
 
   /**
    * {@inheritdoc}
@@ -37,7 +37,7 @@ class ChatGenerationForm extends FormBase {
    */
   public static function create(ContainerInterface $container) {
     $instance = parent::create($container);
-    $instance->llmProviderHelper = $container->get('ai.form_helper');
+    $instance->aiProviderHelper = $container->get('ai.form_helper');
     return $instance;
   }
 
@@ -78,7 +78,7 @@ class ChatGenerationForm extends FormBase {
     }
 
     // Load the LLM configurations.
-    $this->llmProviderHelper->generateLlmProvidersForm($form, $form_state, 'chat', 'chat', LlmProviderFormHelper::FORM_CONFIGURATION_FULL);
+    $this->aiProviderHelper->generateAiProvidersForm($form, $form_state, 'chat', 'chat', AiProviderFormHelper::FORM_CONFIGURATION_FULL);
 
     $form['actions'] = [
       '#type' => 'actions',
@@ -112,7 +112,7 @@ class ChatGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function getResponse(array &$form, FormStateInterface $form_state) {
-    $provider = $this->llmProviderHelper->generateLlmProviderFromFormSubmit($form, $form_state, 'chat', 'chat');
+    $provider = $this->aiProviderHelper->generateAiProviderFromFormSubmit($form, $form_state, 'chat', 'chat');
     $values = $form_state->getValues();
     // Get the messages.
     $messages = [];
@@ -150,7 +150,7 @@ class ChatGenerationForm extends FormBase {
   /**
    * Gets the normalized code example.
    *
-   * @param \Drupal\ai\LlmProviderInterface|\Drupal\ai\Plugin\ProviderProxy $provider
+   * @param \Drupal\ai\AiProviderInterface|\Drupal\ai\Plugin\ProviderProxy $provider
    *   The provider.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
@@ -160,7 +160,7 @@ class ChatGenerationForm extends FormBase {
    * @return string
    *   The normalized code example.
    */
-  public function normalizeCodeExample(LlmProviderInterface|ProviderProxy $provider, FormStateInterface $form_state, array $messages): string {
+  public function normalizeCodeExample(AiProviderInterface|ProviderProxy $provider, FormStateInterface $form_state, array $messages): string {
     $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Normalized Code Example</summary><code class=\"ai-code\">";
     $code .= '// Use this when you want to be able to swap the provider. <br>';
     $code .= '$config = [<br>';
@@ -180,7 +180,7 @@ class ChatGenerationForm extends FormBase {
     }
     $code .= ']);<br><br>';
 
-    $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('chat_llm_provider') . '\');<br>';
+    $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('chat_ai_provider') . '\');<br>';
     $code .= "\$ai_provider->setConfiguration(\$config);<br>";
     $code .= "// Normalized \$response will be a ChatMessage object.<br>";
     $code .= "\$response = \$ai_provider->chat(\$input, '" . $form_state->getValue('chat_ai_model') . '\', ["your_module_name"])->getNormalized();';
@@ -191,7 +191,7 @@ class ChatGenerationForm extends FormBase {
   /**
    * Gets the raw code example.
    *
-   * @param \Drupal\ai\LlmProviderInterface|\Drupal\ai\Plugin\ProviderProxy $provider
+   * @param \Drupal\ai\AiProviderInterface|\Drupal\ai\Plugin\ProviderProxy $provider
    *   The provider.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
@@ -201,7 +201,7 @@ class ChatGenerationForm extends FormBase {
    * @return string
    *   The normalized code example.
    */
-  public function rawCodeExample(LlmProviderInterface|ProviderProxy $provider, FormStateInterface $form_state, array $messages): string {
+  public function rawCodeExample(AiProviderInterface|ProviderProxy $provider, FormStateInterface $form_state, array $messages): string {
     $code = "<br><details style=\"background: #ccc; padding: 5px;\"><summary>Raw Code Example</summary><code class=\"ai-code\">";
     $code .= '// Another way if you know you always will use ' . $provider->getPluginDefinition()['label'] . ' and want its way of doing stuff. Not recommended. <br>';
     $code .= '$config = [<br>';
@@ -214,7 +214,7 @@ class ChatGenerationForm extends FormBase {
       }
     }
     $code .= ']<br><br>';
-    $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('chat_llm_provider') . '\');<br>';
+    $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('chat_ai_provider') . '\');<br>';
     $code .= "\$ai_provider->setConfiguration(\$config);<br>";
     $code .= "// Normalized \$response will be what ever the provider gives back.<br>";
     $code .= "\$response = \$ai_provider->chat(\$expectedInputFromProviderClient, '" . $form_state->getValue('chat_ai_model') . '\', ["your_module_name"])->getRaw();';

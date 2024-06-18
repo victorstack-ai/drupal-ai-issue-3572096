@@ -1,9 +1,9 @@
 <?php
 
-namespace Drupal\provider_anthropic\Plugin\LlmProvider;
+namespace Drupal\provider_anthropic\Plugin\AiProvider;
 
-use Drupal\ai\Attribute\LlmProvider;
-use Drupal\ai\Base\LlmProviderClientBase;
+use Drupal\ai\Attribute\AiProvider;
+use Drupal\ai\Base\AiProviderClientBase;
 use Drupal\ai\Exception\AiResponseErrorException;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
@@ -17,11 +17,11 @@ use WpAi\Anthropic\AnthropicAPI;
 /**
  * Plugin implementation of the 'anthropic' provider.
  */
-#[LlmProvider(
+#[AiProvider(
   id: 'anthropic',
   label: new TranslatableMarkup('Anthropic'),
 )]
-class AnthropicProvider extends LlmProviderClientBase implements
+class AnthropicProvider extends AiProviderClientBase implements
   ChatInterface {
 
   /**
@@ -48,7 +48,7 @@ class AnthropicProvider extends LlmProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function getConfiguredLlms(string $operation_type = NULL): array {
+  public function getConfiguredModels(string $operation_type = NULL): array {
     // Anthropic hard codes :/.
     $version = $this->getConfig()->get('version');
     if ($operation_type == 'chat') {

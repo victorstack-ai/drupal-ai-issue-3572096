@@ -2,7 +2,7 @@ admninister ai:
   title: 'Administer AI'
   description: 'Administer AI settings'
   restrict access: true
-administer llm providers:
+administer ai providers:
   title: 'Administer LLM Providers'
   description: 'Administer the indivual AI providers'
   restrict access: true

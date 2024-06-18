@@ -7,7 +7,7 @@ use Drupal\Component\Plugin\PluginInspectionInterface;
 /**
  * Defines an interface for LLM provider services.
  */
-interface LlmProviderInterface extends PluginInspectionInterface {
+interface AiProviderInterface extends PluginInspectionInterface {
 
   /**
    * Provides associative array with a list of models' IDs.
@@ -20,7 +20,7 @@ interface LlmProviderInterface extends PluginInspectionInterface {
    * @return array
    *   The list of models.
    */
-  public function getConfiguredLlms(string $operation_type = NULL): array;
+  public function getConfiguredModels(string $operation_type = NULL): array;
 
   /**
    * Returns if the provider is setup and ready to use for the bundle.
@@ -47,7 +47,7 @@ interface LlmProviderInterface extends PluginInspectionInterface {
    * @param string $operation_type
    *   Operation type as defined in OperationTypeInterface.
    * @param string $model_id
-   *   LLMs ID as returned from getConfiguredLlms().
+   *   LLMs ID as returned from getConfiguredModels().
    *
    * @return array
    *   List of all available configurations for given model.
@@ -60,7 +60,7 @@ interface LlmProviderInterface extends PluginInspectionInterface {
    * @param string $operation_type
    *   Operation type as defined in OperationTypeInterface.
    * @param string $model_id
-   *   LLMs ID as returned from getConfiguredLlms().
+   *   LLMs ID as returned from getConfiguredModels().
    *
    * @return array
    *   List of configuration values set for given model.
@@ -73,7 +73,7 @@ interface LlmProviderInterface extends PluginInspectionInterface {
    * @param string $operation_type
    *   Operation type as defined in OperationTypeInterface.
    * @param string $model_id
-   *   LLMs ID as returned from getConfiguredLlms().
+   *   LLMs ID as returned from getConfiguredModels().
    *
    * @return array|mixed|null
    *   Example of input variable for given model.
@@ -86,7 +86,7 @@ interface LlmProviderInterface extends PluginInspectionInterface {
    * @param string $operation_type
    *   The operation type for the request.
    * @param string $model_id
-   *   LLMs ID as returned from getConfiguredLlms().
+   *   LLMs ID as returned from getConfiguredModels().
    *
    * @return array|mixed|null
    *   Example of authentication variable for given model.
