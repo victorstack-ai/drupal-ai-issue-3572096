@@ -13,7 +13,7 @@ interface ChatInterface extends OperationTypeInterface {
    * Generate chats.
    *
    * @param array|\Drupal\ai\Operation\Chat\ChatInput $input
-   *   The chat array from or a Output.
+   *   The chat array or ChatInput.
    * @param string $model_id
    *   The model id to use.
    * @param array $tags
