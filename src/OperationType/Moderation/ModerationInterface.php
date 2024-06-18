@@ -20,7 +20,7 @@ interface ModerationInterface extends OperationTypeInterface {
    *   Extra tags to set.
    *
    * @return \Drupal\ai\OperationType\Moderation\ModerationOutput
-   *   The moderation output.
+   *   The moderation output. True if its flagged.
    */
   public function moderation(string|ModerationInput $input, string $model_id = NULL, array $tags = []): ModerationOutput;
 

@@ -10,7 +10,7 @@ use Drupal\ai\OperationType\OutputInterface;
 class ModerationOutput implements OutputInterface {
 
   /**
-   * The moderation answer. True if the content is safe, false otherwise.
+   * The moderation answer. True if the content is flagged, false otherwise.
    *
    * @var bool
    */
@@ -40,7 +40,7 @@ class ModerationOutput implements OutputInterface {
    * Returns the new moderation bool.
    *
    * @return bool
-   *   The moderation bool.
+   *   The moderation bool. True if its flagged.
    */
   public function getNormalized(): bool {
     return $this->normalized;

@@ -5,6 +5,7 @@ namespace Drupal\provider_openai\Plugin\AiProvider;
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
 use Drupal\ai\Exception\AiResponseErrorException;
+use Drupal\ai\Exception\AiUnsafePromptException;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
 use Drupal\ai\OperationType\Chat\ChatMessage;
@@ -12,6 +13,9 @@ use Drupal\ai\OperationType\Chat\ChatOutput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInterface;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsOutput;
+use Drupal\ai\OperationType\Moderation\ModerationInput;
+use Drupal\ai\OperationType\Moderation\ModerationInterface;
+use Drupal\ai\OperationType\Moderation\ModerationOutput;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInput;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInterface;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextOutput;
@@ -38,6 +42,7 @@ use Symfony\Component\Yaml\Yaml;
 class OpenAiProvider extends AiProviderClientBase implements
   ContainerFactoryPluginInterface,
   ChatInterface,
+  ModerationInterface,
   EmbeddingsInterface,
   TextToSpeechInterface,
   SpeechToTextInterface,
@@ -60,9 +65,9 @@ class OpenAiProvider extends AiProviderClientBase implements
   /**
    * Run moderation call, before a normal call.
    *
-   * @var bool
+   * @var bool|null
    */
-  protected bool $moderation = TRUE;
+  protected bool|null $moderation = NULL;
 
   /**
    * {@inheritdoc}
@@ -210,6 +215,10 @@ class OpenAiProvider extends AiProviderClientBase implements
    *   The OpenAI client.
    */
   public function getClient(string $api_key = ''): Client {
+    // If the moderation is not set, we load it from the configuration.
+    if (is_null($this->moderation)) {
+      $this->moderation = $this->getConfig()->get('moderation');
+    }
     if ($api_key) {
       $this->setAuthentication($api_key);
     }
@@ -258,6 +267,8 @@ class OpenAiProvider extends AiProviderClientBase implements
         ];
       }
     }
+    // Moderation check - tokens are still there using json.
+    $this->moderationEndpoints(json_encode($chat_input));
     $payload = [
       'model' => $model_id,
       'messages' => $chat_input,
@@ -271,12 +282,33 @@ class OpenAiProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
+  public function moderation(string|ModerationInput $input, string $model_id = NULL, array $tags = []): ModerationOutput {
+    $this->loadClient();
+    // Normalize the prompt if needed.
+    if ($input instanceof ModerationInput) {
+      $input = $input->getPrompt();
+    }
+    $payload = [
+      'model' => $model_id ?? 'text-moderation-latest',
+      'prompt' => $input,
+    ] + $this->configuration;
+    $response = $this->client->moderations()->create($payload)->toArray();
+
+    return new ModerationOutput($response['flagged'], $response, []);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function textToImage(string|TextToImageInput $input, string $model_id, array $tags = []): TextToImageOutput {
     $this->loadClient();
     // Normalize the input if needed.
     if ($input instanceof TextToImageInput) {
       $input = $input->getText();
     }
+    // Moderation.
+    $this->moderationEndpoints($input);
+    // The send.
     $payload = [
       'model' => $model_id,
       'prompt' => $input,
@@ -309,6 +341,8 @@ class OpenAiProvider extends AiProviderClientBase implements
     if ($input instanceof TextToSpeechInput) {
       $input = $input->getText();
     }
+    // Moderation.
+    $this->moderationEndpoints($input);
     // Send the resuest.
     $payload = [
       'model' => $model_id,
@@ -349,6 +383,9 @@ class OpenAiProvider extends AiProviderClientBase implements
     if ($input instanceof EmbeddingsInput) {
       $input = $input->getPrompt();
     }
+    // Moderation.
+    $this->moderationEndpoints($input);
+    // Send the request.
     $payload = [
       'model' => $model_id,
       'input' => $input,
@@ -356,6 +393,27 @@ class OpenAiProvider extends AiProviderClientBase implements
     $response = $this->client->embeddings()->create($payload)->toArray();
 
     return new EmbeddingsOutput($response['data'][0]['embedding'], $response, []);
+  }
+
+  /**
+   * Moderation endpoints to run before the normal call.
+   *
+   * @throws \Drupal\ai\Exception\AiUnsafePromptException
+   */
+  public function moderationEndpoints(string $prompt): void {
+    // If moderation is disabled, we skip this.
+    if (!$this->moderation) {
+      return;
+    }
+    $this->getClient();
+    $payload = [
+      'model' => 'text-moderation-latest',
+      'prompt' => $prompt,
+    ] + $this->configuration;
+    $response = $this->client->moderations()->create($payload)->toArray();
+    if (!empty($response['flagged'])) {
+      throw new AiUnsafePromptException('The prompt was flagged by the moderation model.');
+    }
   }
 
   /**
