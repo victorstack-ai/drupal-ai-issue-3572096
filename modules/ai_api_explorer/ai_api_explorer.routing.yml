@@ -5,13 +5,6 @@ ai_api_explorer.chat_generation_form:
     _form: 'Drupal\ai_api_explorer\Form\ChatGenerationForm'
   requirements:
     _permission: 'access ai prompt'
-ai_api_explorer.text_completion_form:
-  path: '/admin/config/ai/development/ai-text-completion'
-  defaults:
-    _title: 'AI Prompt Explorer'
-    _form: 'Drupal\ai_api_explorer\Form\TextCompletionForm'
-  requirements:
-    _permission: 'access ai prompt'
 ai_api_explorer.image_generation_form:
   path: '/admin/config/development/ai-image-generation'
   defaults:

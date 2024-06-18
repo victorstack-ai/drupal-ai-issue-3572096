@@ -133,7 +133,7 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
     $route = 'prompt_explorer.prompt_form';
     switch ($event->getOperationType()) {
       case 'chat':
-        $route = 'ai_api_explorer.text_completion_form';
+        $route = 'ai_api_explorer.chat_generation_form';
         break;
 
       case 'text_to_image':

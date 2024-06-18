@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Form;
 
+use Drupal\ai\LlmProviderInterface;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\ai\Service\LlmProviderFormHelper;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -87,21 +89,20 @@ class ChatGenerationForm extends FormBase {
       '#value' => $this->t('Ask The AI'),
       '#ajax' => [
         'callback' => '::getResponse',
-        'wrapper' => 'ai-prompt-response',
+        'wrapper' => 'ai-text-response',
       ],
       '#suffix' => '</div>',
     ];
 
     $form['response'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('Response from the Provider'),
-      '#attributes' => [
-        'readonly' => 'readonly',
-      ],
-      '#weight' => 1000,
-      '#prefix' => '<div id="ai-prompt-response" class="ai-right-side">',
+      '#prefix' => '<div id="ai-text-response" class="ai-right-side">',
       '#suffix' => '</div>',
-      '#description' => $this->t('The response from the provider will appear in the textbox above.'),
+      '#type' => 'inline_template',
+      '#template' => '{{ texts|raw }}',
+      '#weight' => 1000,
+      '#context' => [
+        'texts' => '<h2>Chat response will appear here.</h2>',
+      ],
     ];
 
     return $form;
@@ -127,11 +128,15 @@ class ChatGenerationForm extends FormBase {
 
     $response = $provider->chat($input, $form_state->getValue('chat_ai_model'), ['chat_generation'])->getNormalized();
 
+    // Generation code for normalization.
+    $code = $this->normalizeCodeExample($provider, $form_state, $messages);
+    $code .= $this->rawCodeExample($provider, $form_state, $messages);
+
     if (get_class($response) == ChatMessage::class) {
-      $form['response']['#value'] = 'Role: ' . $response->getRole() . "\n" . $response->getMessage();
+      $form['response']['#context']['texts'] = '<h4>Role: ' . $response->getRole() . "</h4><p>" . $response->getMessage() . '</p>' . $code;
     }
     else {
-      $form['response']['#value'] = 'Error: Invalid response from the provider.';
+      $form['response']['#context']['texts'] = '<p>' . $this->t('Error: Invalid response from the provider.') . '</p>';
     }
     return $form['response'];
   }
@@ -140,6 +145,81 @@ class ChatGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+  }
+
+  /**
+   * Gets the normalized code example.
+   *
+   * @param \Drupal\ai\LlmProviderInterface|\Drupal\ai\Plugin\ProviderProxy $provider
+   *   The provider.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param array $messages
+   *   The messages.
+   *
+   * @return string
+   *   The normalized code example.
+   */
+  public function normalizeCodeExample(LlmProviderInterface|ProviderProxy $provider, FormStateInterface $form_state, array $messages): string {
+    $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Normalized Code Example</summary><code class=\"ai-code\">";
+    $code .= '// Use this when you want to be able to swap the provider. <br>';
+    $code .= '$config = [<br>';
+    foreach ($provider->getConfiguration() as $key => $value) {
+      if (is_string($value)) {
+        $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '";<br>';
+      }
+      else {
+        $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ';<br>';
+      }
+    }
+    $code .= ']<br><br>';
+
+    $code .= '$input = new \Drupal\ai\OperationType\Chat\ChatInput([<br>';
+    foreach ($messages as $message) {
+      $code .= '&nbsp;&nbsp;new \Drupal\ai\OperationType\Chat\ChatMessage("' . $message->getRole() . '", "' . $message->getMessage() . '"),<br>';
+    }
+    $code .= ']);<br><br>';
+
+    $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('chat_llm_provider') . '\');<br>';
+    $code .= "\$ai_provider->setConfiguration(\$config);<br>";
+    $code .= "// Normalized \$response will be a ChatMessage object.<br>";
+    $code .= "\$response = \$ai_provider->chat(\$input, '" . $form_state->getValue('chat_ai_model') . '\', ["your_module_name"])->getNormalized();';
+    $code .= "</code></details>";
+    return $code;
+  }
+
+  /**
+   * Gets the raw code example.
+   *
+   * @param \Drupal\ai\LlmProviderInterface|\Drupal\ai\Plugin\ProviderProxy $provider
+   *   The provider.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param array $messages
+   *   The messages.
+   *
+   * @return string
+   *   The normalized code example.
+   */
+  public function rawCodeExample(LlmProviderInterface|ProviderProxy $provider, FormStateInterface $form_state, array $messages): string {
+    $code = "<br><details style=\"background: #ccc; padding: 5px;\"><summary>Raw Code Example</summary><code class=\"ai-code\">";
+    $code .= '// Another way if you know you always will use ' . $provider->getPluginDefinition()['label'] . ' and want its way of doing stuff. Not recommended. <br>';
+    $code .= '$config = [<br>';
+    foreach ($provider->getConfiguration() as $key => $value) {
+      if (is_string($value)) {
+        $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '";<br>';
+      }
+      else {
+        $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ';<br>';
+      }
+    }
+    $code .= ']<br><br>';
+    $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('chat_llm_provider') . '\');<br>';
+    $code .= "\$ai_provider->setConfiguration(\$config);<br>";
+    $code .= "// Normalized \$response will be what ever the provider gives back.<br>";
+    $code .= "\$response = \$ai_provider->chat(\$expectedInputFromProviderClient, '" . $form_state->getValue('chat_ai_model') . '\', ["your_module_name"])->getRaw();';
+    $code .= "</code></details>";
+    return $code;
   }
 
 }

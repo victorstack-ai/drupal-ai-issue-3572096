@@ -11,3 +11,9 @@
   width: 60%;
   padding: 10px;
 }
+
+code.ai-code {
+  display: block;
+  white-space: pre-wrap;
+  padding: 20px;
+}
