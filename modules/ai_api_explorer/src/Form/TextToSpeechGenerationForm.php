@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\ai_api_explorer\Form;
 
 use Drupal\ai\Service\LlmProviderFormHelper;
+use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -126,7 +127,7 @@ class TextToSpeechGenerationForm extends FormBase {
     $audio = $provider->textToSpeech($form_state->getValue('prompt'), $form_state->getValue('tts_ai_model'), ['ai_api_explorer'])->getNormalized();
     $response = '';
     // Save the binary data to a file.
-    $file_url = $this->fileSystem->saveData($audio[0], 'public://text-to-speech-test.mp3', FileSystemInterface::EXISTS_REPLACE);
+    $file_url = $this->fileSystem->saveData($audio[0], 'public://text-to-speech-test.mp3', FileExists::Replace);
     $response .= '<audio controls><source src="' . $this->fileUrlGenerator->generateAbsoluteString($file_url) . '" type="audio/mpeg"></audio>';
 
     // Generation code.

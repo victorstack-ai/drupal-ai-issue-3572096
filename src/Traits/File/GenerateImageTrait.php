@@ -3,6 +3,7 @@
 namespace Drupal\ai\Traits\File;
 
 use Drupal\ai\Exception\AiBrokenOutputException;
+use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\file\Entity\File;
@@ -42,7 +43,7 @@ trait GenerateImageTrait {
     $files = [];
     foreach ($data as $save_data) {
       // Generate a file from string and rename if it already exists.
-      $file_path = $file_system->saveData($save_data, $file_path, FileSystemInterface::EXISTS_REPLACE);
+      $file_path = $file_system->saveData($save_data, $file_path, FileExists::Replace);
       // Get some meta data for images.
       $resolution = getimagesize($file_path);
       // Generate a file entity.

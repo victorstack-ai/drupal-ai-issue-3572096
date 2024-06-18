@@ -19,6 +19,7 @@ use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInterface;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechOutput;
 use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -324,7 +325,7 @@ class OpenAiProvider extends LlmProviderClientBase implements
       $input = $input->getBinary();
     }
     // The raw file has to become a resource, so we save a temporary file first.
-    $path = $this->fileSystem->saveData($input, 'temporary://speech_to_text.mp3', FileSystemInterface::EXISTS_REPLACE);
+    $path = $this->fileSystem->saveData($input, 'temporary://speech_to_text.mp3', FileExists::Replace);
     $input = fopen($path, 'r');
     $payload = [
       'model' => $model_id,

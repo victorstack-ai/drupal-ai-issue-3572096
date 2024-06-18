@@ -53,7 +53,7 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
    * @return array
    *   The post generate response event.
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     return [
       PostGenerateResponseEvent::EVENT_NAME => 'logPostRequest',
     ];
