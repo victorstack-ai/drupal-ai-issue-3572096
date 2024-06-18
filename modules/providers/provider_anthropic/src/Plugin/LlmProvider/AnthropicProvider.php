@@ -4,7 +4,11 @@ namespace Drupal\provider_anthropic\Plugin\LlmProvider;
 
 use Drupal\ai\Attribute\LlmProvider;
 use Drupal\ai\Base\LlmProviderClientBase;
-use Drupal\ai\Enum\Bundles;
+use Drupal\ai\Exception\AiResponseErrorException;
+use Drupal\ai\OperationType\Chat\ChatInput;
+use Drupal\ai\OperationType\Chat\ChatInterface;
+use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai\OperationType\Chat\ChatOutput;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Symfony\Component\Yaml\Yaml;
@@ -17,7 +21,8 @@ use WpAi\Anthropic\AnthropicAPI;
   id: 'anthropic',
   label: new TranslatableMarkup('Anthropic'),
 )]
-class AnthropicProvider extends LlmProviderClientBase {
+class AnthropicProvider extends LlmProviderClientBase implements
+  ChatInterface {
 
   /**
    * The Anthropic Client.
@@ -43,10 +48,10 @@ class AnthropicProvider extends LlmProviderClientBase {
   /**
    * {@inheritdoc}
    */
-  public function getConfiguredLlms(Bundles $bundle = NULL): array {
+  public function getConfiguredLlms(string $operation_type = NULL): array {
     // Anthropic hard codes :/.
     $version = $this->getConfig()->get('version');
-    if ($bundle == Bundles::Chat) {
+    if ($operation_type == 'chat') {
       return [
         'claude-3-opus-' . $version => 'Claude 3 Opus',
         'claude-3-sonnet-' . $version => 'Claude 3 Sonnet',
@@ -59,13 +64,13 @@ class AnthropicProvider extends LlmProviderClientBase {
   /**
    * {@inheritdoc}
    */
-  public function isUsable(Bundles $bundle = NULL): bool {
+  public function isUsable(string $operation_type = NULL): bool {
     // If its not configured, it is not usable.
     if (!$this->getConfig()->get('api_key')) {
       return FALSE;
     }
     // If its one of the bundles that Anthropic supports its usable.
-    return in_array($bundle, $this->getSupportedBundles());
+    return in_array($operation_type, $this->getSupportedBundles());
   }
 
   /**
@@ -73,8 +78,7 @@ class AnthropicProvider extends LlmProviderClientBase {
    */
   public function getSupportedBundles(): array {
     return [
-      Bundles::Chat,
-      Bundles::ImageToText,
+      'chat',
     ];
   }
 
@@ -113,15 +117,42 @@ class AnthropicProvider extends LlmProviderClientBase {
   /**
    * {@inheritdoc}
    */
-  protected function generateResponse(Bundles $bundle, string $model_id, mixed $input, bool $normalize_io = TRUE): mixed {
+  public function chat(array|ChatInput $input, string $model_id, array $tags = []): ChatOutput {
     $this->loadClient();
-    switch ($bundle) {
-      // Text to image is the same thing as chat, just fewer models.
-      case Bundles::Chat:
-      case Bundles::ImageToText:
-        return $this->chat($model_id, $input, $normalize_io);
+    // Normalize the input if needed.
+    $chat_input = $input;
+    $system_prompt = '';
+    if ($input instanceof ChatInput) {
+      $chat_input = [];
+      foreach ($input->getMessages() as $message) {
+        // System prompts are a variable.
+        if ($message->getRole() == 'system') {
+          $system_prompt = $message->getMessage();
+          continue;
+        }
+        $chat_input[] = [
+          'role' => $message->getRole(),
+          'content' => $message->getMessage(),
+        ];
+      }
     }
-    return NULL;
+    $payload = [
+      'model' => $model_id,
+      'messages' => $chat_input,
+    ] + $this->configuration;
+    if (!isset($payload['system']) && $system_prompt) {
+      $payload['system'] = $system_prompt;
+    }
+    // Unset Max Tokens.
+    $max_tokens = $payload['max_tokens'];
+    unset($payload['max_tokens']);
+    $response = $this->client->messages()->maxTokens($max_tokens)->create($payload)->content;
+    if (!isset($response[0]['text'])) {
+      throw new AiResponseErrorException('Invalid response from Anthropic');
+    }
+    $message = new ChatMessage('', $response[0]['text']);
+
+    return new ChatOutput($message, $response, []);
   }
 
   /**
@@ -175,35 +206,6 @@ class AnthropicProvider extends LlmProviderClientBase {
    */
   protected function loadApiKey(): string {
     return $this->keyRepository->getKey($this->getConfig()->get('api_key'))->getKeyValue();
-  }
-
-  /**
-   * Chat message.
-   *
-   * @param string $model_id
-   *   The model ID.
-   * @param mixed $input
-   *   The input.
-   * @param bool $normalize_io
-   *   Should the output be normalized.
-   *
-   * @return mixed
-   *   The response.
-   */
-  protected function chat(string $model_id, mixed $input, bool $normalize_io = TRUE): mixed {
-    $payload = [
-      'model' => $model_id,
-      'messages' => $input,
-    ] + $this->configuration;
-    // Unset Max Tokens.
-    $max_tokens = $payload['max_tokens'];
-    unset($payload['max_tokens']);
-    $response = $this->client->messages()->maxTokens($max_tokens)->create($payload)->content;
-
-    if ($normalize_io) {
-      return $response[0]['text'] ? trim($response[0]['text']) : 'No response content found.';
-    }
-    return $response;
   }
 
 }
