@@ -168,7 +168,7 @@ class TextToImageGenerationForm extends FormBase {
     $code .= "\$response = \$ai_provider->invokeModelResponse(Bundles::TextToImage, '" . $form_state->getValue('image_generator_ai_model') . '\', $prompt, ["tag_1", "tag_2"], TRUE);';
     if ($form_state->getValue('save_as_media')) {
       $code .= "<br>// We save it as media.";
-      $code .= "<br>\$response->getAsMediaReference('" . $form_state->getValue('save_as_media') . "', 'image.png');";
+      $code .= "<br>\$media = \$response->getAsMediaReference('" . $form_state->getValue('save_as_media') . "', 'image.png');";
     }
     $code .= "</code></details>";
 
