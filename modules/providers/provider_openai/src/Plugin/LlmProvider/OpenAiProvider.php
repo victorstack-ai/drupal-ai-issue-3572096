@@ -311,7 +311,7 @@ class OpenAiProvider extends LlmProviderClientBase implements
     ] + $this->configuration;
     $response = $this->client->audio()->speech($payload);
     // Return a normalized response.
-    return new TextToSpeechOutput($response, $response, []);
+    return new TextToSpeechOutput([$response], $response, []);
   }
 
   /**
