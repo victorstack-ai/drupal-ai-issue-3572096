@@ -16,6 +16,7 @@ use Drupal\ai\OperationType\Embeddings\EmbeddingsOutput;
 use Drupal\ai\OperationType\Moderation\ModerationInput;
 use Drupal\ai\OperationType\Moderation\ModerationInterface;
 use Drupal\ai\OperationType\Moderation\ModerationOutput;
+use Drupal\ai\OperationType\Moderation\ModerationResponse;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInput;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInterface;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextOutput;
@@ -98,6 +99,7 @@ class OpenAiProvider extends AiProviderClientBase implements
     return [
       'chat',
       'embeddings',
+      'moderation',
       'text_to_image',
       'text_to_speech',
       'speech_to_text',
@@ -290,11 +292,11 @@ class OpenAiProvider extends AiProviderClientBase implements
     }
     $payload = [
       'model' => $model_id ?? 'text-moderation-latest',
-      'prompt' => $input,
+      'input' => $input,
     ] + $this->configuration;
     $response = $this->client->moderations()->create($payload)->toArray();
-
-    return new ModerationOutput($response['flagged'], $response, []);
+    $normalized = new ModerationResponse($response['results'][0]['flagged'], $response['results'][0]['category_scores']);
+    return new ModerationOutput($normalized, $response, []);
   }
 
   /**
@@ -408,10 +410,10 @@ class OpenAiProvider extends AiProviderClientBase implements
     $this->getClient();
     $payload = [
       'model' => 'text-moderation-latest',
-      'prompt' => $prompt,
+      'input' => $prompt,
     ] + $this->configuration;
     $response = $this->client->moderations()->create($payload)->toArray();
-    if (!empty($response['flagged'])) {
+    if (!empty($response['results'][0]['flagged'])) {
       throw new AiUnsafePromptException('The prompt was flagged by the moderation model.');
     }
   }
@@ -438,6 +440,7 @@ class OpenAiProvider extends AiProviderClientBase implements
     }
 
     $list = $this->client->models()->list()->toArray();
+
     foreach ($list['data'] as $model) {
       if ($model['owned_by'] === 'openai-dev') {
         continue;
@@ -470,6 +473,12 @@ class OpenAiProvider extends AiProviderClientBase implements
           }
           break;
 
+        case 'moderation':
+          if (!preg_match('/^(text-moderation)/i', $model['id'])) {
+            continue 2;
+          }
+          break;
+
         case 'image_to_text':
           if (!preg_match('/^(gpt-4o|gpt-4-turbo|vision)/i', $model['id'])) {
             continue 2;
@@ -496,6 +505,10 @@ class OpenAiProvider extends AiProviderClientBase implements
       }
 
       $models[$model['id']] = $model['id'];
+    }
+
+    if ($operation_type == 'moderation') {
+      $models['text-moderation-latest'] = 'text-moderation-latest';
     }
 
     if (!empty($models)) {

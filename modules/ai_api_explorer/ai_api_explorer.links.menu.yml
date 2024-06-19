@@ -33,3 +33,9 @@ ai_api_explorer.embeddings_form:
   parent: ai_api_explorer.main
   route_name: ai_api_explorer.embeddings_form
   weight: 4
+ai_api_explorer.moderation_form:
+  title: Moderation Explorer
+  description: Contains a form where you can experiment and test the AI moderation tool with prompts.
+  parent: ai_api_explorer.main
+  route_name: ai_api_explorer.moderation_form
+  weight: 5

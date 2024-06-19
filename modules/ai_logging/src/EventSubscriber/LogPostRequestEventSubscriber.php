@@ -140,6 +140,10 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
         $route = 'ai_api_explorer.embeddings_form';
         break;
 
+      case 'moderation':
+        $route = 'ai_api_explorer.moderation_form';
+        break;
+
       case 'text_to_image':
         $route = 'ai_api_explorer.image_generation_form';
         break;
@@ -153,7 +157,7 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
         break;
 
       default:
-        break;
+        return '';
     }
     $url = Url::fromRoute($route, [], [
       'query' => [

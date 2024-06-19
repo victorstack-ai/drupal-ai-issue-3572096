@@ -12,9 +12,9 @@ class ModerationOutput implements OutputInterface {
   /**
    * The moderation answer. True if the content is flagged, false otherwise.
    *
-   * @var bool
+   * @var \Drupal\ai\OperationType\Moderation\ModerationResponse
    */
-  private bool $normalized;
+  private ModerationResponse $normalized;
 
   /**
    * The raw output from the AI provider.
@@ -30,7 +30,7 @@ class ModerationOutput implements OutputInterface {
    */
   private mixed $metadata;
 
-  public function __construct(array $normalized, mixed $rawOutput, mixed $metadata) {
+  public function __construct(ModerationResponse $normalized, mixed $rawOutput, mixed $metadata) {
     $this->normalized = $normalized;
     $this->rawOutput = $rawOutput;
     $this->metadata = $metadata;
@@ -39,10 +39,10 @@ class ModerationOutput implements OutputInterface {
   /**
    * Returns the new moderation bool.
    *
-   * @return bool
+   * @return \Drupal\ai\OperationType\Moderation\ModerationResponse
    *   The moderation bool. True if its flagged.
    */
-  public function getNormalized(): bool {
+  public function getNormalized(): ModerationResponse {
     return $this->normalized;
   }
 
