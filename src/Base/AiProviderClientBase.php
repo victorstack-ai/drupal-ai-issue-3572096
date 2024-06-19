@@ -280,6 +280,27 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function setTag(string $tag): void {
+    $this->tags[] = $tag;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getTags(): array {
+    return $this->tags;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function removeTag(string $tag): void {
+    $this->tags = array_diff($this->tags, [$tag]);
+  }
+
+  /**
    * Normalize the configuration before runtime.
    *
    * @param string $operation_type

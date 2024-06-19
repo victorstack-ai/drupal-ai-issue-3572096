@@ -5,7 +5,7 @@ namespace Drupal\ai;
 use Drupal\Component\Plugin\PluginInspectionInterface;
 
 /**
- * Defines an interface for LLM provider services.
+ * Defines an interface for AI provider services.
  */
 interface AiProviderInterface extends PluginInspectionInterface {
 
@@ -94,7 +94,7 @@ interface AiProviderInterface extends PluginInspectionInterface {
   public function getAuthenticationExample(string $operation_type, string $model_id): mixed;
 
   /**
-   * Set authentication data for the LLM provider.
+   * Set authentication data for the AI provider.
    *
    * @param mixed $authentication
    *   Authentication data.
@@ -102,7 +102,7 @@ interface AiProviderInterface extends PluginInspectionInterface {
   public function setAuthentication(mixed $authentication): void;
 
   /**
-   * Set configuration data for the LLM provider.
+   * Set configuration data for the AI provider.
    *
    * @param array $configuration
    *   Configuration data.
@@ -110,11 +110,35 @@ interface AiProviderInterface extends PluginInspectionInterface {
   public function setConfiguration(array $configuration): void;
 
   /**
-   * Get configuration data for the LLM provider.
+   * Get configuration data for the AI provider.
    *
    * @return array
    *   Configuration data.
    */
   public function getConfiguration(): array;
+
+  /**
+   * Set one tag form the AI Provider.
+   *
+   * @param string $tag
+   *   The tag to set.
+   */
+  public function setTag(string $tag): void;
+
+  /**
+   * Get all tags from the AI Provider.
+   *
+   * @return array
+   *   The tags.
+   */
+  public function getTags(): array;
+
+  /**
+   * Remove one tag from the AI Provider.
+   *
+   * @param string $tag
+   *   The tag to remove.
+   */
+  public function removeTag(string $tag): void;
 
 }

@@ -5,7 +5,6 @@
  * The AI Logging module.
  */
 
-use Drupal\ai\Enum\Bundles;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
@@ -37,23 +36,6 @@ function ai_logging_form_ai_settings_alter(&$form, FormStateInterface $form_stat
     '#title' => t('Prompt Tags'),
     '#description' => t('Log prompts and responses with these tags in the database. Separate tags with commas. Empty means all.'),
     '#default_value' => $config->get('prompt_logging_tags'),
-    '#states' => [
-      'visible' => [
-        ':input[name="prompt_logging"]' => ['checked' => TRUE],
-      ],
-    ],
-  ];
-
-  $options = [];
-  foreach (Bundles::cases() as $bundle) {
-    $options[$bundle->value] = $bundle->name;
-  }
-  $form['logging']['prompt_logging_bundles'] = [
-    '#type' => 'checkboxes',
-    '#title' => t('Log prompts for bundles'),
-    '#description' => t('Log prompts and responses for these bundles in the database. Has to be set'),
-    '#options' => $options,
-    '#default_value' => $config->get('prompt_logging_bundles') ?? [],
     '#states' => [
       'visible' => [
         ':input[name="prompt_logging"]' => ['checked' => TRUE],
