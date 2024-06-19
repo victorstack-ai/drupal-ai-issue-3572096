@@ -131,6 +131,11 @@ class TextToImageGenerationForm extends FormBase {
       ],
     ];
 
+    $form['markup_end'] = [
+      '#markup' => '<div class="ai-break"></div>',
+      '#weight' => 1001,
+    ];
+
     return $form;
   }
 
