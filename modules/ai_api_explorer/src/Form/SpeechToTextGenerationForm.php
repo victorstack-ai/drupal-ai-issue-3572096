@@ -49,7 +49,7 @@ class SpeechToTextGenerationForm extends FormBase {
     $instance = parent::create($container);
     $instance->aiProviderHelper = $container->get('ai.form_helper');
     $instance->requestStack = $container->get('request_stack');
-    $instance->explorerHelper = $container->get('ai.explorer_helper');
+    $instance->explorerHelper = $container->get('ai_api_explorer.helper');
     return $instance;
   }
 

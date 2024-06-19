@@ -44,7 +44,7 @@ class ModerationGenerationForm extends FormBase {
   public static function create(ContainerInterface $container) {
     $instance = parent::create($container);
     $instance->aiProviderHelper = $container->get('ai.form_helper');
-    $instance->explorerHelper = $container->get('ai.explorer_helper');
+    $instance->explorerHelper = $container->get('ai_api_explorer.helper');
     return $instance;
   }
 
