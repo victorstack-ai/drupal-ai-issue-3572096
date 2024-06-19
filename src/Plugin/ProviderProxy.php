@@ -118,7 +118,6 @@ class ProviderProxy {
     $this->plugin->setTag($operation_type);
     $this->plugin->setTag($arguments[1]);
 
-
     // Invoke the pre generate response event.
     $pre_generate_event = new PreGenerateResponseEvent($this->plugin->getPluginId(), $operation_type, $this->plugin->configuration, $arguments[0], $arguments[1], $arguments[2]);
     $this->eventDispatcher->dispatch($pre_generate_event, PreGenerateResponseEvent::EVENT_NAME);
