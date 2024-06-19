@@ -3,11 +3,9 @@
 namespace Drupal\ai\Traits\File;
 
 use Drupal\ai\Exception\AiBrokenOutputException;
+use Drupal\Core\Field\FieldConfigInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Utility\Token;
-use Drupal\field\Entity\FieldConfig;
-use Drupal\media\Entity\Media;
-use Drupal\media\Entity\MediaType;
 
 /**
  * Trait to add the possibility to store medias directly in the processor.
@@ -39,7 +37,7 @@ trait GenerateMediaTrait {
       throw new AiBrokenOutputException('Media module is not installed, getAsMediaReference will not work.');
     }
     // Check if the media type exists.
-    if (!MediaType::load($media_type)) {
+    if (!\Drupal::entityTypeManager()->getStorage('media_type')->load($media_type)) {
       throw new AiBrokenOutputException('Media type does not exist.');
     }
     // Get the base field.
@@ -64,7 +62,7 @@ trait GenerateMediaTrait {
       }
 
       // Create the media.
-      $media = Media::create([
+      $media = \Drupal::entityTypeManager()->getStorage('media')->create([
         'bundle' => $media_type,
         'uid' => $this->getMediaCurrentUser()->id(),
         'status' => 1,
@@ -91,7 +89,7 @@ trait GenerateMediaTrait {
    * @return string
    *   The path.
    */
-  private function getMediaFilePath(FieldConfig $field_definition, string $file_name): string {
+  private function getMediaFilePath(FieldConfigInterface $field_definition, string $file_name): string {
     $config = $field_definition->getSettings();
     $file_path = $this->getMediaToken()->replace($config['uri_scheme'] . '://' . rtrim($config['file_directory'], '/'));
     return $file_path . '/' . $file_name;
@@ -107,7 +105,8 @@ trait GenerateMediaTrait {
    *   The base media field.
    */
   private function getBaseMediaField(string $media_type): string {
-    $media_type = MediaType::load($media_type);
+    /** @var \Drupal\media\Entity\MediaType $media_type */
+    $media_type = \Drupal::entityTypeManager()->getStorage('media_type')->load($media_type);
     $base_field = $media_type->getSource()->getConfiguration()['source_field'] ?? '';
     return $base_field;
   }
@@ -118,12 +117,14 @@ trait GenerateMediaTrait {
    * @param string $media_type
    *   The media type.
    *
-   * @return \Drupal\field\Entity\FieldConfig|null
+   * @return \Drupal\Core\Field\FieldConfigInterface|null
    *   The field definition.
    */
-  private function getBaseMediaFieldDefinition(string $media_type): FieldConfig|null {
+  private function getBaseMediaFieldDefinition(string $media_type): ?FieldConfigInterface {
     $base_field = $this->getBaseMediaField($media_type);
-    $field_definition = FieldConfig::loadByName('media', $media_type, $base_field);
+    /** @var \Drupal\field\FieldConfigStorage */
+    $field_config_storage = \Drupal::entityTypeManager()->getStorage('field_config');
+    $field_definition = $field_config_storage->load('media.' . $media_type . '.' . $base_field);
     return $field_definition;
   }
 

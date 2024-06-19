@@ -155,7 +155,7 @@ class ProviderProxy {
     }
 
     // Invoke the post generate response event.
-    $post_generate_event = new PostGenerateResponseEvent($this->getPluginId(), $operation_type, $this->configuration, $arguments[0], $arguments[1], $response, $arguments[2]);
+    $post_generate_event = new PostGenerateResponseEvent($this->plugin->getPluginId(), $operation_type, $this->plugin->configuration, $arguments[0], $arguments[1], $response, $arguments[2]);
     $this->eventDispatcher->dispatch($post_generate_event, PostGenerateResponseEvent::EVENT_NAME);
     // Get a potential new response from the event.
     $response = $post_generate_event->getOutput();

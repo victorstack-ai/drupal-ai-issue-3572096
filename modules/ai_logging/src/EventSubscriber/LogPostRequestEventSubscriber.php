@@ -3,6 +3,7 @@
 namespace Drupal\ai_logging\EventSubscriber;
 
 use Drupal\ai\Event\PostGenerateResponseEvent;
+use Drupal\ai\OperationType\InputInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Link;
@@ -72,7 +73,7 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
         '@provider' => $event->getProviderId(),
         '@model' => $event->getModelId(),
         '@type' => $event->getOperationType(),
-        '@prompt' => json_encode($event->getInput()),
+        '@prompt' => $this->getInputText($event->getInput()),
         '@config' => json_encode($event->getConfiguration()),
         '@response' => 'Not logged',
       ];
@@ -161,13 +162,29 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
     }
     $url = Url::fromRoute($route, [], [
       'query' => [
-        'input' => json_encode($event->getInput()),
+        'input' => $this->getInputText($event->getInput()),
         'provider_id' => $event->getProviderId(),
         'model_id' => $event->getModelId(),
         'config' => json_encode($event->getConfiguration()),
       ],
     ]);
     return Link::fromTextAndUrl('Test AI Request', $url)->toString();
+  }
+
+  /**
+   * Get the text from the input.
+   *
+   * @param mixed $input
+   *   The input to get the text from.
+   *
+   * @return string
+   *   The text from the input.
+   */
+  protected function getInputText($input): string {
+    if ($input instanceof InputInterface) {
+      return $input->toString();
+    }
+    return json_encode($input);
   }
 
 }

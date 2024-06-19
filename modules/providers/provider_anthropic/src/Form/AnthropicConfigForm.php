@@ -35,7 +35,7 @@ class AnthropicConfigForm extends ConfigFormBase {
   /**
    * Constructs a new AnthropicConfigForm object.
    */
-  public function __construct(AiProviderPluginManager $ai_provider_manager, ModuleHandlerInterface $module_handler) {
+  final public function __construct(AiProviderPluginManager $ai_provider_manager, ModuleHandlerInterface $module_handler) {
     $this->aiProviderManager = $ai_provider_manager;
     $this->moduleHandler = $module_handler;
   }
@@ -43,7 +43,7 @@ class AnthropicConfigForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container) {
+  final public static function create(ContainerInterface $container) {
     return new static(
       $container->get('ai.provider'),
       $container->get('module_handler')

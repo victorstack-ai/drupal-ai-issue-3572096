@@ -122,8 +122,6 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   /**
    * Constructs a new AiClientBase abstract class.
    *
-   * @param array $configuration
-   *   Configuration array.
    * @param string $plugin_id
    *   Plugin ID.
    * @param mixed $plugin_definition
@@ -146,7 +144,6 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    *   The file system.
    */
   final public function __construct(
-    array $configuration,
     $plugin_id,
     $plugin_definition,
     ClientInterface $http_client,
@@ -177,7 +174,6 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
-      $configuration,
       $plugin_id,
       $plugin_definition,
       $container->get('http_client'),
