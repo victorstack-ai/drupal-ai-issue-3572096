@@ -56,7 +56,7 @@ class ChatGenerationForm extends FormBase {
     $form['#attached']['library'][] = 'ai_api_explorer/explorer';
 
     $form['markup'] = [
-      '#markup' => '<div class="ai-left-side">',
+      '#markup' => '<div class="ai-three-info">',
     ];
 
     $form['prompts'] = [
@@ -66,27 +66,46 @@ class ChatGenerationForm extends FormBase {
       '#description' => $this->t('<strong>Please note: This is not a chat, its an explorer of the chat endpoint to build chat logic!</strong> <br />Enter your chat messages here, each message has to have a role and a message. Role will no always be used by all providers/models.'),
     ];
 
-    // Loop five times to generate five roles and messages.
-    for ($i = 0; $i < 2; $i++) {
-      $form['prompts']['role_' . $i] = [
-        '#type' => 'textfield',
-        '#title' => $this->t('Role'),
-        '#attributes' => [
-          'placeholder' => $this->t('user, system, assistant, etc.'),
-        ],
-        '#default_value' => $i ? 'user' : 'system',
-        '#required' => !$i,
-      ];
-      $form['prompts']['message_' . $i] = [
-        '#type' => 'textarea',
-        '#title' => $this->t('Message'),
-        '#required' => !$i,
-        '#default_value' => !$i ? $this->t('You are an helpful assistant') : '',
-      ];
-    }
+    $form['prompts']['system_prompt'] = [
+      '#type' => 'details',
+      '#title' => $this->t('System Prompt'),
+      '#open' => FALSE,
+    ];
 
-    // Load the LLM configurations.
-    $this->aiProviderHelper->generateAiProvidersForm($form, $form_state, 'chat', 'chat', AiProviderFormHelper::FORM_CONFIGURATION_FULL);
+    $form['prompts']['system_prompt']['role_1'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Role'),
+      '#attributes' => [
+        'placeholder' => $this->t('user, system, assistant, etc.'),
+      ],
+      '#default_value' => 'system',
+      '#required' => FALSE,
+    ];
+    $form['prompts']['system_prompt']['message_1'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Message'),
+      '#required' => FALSE,
+      '#default_value' => $this->t('You are an helpful assistant'),
+    ];
+
+    $form['prompts']['role_2'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Role'),
+      '#attributes' => [
+        'placeholder' => $this->t('user, system, assistant, etc.'),
+      ],
+      '#default_value' => 'user',
+      '#required' => TRUE,
+    ];
+    $form['prompts']['message_2'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Message'),
+      '#attributes' => [
+        'placeholder' => $this->t('Write you message here.'),
+      ],
+      '#required' => TRUE,
+      '#default_value' => '',
+    ];
 
     $form['actions'] = [
       '#type' => 'actions',
@@ -103,7 +122,7 @@ class ChatGenerationForm extends FormBase {
     ];
 
     $form['response'] = [
-      '#prefix' => '<div id="ai-text-response" class="ai-right-side">',
+      '#prefix' => '<div id="ai-text-response" class="ai-three-middle">',
       '#suffix' => '</div>',
       '#type' => 'inline_template',
       '#template' => '{{ texts|raw }}',
@@ -113,9 +132,16 @@ class ChatGenerationForm extends FormBase {
       ],
     ];
 
+    // Load the LLM configurations.
+    $form['markup_after_middle'] = [
+      '#markup' => '<div class="ai-three-info">',
+      '#weight' => 1003,
+    ];
+    $this->aiProviderHelper->generateAiProvidersForm($form, $form_state, 'chat', 'chat', AiProviderFormHelper::FORM_CONFIGURATION_FULL, 1003);
+
     $form['markup_end'] = [
-      '#markup' => '<div class="ai-break"></div>',
-      '#weight' => 1001,
+      '#markup' => '</div><div class="ai-break"></div>',
+      '#weight' => 1004,
     ];
 
     return $form;

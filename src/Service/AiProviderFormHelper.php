@@ -61,10 +61,12 @@ class AiProviderFormHelper {
    *   If you want to add a prefix to the form parts generated.
    * @param int $config_level
    *   What level of configuration you want to show.
+   * @param int $weight
+   *   The weight of the form element.
    * @param string $provider_id
    *   If you already have the provider id and only want to show the models.
    */
-  public function generateAiProvidersForm(array &$form, FormStateInterface $form_state, string $operation_type, string $prefix = '', int $config_level = AiProviderFormHelper::FORM_CONFIGURATION_NONE, string $provider_id = '') {
+  public function generateAiProvidersForm(array &$form, FormStateInterface $form_state, string $operation_type, string $prefix = '', int $config_level = AiProviderFormHelper::FORM_CONFIGURATION_NONE, $weight = 0, string $provider_id = '') {
     $providers = $this->getAiProvidersOptions($operation_type);
 
     // Make sure the prefix is properly formatted.
@@ -86,6 +88,9 @@ class AiProviderFormHelper {
           'wrapper' => $prefix . 'ajax_wrapper',
         ],
       ];
+      if ($weight) {
+        $form[$prefix . 'ai_provider']['#weight'] = $weight;
+      }
     }
 
     $form[$prefix . 'ajax_prefix'] = [
@@ -101,6 +106,9 @@ class AiProviderFormHelper {
         ],
       ],
     ];
+    if ($weight) {
+      $form[$prefix . 'ajax_prefix']['#weight'] = $weight;
+    }
 
     if ($provider) {
       $llmInstance = $this->aiProviderPluginManager->createInstance($provider);

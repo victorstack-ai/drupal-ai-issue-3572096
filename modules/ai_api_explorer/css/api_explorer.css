@@ -12,6 +12,19 @@
   padding: 10px;
 }
 
+.ai-three-info {
+  float: left;
+  width: 24%;
+  padding: 1%;
+  background: #c5c5c5;
+}
+
+.ai-three-middle {
+  float: left;
+  width: 44%;
+  padding: 0 1%;
+}
+
 .ai-break {
   clear: both;
 }
