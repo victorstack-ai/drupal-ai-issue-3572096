@@ -2,8 +2,11 @@
 
 namespace Drupal\provider_anthropic\Form;
 
+use Drupal\ai\AiProviderPluginManager;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Configure Anthropic API access.
@@ -14,6 +17,38 @@ class AnthropicConfigForm extends ConfigFormBase {
    * Config settings.
    */
   const CONFIG_NAME = 'provider_anthropic.settings';
+
+  /**
+   * The AI provider manager.
+   *
+   * @var \Drupal\ai\AiProviderPluginManager
+   */
+  protected $aiProviderManager;
+
+  /**
+   * Module Handler.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
+
+  /**
+   * Constructs a new AnthropicConfigForm object.
+   */
+  public function __construct(AiProviderPluginManager $ai_provider_manager, ModuleHandlerInterface $module_handler) {
+    $this->aiProviderManager = $ai_provider_manager;
+    $this->moduleHandler = $module_handler;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('ai.provider'),
+      $container->get('module_handler')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -46,13 +81,19 @@ class AnthropicConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('api_key'),
     ];
 
-    $form['advanced'] = [
-      '#type' => 'details',
-      '#title' => $this->t('Advanced settings'),
-      '#open' => FALSE,
-    ];
+    // Check if the OpenAI provider is enabled and usabled.
+    $disabled = TRUE;
+    // Check so that the AI External Moderation module is enabled.
+    $provider = $this->aiProviderManager->createInstance('openai');
+    $description = $this->t('Enable OpenAI moderation for any Anthropic chat query.');
+    if ($provider->isUsable() && $this->moduleHandler->moduleExists('ai_external_moderation')) {
+      $disabled = FALSE;
+    }
+    else {
+      $description .= ' ' . $this->t('<strong>AI External Moderation module and/or OpenAI provider is not enabled or usable. Please enable the OpenAI provider and the AI External Moderation module to use this feature.</strong>');
+    }
 
-    $form['advanced']['version'] = [
+    $form['version'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Anthropic Version'),
       '#description' => $this->t('The version of the Anthropic API to use. This could need to be changed if the API gets updated with a better model. See https://docs.anthropic.com/en/docs/models-overview.'),
@@ -60,26 +101,18 @@ class AnthropicConfigForm extends ConfigFormBase {
       '#required' => TRUE,
     ];
 
-    $form['advanced']['moderation'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Request Moderation'),
-      '#description' => $this->t('This makes sure that for each request being sent, we do a moderation check via Anthropic before. This costs money, but ensures that your account will not be banned.'),
-      '#options' => [
-        0 => $this->t('No moderation'),
-        1 => $this->t('Moderation'),
-      ],
-      '#default_value' => $config->get('moderation'),
+    $form['openai_moderation'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Enable OpenAI Moderation'),
+      '#description' => $description,
+      '#default_value' => $config->get('openai_moderation'),
+      '#disabled' => $disabled,
     ];
 
-    $form['advanced']['moderation_checkbox'] = [
+    $form['moderation_checkbox'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Verify Moderation'),
-      '#description' => $this->t('I hereby understand that disabling the moderation, might lead to a prompt that will be seen as malicious to Anthropic, THAT WILL GET ME BANNED.'),
-      '#states' => [
-        'visible' => [
-          ':input[name="moderation"]' => ['value' => 0],
-        ],
-      ],
+      '#title' => $this->t('No Moderation Needed'),
+      '#description' => $this->t('I hereby understand that Anthropic is being run without moderation, which might lead to me sending a prompt that will be seen as malicious to Anthropic, THAT WILL GET ME BANNED.'),
     ];
 
     return parent::buildForm($form, $form_state);
@@ -89,7 +122,7 @@ class AnthropicConfigForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    if ($form_state->getValue('moderation') == 0 && !$form_state->getValue('moderation_checkbox')) {
+    if ($form_state->getValue('openai_moderation') == 0 && !$form_state->getValue('moderation_checkbox')) {
       $form_state->setErrorByName('moderation_checkbox', $this->t('You need to verify that you understand the consequences of disabling moderation.'));
     }
   }
@@ -101,9 +134,27 @@ class AnthropicConfigForm extends ConfigFormBase {
     // Retrieve the configuration.
     $this->config(static::CONFIG_NAME)
       ->set('api_key', $form_state->getValue('api_key'))
-      ->set('moderation', $form_state->getValue('moderation'))
+      ->set('openai_moderation', $form_state->getValue('openai_moderation'))
       ->set('version', $form_state->getValue('version'))
       ->save();
+
+    // Get the configuration of the AI External Moderation.
+    $config = $this->configFactory->getEditable('ai_external_moderation.settings');
+    $moderations = $config->get('moderations');
+    if ($form_state->getValue('openai_moderation')) {
+      if (!isset($moderations['anthropic__chat'])) {
+        $moderations['anthropic__chat'] = 'openai__text-moderation-latest';
+        $config->set('moderations', $moderations);
+        $config->save();
+      }
+    }
+    else {
+      if (isset($moderations['anthropic__chat'])) {
+        unset($moderations['anthropic__chat']);
+        $config->set('moderations', $moderations);
+        $config->save();
+      }
+    }
 
     parent::submitForm($form, $form_state);
   }
