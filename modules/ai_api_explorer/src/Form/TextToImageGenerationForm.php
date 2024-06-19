@@ -43,6 +43,13 @@ class TextToImageGenerationForm extends FormBase {
   protected $entityTypeManager;
 
   /**
+   * The Explorer Helper.
+   *
+   * @var \Drupal\ai_api_explorer\ExplorerHelper
+   */
+  protected $explorerHelper;
+
+  /**
    * {@inheritdoc}
    */
   public function getFormId() {
@@ -58,6 +65,7 @@ class TextToImageGenerationForm extends FormBase {
     $instance->requestStack = $container->get('request_stack');
     $instance->moduleHandler = $container->get('module_handler');
     $instance->entityTypeManager = $container->get('entity_type.manager');
+    $instance->explorerHelper = $container->get('ai_api_explorer.helper');
     return $instance;
   }
 
@@ -144,13 +152,18 @@ class TextToImageGenerationForm extends FormBase {
    */
   public function getResponse(array &$form, FormStateInterface $form_state) {
     $provider = $this->aiProviderHelper->generateAiProviderFromFormSubmit($form, $form_state, 'text_to_image', 'image_generator');
-    $images = $provider->textToImage($form_state->getValue('prompt'), $form_state->getValue('image_generator_ai_model'), ['ai_api_explorer']);
-    $response = '';
-    foreach ($images->getAsBase64EncodedString() as $image) {
-      $response .= '<img src="data:image/png;charset=utf-8;base64,' . $image . '" />';
+    try {
+      $images = $provider->textToImage($form_state->getValue('prompt'), $form_state->getValue('image_generator_ai_model'), ['ai_api_explorer']);
+      $response = '';
+      foreach ($images->getAsBase64EncodedString() as $image) {
+        $response .= '<img src="data:image/png;charset=utf-8;base64,' . $image . '" />';
+      }
+      if ($form_state->getValue('save_as_media')) {
+        $images->getAsMediaReference($form_state->getValue('save_as_media'), 'image.png');
+      }
     }
-    if ($form_state->getValue('save_as_media')) {
-      $images->getAsMediaReference($form_state->getValue('save_as_media'), 'image.png');
+    catch (\Exception $e) {
+      $response = $this->explorerHelper->renderException($e);
     }
 
     // Generation code.

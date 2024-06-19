@@ -29,6 +29,13 @@ class SpeechToTextGenerationForm extends FormBase {
   protected $requestStack;
 
   /**
+   * The Explorer Helper.
+   *
+   * @var \Drupal\ai_api_explorer\ExplorerHelper
+   */
+  protected $explorerHelper;
+
+  /**
    * {@inheritdoc}
    */
   public function getFormId() {
@@ -42,6 +49,7 @@ class SpeechToTextGenerationForm extends FormBase {
     $instance = parent::create($container);
     $instance->aiProviderHelper = $container->get('ai.form_helper');
     $instance->requestStack = $container->get('request_stack');
+    $instance->explorerHelper = $container->get('ai.explorer_helper');
     return $instance;
   }
 
@@ -115,7 +123,12 @@ class SpeechToTextGenerationForm extends FormBase {
     $file = reset($files);
     $raw_file = file_get_contents($file['file']->getPathname());
 
-    $response = $provider->speechToText($raw_file, $form_state->getValue('stt_ai_model'), ['ai_api_explorer'])->getNormalized();
+    try {
+      $response = $provider->speechToText($raw_file, $form_state->getValue('stt_ai_model'), ['ai_api_explorer'])->getNormalized();
+    }
+    catch (\Exception $e) {
+      $response = $this->explorerHelper->renderException($e);
+    }
 
     // Generation code.
     $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";

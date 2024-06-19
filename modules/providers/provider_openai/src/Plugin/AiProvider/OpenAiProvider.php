@@ -406,16 +406,17 @@ class OpenAiProvider extends AiProviderClientBase implements
    * @throws \Drupal\ai\Exception\AiUnsafePromptException
    */
   public function moderationEndpoints(string $prompt): void {
+    $this->getClient();
     // If moderation is disabled, we skip this.
     if (!$this->moderation) {
       return;
     }
-    $this->getClient();
     $payload = [
       'model' => 'text-moderation-latest',
       'input' => $prompt,
     ] + $this->configuration;
     $response = $this->client->moderations()->create($payload)->toArray();
+
     if (!empty($response['results'][0]['flagged'])) {
       throw new AiUnsafePromptException('The prompt was flagged by the moderation model.');
     }

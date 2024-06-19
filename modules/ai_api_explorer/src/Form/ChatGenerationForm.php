@@ -26,6 +26,13 @@ class ChatGenerationForm extends FormBase {
   protected $aiProviderHelper;
 
   /**
+   * The Explorer Helper.
+   *
+   * @var \Drupal\ai_api_explorer\ExplorerHelper
+   */
+  protected $explorerHelper;
+
+  /**
    * {@inheritdoc}
    */
   public function getFormId() {
@@ -38,6 +45,7 @@ class ChatGenerationForm extends FormBase {
   public static function create(ContainerInterface $container) {
     $instance = parent::create($container);
     $instance->aiProviderHelper = $container->get('ai.form_helper');
+    $instance->explorerHelper = $container->get('ai_api_explorer.helper');
     return $instance;
   }
 
@@ -131,17 +139,23 @@ class ChatGenerationForm extends FormBase {
     }
     $input = new ChatInput($messages);
 
-    $response = $provider->chat($input, $form_state->getValue('chat_ai_model'), ['chat_generation'])->getNormalized();
+    $response = NULL;
+    try {
+      $response = $provider->chat($input, $form_state->getValue('chat_ai_model'), ['chat_generation'])->getNormalized();
+    }
+    catch (\Exception $e) {
+      $response = $this->explorerHelper->renderException($e);
+    }
 
     // Generation code for normalization.
     $code = $this->normalizeCodeExample($provider, $form_state, $messages);
     $code .= $this->rawCodeExample($provider, $form_state, $messages);
 
-    if (get_class($response) == ChatMessage::class) {
+    if (is_object($response) && get_class($response) == ChatMessage::class) {
       $form['response']['#context']['texts'] = '<h4>Role: ' . $response->getRole() . "</h4><p>" . $response->getMessage() . '</p>' . $code;
     }
     else {
-      $form['response']['#context']['texts'] = '<p>' . $this->t('Error: Invalid response from the provider.') . '</p>';
+      $form['response']['#context']['texts'] = '<p>' . $response . '</p>';
     }
     return $form['response'];
   }

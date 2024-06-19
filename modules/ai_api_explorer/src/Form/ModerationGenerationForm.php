@@ -25,6 +25,13 @@ class ModerationGenerationForm extends FormBase {
   protected $aiProviderHelper;
 
   /**
+   * The Explorer Helper.
+   *
+   * @var \Drupal\ai_api_explorer\ExplorerHelper
+   */
+  protected $explorerHelper;
+
+  /**
    * {@inheritdoc}
    */
   public function getFormId() {
@@ -37,6 +44,7 @@ class ModerationGenerationForm extends FormBase {
   public static function create(ContainerInterface $container) {
     $instance = parent::create($container);
     $instance->aiProviderHelper = $container->get('ai.form_helper');
+    $instance->explorerHelper = $container->get('ai.explorer_helper');
     return $instance;
   }
 

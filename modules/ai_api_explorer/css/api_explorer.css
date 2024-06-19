@@ -16,6 +16,11 @@
   clear: both;
 }
 
+.ai-error {
+  color: #cc3d3d;
+
+}
+
 code.ai-code {
   display: block;
   white-space: pre-wrap;

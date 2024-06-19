@@ -58,6 +58,13 @@ class TextToSpeechGenerationForm extends FormBase {
   protected $entityTypeManager;
 
   /**
+   * The Explorer Helper.
+   *
+   * @var \Drupal\ai_api_explorer\ExplorerHelper
+   */
+  protected $explorerHelper;
+
+  /**
    * {@inheritdoc}
    */
   public function getFormId() {
@@ -75,6 +82,7 @@ class TextToSpeechGenerationForm extends FormBase {
     $instance->fileSystem = $container->get('file_system');
     $instance->moduleHandler = $container->get('module_handler');
     $instance->entityTypeManager = $container->get('entity_type.manager');
+    $instance->explorerHelper = $container->get('ai_api_explorer.helper');
     return $instance;
   }
 
@@ -161,16 +169,21 @@ class TextToSpeechGenerationForm extends FormBase {
    */
   public function getResponse(array &$form, FormStateInterface $form_state) {
     $provider = $this->aiProviderHelper->generateAiProviderFromFormSubmit($form, $form_state, 'text_to_speech', 'tts_');
-    $audio = $provider->textToSpeech($form_state->getValue('prompt'), $form_state->getValue('tts_ai_model'), ['ai_api_explorer']);
-    $response = '';
-    if ($form_state->getValue('save_as_media')) {
-      $audio->getAsMediaReference($form_state->getValue('save_as_media'), 'text-to-speech.mp3');
-    }
-    $audio_normalized = $audio->getNormalized();
-    // Save the binary data to a file.
-    $file_url = $this->fileSystem->saveData($audio_normalized[0], 'public://text-to-speech-test.mp3', FileExists::Replace);
-    $response .= '<audio controls><source src="' . $this->fileUrlGenerator->generateAbsoluteString($file_url) . '" type="audio/mpeg"></audio>';
 
+    $response = '';
+    try {
+      $audio = $provider->textToSpeech($form_state->getValue('prompt'), $form_state->getValue('tts_ai_model'), ['ai_api_explorer']);
+      if ($form_state->getValue('save_as_media')) {
+        $audio->getAsMediaReference($form_state->getValue('save_as_media'), 'text-to-speech.mp3');
+      }
+      $audio_normalized = $audio->getNormalized();
+      // Save the binary data to a file.
+      $file_url = $this->fileSystem->saveData($audio_normalized[0], 'public://text-to-speech-test.mp3', FileExists::Replace);
+      $response .= '<audio controls><source src="' . $this->fileUrlGenerator->generateAbsoluteString($file_url) . '" type="audio/mpeg"></audio>';
+    }
+    catch (\Exception $e) {
+      $response = $this->explorerHelper->renderException($e);
+    }
     // Generation code.
     $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
     $code .= '$prompt = "' . $form_state->getValue('prompt') . '";<br>';

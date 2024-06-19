@@ -29,6 +29,13 @@ class EmbeddingsGenerationForm extends FormBase {
   protected $requestStack;
 
   /**
+   * The Explorer Helper.
+   *
+   * @var \Drupal\ai_api_explorer\ExplorerHelper
+   */
+  protected $explorerHelper;
+
+  /**
    * {@inheritdoc}
    */
   public function getFormId() {
@@ -42,6 +49,7 @@ class EmbeddingsGenerationForm extends FormBase {
     $instance = parent::create($container);
     $instance->aiProviderHelper = $container->get('ai.form_helper');
     $instance->requestStack = $container->get('request_stack');
+    $instance->explorerHelper = $container->get('ai_api_explorer.helper');
     return $instance;
   }
 
@@ -111,8 +119,13 @@ class EmbeddingsGenerationForm extends FormBase {
    */
   public function getResponse(array &$form, FormStateInterface $form_state) {
     $provider = $this->aiProviderHelper->generateAiProviderFromFormSubmit($form, $form_state, 'embeddings', 'embed');
-    $embeddings = $provider->embeddings($form_state->getValue('prompt'), $form_state->getValue('embed_ai_model'), ['ai_api_explorer']);
-    $response = implode(', ', $embeddings->getNormalized());
+    try {
+      $embeddings = $provider->embeddings($form_state->getValue('prompt'), $form_state->getValue('embed_ai_model'), ['ai_api_explorer']);
+      $response = implode(', ', $embeddings->getNormalized());
+    }
+    catch (\Exception $e) {
+      $response = $this->explorerHelper->renderException($e);
+    }
     // Generation code.
     $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
     $code .= '$prompt = "' . $form_state->getValue('prompt') . '";<br>';
