@@ -35,4 +35,21 @@ class SpeechToTextInput implements InputInterface {
     return $this->binary;
   }
 
+  /**
+   * Set the mp3 binary to convert into text.
+   *
+   * @param string $binary
+   *   The text.
+   */
+  public function setBinary(string $binary) {
+    $this->binary = $binary;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function toString(): string {
+    return $this->binary;
+  }
+
 }

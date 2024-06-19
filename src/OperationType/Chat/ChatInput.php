@@ -45,4 +45,15 @@ class ChatInput implements InputInterface {
     $this->messages = $messages;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function toString(): string {
+    $string = "";
+    foreach ($this->messages as $message) {
+      $string .= $message->getRole() . "\n" . $message->getMessage() . "\n";
+    }
+    return $string;
+  }
+
 }

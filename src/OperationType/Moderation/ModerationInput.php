@@ -12,7 +12,7 @@ class ModerationInput implements InputInterface {
   /**
    * The prompts to convert to verify.
    *
-   * @var array
+   * @var string
    */
   private string $prompt;
 
@@ -22,28 +22,35 @@ class ModerationInput implements InputInterface {
    * @param string $prompt
    *   The prompt to convert to verify.
    */
-  public function __construct(array $prompt) {
+  public function __construct(string $prompt) {
     $this->prompt = $prompt;
   }
 
   /**
    * Get the prompt.
    *
-   * @return array
+   * @return string
    *   The prompt.
    */
-  public function getPrompt(): array {
+  public function getPrompt(): string {
     return $this->prompt;
   }
 
   /**
    * Set the prompt.
    *
-   * @param array $prompt
+   * @param string $prompt
    *   The prompt.
    */
-  public function setPrompt(array $prompt) {
+  public function setPrompt(string $prompt) {
     $this->prompt = $prompt;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function toString(): string {
+    return $this->prompt;
   }
 
 }

@@ -35,4 +35,21 @@ class TextToSpeechInput implements InputInterface {
     return $this->text;
   }
 
+  /**
+   * Set the text to convert to speech.
+   *
+   * @param string $text
+   *   The text.
+   */
+  public function setText(string $text) {
+    $this->text = $text;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function toString(): string {
+    return $this->text;
+  }
+
 }

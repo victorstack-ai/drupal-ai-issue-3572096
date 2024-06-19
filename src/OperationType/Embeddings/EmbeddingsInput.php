@@ -11,7 +11,7 @@ class EmbeddingsInput implements InputInterface {
   /**
    * The prompts to convert to vectors.
    *
-   * @var array
+   * @var string
    */
   private string $prompt;
 
@@ -21,17 +21,17 @@ class EmbeddingsInput implements InputInterface {
    * @param string $prompt
    *   The prompt to convert to vectors.
    */
-  public function __construct(array $prompt) {
+  public function __construct(string $prompt) {
     $this->prompt = $prompt;
   }
 
   /**
    * Get the prompt.
    *
-   * @return array
+   * @return string
    *   The prompt.
    */
-  public function getPrompt(): array {
+  public function getPrompt(): string {
     return $this->prompt;
   }
 
@@ -43,6 +43,13 @@ class EmbeddingsInput implements InputInterface {
    */
   public function setPrompt(array $prompt) {
     $this->prompt = $prompt;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function toString(): string {
+    return $this->prompt;
   }
 
 }
