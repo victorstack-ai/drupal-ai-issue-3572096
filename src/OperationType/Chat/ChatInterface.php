@@ -2,11 +2,17 @@
 
 namespace Drupal\ai\OperationType\Chat;
 
+use Drupal\ai\Attribute\OperationType;
 use Drupal\ai\OperationType\OperationTypeInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Interface for chat models.
  */
+#[OperationType(
+  id: 'chat',
+  label: new TranslatableMarkup('Chat'),
+)]
 interface ChatInterface extends OperationTypeInterface {
 
   /**

@@ -8,13 +8,13 @@ use Drupal\Component\Plugin\Attribute\AttributeBase;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
- * The ai provider attribute.
+ * The operation type attribute.
  */
 #[\Attribute(\Attribute::TARGET_CLASS)]
-final class AiProvider extends AttributeBase {
+final class OperationType extends AttributeBase {
 
   /**
-   * Constructs a new AiProvider instance.
+   * Constructs a new OperationType instance.
    *
    * @param string $id
    *   The plugin ID. There are some implementation bugs that make the plugin
@@ -30,6 +30,7 @@ final class AiProvider extends AttributeBase {
     public readonly string $id,
     public readonly TranslatableMarkup $label,
     public readonly ?string $deriver = NULL,
-  ) {}
+  ) {
+  }
 
 }

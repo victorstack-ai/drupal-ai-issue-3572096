@@ -2,11 +2,17 @@
 
 namespace Drupal\ai\OperationType\TextToImage;
 
+use Drupal\ai\Attribute\OperationType;
 use Drupal\ai\OperationType\OperationTypeInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Interface for text to speech models.
  */
+#[OperationType(
+  id: 'text_to_image',
+  label: new TranslatableMarkup('Text To Image'),
+)]
 interface TextToImageInterface extends OperationTypeInterface {
 
   /**

@@ -2,11 +2,17 @@
 
 namespace Drupal\ai\OperationType\SpeechToText;
 
+use Drupal\ai\Attribute\OperationType;
 use Drupal\ai\OperationType\OperationTypeInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Interface for text to speech models.
  */
+#[OperationType(
+  id: 'speech_to_text',
+  label: new TranslatableMarkup('Speech To Text'),
+)]
 interface SpeechToTextInterface extends OperationTypeInterface {
 
   /**

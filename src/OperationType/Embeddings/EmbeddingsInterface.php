@@ -2,11 +2,17 @@
 
 namespace Drupal\ai\OperationType\Embeddings;
 
+use Drupal\ai\Attribute\OperationType;
 use Drupal\ai\OperationType\OperationTypeInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Interface for embeddings models.
  */
+#[OperationType(
+  id: 'embeddings',
+  label: new TranslatableMarkup('Embeddings'),
+)]
 interface EmbeddingsInterface extends OperationTypeInterface {
 
   /**

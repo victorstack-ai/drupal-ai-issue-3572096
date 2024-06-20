@@ -2,11 +2,17 @@
 
 namespace Drupal\ai\OperationType\Moderation;
 
+use Drupal\ai\Attribute\OperationType;
 use Drupal\ai\OperationType\OperationTypeInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Interface for moderation models.
  */
+#[OperationType(
+  id: 'moderation',
+  label: new TranslatableMarkup('Moderation'),
+)]
 interface ModerationInterface extends OperationTypeInterface {
 
   /**

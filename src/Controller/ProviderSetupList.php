@@ -24,7 +24,7 @@ class ProviderSetupList extends ControllerBase {
    * @param \Drupal\system\SystemManager $system_manager
    *   The system manager service.
    */
-  public function __construct(SystemManager $system_manager) {
+  final public function __construct(SystemManager $system_manager) {
     $this->systemManager = $system_manager;
   }
 
