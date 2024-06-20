@@ -90,7 +90,7 @@ class OpenAiProvider extends AiProviderClientBase implements
     }
     // If its one of the bundles that OpenAI supports its usable.
     if ($operation_type) {
-      return in_array($operation_type, $this->getSupportedBundles());
+      return in_array($operation_type, $this->getSupportedOperationTypes());
     }
     return TRUE;
   }
@@ -98,7 +98,7 @@ class OpenAiProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function getSupportedBundles(): array {
+  public function getSupportedOperationTypes(): array {
     return [
       'chat',
       'embeddings',

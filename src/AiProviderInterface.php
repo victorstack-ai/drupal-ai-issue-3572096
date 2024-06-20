@@ -12,7 +12,7 @@ interface AiProviderInterface extends PluginInspectionInterface {
   /**
    * Provides associative array with a list of models' IDs.
    *
-   * Keyed with human-readable names and optionally filtered by bundle.
+   * Keyed with human-readable names and optionally filtered by typ.
    *
    * @param string|null $operation_type
    *   The oepration type.
@@ -23,10 +23,10 @@ interface AiProviderInterface extends PluginInspectionInterface {
   public function getConfiguredModels(string $operation_type = NULL): array;
 
   /**
-   * Returns if the provider is setup and ready to use for the bundle.
+   * Returns if the provider is setup and ready to use for the type.
    *
    * @param string|null $operation_type
-   *   Bundle from Bundles Enum.
+   *   Operation type string.
    *
    * @return bool
    *   Returns TRUE if the provider is setup and ready to use.
@@ -34,15 +34,15 @@ interface AiProviderInterface extends PluginInspectionInterface {
   public function isUsable(string $operation_type): bool;
 
   /**
-   * Returns the supported bundles for this provider.
+   * Returns the supported operation types for this provider.
    *
    * @return string[]
    *   List of supported operation types.
    */
-  public function getSupportedBundles(): array;
+  public function getSupportedOperationTypes(): array;
 
   /**
-   * Returns array of available configuration parameters for given bundle.
+   * Returns array of available configuration parameters for given type.
    *
    * @param string $operation_type
    *   Operation type as defined in OperationTypeInterface.

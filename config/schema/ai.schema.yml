@@ -8,3 +8,17 @@ ai.settings:
     prompt_logging_tags:
       type: string
       label: 'Tags to log prompts with'
+    default_providers:
+      type: mapping
+      label: 'Default providers'
+      mapping:
+         '*':
+          type: mapping
+          label: 'Operation Type'
+          mapping:
+            provider_id:
+              type: string
+              label: 'Provider ID'
+            model_id:
+              type: string
+              label: 'Model ID'

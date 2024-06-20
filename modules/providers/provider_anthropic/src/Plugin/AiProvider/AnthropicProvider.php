@@ -71,7 +71,7 @@ class AnthropicProvider extends AiProviderClientBase implements
     }
     // If its one of the bundles that Anthropic supports its usable.
     if ($operation_type) {
-      return in_array($operation_type, $this->getSupportedBundles());
+      return in_array($operation_type, $this->getSupportedOperationTypes());
     }
     return TRUE;
   }
@@ -79,7 +79,7 @@ class AnthropicProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function getSupportedBundles(): array {
+  public function getSupportedOperationTypes(): array {
     return [
       'chat',
     ];
