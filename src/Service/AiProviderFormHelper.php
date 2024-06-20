@@ -72,11 +72,15 @@ class AiProviderFormHelper {
     // Make sure the prefix is properly formatted.
     $prefix = $prefix ? rtrim($prefix, '_') . '_' : '';
     $form_state->set('llm_prefix', $prefix);
+    $defaults = $this->aiProviderPluginManager->getDefaultProviderForOperationType($operation_type);
 
     // Don't load the provider selection if a provider is already selected.
     $provider = $provider_id;
     if (!$provider_id) {
       $provider = $form_state->getValue($prefix . 'ai_provider');
+      if (!$provider && !empty($defaults['provider_id'])) {
+        $provider = $defaults['provider_id'];
+      }
       $form[$prefix . 'ai_provider'] = [
         '#type' => 'select',
         '#title' => $this->t('LLM Provider'),
@@ -113,6 +117,9 @@ class AiProviderFormHelper {
     if ($provider) {
       $llmInstance = $this->aiProviderPluginManager->createInstance($provider);
       $model = $form_state->getValue($prefix . 'ai_model');
+      if (!$model && !empty($defaults['model_id'])) {
+        $model = $defaults['model_id'];
+      }
       $form[$prefix . 'ajax_prefix'][$prefix . 'ai_model'] = [
         '#type' => 'select',
         '#title' => $this->t('Model'),

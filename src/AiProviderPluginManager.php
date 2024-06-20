@@ -47,6 +47,13 @@ final class AiProviderPluginManager extends DefaultPluginManager {
   protected $moduleHandler;
 
   /**
+   * The config factory.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $configFactory;
+
+  /**
    * Constructs the object.
    */
   public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, ModuleHandlerInterface $module_handler, ContainerInterface $container) {
@@ -57,6 +64,7 @@ final class AiProviderPluginManager extends DefaultPluginManager {
     $this->loggerFactory = $container->get('logger.factory');
     $this->cacheBackend = $cache_backend;
     $this->moduleHandler = $module_handler;
+    $this->configFactory = $container->get('config.factory');
   }
 
   /**
@@ -84,6 +92,20 @@ final class AiProviderPluginManager extends DefaultPluginManager {
   }
 
   /**
+   * Gets the default possible provider name and model for an operation type.
+   *
+   * @param string $operation_type
+   *   The operation type.
+   *
+   * @return array|null
+   *   The default provider name and model or null.
+   */
+  public function getDefaultProviderForOperationType(string $operation_type): ?array {
+    $config = $this->configFactory->get('ai.settings');
+    return $config->get('default_providers.' . $operation_type, NULL);
+  }
+
+  /**
    * Gets all providers for an operation type.
    *
    * @param string $operation_type
@@ -100,7 +122,7 @@ final class AiProviderPluginManager extends DefaultPluginManager {
     foreach ($definitions as $id => $definition) {
       $provider_entity = $this->createInstance($id);
       if (in_array($operation_type, $provider_entity->getSupportedOperationTypes())) {
-        if (!$setup || $provider_entity->isUsable($id)) {
+        if (!$setup || $provider_entity->isUsable($operation_type)) {
           $providers[$id] = $definition;
         }
       }
