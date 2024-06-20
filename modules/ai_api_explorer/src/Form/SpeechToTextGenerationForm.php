@@ -7,6 +7,7 @@ namespace Drupal\ai_api_explorer\Form;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Link;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -36,6 +37,13 @@ class SpeechToTextGenerationForm extends FormBase {
   protected $explorerHelper;
 
   /**
+   * The AI Provider.
+   *
+   * @var \Drupal\ai\AiProviderPluginManager
+   */
+  protected $providerManager;
+
+  /**
    * {@inheritdoc}
    */
   public function getFormId() {
@@ -50,6 +58,7 @@ class SpeechToTextGenerationForm extends FormBase {
     $instance->aiProviderHelper = $container->get('ai.form_helper');
     $instance->requestStack = $container->get('request_stack');
     $instance->explorerHelper = $container->get('ai_api_explorer.helper');
+    $instance->providerManager = $container->get('ai.provider');
     return $instance;
   }
 
@@ -57,6 +66,17 @@ class SpeechToTextGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    // If no provider is installed we can't do anything.
+    if (!$this->providerManager->hasProvidersForOperationType('speech_to_text')) {
+      $form['markup'] = [
+        '#markup' => '<div class="ai-error">' . $this->t('No AI providers are installed for Speech To Text calls, please %install and %configure one first.', [
+          '%install' => Link::createFromRoute($this->t('install'), 'system.modules_list')->toString(),
+          '%configure' => Link::createFromRoute($this->t('configure'), 'ai.admin_providers')->toString(),
+        ]) . '</div>',
+      ];
+      return $form;
+    }
+
     // Get the query string for provider_id, model_id.
     $request = $this->requestStack->getCurrentRequest();
     if ($request->query->get('provider_id')) {

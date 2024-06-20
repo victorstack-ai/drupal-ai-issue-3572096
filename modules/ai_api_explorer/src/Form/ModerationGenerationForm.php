@@ -10,6 +10,7 @@ use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Link;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -32,6 +33,13 @@ class ModerationGenerationForm extends FormBase {
   protected $explorerHelper;
 
   /**
+   * The AI Provider.
+   *
+   * @var \Drupal\ai\AiProviderPluginManager
+   */
+  protected $providerManager;
+
+  /**
    * {@inheritdoc}
    */
   public function getFormId() {
@@ -45,6 +53,7 @@ class ModerationGenerationForm extends FormBase {
     $instance = parent::create($container);
     $instance->aiProviderHelper = $container->get('ai.form_helper');
     $instance->explorerHelper = $container->get('ai_api_explorer.helper');
+    $instance->providerManager = $container->get('ai.provider');
     return $instance;
   }
 
@@ -52,6 +61,17 @@ class ModerationGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    // If no provider is installed we can't do anything.
+    if (!$this->providerManager->hasProvidersForOperationType('moderation')) {
+      $form['markup'] = [
+        '#markup' => '<div class="ai-error">' . $this->t('No AI providers are installed for Moderation calls, please %install and %configure one first.', [
+          '%install' => Link::createFromRoute($this->t('install'), 'system.modules_list')->toString(),
+          '%configure' => Link::createFromRoute($this->t('configure'), 'ai.admin_providers')->toString(),
+        ]) . '</div>',
+      ];
+      return $form;
+    }
+
     $form['#attached']['library'][] = 'ai_api_explorer/explorer';
 
     $form['prompt'] = [
