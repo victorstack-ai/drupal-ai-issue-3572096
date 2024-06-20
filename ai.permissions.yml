@@ -1,4 +1,4 @@
-admninister ai:
+administer ai:
   title: 'Administer AI'
   description: 'Administer AI settings'
   restrict access: true

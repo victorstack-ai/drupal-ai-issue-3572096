@@ -6,3 +6,10 @@ ai.settings_form:
   requirements:
     _permission: 'administer ai'
 
+ai.admin_providers:
+  path: '/admin/config/ai/providers'
+  defaults:
+    _controller: '\Drupal\ai\Controller\ProviderSetupList::list'
+    _title: 'AI Providers'
+  requirements:
+    _permission: 'administer ai'

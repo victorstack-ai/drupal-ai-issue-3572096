@@ -1,6 +1,6 @@
 name: Anthropic Provider
 description: This enables the use of Anthropic for the AI module.
-package: AI
+package: AI Providers
 type: module
 core_version_requirement: ^10.3 || ^11
 configure: provider_anthropic.settings_form

@@ -1,0 +1,60 @@
+<?php
+
+/**
+ * @file
+ * AI module file.
+ */
+
+use Drupal\Core\Link;
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function ai_help($route_name, RouteMatchInterface $route_match) {
+  // Get logged in user.
+  $user = \Drupal::currentUser();
+  // Only do check on any admin pages.
+  if ($user->hasPermission('administer ai') && ai_is_admin_route($route_match)) {
+    // Check so a provider is installed an usable.
+    $ai_provider = \Drupal::service('ai.provider');
+    $warn = TRUE;
+    foreach ($ai_provider->getDefinitions() as $provider_id => $provider) {
+      if ($ai_provider->createInstance($provider_id)->isUsable()) {
+        $warn = FALSE;
+        break;
+      }
+    }
+    if ($warn) {
+      // Display a warning message.
+      \Drupal::messenger()->addWarning(t('No AI provider is install or usable for the AI module. Please %install and %configure an AI provider.', [
+        '%install' => Link::createFromRoute(t('install'), 'system.modules_list')->toString(),
+        '%configure' => Link::createFromRoute(t('configure'), 'ai.admin_providers')->toString(),
+      ]));
+    }
+  }
+}
+
+/**
+ * Helper function to check if the current route is an admin route.
+ *
+ * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
+ *   The route match interface.
+ *
+ * @return bool
+ *   TRUE if the route is an admin route, FALSE otherwise.
+ */
+function ai_is_admin_route(RouteMatchInterface $route_match) {
+  $route = $route_match->getRouteObject();
+  if ($route && $route->hasOption('_admin_route') && $route->getOption('_admin_route') == TRUE) {
+    return TRUE;
+  }
+
+  // Check if the route path starts with '/admin'.
+  $path = $route_match->getRouteObject()->getPath();
+  if (strpos($path, '/admin') === 0) {
+    return TRUE;
+  }
+
+  return FALSE;
+}

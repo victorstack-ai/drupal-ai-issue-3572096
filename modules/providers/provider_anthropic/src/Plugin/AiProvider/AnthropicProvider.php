@@ -70,7 +70,10 @@ class AnthropicProvider extends AiProviderClientBase implements
       return FALSE;
     }
     // If its one of the bundles that Anthropic supports its usable.
-    return in_array($operation_type, $this->getSupportedBundles());
+    if ($operation_type) {
+      return in_array($operation_type, $this->getSupportedBundles());
+    }
+    return TRUE;
   }
 
   /**

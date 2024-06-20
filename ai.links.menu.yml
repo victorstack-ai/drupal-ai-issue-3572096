@@ -8,4 +8,4 @@ ai.admin_providers:
   title: 'Provider Settings'
   description: 'Configure the core Provider Settings.'
   parent: ai.admin_settings
-  route_name: ai.settings_form
+  route_name: ai.admin_providers
