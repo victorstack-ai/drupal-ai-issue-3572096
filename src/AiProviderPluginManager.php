@@ -68,6 +68,47 @@ final class AiProviderPluginManager extends DefaultPluginManager {
   }
 
   /**
+   * Helper function if providers exists and are setup per operation type.
+   *
+   * @param string $operation_type
+   *   The operation type.
+   * @param bool $setup
+   *   If the provider should be required to be setup.
+   *
+   * @return bool
+   *   If providers exist.
+   */
+  public function hasProvidersForOperationType(string $operation_type, bool $setup = TRUE): bool {
+    $providers = $this->getProvidersForOperationType($operation_type, $setup);
+    return !empty($providers);
+  }
+
+  /**
+   * Gets all providers for an operation type.
+   *
+   * @param string $operation_type
+   *   The operation type.
+   * @param bool $setup
+   *   If the provider should be required to be setup.
+   *
+   * @return array
+   *   The providers.
+   */
+  public function getProvidersForOperationType(string $operation_type, bool $setup = TRUE): array {
+    $providers = [];
+    $definitions = $this->getDefinitions();
+    foreach ($definitions as $id => $definition) {
+      $provider_entity = $this->createInstance($id);
+      if (in_array($operation_type, $provider_entity->getSupportedOperationTypes())) {
+        if (!$setup || $provider_entity->isUsable($id)) {
+          $providers[$id] = $definition;
+        }
+      }
+    }
+    return $providers;
+  }
+
+  /**
    * Get operation types.
    *
    * @return array
