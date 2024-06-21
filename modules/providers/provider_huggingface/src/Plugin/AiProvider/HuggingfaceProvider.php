@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\provider_ollama\Plugin\AiProvider;
+namespace Drupal\provider_huggingface\Plugin\AiProvider;
 
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
@@ -14,44 +14,42 @@ use Drupal\ai\OperationType\Embeddings\EmbeddingsOutput;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\provider_ollama\OllamaControlApi;
-use OpenAI\Client;
+use Drupal\provider_huggingface\HuggingfaceApi;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * Plugin implementation of the 'ollama' provider.
+ * Plugin implementation of the 'huggingface' provider.
  */
 #[AiProvider(
-  id: 'ollama',
-  label: new TranslatableMarkup('Ollama'),
+  id: 'huggingface',
+  label: new TranslatableMarkup('Huggingface'),
 )]
-class OllamaProvider extends AiProviderClientBase implements
+class HuggingfaceProvider extends AiProviderClientBase implements
   ContainerFactoryPluginInterface,
   ChatInterface,
   EmbeddingsInterface {
 
   /**
-   * The OpenAI Client for API calls.
+   * The Huggingface Client.
    *
-   * @var \OpenAI\Client|null
+   * @var \Drupal\provider_huggingface\HuggingfaceApi
    */
-  protected $client;
+  protected HuggingfaceApi $client;
 
   /**
-   * The Ollama Control API for configuration calls.
+   * API Key.
    *
-   * @var \Drupal\provider_ollama\OllamaControlApi
+   * @var string
    */
-  protected $controlApi;
+  protected string $apiKey = '';
 
   /**
-   * Dependency Injection for the Ollama Control API.
+   * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): static {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
-    $instance->controlApi = $container->get('provider_ollama.control_api');
-    $instance->controlApi->setConnectData($instance->getBaseHost());
+    $instance->client = $container->get('provider_huggingface.api');
     return $instance;
   }
 
@@ -59,11 +57,11 @@ class OllamaProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function getConfiguredModels(string $operation_type = NULL): array {
-    $response = $this->controlApi->getModels();
+    $models_config = $this->getConfig()->get('models') ?: [];
     $models = [];
-    if (isset($response['models'])) {
-      foreach ($response['models'] as $model) {
-        $models[$model['model']] = $model['name'];
+    if (!empty($models_config[$operation_type])) {
+      foreach ($models_config[$operation_type] as $model) {
+        $models[$model] = $model;
       }
     }
     return $models;
@@ -73,10 +71,11 @@ class OllamaProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function isUsable(string $operation_type = NULL): bool {
-    // If its one of the bundles that Ollama supports its usable.
-    if (!$this->getBaseHost()) {
+    // If its not configured, it is not usable.
+    if (!$this->getConfig()->get('api_key')) {
       return FALSE;
     }
+    // If its one of the bundles that Mistral supports its usable.
     if ($operation_type) {
       return in_array($operation_type, $this->getSupportedOperationTypes());
     }
@@ -97,7 +96,7 @@ class OllamaProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function getConfig(): ImmutableConfig {
-    return $this->configFactory->get('provider_ollama.settings');
+    return $this->configFactory->get('provider_huggingface.settings');
   }
 
   /**
@@ -105,7 +104,7 @@ class OllamaProvider extends AiProviderClientBase implements
    */
   public function getApiDefinition(): array {
     // Load the configuration.
-    $definition = Yaml::parseFile($this->moduleHandler->getModule('provider_ollama')->getPath() . '/definitions/api_defaults.yml');
+    $definition = Yaml::parseFile($this->moduleHandler->getModule('provider_huggingface')->getPath() . '/definitions/api_defaults.yml');
     return $definition;
   }
 
@@ -120,8 +119,9 @@ class OllamaProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function setAuthentication(mixed $authentication): void {
-    // Doesn't do anything.
-    $this->client = NULL;
+    // Set the new API key and reset the client.
+    $this->apiKey = $authentication;
+    $this->client->setApiToken($this->apiKey);
   }
 
   /**
@@ -129,39 +129,22 @@ class OllamaProvider extends AiProviderClientBase implements
    *
    * This is the client for inference.
    *
-   * @return \OpenAI\Client
-   *   The OpenAI client.
+   * @return \Drupal\provider_huggingface\HuggingfaceApi
+   *   The Huggingface client.
    */
-  public function getClient(): Client {
+  public function getClient(): HuggingfaceApi {
     $this->loadClient();
     return $this->client;
   }
 
   /**
-   * Get control client.
-   *
-   * This is the client for controlling the Ollama API.
-   *
-   * @return \Drupal\provider_ollama\OllamaControlApi
-   *   The control client.
-   */
-  public function getControlClient(): OllamaControlApi {
-    return $this->controlApi;
-  }
-
-  /**
-   * Loads the Ollama Client with hostname and port.
+   * Loads the Huggingface Client with authentication if not initialized.
    */
   protected function loadClient(): void {
-    if (!$this->client) {
-      $host = $this->getBaseHost();
-      $host .= '/v1';
-
-      $this->client = \OpenAI::factory()
-        ->withHttpClient($this->httpClient)
-        ->withBaseUri($host)
-        ->make();
+    if (!$this->apiKey) {
+      $this->setAuthentication($this->loadApiKey());
     }
+    $this->client->setApiToken($this->apiKey);
   }
 
   /**
@@ -172,20 +155,14 @@ class OllamaProvider extends AiProviderClientBase implements
     // Normalize the input if needed.
     $chat_input = $input;
     if ($input instanceof ChatInput) {
-      $chat_input = [];
+      $chat_input = "";
       foreach ($input->getMessages() as $message) {
-        $chat_input[] = [
-          'role' => $message->getRole(),
-          'content' => $message->getMessage(),
-        ];
+        $chat_input .= $message->getRole() . ': ' . $message->getMessage() . "\n";
       }
     }
-    $payload = [
-      'model' => $model_id,
-      'messages' => $chat_input,
-    ] + $this->configuration;
-    $response = $this->client->chat()->create($payload);
-    $message = new ChatMessage($response['choices'][0]['message']['role'], $response['choices'][0]['message']['content']);
+    $response = json_decode($this->client->textGeneration($model_id, $chat_input), TRUE);
+    // We remove the inputted text.
+    $message = new ChatMessage('', str_replace($chat_input, '', $response[0]['generated_text']));
     return new ChatOutput($message, $response, []);
   }
 
@@ -198,23 +175,20 @@ class OllamaProvider extends AiProviderClientBase implements
     if ($input instanceof EmbeddingsInput) {
       $input = $input->getPrompt();
     }
-    $response = $this->controlApi->embeddings($input, $model_id);
+    // Send the request.
+    $response = json_decode($this->client->featureExtraction($model_id, $input), TRUE);
 
-    return new EmbeddingsOutput($response['embedding'], $response, []);
+    return new EmbeddingsOutput($response, $response, []);
   }
 
   /**
-   * Gets the base host.
+   * Load API key from key module.
    *
    * @return string
-   *   The base host.
+   *   The API key.
    */
-  protected function getBaseHost(): string {
-    $host = rtrim($this->getConfig()->get('host_name'), '/');
-    if ($this->getConfig()->get('port')) {
-      $host .= ':' . $this->getConfig()->get('port');
-    }
-    return $host;
+  protected function loadApiKey(): string {
+    return $this->keyRepository->getKey($this->getConfig()->get('api_key'))->getKeyValue();
   }
 
 }

@@ -266,7 +266,7 @@ class OpenAiProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function chat(array|ChatInput $input, string $model_id, array $tags = []): ChatOutput {
+  public function chat(array|string|ChatInput $input, string $model_id, array $tags = []): ChatOutput {
     $this->loadClient();
     // Normalize the input if needed.
     $chat_input = $input;

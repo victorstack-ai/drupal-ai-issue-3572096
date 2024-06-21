@@ -18,8 +18,8 @@ interface ChatInterface extends OperationTypeInterface {
   /**
    * Generate chats.
    *
-   * @param array|\Drupal\ai\Operation\Chat\ChatInput $input
-   *   The chat array or ChatInput.
+   * @param array|string|\Drupal\ai\Operation\Chat\ChatInput $input
+   *   The chat array, string or ChatInput.
    * @param string $model_id
    *   The model id to use.
    * @param array $tags
@@ -28,6 +28,6 @@ interface ChatInterface extends OperationTypeInterface {
    * @return \Drupal\ai\OperationType\Chat\ChatOutput
    *   The output Output.
    */
-  public function chat(array|ChatInput $input, string $model_id, array $tags = []): ChatOutput;
+  public function chat(array|string|ChatInput $input, string $model_id, array $tags = []): ChatOutput;
 
 }
