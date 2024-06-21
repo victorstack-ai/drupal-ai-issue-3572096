@@ -179,7 +179,9 @@ class ChatGenerationForm extends FormBase {
         $index = substr($key, 5);
         $role = $value;
         $message = $values['message_' . $index];
-        $messages[] = new ChatMessage($role, $message);
+        if ($role && $message) {
+          $messages[] = new ChatMessage($role, $message);
+        }
       }
     }
     $input = new ChatInput($messages);

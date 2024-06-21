@@ -193,3 +193,20 @@ speech_to_text:
         min: 0
         max: 1
         step: 0.1
+embeddings:
+  input:
+    description: 'Textual representation of the speech.'
+    type: 'string'
+    default: 'Once upon a time in London.'
+    required: true
+  authentication:
+    description: 'OpenAI API Key.'
+    type: 'string'
+    default: ''
+    required: true
+  configuration:
+    dimension:
+      label: 'Vector Dimension'
+      type: 'integer'
+      default: 1536
+      required: false
