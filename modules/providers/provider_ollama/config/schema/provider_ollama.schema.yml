@@ -1,0 +1,12 @@
+provider_openai.settings:
+  type: mapping
+  label: 'Ollama Settings'
+  mapping:
+    host_name:
+      type: string
+      label: 'Host Name'
+      required: true
+    port:
+      type: integer
+      label: 'Port'
+      required: false

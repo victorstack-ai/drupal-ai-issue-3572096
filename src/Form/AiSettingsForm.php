@@ -27,7 +27,7 @@ class AiSettingsForm extends ConfigFormBase {
   /**
    * Constructor.
    */
-  public function __construct(AiProviderPluginManager $provider_manager) {
+  final public function __construct(AiProviderPluginManager $provider_manager) {
     $this->providerManager = $provider_manager;
   }
 
@@ -101,7 +101,7 @@ class AiSettingsForm extends ConfigFormBase {
         '#type' => 'select',
         '#title' => $this->t('Default Provider'),
         '#options' => $options,
-        '#default_value' => $default_provider ?? '',
+        '#default_value' => $default_provider,
         '#ajax' => [
           'callback' => '::loadModels',
           'wrapper' => 'model__' . $operation_type['id'],

@@ -186,7 +186,7 @@ final class AiProviderPluginManager extends DefaultPluginManager {
     }
 
     // Match on starts with interface and has extends in it.
-    if (preg_match('/interface\s+([^ ]+)\s+extends\s+([^ ]+)/i', $contents, $matches)) {
+    if (preg_match('/interface\s+([^ ]+)\s+extends\s+([^ ]+)/i', $contents, $matches) && isset($namespace)) {
       $interface = $matches[1];
       return $namespace . '\\' . $interface;
     }
