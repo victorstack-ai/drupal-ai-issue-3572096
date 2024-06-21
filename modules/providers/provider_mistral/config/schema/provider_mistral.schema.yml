@@ -1,6 +1,6 @@
-provider_groq.settings:
+provider_mistral.settings:
   type: mapping
-  label: 'Groq Settings'
+  label: 'Mistral AI Settings'
   mapping:
     api_key:
       type: string
