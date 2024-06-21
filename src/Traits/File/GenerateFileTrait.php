@@ -52,7 +52,7 @@ trait GenerateFileTrait {
         'filename' => basename($file_path),
       ]);
       $file->save();
-      $files[] = $file;
+      $files[] = ['target_id' => $file->id()];
     }
     return $files;
   }

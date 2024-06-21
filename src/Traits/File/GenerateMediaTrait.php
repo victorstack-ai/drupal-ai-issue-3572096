@@ -72,7 +72,7 @@ trait GenerateMediaTrait {
         ],
       ]);
       $media->save();
-      $medias[] = $media;
+      $medias[] = ['target_id' => $media->id()];
     }
 
     return $medias;

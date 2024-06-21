@@ -229,16 +229,19 @@ class ChatGenerationForm extends FormBase {
   public function normalizeCodeExample(AiProviderInterface|ProviderProxy $provider, FormStateInterface $form_state, array $messages): string {
     $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Normalized Code Example</summary><code class=\"ai-code\">";
     $code .= '// Use this when you want to be able to swap the provider. <br>';
-    $code .= '$config = [<br>';
-    foreach ($provider->getConfiguration() as $key => $value) {
-      if (is_string($value)) {
-        $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '";<br>';
+    $show_config = count($provider->getConfiguration()) ? TRUE : FALSE;
+    if ($show_config) {
+      $code .= '$config = [<br>';
+      foreach ($provider->getConfiguration() as $key => $value) {
+        if (is_string($value)) {
+          $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '";<br>';
+        }
+        else {
+          $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ';<br>';
+        }
       }
-      else {
-        $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ';<br>';
-      }
+      $code .= ']<br><br>';
     }
-    $code .= ']<br><br>';
 
     $code .= '$input = new \Drupal\ai\OperationType\Chat\ChatInput([<br>';
     foreach ($messages as $message) {
@@ -247,7 +250,9 @@ class ChatGenerationForm extends FormBase {
     $code .= ']);<br><br>';
 
     $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('chat_ai_provider') . '\');<br>';
-    $code .= "\$ai_provider->setConfiguration(\$config);<br>";
+    if ($show_config) {
+      $code .= "\$ai_provider->setConfiguration(\$config);<br>";
+    }
     $code .= "// Normalized \$response will be a ChatMessage object.<br>";
     $code .= "\$response = \$ai_provider->chat(\$input, '" . $form_state->getValue('chat_ai_model') . '\', ["your_module_name"])->getNormalized();';
     $code .= "</code></details>";

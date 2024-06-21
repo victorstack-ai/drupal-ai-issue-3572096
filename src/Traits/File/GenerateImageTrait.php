@@ -55,7 +55,7 @@ trait GenerateImageTrait {
         'height' => $resolution[1],
       ]);
       $file->save();
-      $files[] = $file;
+      $files[] = ['target_id' => $file->id()];
     }
     return $files;
   }
