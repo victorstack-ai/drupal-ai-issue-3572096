@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\provider_lmstudio\Plugin\AiProvider;
+namespace Drupal\provider_groq\Plugin\AiProvider;
 
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
@@ -8,28 +8,22 @@ use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\ChatOutput;
-use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
-use Drupal\ai\OperationType\Embeddings\EmbeddingsInterface;
-use Drupal\ai\OperationType\Embeddings\EmbeddingsOutput;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\provider_lmstudio\LmStudioControlApi;
 use OpenAI\Client;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * Plugin implementation of the 'lmstudio' provider.
+ * Plugin implementation of the 'groq' provider.
  */
 #[AiProvider(
-  id: 'lmstudio',
-  label: new TranslatableMarkup('LM Studio'),
+  id: 'groq',
+  label: new TranslatableMarkup('Groq'),
 )]
-class LmStudioProvider extends AiProviderClientBase implements
+class GroqProvider extends AiProviderClientBase implements
   ContainerFactoryPluginInterface,
-  ChatInterface,
-  EmbeddingsInterface {
+  ChatInterface {
 
   /**
    * The OpenAI Client for API calls.
@@ -39,28 +33,17 @@ class LmStudioProvider extends AiProviderClientBase implements
   protected $client;
 
   /**
-   * The control API.
+   * API Key.
    *
-   * @var \Drupal\provider_lmstudio\LmStudioControlApi
+   * @var string
    */
-  protected $controlApi;
-
-  /**
-   * Dependency Injection for the LM Studio Control API.
-   */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
-    $instance->controlApi = $container->get('provider_lmstudio.control_api');
-    $instance->controlApi->setConnectData($instance->getBaseHost());
-    return $instance;
-  }
+  protected string $apiKey = '';
 
   /**
    * {@inheritdoc}
    */
   public function getConfiguredModels(string $operation_type = NULL): array {
-    $this->loadClient();
-    $response = $this->controlApi->getModels();
+    $response = $this->getClient()->models()->list()->toArray();
     $models = [];
     if (isset($response['data'])) {
       foreach ($response['data'] as $model) {
@@ -74,10 +57,11 @@ class LmStudioProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function isUsable(string $operation_type = NULL): bool {
-    if (!$this->getBaseHost()) {
+    // If its not configured, it is not usable.
+    if (!$this->getConfig()->get('api_key')) {
       return FALSE;
     }
-    // If its one of the bundles that Ollama supports its usable.
+    // If its one of the bundles that Groq supports its usable.
     if ($operation_type) {
       return in_array($operation_type, $this->getSupportedOperationTypes());
     }
@@ -98,7 +82,7 @@ class LmStudioProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function getConfig(): ImmutableConfig {
-    return $this->configFactory->get('provider_lmstudio.settings');
+    return $this->configFactory->get('provider_groq.settings');
   }
 
   /**
@@ -106,7 +90,7 @@ class LmStudioProvider extends AiProviderClientBase implements
    */
   public function getApiDefinition(): array {
     // Load the configuration.
-    $definition = Yaml::parseFile($this->moduleHandler->getModule('provider_lmstudio')->getPath() . '/definitions/api_defaults.yml');
+    $definition = Yaml::parseFile($this->moduleHandler->getModule('provider_groq')->getPath() . '/definitions/api_defaults.yml');
     return $definition;
   }
 
@@ -121,7 +105,8 @@ class LmStudioProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function setAuthentication(mixed $authentication): void {
-    // Doesn't do anything.
+    // Set the new API key and reset the client.
+    $this->apiKey = $authentication;
     $this->client = NULL;
   }
 
@@ -139,28 +124,17 @@ class LmStudioProvider extends AiProviderClientBase implements
   }
 
   /**
-   * Get control client.
-   *
-   * This is the client for controlling the LM Studio API.
-   *
-   * @return \Drupal\provider_lmstudio\LmStudioControlApi
-   *   The control client.
-   */
-  public function getControlClient(): LmStudioControlApi {
-    return $this->controlApi;
-  }
-
-  /**
-   * Loads the Ollama Client with hostname and port.
+   * Loads the Groq Client with authentication if not initialized.
    */
   protected function loadClient(): void {
     if (!$this->client) {
-      $host = $this->getBaseHost();
-      $host .= '/v1';
-
+      if (!$this->apiKey) {
+        $this->setAuthentication($this->loadApiKey());
+      }
       $this->client = \OpenAI::factory()
+        ->withApiKey($this->apiKey)
+        ->withBaseUri('https://api.groq.com/openai/v1')
         ->withHttpClient($this->httpClient)
-        ->withBaseUri($host)
         ->make();
     }
   }
@@ -191,36 +165,13 @@ class LmStudioProvider extends AiProviderClientBase implements
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function embeddings(string|EmbeddingsInput $input, string $model_id, array $tags = []): EmbeddingsOutput {
-    $this->loadClient();
-    // Normalize the input if needed.
-    if ($input instanceof EmbeddingsInput) {
-      $input = $input->getPrompt();
-    }
-    // Send the request.
-    $payload = [
-      'model' => $model_id,
-      'input' => $input,
-    ] + $this->configuration;
-    $response = $this->client->embeddings()->create($payload)->toArray();
-
-    return new EmbeddingsOutput($response['data'][0]['embedding'], $response, []);
-  }
-
-  /**
-   * Gets the base host.
+   * Load API key from key module.
    *
    * @return string
-   *   The base host.
+   *   The API key.
    */
-  protected function getBaseHost(): string {
-    $host = rtrim($this->getConfig()->get('host_name'), '/');
-    if ($this->getConfig()->get('port')) {
-      $host .= ':' . $this->getConfig()->get('port');
-    }
-    return $host;
+  protected function loadApiKey(): string {
+    return $this->keyRepository->getKey($this->getConfig()->get('api_key'))->getKeyValue();
   }
 
 }

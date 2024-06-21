@@ -1,0 +1,10 @@
+name: Groq Provider
+description: This enables the use of Groq for the AI module.
+package: AI Providers
+type: module
+core_version_requirement: ^10.3 || ^11
+configure: provider_groq.settings_form
+
+dependencies:
+  - ai:ai
+  - key:key
