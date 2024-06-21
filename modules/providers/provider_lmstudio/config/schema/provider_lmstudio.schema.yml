@@ -1,6 +1,6 @@
-provider_ollama.settings:
+provider_lmstudio.settings:
   type: mapping
-  label: 'Ollama Settings'
+  label: 'LM Studio Settings'
   mapping:
     host_name:
       type: string

@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\provider_ollama\Plugin\AiProvider;
+namespace Drupal\provider_lmstudio\Plugin\AiProvider;
 
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
@@ -14,19 +14,20 @@ use Drupal\ai\OperationType\Embeddings\EmbeddingsOutput;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\provider_lmstudio\LmStudioControlApi;
 use Drupal\provider_ollama\OllamaControlApi;
 use OpenAI\Client;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * Plugin implementation of the 'ollama' provider.
+ * Plugin implementation of the 'lmstudio' provider.
  */
 #[AiProvider(
-  id: 'ollama',
-  label: new TranslatableMarkup('Ollama'),
+  id: 'lmstudio',
+  label: new TranslatableMarkup('LM Studio'),
 )]
-class OllamaProvider extends AiProviderClientBase implements
+class LmStudioProvider extends AiProviderClientBase implements
   ContainerFactoryPluginInterface,
   ChatInterface,
   EmbeddingsInterface {
@@ -39,18 +40,18 @@ class OllamaProvider extends AiProviderClientBase implements
   protected $client;
 
   /**
-   * The Ollama Control API for configuration calls.
+   * The control API.
    *
-   * @var \Drupal\provider_ollama\OllamaControlApi
+   * @var \Drupal\provider_lmstudio\LmStudioControlApi
    */
   protected $controlApi;
 
   /**
-   * Dependency Injection for the Ollama Control API.
+   * Dependency Injection for the LM Studio Control API.
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
-    $instance->controlApi = $container->get('provider_ollama.control_api');
+    $instance->controlApi = $container->get('provider_lmstudio.control_api');
     $instance->controlApi->setConnectData($instance->getBaseHost());
     return $instance;
   }
@@ -59,11 +60,12 @@ class OllamaProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function getConfiguredModels(string $operation_type = NULL): array {
+    $this->loadClient();
     $response = $this->controlApi->getModels();
     $models = [];
-    if (isset($response['models'])) {
-      foreach ($response['models'] as $model) {
-        $models[$model['model']] = $model['name'];
+    if (isset($response['data'])) {
+      foreach ($response['data'] as $model) {
+        $models[$model['id']] = $model['id'];
       }
     }
     return $models;
@@ -73,10 +75,10 @@ class OllamaProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function isUsable(string $operation_type = NULL): bool {
-    // If its one of the bundles that Ollama supports its usable.
     if (!$this->getBaseHost()) {
       return FALSE;
     }
+    // If its one of the bundles that Ollama supports its usable.
     if ($operation_type) {
       return in_array($operation_type, $this->getSupportedOperationTypes());
     }
@@ -97,7 +99,7 @@ class OllamaProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function getConfig(): ImmutableConfig {
-    return $this->configFactory->get('provider_ollama.settings');
+    return $this->configFactory->get('provider_lmstudio.settings');
   }
 
   /**
@@ -105,7 +107,7 @@ class OllamaProvider extends AiProviderClientBase implements
    */
   public function getApiDefinition(): array {
     // Load the configuration.
-    $definition = Yaml::parseFile($this->moduleHandler->getModule('provider_ollama')->getPath() . '/definitions/api_defaults.yml');
+    $definition = Yaml::parseFile($this->moduleHandler->getModule('provider_lmstudio')->getPath() . '/definitions/api_defaults.yml');
     return $definition;
   }
 
@@ -140,14 +142,15 @@ class OllamaProvider extends AiProviderClientBase implements
   /**
    * Get control client.
    *
-   * This is the client for controlling the Ollama API.
+   * This is the client for controlling the LM Studio API.
    *
-   * @return \Drupal\provider_ollama\OllamaControlApi
+   * @return \Drupal\provider_lmstudio\LmStudioControlApi
    *   The control client.
    */
-  public function getControlClient(): OllamaControlApi {
+  public function getControlClient(): LmStudioControlApi {
     return $this->controlApi;
   }
+
 
   /**
    * Loads the Ollama Client with hostname and port.
@@ -198,9 +201,14 @@ class OllamaProvider extends AiProviderClientBase implements
     if ($input instanceof EmbeddingsInput) {
       $input = $input->getPrompt();
     }
-    $response = $this->controlApi->embeddings($input, $model_id);
+    // Send the request.
+    $payload = [
+      'model' => $model_id,
+      'input' => $input,
+    ] + $this->configuration;
+    $response = $this->client->embeddings()->create($payload)->toArray();
 
-    return new EmbeddingsOutput($response['embedding'], $response, []);
+    return new EmbeddingsOutput($response['data'][0]['embedding'], $response, []);
   }
 
   /**
