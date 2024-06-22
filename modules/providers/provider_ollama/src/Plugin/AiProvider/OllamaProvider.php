@@ -157,8 +157,11 @@ class OllamaProvider extends AiProviderClientBase implements
       $host = $this->getBaseHost();
       $host .= '/v1';
 
+      // Set longer timeout.
+      $client = new \GuzzleHttp\Client(['timeout' => 600]);
+
       $this->client = \OpenAI::factory()
-        ->withHttpClient($this->httpClient)
+        ->withHttpClient($client)
         ->withBaseUri($host)
         ->make();
     }
