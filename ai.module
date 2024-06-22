@@ -36,6 +36,14 @@ function ai_help($route_name, RouteMatchInterface $route_match) {
 }
 
 /**
+ * Implements hook_modules_installed().
+ */
+function ai_modules_installed(array $modules) {
+  // Clear the provider cache when a module is installed.
+  \Drupal::cache('discovery')->delete('ai_provider_plugins');
+}
+
+/**
  * Helper function to check if the current route is an admin route.
  *
  * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
