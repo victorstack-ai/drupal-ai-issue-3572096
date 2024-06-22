@@ -278,14 +278,14 @@ class ChatGenerationForm extends FormBase {
     $code .= '$config = [<br>';
     foreach ($provider->getConfiguration() as $key => $value) {
       if (is_string($value)) {
-        $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '";<br>';
+        $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '",<br>';
       }
       else {
-        $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ';<br>';
+        $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ',<br>';
       }
     }
-    $code .= ']<br><br>';
-    $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('chat_ai_provider') . '\');<br>';
+    $code .= '];<br><br>';
+    $code .= "\$ai_provider = \Drupal::service('ai.provider')->createInstance('" . $form_state->getValue('chat_ai_provider') . '\');<br>';
     $code .= "\$ai_provider->setConfiguration(\$config);<br>";
     $code .= "// Normalized \$response will be what ever the provider gives back.<br>";
     $code .= "\$response = \$ai_provider->chat(\$expectedInputFromProviderClient, '" . $form_state->getValue('chat_ai_model') . '\', ["your_module_name"])->getRaw();';

@@ -193,15 +193,15 @@ class TextToImageGenerationForm extends FormBase {
     $code .= '$config = [<br>';
     foreach ($provider->getConfiguration() as $key => $value) {
       if (is_string($value)) {
-        $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '";<br>';
+        $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '",<br>';
       }
       else {
-        $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ';<br>';
+        $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ',<br>';
       }
     }
 
-    $code .= ']<br><br>';
-    $code .= "\$ai_provider = \Drupal::service('ai.provider')->getInstance('" . $form_state->getValue('image_generator_ai_provider') . '\');<br>';
+    $code .= '];<br><br>';
+    $code .= "\$ai_provider = \Drupal::service('ai.provider')->createInstance('" . $form_state->getValue('image_generator_ai_provider') . '\');<br>';
     $code .= "\$ai_provider->setConfiguration(\$config);<br>";
     $code .= "\$response = \$ai_provider->invokeModelResponse(Bundles::TextToImage, '" . $form_state->getValue('image_generator_ai_model') . '\', $prompt, ["tag_1", "tag_2"], TRUE);';
     if ($form_state->getValue('save_as_media')) {
