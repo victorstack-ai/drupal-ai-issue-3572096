@@ -53,12 +53,6 @@ chat:
         min: 0
         max: 1
         step: 0.1
-    stream:
-      label: 'Stream'
-      description: 'Enable/disable stream of generated tokens.'
-      type: 'boolean'
-      default: false
-      required: false
 embeddings:
   input:
     description: 'Textual representation of the speech.'
