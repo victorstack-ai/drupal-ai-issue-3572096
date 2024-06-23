@@ -40,11 +40,11 @@ class OllamaConfigForm extends ConfigFormBase {
     $form['host_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Host Name'),
-      '#description' => $this->t('The host name for the API, including protocol.'),
+      '#description' => $this->t('The host name for the API, including protocol, typically http://127.0.0.1 on a server. Use http://host.docker.internal for DDEV, see <a href="https://www.drupal.org/docs/extending-drupal/contributed-modules/contributed-module-documentation/ai/how-to-set-up-a-provider">AI documentation</a>.'),
       '#required' => TRUE,
       '#default_value' => $config->get('host_name'),
       '#attributes' => [
-        'placeholder' => 'http://127.0.0.1',
+        'placeholder' => 'http://127.0.0.1 or http://host.docker.internal for DDEV, Docker, etc.',
       ],
     ];
 
@@ -54,7 +54,7 @@ class OllamaConfigForm extends ConfigFormBase {
       '#description' => $this->t('The port number for the API. Can be left empty if 80 or 443.'),
       '#default_value' => $config->get('port'),
       '#attributes' => [
-        'placeholder' => '11343',
+        'placeholder' => '11434',
       ],
     ];
 
