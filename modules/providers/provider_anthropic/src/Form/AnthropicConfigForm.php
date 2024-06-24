@@ -83,10 +83,8 @@ class AnthropicConfigForm extends ConfigFormBase {
 
     // Check if the OpenAI provider is enabled and usabled.
     $disabled = TRUE;
-    // Check so that the AI External Moderation module is enabled.
-    $provider = $this->aiProviderManager->createInstance('openai');
     $description = $this->t('Enable OpenAI moderation for any Anthropic chat query.');
-    if ($provider->isUsable() && $this->moduleHandler->moduleExists('ai_external_moderation')) {
+    if ($this->moduleHandler->moduleExists('provider_openai') && $this->aiProviderManager->createInstance('openai')->isUsable() && $this->moduleHandler->moduleExists('ai_external_moderation')) {
       $disabled = FALSE;
     }
     else {
