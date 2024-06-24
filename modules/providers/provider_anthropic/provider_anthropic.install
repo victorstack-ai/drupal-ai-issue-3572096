@@ -1,0 +1,16 @@
+<?php
+
+/**
+ * @file
+ * Install, update, and uninstall functions for the provider_anthropic module.
+ */
+
+/**
+ * Implements hook_update_N().
+ */
+function provider_anthropic_update_10301() {
+  // Update the version id, so that Sonnet 3.5 is possible.
+  $config = \Drupal::configFactory()->getEditable('provider_anthropic.settings');
+  $config->set('version', '20240620');
+  $config->save();
+}

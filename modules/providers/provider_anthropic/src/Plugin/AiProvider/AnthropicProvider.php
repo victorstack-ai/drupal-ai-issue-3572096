@@ -53,6 +53,7 @@ class AnthropicProvider extends AiProviderClientBase implements
     $version = $this->getConfig()->get('version');
     if ($operation_type == 'chat') {
       return [
+        'claude-3-5-sonnet-' . $version => 'Claude 3.5 Sonnet',
         'claude-3-opus-' . $version => 'Claude 3 Opus',
         'claude-3-sonnet-' . $version => 'Claude 3 Sonnet',
         'claude-3-haiku-' . $version => 'Claude 3 Haiku',
