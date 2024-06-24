@@ -160,7 +160,7 @@ class MistralProvider extends AiProviderClientBase implements
       foreach ($input->getMessages() as $message) {
         $chat_input[] = [
           'role' => $message->getRole(),
-          'content' => $message->getMessage(),
+          'content' => $message->getText(),
         ];
       }
     }

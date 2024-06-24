@@ -6,6 +6,7 @@ use Drupal\ai\Base\AiProviderClientBase;
 use Drupal\ai\Event\PostGenerateResponseEvent;
 use Drupal\ai\Event\PreGenerateResponseEvent;
 use Drupal\ai\Exception\AiBadRequestException;
+use Drupal\ai\Exception\AiMissingFeatureException;
 use Drupal\ai\Exception\AiOperationTypeMissingException;
 use Drupal\ai\Exception\AiRequestErrorException;
 use Drupal\ai\Exception\AiResponseErrorException;
@@ -141,6 +142,11 @@ class ProviderProxy {
     // If the provider does an responser error.
     catch (AiResponseErrorException $e) {
       $this->loggerFactory->get('ai')->error('Error invoking model response: @error', ['@error' => $e->getMessage()]);
+      throw $e;
+    }
+    // If its a missing feature exception.
+    catch (AiMissingFeatureException $e) {
+      $this->loggerFactory->get('ai')->error('The provider was missing a requested feature: @error', ['@error' => $e->getMessage()]);
       throw $e;
     }
     // Its not safe.

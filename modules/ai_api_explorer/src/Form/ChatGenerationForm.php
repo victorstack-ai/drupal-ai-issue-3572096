@@ -41,6 +41,13 @@ class ChatGenerationForm extends FormBase {
   protected $providerManager;
 
   /**
+   * The current request stack.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  protected $requestStack;
+
+  /**
    * {@inheritdoc}
    */
   public function getFormId() {
@@ -55,6 +62,7 @@ class ChatGenerationForm extends FormBase {
     $instance->aiProviderHelper = $container->get('ai.form_helper');
     $instance->explorerHelper = $container->get('ai_api_explorer.helper');
     $instance->providerManager = $container->get('ai.provider');
+    $instance->requestStack = $container->get('request_stack');
     return $instance;
   }
 
@@ -125,6 +133,13 @@ class ChatGenerationForm extends FormBase {
       '#required' => TRUE,
       '#default_value' => '',
     ];
+    $form['prompts']['image_2'] = [
+      '#type' => 'file',
+      // Only jpg, png files are allowed in this case, since that covers most models.
+      '#accept' => '.jpg, .png',
+      '#title' => $this->t('Image'),
+      '#description' => $this->t('Attach an image to the call. Note that not all models support images and will throw an error.'),
+    ];
 
     $form['actions'] = [
       '#type' => 'actions',
@@ -174,16 +189,30 @@ class ChatGenerationForm extends FormBase {
     $values = $form_state->getValues();
     // Get the messages.
     $messages = [];
+    // Get potential files.
+    $files = $this->requestStack->getCurrentRequest()->files->all();
     foreach ($values as $key => $value) {
       if (strpos($key, 'role_') === 0) {
         $index = substr($key, 5);
         $role = $value;
         $message = $values['message_' . $index];
+        // Load the file.
+        $image = "";
+        if (isset($files['files']['image_' . $index])) {
+          $raw_file = file_get_contents($files['files']['image_' . $index]->getPathname());
+          $image = 'data:' . $files['files']['image_' . $index]->getClientMimeType() . ';base64,' . base64_encode($raw_file);
+        }
         if ($role && $message) {
-          $messages[] = new ChatMessage($role, $message);
+          $images = [];
+          if ($image) {
+            $images[] = $image;
+          }
+          $messages[] = new ChatMessage($role, $message, $images);
         }
       }
+
     }
+
     $input = new ChatInput($messages);
 
     $response = NULL;
@@ -199,7 +228,7 @@ class ChatGenerationForm extends FormBase {
     $code .= $this->rawCodeExample($provider, $form_state, $messages);
 
     if (is_object($response) && get_class($response) == ChatMessage::class) {
-      $form['response']['#context']['texts'] = '<h4>Role: ' . $response->getRole() . "</h4><p>" . $response->getMessage() . '</p>' . $code;
+      $form['response']['#context']['texts'] = '<h4>Role: ' . $response->getRole() . "</h4><p>" . $response->getText() . '</p>' . $code;
     }
     else {
       $form['response']['#context']['texts'] = '<p>' . $response . '</p>';
@@ -245,7 +274,7 @@ class ChatGenerationForm extends FormBase {
 
     $code .= '$input = new \Drupal\ai\OperationType\Chat\ChatInput([<br>';
     foreach ($messages as $message) {
-      $code .= '&nbsp;&nbsp;new \Drupal\ai\OperationType\Chat\ChatMessage("' . $message->getRole() . '", "' . $message->getMessage() . '"),<br>';
+      $code .= '&nbsp;&nbsp;new \Drupal\ai\OperationType\Chat\ChatMessage("' . $message->getRole() . '", "' . $message->getText() . '"),<br>';
     }
     $code .= ']);<br><br>';
 

@@ -272,10 +272,27 @@ class OpenAiProvider extends AiProviderClientBase implements
     $chat_input = $input;
     if ($input instanceof ChatInput) {
       $chat_input = [];
+      /** @var \Drupal\ai\OperationType\Chat\ChatMessage $message */
       foreach ($input->getMessages() as $message) {
+        $content = [
+          [
+            'type' => 'text',
+            'text' => $message->getText(),
+          ]
+        ];
+        if (count($message->getImages())) {
+          foreach ($message->getImages() as $image) {
+            $content[] = [
+              'type' => 'image_url',
+              'image_url' => [
+                'url' => $image,
+              ],
+            ];
+          }
+        }
         $chat_input[] = [
           'role' => $message->getRole(),
-          'content' => $message->getMessage(),
+          'content' => $content,
         ];
       }
     }

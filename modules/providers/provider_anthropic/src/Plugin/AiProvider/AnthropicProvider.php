@@ -131,12 +131,12 @@ class AnthropicProvider extends AiProviderClientBase implements
       foreach ($input->getMessages() as $message) {
         // System prompts are a variable.
         if ($message->getRole() == 'system') {
-          $system_prompt = $message->getMessage();
+          $system_prompt = $message->getText();
           continue;
         }
         $chat_input[] = [
           'role' => $message->getRole(),
-          'content' => $message->getMessage(),
+          'content' => $message->getText(),
         ];
       }
     }

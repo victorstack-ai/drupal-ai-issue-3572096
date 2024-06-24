@@ -4,6 +4,7 @@ namespace Drupal\provider_huggingface\Plugin\AiProvider;
 
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
+use Drupal\ai\Exception\AiMissingFeatureException;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
 use Drupal\ai\OperationType\Chat\ChatMessage;
@@ -157,7 +158,10 @@ class HuggingfaceProvider extends AiProviderClientBase implements
     if ($input instanceof ChatInput) {
       $chat_input = "";
       foreach ($input->getMessages() as $message) {
-        $chat_input .= $message->getRole() . ': ' . $message->getMessage() . "\n";
+        $chat_input .= $message->getRole() . ': ' . $message->getText() . "\n";
+      }
+      if (count($message->getImages())) {
+        throw new AiMissingFeatureException('Images are not supported by Huggingface.');
       }
     }
     $response = json_decode($this->client->textGeneration($model_id, $chat_input), TRUE);
