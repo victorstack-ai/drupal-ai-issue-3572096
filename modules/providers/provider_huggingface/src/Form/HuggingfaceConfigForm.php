@@ -4,6 +4,8 @@ namespace Drupal\provider_huggingface\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Link;
+use Drupal\Core\Url;
 
 /**
  * Configure Huggingface access.
@@ -64,7 +66,9 @@ class HuggingfaceConfigForm extends ConfigFormBase {
     $form['api_key'] = [
       '#type' => 'key_select',
       '#title' => $this->t('Huggingface Access Token'),
-      '#description' => $this->t('The Access Token. Can be found on <a href="https://huggingface.co/settings/tokens">https://huggingface.co/settings/tokens</a>.'),
+      '#description' => $this->t('The Access Token. Can be found on @link admin pages. <strong>Make sure that the token has the correct rights.</strong>', [
+        '@link' => Link::fromTextAndUrl('Huggingface', Url::fromUri('https://huggingface.co/settings/tokens'))->toString(),
+      ]),
       '#default_value' => $config->get('api_key'),
     ];
 
@@ -72,9 +76,8 @@ class HuggingfaceConfigForm extends ConfigFormBase {
       $form[$type] = [
         '#type' => 'fieldset',
         '#title' => $type_info['label'],
-        '#description' => $this->t('Add the models you want to use for %title (%data_name) by autocompleting them.', [
-          '%title' => $type_info['label'],
-          '%data_name' => $type_info['filter'],
+        '#description' => $this->t('Add the models you want to use for @link by autocompleting them. Follow the link to @link for the full list.', [
+          '@link' => Link::fromTextAndUrl($type_info['label'], Url::fromUri('https://huggingface.co/models?pipeline_tag=' . $type_info['filter'] .'&sort=trending'))->toString(),
         ]),
         '#prefix' => '<div id="' . $type . '-wrapper">',
         '#suffix' => '</div>',
@@ -110,7 +113,7 @@ class HuggingfaceConfigForm extends ConfigFormBase {
 
       $form[$type]['add_more_' . $type] = [
         '#type' => 'submit',
-        '#value' => $this->t('Add more'),
+        '#value' => $this->t('Add another @type model', ['@type' => strtolower($type_info['label'])]),
         '#submit' => ['::addMoreModel'],
         '#attributes' => [
           'data-type' => $type,
