@@ -4,6 +4,7 @@ namespace Drupal\provider_mistral\Plugin\AiProvider;
 
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
+use Drupal\ai\Exception\AiResponseErrorException;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
 use Drupal\ai\OperationType\Chat\ChatMessage;
@@ -168,7 +169,13 @@ class MistralProvider extends AiProviderClientBase implements
       'model' => $model_id,
       'messages' => $chat_input,
     ] + $this->configuration;
-    $response = $this->client->chat()->create($payload)->toArray();
+
+    // This is ugly, but that is the only way we catch the array_map error
+    // that happens when the array keys from Mistral are different then from
+    // OpenAI.
+    set_error_handler([$this, 'errorCatcher'], E_ALL);
+    $response = $this->client->chat()->create($payload);
+    restore_error_handler();
 
     $message = new ChatMessage($response['choices'][0]['message']['role'], $response['choices'][0]['message']['content']);
     return new ChatOutput($message, $response, []);
@@ -201,6 +208,19 @@ class MistralProvider extends AiProviderClientBase implements
    */
   protected function loadApiKey(): string {
     return $this->keyRepository->getKey($this->getConfig()->get('api_key'))->getKeyValue();
+  }
+
+  /**
+   * Undocumented function
+   *
+   * @param [type] $errno
+   * @param [type] $errstr
+   * @param [type] $file
+   * @param [type] $line
+   * @return void
+   */
+  function errorCatcher($errno, $errstr, $file, $line) {
+    throw new AiResponseErrorException("Something undefined was broken in the response from Mistral AI");
   }
 
 }
