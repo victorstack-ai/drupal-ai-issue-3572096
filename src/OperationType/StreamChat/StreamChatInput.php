@@ -1,13 +1,13 @@
 <?php
 
-namespace Drupal\ai\OperationType\Chat;
+namespace Drupal\ai\OperationType\StreamChat;
 
 use Drupal\ai\OperationType\InputInterface;
 
 /**
  * Input object for chat input.
  */
-class ChatInput implements InputInterface {
+class StreamChatInput implements InputInterface {
   /**
    * The message to convert to text.
    *
@@ -51,7 +51,7 @@ class ChatInput implements InputInterface {
   public function toString(): string {
     $string = "";
     foreach ($this->messages as $message) {
-      $string .= $message->getRole() . "\n" . $message->getText() . "\n";
+      $string .= $message->getRole() . "\n" . $message->getMessage() . "\n";
     }
     return $string;
   }
