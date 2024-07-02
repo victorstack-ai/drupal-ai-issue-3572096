@@ -2,8 +2,12 @@
 
 namespace Drupal\ai_automator\PluginBaseClasses;
 
+use Drupal\ai\OperationType\Chat\ChatInput;
+use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai\Utility\CastUtility;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Form\FormStateInterface;
 
 /**
  * This is a base class that can be used for LLMs simple custom field rules.
@@ -44,22 +48,22 @@ class CustomField extends RuleBase {
    * @return array
    *   The form.
    */
-  public function addCustomFormFields($prefix, ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition) {
+  public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
     $config = $fieldDefinition->getConfig($entity->bundle())->getSettings();
 
     if (isset($config['field_settings'])) {
       foreach ($config['field_settings'] as $key => $value) {
-        $form["automator_{$prefix}_custom_value_" . $key] = [
+        $form["automator_llm_custom_value_" . $key] = [
           '#type' => 'textfield',
           '#title' => $value['widget_settings']['label'],
           '#description' => $this->t('One sentence how the %label should be filled out. For instance "the original quote".', [
             '%label' => $value['widget_settings']['label'],
           ]),
-          '#default_value' => $fieldDefinition->getConfig($entity->bundle())->getThirdPartySetting('ai_automator', "automator_{$prefix}_custom_value_" . $key, ''),
+          '#default_value' => $fieldDefinition->getConfig($entity->bundle())->getThirdPartySetting('ai_automator', "automator_llm_custom_value_" . $key, ''),
           '#weight' => 14,
         ];
 
-        $form["automator_{$prefix}_custom_oneshot_" . $key] = [
+        $form["automator_llm_custom_oneshot_" . $key] = [
           '#type' => 'textfield',
           '#title' => $this->t('Example %label', [
             '%label' => $value['widget_settings']['label'],
@@ -67,7 +71,7 @@ class CustomField extends RuleBase {
           '#description' => $this->t('One example %label of a filled out value for one shot learning. For instance "To be or not to be".', [
             '%label' => $value['widget_settings']['label'],
           ]),
-          '#default_value' => $fieldDefinition->getConfig($entity->bundle())->getThirdPartySetting('ai_automator', "automator_{$prefix}_custom_oneshot_" . $key, ''),
+          '#default_value' => $fieldDefinition->getConfig($entity->bundle())->getThirdPartySetting('ai_automator', "automator_llm_custom_oneshot_" . $key, ''),
           '#weight' => 14,
         ];
       }
@@ -77,21 +81,9 @@ class CustomField extends RuleBase {
   }
 
   /**
-   * Generate the prompts needed for a custom field.
-   *
-   * @param string $prefix
-   *   The prefix.
-   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
-   *   The entity.
-   * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
-   *   The field definition.
-   * @param array $automatorConfig
-   *   The config.
-   *
-   * @return array
-   *   The prompts.
+   * {@inheritDoc}
    */
-  public function generatePrompts($prefix, ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
+  public function generate(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     // Generate the real prompt if needed.
     $prompts = [];
     // @phpstan-ignore-next-line
@@ -108,11 +100,11 @@ class CustomField extends RuleBase {
     }
 
     foreach ($automatorConfig as $key => $value) {
-      if (str_starts_with($key, $prefix . '_custom_value_')) {
-        $example[substr($key, strlen($prefix . '_custom_value_'))] = $value;
+      if (str_starts_with($key, 'llm_custom_value_')) {
+        $example[substr($key, strlen('llm_custom_value_'))] = $value;
       }
-      elseif (str_starts_with($key, $prefix . '_custom_oneshot_')) {
-        $oneShot[substr($key, strlen($prefix . '_custom_oneshot_'))] = $value;
+      elseif (str_starts_with($key, 'llm_custom_oneshot_')) {
+        $oneShot[substr($key, strlen('llm_custom_oneshot_'))] = $value;
       }
     }
 
@@ -122,14 +114,36 @@ class CustomField extends RuleBase {
       $prompt .= "\n\nExample of one row:\n[{\"value\":" . json_encode($oneShot) . "}]\n";
       $prompts[$key] = $prompt;
     }
+
     $total = [];
+    $instance = $this->aiPluginManager->createInstance($automatorConfig['ai_provider']);
+
+    // Get configuration.
+    $config = [];
+    $configCast = $instance->getAvailableConfiguration('chat', $automatorConfig['ai_model']);
+    foreach ($automatorConfig as $key => $val) {
+      if (strpos($key, 'configuration_') === 0 && $val) {
+        $configKey = str_replace('configuration_', '', $key);
+        $config[$configKey] = CastUtility::typeCast($configCast[$configKey]['type'], $val);
+      }
+    }
     foreach ($prompts as $prompt) {
-      $values = $this->generateResponse($prompt, $automatorConfig, $entity, $fieldDefinition);
+      // Create new messages.
+      $input = new ChatInput([
+        new ChatMessage("user", $prompt),
+      ]);
+
+      $instance->setConfiguration($config);
+      $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
+
+      // Normalize the response.
+      $values = json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE);
+
       if (!empty($values)) {
         $total = array_merge_recursive($total, $values);
       }
     }
-    return $total;
+    return $values;
   }
 
   /**
