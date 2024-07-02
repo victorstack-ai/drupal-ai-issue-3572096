@@ -1,0 +1,8 @@
+name: AI Automator
+description: Automate anything and everything using AI.
+package: AI Automator
+type: module
+core_version_requirement: ^10.3 || ^11
+
+dependencies:
+  - ai:ai

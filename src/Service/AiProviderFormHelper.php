@@ -78,6 +78,9 @@ class AiProviderFormHelper {
     $provider = $provider_id;
     if (!$provider_id) {
       $provider = $form_state->getValue($prefix . 'ai_provider');
+      if (!$provider && !empty($defaultValues['provider_id'])) {
+        $provider = $defaultValues['provider_id'];
+      }
       if (!$provider && !empty($defaults['provider_id'])) {
         $provider = $defaults['provider_id'];
       }
@@ -226,7 +229,7 @@ class AiProviderFormHelper {
    * @return array
    *   The list of available LLM providers.
    */
-  private function getAiProvidersOptions(string $operation_type) {
+  public function getAiProvidersOptions(string $operation_type) {
     $providers = $this->aiProviderPluginManager->getDefinitions();
     $options = [
       '' => $this->t('Select a provider'),
@@ -291,7 +294,7 @@ class AiProviderFormHelper {
    * @return string
    *   Type of widget.
    */
-  private function mapSchemaTypeToFormType(array $definition): string {
+  public function mapSchemaTypeToFormType(array $definition): string {
     // Check first for settings constraints.
     if (isset($definition['constraints']['options'])) {
       return 'select';

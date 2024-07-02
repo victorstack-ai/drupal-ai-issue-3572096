@@ -266,6 +266,10 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   }
 
   /**
+   * Get cast of configuration values.
+   */
+
+  /**
    * {@inheritdoc}
    */
   public function getInputExample(string $operation_type, string $model_id): mixed {

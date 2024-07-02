@@ -49,7 +49,7 @@ class SpeechToTextInput implements InputInterface {
    * {@inheritdoc}
    */
   public function toString(): string {
-    return $this->binary;
+    return 'binary';
   }
 
 }
