@@ -49,8 +49,9 @@ class Telephone extends RuleBase {
       $prompts[$key] = $prompt;
     }
     $total = [];
+    $instance = $this->prepareLlmInstance('chat', $automatorConfig);
     foreach ($prompts as $prompt) {
-      $values = $this->generateResponse($prompt, $automatorConfig, $entity, $fieldDefinition);
+      $values = $this->runChatMessage($prompt, $automatorConfig, $instance);
       if (!empty($values)) {
         $total = array_merge_recursive($total, $values);
       }
@@ -61,7 +62,7 @@ class Telephone extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition) {
+  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     // Has to be valid telephone number.
     $pattern = '/^\+\(?[0-9]{1,3}\)?[ ]?[0-9]{6,12}$/';
     if (preg_match($pattern, $value)) {

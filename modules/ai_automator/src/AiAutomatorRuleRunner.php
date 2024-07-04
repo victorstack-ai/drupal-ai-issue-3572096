@@ -76,14 +76,14 @@ class AiAutomatorRuleRunner {
 
     foreach ($values as $key => $value) {
       // Remove values that does not fit.
-      if (!$rule->verifyValue($entity, $value, $fieldDefinition)) {
+      if (!$rule->verifyValue($entity, $value, $fieldDefinition, $automatorConfig)) {
         unset($values[$key]);
       }
     }
 
     // Save values.
     if ($values && is_array($values)) {
-      $rule->storeValues($entity, $values, $fieldDefinition);
+      $rule->storeValues($entity, $values, $fieldDefinition, $automatorConfig);
     }
     return $entity;
   }

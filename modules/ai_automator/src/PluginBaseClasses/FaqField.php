@@ -2,6 +2,8 @@
 
 namespace Drupal\ai_automator\PluginBaseClasses;
 
+use Drupal\ai\OperationType\Chat\ChatInput;
+use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 
@@ -49,8 +51,17 @@ class FaqField extends RuleBase {
       $prompts[$key] = $prompt;
     }
     $total = [];
+    $instance = $this->prepareLlmInstance('chat', $automatorConfig);
     foreach ($prompts as $prompt) {
-      $values = $this->generateResponse($prompt, $automatorConfig, $entity, $fieldDefinition);
+      // Create new messages.
+      $input = new ChatInput([
+        new ChatMessage("user", $prompt),
+      ]);
+
+      $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
+
+      // Normalize the response.
+      $values = json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE);
       if (!empty($values)) {
         $total = array_merge_recursive($total, $values);
       }

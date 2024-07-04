@@ -10,7 +10,7 @@ use Drupal\Core\Plugin\DefaultPluginManager;
 /**
  * Provides an OpenAI Automator Field process plugin manager.
  *
- * @see \Drupal\ai_automator\Annotation\AiAutomatorProcessRule
+ * @see \Drupal\ai_automator\Attribute\AiAutomatorProcessRule
  * @see \Drupal\ai_automator\PluginInterfaces\AiAutomatorFieldProcessInterface
  * @see plugin_api
  */

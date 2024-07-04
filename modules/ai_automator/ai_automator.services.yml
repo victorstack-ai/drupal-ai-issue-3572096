@@ -1,19 +1,19 @@
 services:
   plugin.manager.ai_automator:
-    class: Drupal\ai_automator\PluginManager\AiAutomatorFieldRuleManager
+    class: Drupal\ai_automator\PluginManager\AiAutomatorTypeManager
     parent: default_plugin_manager
   plugin.manager.ai_processor:
     class: Drupal\ai_automator\PluginManager\AiAutomatorFieldProcessManager
     parent: default_plugin_manager
   ai_automator.field_config:
     class: Drupal\ai_automator\FormAlter\AiAutomatorFieldConfig
-    arguments: ['@entity_field.manager', '@ai_automator.field_rules', '@current_route_match', '@module_handler', '@plugin.manager.ai_processor']
+    arguments: ['@entity_field.manager', '@ai_automator.field_rules', '@current_route_match', '@module_handler', '@plugin.manager.ai_processor', '@entity_type.manager']
   ai_automator.field_rules:
     class: Drupal\ai_automator\AiFieldRules
     arguments: ['@plugin.manager.ai_automator', '@event_dispatcher']
   ai_automator.entity_modifier:
     class: Drupal\ai_automator\AiAutomatorEntityModifier
-    arguments: ['@entity_field.manager', '@plugin.manager.ai_processor', '@ai_automator.field_rules', '@event_dispatcher']
+    arguments: ['@entity_field.manager', '@plugin.manager.ai_processor', '@ai_automator.field_rules', '@event_dispatcher', '@entity_type.manager']
   ai_automator.rule_runner:
     class: Drupal\ai_automator\AiAutomatorRuleRunner
     arguments: ['@entity_type.manager', '@ai_automator.field_rules', '@event_dispatcher']

@@ -63,8 +63,9 @@ class Numeric extends RuleBase {
       $prompts[$key] = $prompt;
     }
     $total = [];
+    $instance = $this->prepareLlmInstance('chat', $automatorConfig);
     foreach ($prompts as $prompt) {
-      $values = $this->generateResponse($prompt, $automatorConfig, $entity, $fieldDefinition);
+      $values = $this->runChatMessage($prompt, $automatorConfig, $instance);
       if (!empty($values)) {
         $total = array_merge_recursive($total, $values);
       }
@@ -75,7 +76,7 @@ class Numeric extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition) {
+  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     $config = $fieldDefinition->getConfig($entity->bundle())->getSettings();
     // Has to be number.
     if (!is_numeric($value)) {

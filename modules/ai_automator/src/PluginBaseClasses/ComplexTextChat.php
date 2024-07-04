@@ -48,28 +48,9 @@ class ComplexTextChat extends SimpleTextChat {
       $prompts[$key] = $prompt;
     }
     $total = [];
-    $instance = $this->aiPluginManager->createInstance($automatorConfig['ai_provider']);
-
-    // Get configuration.
-    $config = [];
-    $configCast = $instance->getAvailableConfiguration('chat', $automatorConfig['ai_model']);
-    foreach ($automatorConfig as $key => $val) {
-      if (strpos($key, 'configuration_') === 0 && $val) {
-        $configKey = str_replace('configuration_', '', $key);
-        $config[$configKey] = CastUtility::typeCast($configCast[$configKey]['type'], $val);
-      }
-    }
+    $instance = $this->prepareLlmInstance('chat', $automatorConfig);
     foreach ($prompts as $prompt) {
-      // Create new messages.
-      $input = new ChatInput([
-        new ChatMessage("user", $prompt),
-      ]);
-
-      $instance->setConfiguration($config);
-      $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
-
-      // Normalize the response.
-      $values = json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE);
+      $values = $this->runChatMessage($prompt, $automatorConfig, $instance);
 
       if (!empty($values)) {
         $total = array_merge_recursive($total, $values);

@@ -6,6 +6,7 @@ use Drupal\ai_automator\AiFieldRules;
 use Drupal\ai_automator\PluginManager\AiAutomatorFieldProcessManager;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Field\Entity\BaseFieldOverride;
 use Drupal\Core\Form\FormStateInterface;
@@ -47,6 +48,11 @@ class AiAutomatorFieldConfig {
   protected AiAutomatorFieldProcessManager $processes;
 
   /**
+   * The entity type maanger.
+   */
+  protected EntityTypeManagerInterface $entityTypeManager;
+
+  /**
    * Constructs a field config modifier.
    *
    * @param \Drupal\Core\Entity\EntityFieldManagerInterface $fieldManager
@@ -59,13 +65,16 @@ class AiAutomatorFieldConfig {
    *   The module handler.
    * @param \Drupal\ai_automator\PluginManager\AiAutomatorFieldProcessManager $processes
    *   The process manager.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity type manager.
    */
-  public function __construct(EntityFieldManagerInterface $fieldManager, AiFieldRules $fieldRules, RouteMatchInterface $routeMatch, ModuleHandlerInterface $moduleHandler, AiAutomatorFieldProcessManager $processes) {
+  public function __construct(EntityFieldManagerInterface $fieldManager, AiFieldRules $fieldRules, RouteMatchInterface $routeMatch, ModuleHandlerInterface $moduleHandler, AiAutomatorFieldProcessManager $processes, EntityTypeManagerInterface $entityTypeManager) {
     $this->fieldManager = $fieldManager;
     $this->fieldRules = $fieldRules;
     $this->routeMatch = $routeMatch;
     $this->moduleHandler = $moduleHandler;
     $this->processes = $processes;
+    $this->entityTypeManager = $entityTypeManager;
   }
 
   /**
@@ -124,12 +133,18 @@ class AiAutomatorFieldConfig {
       return;
     }
 
+    // Get the default config if it exists.
+    $id = $form['#entity']->getEntityTypeId() . '.' . $form['#entity']->bundle() . '.' . $fieldInfo->getName() . '.default';
+
+    /** @var \Drupal\ai_automator\Entity\AiAutomator $aiConfig */
+    $aiConfig = $this->entityTypeManager->getStorage('ai_automator')->load($id);
+
     $form['automator_enabled'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Enable AI Automator'),
       '#description' => $this->t('If you want this value to be auto filled from AI'),
       '#weight' => 15,
-      '#default_value' => $fieldInfo->getThirdPartySetting('ai_automator', 'automator_enabled', 0),
+      '#default_value' => !empty($aiConfig),
       '#attributes' => [
         'name' => 'automator_enabled',
       ],
@@ -140,14 +155,17 @@ class AiAutomatorFieldConfig {
       $rulesOptions[$ruleKey] = $rule->title;
     }
 
-    $chosenRule = $formState->getValue('automator_rule') ?? $fieldInfo->getThirdPartySetting('ai_automator', 'automator_rule', '');
+    $chosenRule = $formState->getValue('automator_rule') ?? NULL;
+    if (empty($chosenRule) && !empty($aiConfig)) {
+      $chosenRule = $aiConfig->get('rule');
+    }
     $chosenRule = $chosenRule ? $chosenRule : key($rulesOptions);
     $rule = $rules[$chosenRule] ?? $rules[key($rulesOptions)];
 
     $form['automator_rule'] = [
       '#type' => 'select',
-      '#title' => $this->t('Choose AI Automator Rule'),
-      '#description' => $this->t('Some field type might have many rules to use, based on the modules you installed'),
+      '#title' => $this->t('Choose AI Automator Type'),
+      '#description' => $this->t('Some field type might have many types to use, based on the modules you installed'),
       '#weight' => 16,
       '#options' => $rulesOptions,
       '#default_value' => $chosenRule,
@@ -205,8 +223,9 @@ class AiAutomatorFieldConfig {
       ],
     ];
 
-    $defaultValues = $fieldInfo->getConfig($entity->bundle())->getThirdPartySettings('ai_automator');
-    $form['automator_container'] = array_merge($form['automator_container'], $rule->extraFormFields($entity, $fieldInfo, $formState, $defaultValues));
+    $defaultValues = !empty($aiConfig) ? $aiConfig->get('plugin_config') : [];
+    $subForm = $rule->extraFormFields($entity, $fieldInfo, $formState, $defaultValues);
+    $form['automator_container'] = array_merge($form['automator_container'], $subForm);
 
     $modeOptions['base'] = $this->t('Base Mode');
     // Not every rule allows advanced mode.
@@ -220,7 +239,7 @@ class AiAutomatorFieldConfig {
         '#title' => $this->t('Automator Input Mode'),
         '#description' => $this->t('If you have token installed you can use it in advanced mode, otherwise it uses base mode.'),
         '#options' => $modeOptions,
-        '#default_value' => $fieldInfo->getThirdPartySetting('ai_automator', 'automator_mode', 'base'),
+        '#default_value' => !empty($aiConfig) ? $aiConfig->get('input_mode') : 'base',
         '#weight' => 5,
         '#attributes' => [
           'name' => 'automator_mode',
@@ -240,7 +259,7 @@ class AiAutomatorFieldConfig {
       '#weight' => 11,
       '#states' => [
         'visible' => [
-          ':input[name="automator_mode"]' => [
+          ':input[name="automator_mode' . '"]' => [
             'value' => 'base',
           ],
         ],
@@ -259,7 +278,7 @@ class AiAutomatorFieldConfig {
       '#title' => $this->t('Automator Base Field'),
       '#description' => $this->t('This is the field that will be used as context field for generating data into this field.'),
       '#options' => $baseFieldOptions,
-      '#default_value' => $fieldInfo->getThirdPartySetting('ai_automator', 'automator_base_field', NULL),
+      '#default_value' => !empty($aiConfig) ? $aiConfig->get('base_field') : NULL,
       '#weight' => 5,
     ];
 
@@ -272,7 +291,7 @@ class AiAutomatorFieldConfig {
         '#attributes' => [
           'placeholder' => $rule->placeholderText(),
         ],
-        '#default_value' => $fieldInfo->getThirdPartySetting('ai_automator', 'automator_prompt', ''),
+        '#default_value' => !empty($aiConfig) ? $aiConfig->get('prompt') : NULL,
         '#weight' => 10,
       ];
 
@@ -305,7 +324,7 @@ class AiAutomatorFieldConfig {
         '#weight' => 11,
         '#states' => [
           'visible' => [
-            ':input[name="automator_mode"]' => [
+            ':input[name="automator_mode' . '"]' => [
               'value' => 'token',
             ],
           ],
@@ -318,7 +337,7 @@ class AiAutomatorFieldConfig {
           '#type' => 'textarea',
           '#title' => $this->t('Automator Prompt (Token)'),
           '#description' => $this->t('The prompt to use to fill this field.'),
-          '#default_value' => $fieldInfo->getThirdPartySetting('ai_automator', 'automator_token', ''),
+          '#default_value' => !empty($aiConfig) ? $aiConfig->get('token') : NULL,
         ];
 
         // Because we have to invoke this only if the module is installed, no
@@ -335,7 +354,7 @@ class AiAutomatorFieldConfig {
       '#type' => 'checkbox',
       '#title' => $this->t('Edit when changed'),
       '#description' => $this->t('By default the initial value or manual set value will not be overriden. If you check this, it will override if the base text field changes its value.'),
-      '#default_value' => $fieldInfo->getThirdPartySetting('ai_automator', 'automator_edit_mode', ''),
+      '#default_value' => !empty($aiConfig) ? $aiConfig->get('edit_mode') : FALSE,
       '#weight' => 20,
     ];
 
@@ -345,13 +364,26 @@ class AiAutomatorFieldConfig {
       '#weight' => 25,
     ];
 
+    $form['automator_container']['automator_advanced']['label_detail'] = [
+      '#type' => 'details',
+      '#open' => FALSE,
+      '#title' => $this->t('Automator Label'),
+    ];
+
+    $form['automator_container']['automator_advanced']['label_detail']['automator_label'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Automator Label'),
+      '#description' => $this->t('The label of the automator for referencing.'),
+      '#default_value' => !empty($aiConfig) ? $aiConfig->get('label') : $fieldInfo->getLabel() . ' Default',
+    ];
+
     $form['automator_container']['automator_advanced']['automator_weight'] = [
       '#type' => 'number',
       '#min' => 0,
       '#max' => 1000,
       '#title' => $this->t('Automator Weight'),
       '#description' => $this->t('If you have fields dependent on each other, you can sequentially order the processing using weights. The higher the value, the later it is run.'),
-      '#default_value' => $fieldInfo->getThirdPartySetting('ai_automator', 'automator_weight', 100),
+      '#default_value' => !empty($aiConfig) ? $aiConfig->get('weight') : 100,
     ];
 
     // Get possible processes.
@@ -365,10 +397,11 @@ class AiAutomatorFieldConfig {
       '#title' => $this->t('Automator Worker'),
       '#options' => $workerOptions,
       '#description' => $this->t('This defines how the saving of an interpolation happens. Direct saving is the easiest, but since it can take time you need to have longer timeouts.'),
-      '#default_value' => $fieldInfo->getThirdPartySetting('ai_automator', 'automator_worker_type', 'direct'),
+      '#default_value' => !empty($aiConfig) ? $aiConfig->get('worker_type') : 'direct',
     ];
 
-    $form['automator_container']['automator_advanced'] = array_merge($form['automator_container']['automator_advanced'], $rule->extraAdvancedFormFields($entity, $fieldInfo, $formState, $defaultValues));
+    $subForm = $rule->extraAdvancedFormFields($entity, $fieldInfo, $formState, $defaultValues);
+    $form['automator_container']['automator_advanced'] = array_merge($form['automator_container']['automator_advanced'], $subForm);
 
     // Validate.
     $form['#validate'][] = [$this, 'validateConfigValues'];
@@ -397,20 +430,28 @@ class AiAutomatorFieldConfig {
    *   The form state interface.
    */
   public function validateConfigValues(&$form, FormStateInterface $formState) {
-    // Find the rule. If not found don't do anything.
-    $rule = $this->fieldRules->findRule($formState->getValue('automator_rule'));
+    if ($formState->getValue('automator_enabled')) {
+      $values = $formState->getValues();
+      foreach ($values as $key => $val) {
+        if (strpos($key, 'automator_rule_') === 0) {
+          // Find the rule. If not found don't do anything.
+          $rule = $this->fieldRules->findRule($formState->getValue('automator_rule'));
 
-    // Validate the configuration.
-    if ($rule->needsPrompt() && $formState->getValue('automator_enabled') && $formState->getValue('automator_mode') == 'base' && !$formState->getValue('automator_prompt')) {
-      $formState->setErrorByName('automator_prompt', $this->t('If you enable AI Automator, you have to give a prompt.'));
+          // Validate the configuration.
+          if ($rule->needsPrompt() && $formState->getValue('automator_mode') == 'base' && !$formState->getValue('automator_prompt')) {
+            $formState->setErrorByName('automator_prompt', $this->t('If you enable AI Automator, you have to give a prompt.'));
+          }
+          if ($formState->getValue('automator_mode') == 'base' && !$formState->getValue('automator_base_field')) {
+            $formState->setErrorByName('automator_base_field', $this->t('If you enable AI Automator, you have to give a base field.'));
+          }
+          // Run the rule validation.
+          if (method_exists($rule, 'validateConfigValues')) {
+            $rule->validateConfigValues($form, $formState);
+          }
+        }
+      }
     }
-    if ($formState->getValue('automator_enabled') && $formState->getValue('automator_mode') == 'base' && !$formState->getValue('automator_base_field')) {
-      $formState->setErrorByName('automator_base_field', $this->t('If you enable AI Automator, you have to give a base field.'));
-    }
-    // Run the rule validation.
-    if (method_exists($rule, 'validateConfigValues')) {
-      $rule->validateConfigValues($form, $formState);
-    }
+
     return TRUE;
   }
 
@@ -427,22 +468,45 @@ class AiAutomatorFieldConfig {
    *   The form state interface.
    */
   public function addConfigValues($entity_type, FieldConfig|BaseFieldOverride $fieldConfig, &$form, FormStateInterface $formState) {
-    // Reset previous values.
-    $settings = $fieldConfig->getThirdPartySettings('ai_automator');
-    foreach ($settings as $key => $val) {
-      $fieldConfig->unsetThirdPartySetting('ai_automator', $key);
-    }
+    // Get the default config if it exists.
+    $id = $form['#entity']->getEntityTypeId() . '.' . $form['#entity']->bundle() . '.' . $fieldConfig->getName() . '.default';
+    /** @var \Drupal\ai_automator\Entity\AiAutomator $aiConfig */
+    $aiConfig = $this->entityTypeManager->getStorage('ai_automator')->load($id);
+
     // Save the configuration.
     if ($formState->getValue('automator_enabled')) {
+      if (!$aiConfig) {
+        // Create a new one if there is no config.
+        /** @var \Drupal\ai_automator\Entity\AiAutomator $aiConfig */
+        $aiConfig = $this->entityTypeManager->getStorage('ai_automator')->create([
+          'id' => $id,
+          'entity_type' => $form['#entity']->getEntityTypeId(),
+          'bundle' => $form['#entity']->bundle(),
+          'field_name' => $fieldConfig->getName(),
+        ]);
+      }
+      $aiConfig->set('label', $formState->getValue('automator_label') ?? $fieldConfig->getLabel() . ' Default');
+      $aiConfig->set('rule', $formState->getValue('automator_rule'));
+      $aiConfig->set('input_mode', $formState->getValue('automator_mode'));
+      $aiConfig->set('weight', $formState->getValue('automator_weight'));
+      $aiConfig->set('worker_type', $formState->getValue('automator_worker_type'));
+      $aiConfig->set('edit_mode', $formState->getValue('automator_edit_mode'));
+      $aiConfig->set('base_field', $formState->getValue('automator_base_field'));
+      $aiConfig->set('prompt', $formState->getValue('automator_prompt') ?? '');
+      $aiConfig->set('token', $formState->getValue('automator_token') ?? '');
+
+      $pluginConfig = [];
       foreach ($formState->getValues() as $key => $val) {
         if (substr($key, 0, 10) == 'automator_') {
-          $fieldConfig->setThirdPartySetting('ai_automator', $key, $val);
+          $pluginConfig[$key] = $val;
         }
       }
+      $aiConfig->set('plugin_config', $pluginConfig);
+      $aiConfig->save();
     }
-    else {
-      // Hard disable.
-      $fieldConfig->unsetThirdPartySetting('ai_automator', 'automator_enabled');
+    else if ($aiConfig) {
+      // Remove it if disabled and exists.
+      $aiConfig->delete();
     }
     return TRUE;
   }

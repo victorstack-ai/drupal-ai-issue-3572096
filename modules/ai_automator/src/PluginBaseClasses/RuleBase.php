@@ -3,8 +3,11 @@
 namespace Drupal\ai_automator\PluginBaseClasses;
 
 use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\OperationType\Chat\ChatInput;
+use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\Service\AiProviderFormHelper;
-use Drupal\ai_automator\PluginInterfaces\AiAutomatorFieldRuleInterface;
+use Drupal\ai\Utility\CastUtility;
+use Drupal\ai_automator\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -15,7 +18,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * This is a base class for all rule helpers.
  */
-abstract class RuleBase implements AiAutomatorFieldRuleInterface, ContainerFactoryPluginInterface {
+abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPluginInterface {
 
   use StringTranslationTrait;
 
@@ -52,7 +55,7 @@ abstract class RuleBase implements AiAutomatorFieldRuleInterface, ContainerFacto
    * @param \Drupal\ai\Service\AiProviderFormHelper $formHelper
    *   The form helper.
    */
-  final public function __construct(
+  public function __construct(
     $plugin_id,
     $plugin_definition,
     AiProviderPluginManager $pluginManager,
@@ -155,12 +158,12 @@ abstract class RuleBase implements AiAutomatorFieldRuleInterface, ContainerFacto
     $providers = $this->formHelper->getAiProvidersOptions($this->llmType);
     $defaults = $this->aiPluginManager->getDefaultProviderForOperationType($this->llmType);
     $provider = $formState->getValue('automator_ai_provider');
-    if (!$provider && !empty($defaults['provider_id'])) {
+    if (!$provider) {
       $provider = $defaultValues['automator_ai_provider'] ?? $defaults['provider_id'];
     }
     $form['automator_ai_provider'] = [
       '#type' => 'select',
-      '#title' => $this->t('LLM Provider'),
+      '#title' => $this->t('AI Provider'),
       '#options' => $providers,
       '#default_value' => $provider,
       '#ajax' => [
@@ -185,7 +188,7 @@ abstract class RuleBase implements AiAutomatorFieldRuleInterface, ContainerFacto
     if ($provider) {
       $llmInstance = $this->aiPluginManager->createInstance($provider);
       $model = $formState->getValue('automator_ai_model');
-      if (!$model && !empty($defaults['model_id'])) {
+      if (!$model) {
         $model = $defaultValues['automator_ai_model'] ?? $defaults['model_id'];
       }
 
@@ -236,6 +239,13 @@ abstract class RuleBase implements AiAutomatorFieldRuleInterface, ContainerFacto
   /**
    * {@inheritDoc}
    */
+  public function validateConfigValues($form, FormStateInterface $formState) {
+
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   public function generateTokens(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig, $delta = 0) {
     $values = $entity->get($automatorConfig['base_field'])->getValue();
     return [
@@ -248,14 +258,14 @@ abstract class RuleBase implements AiAutomatorFieldRuleInterface, ContainerFacto
   /**
    * {@inheritDoc}
    */
-  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition) {
+  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     return TRUE;
   }
 
   /**
    * {@inheritDoc}
    */
-  public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition) {
+  public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     $entity->set($fieldDefinition->getName(), $values);
   }
 
@@ -282,7 +292,163 @@ abstract class RuleBase implements AiAutomatorFieldRuleInterface, ContainerFacto
    */
   public static function loadModelsAjaxCallback(array &$form, FormStateInterface $form_state) {
     $form_state->setRebuild(TRUE);
-    return $form['automator_container']['automator_advanced']['ajax_prefix'];
+    // Get trigger suffix.
+    $trigger = $form_state->getTriggeringElement();
+    $suffix = $trigger['#attributes']['data-trigger-suffix'] ?? '';
+    return $form['automator_container']['automator_advanced']['ajax_prefix' . $suffix];
+  }
+
+
+  /**
+   * Load one extra provider form.
+   *
+   * @param array $form
+   */
+  public function extraProviderForm(&$form, FormStateInterface $formState, $type, $suffix, $title, $defaultValues = []) {
+    $suffix = '_' . ltrim($suffix, '_');
+    // Load the AI models.
+    $providers = $this->formHelper->getAiProvidersOptions($type);
+    $defaults = $this->aiPluginManager->getDefaultProviderForOperationType($type);
+    $provider = $formState->getValue('automator_ai_provider' . $suffix);
+    if (!$provider) {
+      $provider = $defaultValues['automator_ai_provider' . $suffix] ?? $defaults['provider_id'];
+    }
+    $form['automator_ai_provider' . $suffix] = [
+      '#type' => 'select',
+      '#title' => $title,
+      '#options' => $providers,
+      '#default_value' => $provider,
+      '#attributes' => [
+        'data-trigger-suffix' => $suffix,
+      ],
+      '#ajax' => [
+        'callback' => '\Drupal\ai_automator\PluginBaseClasses\RuleBase::loadModelsAjaxCallback',
+        'wrapper' => 'provider_ajax_wrapper' . $suffix,
+      ],
+    ];
+    $form['ajax_prefix' . $suffix] = [
+      '#type' => 'details',
+      '#open' => TRUE,
+      '#title' => $this->t('Provider Configuration'),
+      '#attributes' => [
+        'id' => 'provider_ajax_wrapper' . $suffix,
+      ],
+      '#states' => [
+        'visible' => [
+          ':input[name="automator_ai_provider' . $suffix . '"]' => ['!value' => ''],
+        ],
+      ],
+    ];
+
+    if ($provider) {
+      $llmInstance = $this->aiPluginManager->createInstance($provider);
+      $model = $formState->getValue('automator_ai_model' . $suffix);
+      if (!$model) {
+        $model = $defaultValues['automator_ai_model' . $suffix] ?? $defaults['model_id'];
+      }
+      if (!$model) {
+        $model = key($llmInstance->getConfiguredModels($type));
+      }
+
+      $form['ajax_prefix' . $suffix]['automator_ai_model' . $suffix] = [
+        '#type' => 'select',
+        '#title' => $this->t('Model'),
+        // Only get chat models.
+        '#options' => $llmInstance->getConfiguredModels($type),
+        '#default_value' => $model,
+        '#attributes' => [
+          'data-trigger-suffix' => $suffix,
+        ],
+        '#ajax' => [
+          'callback' => '\Drupal\ai_automator\PluginBaseClasses\RuleBase::loadModelsAjaxCallback',
+          'wrapper' => 'provider_ajax_wrapper' . $suffix,
+        ],
+      ];
+
+      if ($model) {
+        $configuration = $llmInstance->getAvailableConfiguration($type, $model);
+
+        if (count($configuration)) {
+          $form['ajax_prefix' . $suffix]['ai_settings'] = [
+            '#type' => 'fieldset',
+            '#title' => $this->t('Settings'),
+          ];
+          foreach ($configuration as $key => $definition) {
+            $set_key = 'automator_configuration_' . $key . $suffix;
+            $form['ajax_prefix' . $suffix]['ai_settings'][$set_key]['#type'] = $this->formHelper->mapSchemaTypeToFormType($definition);
+            $form['ajax_prefix' . $suffix]['ai_settings'][$set_key]['#required'] = $definition['required'] ?? FALSE;
+            $form['ajax_prefix' . $suffix]['ai_settings'][$set_key]['#title'] = $definition['label'] ?? $key;
+            $form['ajax_prefix' . $suffix]['ai_settings'][$set_key]['#description'] = $definition['description'] ?? '';
+            $form['ajax_prefix' . $suffix]['ai_settings'][$set_key]['#default_value'] = $defaultValues[$set_key] ?? $definition['default'] ?? NULL;
+            if (isset($definition['constraints'])) {
+              foreach ($definition['constraints'] as $form_key => $value) {
+                if ($form_key == 'options') {
+                  $form['ajax_prefix' . $suffix]['ai_settings'][$set_key]['#options'] = array_combine($value, $value);
+                  continue;
+                }
+                $form['ajax_prefix' . $suffix]['ai_settings'][$set_key]['#' . $form_key] = $value;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return $form;
+  }
+
+  /**
+   * Prepare LLM Instance.
+   *
+   * @param string $operationType
+   *   The operation type.
+   * @param array automatorConfig
+   *   The automator configuration.
+   *
+   * @return \Drupal\ai\Plugin\ProviderProxy
+   *   The LLM instance.
+   */
+  public function prepareLlmInstance($operationType, array $automatorConfig) {
+    $instance = $this->aiPluginManager->createInstance($automatorConfig['ai_provider']);
+
+    // Get configuration.
+    $config = [];
+    $configCast = $instance->getAvailableConfiguration($operationType, $automatorConfig['ai_model']);
+    foreach ($automatorConfig as $key => $val) {
+      if (strpos($key, 'configuration_') === 0 && $val) {
+        $configKey = str_replace('configuration_', '', $key);
+        if (isset($configCast[$configKey]['type'])) {
+          $config[$configKey] = CastUtility::typeCast($configCast[$configKey]['type'], $val);
+        }
+      }
+    }
+    $instance->setConfiguration($config);
+    return $instance;
+  }
+
+  /**
+   * Run a chat message.
+   *
+   * @param string $prompt
+   *   The prompt.
+   * @param array $automatorConfig
+   *   The automator configuration.
+   * @param \Drupal\ai\Plugin\ProviderProxy $instance
+   *   The LLM instance.
+   *
+   * @return array
+   *   The response.
+   */
+  public function runChatMessage(string $prompt, array $automatorConfig, $instance) {
+    // Create new messages.
+    $input = new ChatInput([
+      new ChatMessage("user", $prompt),
+    ]);
+
+    $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
+
+    // Normalize the response.
+    return json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE);
   }
 
 }

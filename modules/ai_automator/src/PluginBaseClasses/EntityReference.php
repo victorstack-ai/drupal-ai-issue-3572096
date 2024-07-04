@@ -2,6 +2,8 @@
 
 namespace Drupal\ai_automator\PluginBaseClasses;
 
+use Drupal\ai\OperationType\Chat\ChatInput;
+use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -56,7 +58,7 @@ abstract class EntityReference extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function extraFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $form) {
+  public function extraFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
     // Load the target type.
     $targetType = $fieldDefinition->getFieldStorageDefinition()->getSettings()['target_type'];
     // Check if the target type has bundles.
@@ -68,7 +70,7 @@ abstract class EntityReference extends RuleBase {
       foreach ($bundles as $bundle => $info) {
         $options[$bundle] = $info['label'];
       }
-      $chosenBundle = $fieldDefinition->getConfig($entity->bundle())->getThirdPartySetting('ai_automator', 'automator_entity_reference_bundle', '');
+      $chosenBundle = $defaultValues['entity_reference_bundle'] ?? '';
       $form['automator_entity_reference_bundle'] = [
         '#type' => 'select',
         '#title' => t('Bundle'),
@@ -124,7 +126,7 @@ abstract class EntityReference extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function validateConfigValues(&$form, FormStateInterface $formState) {
+  public function validateConfigValues($form, FormStateInterface $formState) {
     // If the bundle is set, but no fields, please notify the user.
     $foundField = FALSE;
     $isEnabled = FALSE;
@@ -181,8 +183,17 @@ abstract class EntityReference extends RuleBase {
     }
 
     $total = [];
+    $instance = $this->prepareLlmInstance('chat', $automatorConfig);
     foreach ($prompts as $prompt) {
-      $values = $this->generateResponse($prompt, $automatorConfig, $entity, $fieldDefinition);
+      // Create new messages.
+      $input = new ChatInput([
+        new ChatMessage("user", $prompt),
+      ]);
+
+      $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
+
+      // Normalize the response.
+      $values = json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE);
       if (!empty($values)) {
         $total = array_merge_recursive($total, $values);
       }
@@ -203,7 +214,7 @@ abstract class EntityReference extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition) {
+  public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     $target = $fieldDefinition->getConfig($entity->bundle())->getThirdPartySetting('ai_automator', 'automator_entity_reference_bundle', '');
     $baseFields = $this->getBaseFields($entity->getEntityTypeId());
     $storage = \Drupal::entityTypeManager()->getStorage($entity->getEntityTypeId());
@@ -211,6 +222,7 @@ abstract class EntityReference extends RuleBase {
 
     $targets = [];
     foreach ($values as $parts) {
+      // @var \Drupal\Core\Entity\ContentEntityInterface $newEntity */
       $newEntity = $storage->create([
         $baseFields['owner'] => \Drupal::currentUser()->id(),
         $baseFields['status'] => 1,

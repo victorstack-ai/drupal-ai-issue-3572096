@@ -9,6 +9,7 @@ use Drupal\ai_automator\PluginManager\AiAutomatorFieldProcessManager;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -38,6 +39,11 @@ class AiAutomatorEntityModifier {
   protected EventDispatcherInterface $eventDispatcher;
 
   /**
+   * The entity type manager.
+   */
+  protected EntityTypeManagerInterface $entityTypeManager;
+
+  /**
    * Constructs an entity modifier.
    *
    * @param \Drupal\Core\Entity\EntityFieldManagerInterface $fieldManager
@@ -48,12 +54,15 @@ class AiAutomatorEntityModifier {
    *   The field rules.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
    *   The event dispatcher.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity type manager.
    */
-  public function __construct(EntityFieldManagerInterface $fieldManager, AiAutomatorFieldProcessManager $processes, AiFieldRules $aiFieldRules, EventDispatcherInterface $eventDispatcher) {
+  public function __construct(EntityFieldManagerInterface $fieldManager, AiAutomatorFieldProcessManager $processes, AiFieldRules $aiFieldRules, EventDispatcherInterface $eventDispatcher, EntityTypeManagerInterface $entityTypeManager) {
     $this->fieldManager = $fieldManager;
     $this->processes = $processes;
     $this->fieldRules = $aiFieldRules;
     $this->eventDispatcher = $eventDispatcher;
+    $this->entityTypeManager = $entityTypeManager;
   }
 
   /**
@@ -138,23 +147,26 @@ class AiAutomatorEntityModifier {
    *   An array with the field configs affected.
    */
   public function entityHasConfig(EntityInterface $entity) {
+    $storage = $this->entityTypeManager->getStorage('ai_automator');
+    $fields = $storage->loadByProperties([
+      'entity_type' => $entity->getEntityTypeId(),
+      'bundle' => $entity->bundle(),
+    ]);
     $fieldDefinitions = $this->fieldManager->getFieldDefinitions($entity->getEntityTypeId(), $entity->bundle());
 
     $fieldConfigs = [];
     $automatorConfig = [];
-    foreach ($fieldDefinitions as $fieldDefinition) {
+    /** @var \Drupal\ai_automator\Entity\AiAutomator $field */
+    foreach ($fields as $field) {
       // Check if enabled and return the config.
-      $config = $fieldDefinition->getConfig($entity->bundle());
-      if ($config->getThirdPartySetting('ai_automator', 'automator_enabled', 0)) {
-        $fieldConfigs[$config->getName()]['fieldDefinition'] = $fieldDefinition;
-        $automatorConfig = [
-          'field_name' => $config->getName(),
-        ];
-        foreach ($config->getThirdPartySettings('ai_automator') as $key => $setting) {
-          $automatorConfig[substr($key, 10)] = $setting;
-        }
-        $fieldConfigs[$config->getName()]['automatorConfig'] = $automatorConfig;
+      $fieldConfigs[$field->id()]['fieldDefinition'] = $fieldDefinitions[$field->get('field_name')];
+      $automatorConfig = [
+        'field_name' => $field->get('field_name'),
+      ];
+      foreach ($field->get('plugin_config') as $key => $setting) {
+        $automatorConfig[substr($key, 10)] = $setting;
       }
+      $fieldConfigs[$field->id()]['automatorConfig'] = $automatorConfig;
     }
 
     return $fieldConfigs;

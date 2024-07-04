@@ -4,6 +4,7 @@ namespace Drupal\ai_automator\PluginBaseClasses;
 
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Form\FormStateInterface;
 
 /**
  * This is a base class that can be used for LLMs taxonomy rules.
@@ -50,8 +51,8 @@ class Taxonomy extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition) {
-    $form = parent::extraAdvancedFormFields($entity, $fieldDefinition);
+  public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
+    $form = parent::extraAdvancedFormFields($entity, $fieldDefinition, $formState, $defaultValues);
     $settings = $fieldDefinition->getConfig($entity->bundle())->getSettings();
 
     $form['automator_clean_up'] = [
@@ -106,8 +107,9 @@ class Taxonomy extends RuleBase {
       $prompts[$key] = $prompt;
     }
     $total = [];
+    $instance = $this->prepareLlmInstance('chat', $automatorConfig);
     foreach ($prompts as $prompt) {
-      $values = $this->generateResponse($prompt, $automatorConfig, $entity, $fieldDefinition);
+      $values = $this->runChatMessage($prompt, $automatorConfig, $instance);
       if (!empty($values)) {
         // Clean value.
         if ($automatorConfig['clean_up']) {
@@ -126,7 +128,7 @@ class Taxonomy extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition) {
+  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     $settings = $fieldDefinition->getConfig($entity->bundle())->getSettings();
     // If it's auto create and its a text field, create.
     if ($settings['handler_settings']['auto_create'] && is_string($value)) {
@@ -147,7 +149,7 @@ class Taxonomy extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition) {
+  public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     $settings = $fieldDefinition->getConfig($entity->bundle())->getSettings();
 
     $list = $this->getTaxonomyList($entity, $fieldDefinition);
@@ -194,7 +196,8 @@ class Taxonomy extends RuleBase {
     $prompt .= "Do not include any explanations, only provide a RFC8259 compliant JSON response following this format without deviation.\n[{\"available_category\": \"The available category\", \"new_category\": \"The new category\"}]\n\n";
     $prompt .= "List of available categories:\n" . implode("\n", $list) . "\n\n";
     $prompt .= "List of new categories:\n" . implode("\n", $values) . "\n\n";
-    $data = $this->generateRawResponse($prompt, $automatorConfig, $entity, $fieldDefinition);
+    $instance = $this->prepareLlmInstance('chat', $automatorConfig);
+    $data = $this->runChatMessage($prompt, $automatorConfig, $instance);
     // If there is a response, we use it.
     if (!empty($data)) {
       foreach ($data as $change) {

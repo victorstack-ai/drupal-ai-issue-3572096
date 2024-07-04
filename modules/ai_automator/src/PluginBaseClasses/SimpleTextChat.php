@@ -14,7 +14,7 @@ class SimpleTextChat extends RuleBase {
    * {@inheritDoc}
    */
   public function helpText() {
-    return "This is a simple text to text model.";
+    return "This is a simple text to text model. It will give back the raw output.";
   }
 
   /**
@@ -36,8 +36,9 @@ class SimpleTextChat extends RuleBase {
       }
     }
     $total = [];
+    $instance = $this->prepareLlmInstance('chat', $automatorConfig);
     foreach ($prompts as $prompt) {
-      $value = $this->generateResponse($prompt, $automatorConfig, $entity, $fieldDefinition);
+      $value = $this->runChatMessage($prompt, $automatorConfig, $instance);
       if (!empty($value)) {
         $total = array_merge_recursive($total, $value);
       }
@@ -48,7 +49,7 @@ class SimpleTextChat extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition) {
+  public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     $config = $fieldDefinition->getConfig($entity->bundle())->getSettings();
     if (!empty($config['max_length'])) {
       $values = array_map(function ($value) use ($config) {

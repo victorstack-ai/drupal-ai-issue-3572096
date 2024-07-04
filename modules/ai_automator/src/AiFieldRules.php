@@ -3,7 +3,7 @@
 namespace Drupal\ai_automator;
 
 use Drupal\ai_automator\Event\RuleIsAllowedEvent;
-use Drupal\ai_automator\PluginManager\AiAutomatorFieldRuleManager;
+use Drupal\ai_automator\PluginManager\AiAutomatorTypeManager;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -16,7 +16,7 @@ class AiFieldRules {
   /**
    * The field rule manager.
    */
-  protected AiAutomatorFieldRuleManager $fieldRuleManager;
+  protected AiAutomatorTypeManager $fieldRuleManager;
 
   /**
    * The event dispatcher.
@@ -26,12 +26,12 @@ class AiFieldRules {
   /**
    * Constructs a field rule manager.
    *
-   * @param \Drupal\ai_automator\PluginManager\AiAutomatorFieldRuleManager $fieldRuleManager
+   * @param \Drupal\ai_automator\PluginManager\AiAutomatorTypeManager $fieldRuleManager
    *   The field rule manager.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
    *   The event dispatcher.
    */
-  public function __construct(AiAutomatorFieldRuleManager $fieldRuleManager, EventDispatcherInterface $eventDispatcher) {
+  public function __construct(AiAutomatorTypeManager $fieldRuleManager, EventDispatcherInterface $eventDispatcher) {
     $this->fieldRuleManager = $fieldRuleManager;
     $this->eventDispatcher = $eventDispatcher;
   }
@@ -44,12 +44,13 @@ class AiFieldRules {
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The field definition interface.
    *
-   * @return array[Drupal\ai_automator\Annotation\AiAutomatorFieldRule]
+   * @return array[Drupal\ai_automator\Attribute\AiAutomatorType]
    *   The field rules to possibly use.
    */
   public function findRuleCandidates(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition) {
     $target = $fieldDefinition->getFieldStorageDefinition()->getSettings()['target_type'] ?? NULL;
     $candidates = [];
+
     foreach ($this->fieldRuleManager->getDefinitions() as $definition) {
       if ($definition['field_rule'] == $fieldDefinition->getType() && (
         !$target || $definition['target'] == $target || $definition['target'] == 'any')) {
@@ -76,7 +77,7 @@ class AiFieldRules {
    * @param string $id
    *   The id of the rule.
    *
-   * @return Drupal\ai_automator\Annotation\AiAutomatorFieldRule
+   * @return Drupal\ai_automator\Attribute\AiAutomatorType
    *   The field rule to use.
    */
   public function findRule($id) {

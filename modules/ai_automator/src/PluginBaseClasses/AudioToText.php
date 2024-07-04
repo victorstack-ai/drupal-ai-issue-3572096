@@ -3,9 +3,8 @@
 namespace Drupal\ai_automator\PluginBaseClasses;
 
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInput;
-use Drupal\ai\Utility\CastUtility;
 use Drupal\ai_automator\PluginBaseClasses\RuleBase;
-use Drupal\ai_automator\PluginInterfaces\AiAutomatorFieldRuleInterface;
+use Drupal\ai_automator\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
@@ -13,7 +12,7 @@ use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 /**
  * Helper function for audio to text.
  */
-class AudioToText extends RuleBase implements AiAutomatorFieldRuleInterface, ContainerFactoryPluginInterface {
+class AudioToText extends RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPluginInterface {
 
   /**
    * {@inheritDoc}
@@ -60,17 +59,8 @@ class AudioToText extends RuleBase implements AiAutomatorFieldRuleInterface, Con
    */
   public function generate(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     $values = [];
-    $instance = $this->aiPluginManager->createInstance($automatorConfig['ai_provider']);
+    $instance = $this->prepareLlmInstance('speech_to_text', $automatorConfig);
 
-    // Get configuration.
-    $config = [];
-    $configCast = $instance->getAvailableConfiguration('speech_to_text', $automatorConfig['ai_model']);
-    foreach ($automatorConfig as $key => $val) {
-      if (strpos($key, 'configuration_') === 0 && $val) {
-        $configKey = str_replace('configuration_', '', $key);
-        $config[$configKey] = CastUtility::typeCast($configCast[$configKey]['type'], $val);
-      }
-    }
     foreach ($entity->{$automatorConfig['base_field']} as $entityWrapper) {
       if ($entityWrapper->entity) {
         $fileEntity = $entityWrapper->entity;
@@ -91,7 +81,7 @@ class AudioToText extends RuleBase implements AiAutomatorFieldRuleInterface, Con
   /**
    * {@inheritDoc}
    */
-  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition) {
+  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     // Should be a string.
     if (!is_string($value)) {
       return FALSE;
@@ -103,7 +93,7 @@ class AudioToText extends RuleBase implements AiAutomatorFieldRuleInterface, Con
   /**
    * {@inheritDoc}
    */
-  public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition) {
+  public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     // Then set the value.
     $entity->set($fieldDefinition->getName(), $values);
     return TRUE;

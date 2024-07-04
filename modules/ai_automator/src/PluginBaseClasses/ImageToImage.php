@@ -85,7 +85,7 @@ class ImageToImage extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition) {
+  public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     $images = [];
     foreach ($values as $value) {
       $fileHelper = $this->getFileHelper();

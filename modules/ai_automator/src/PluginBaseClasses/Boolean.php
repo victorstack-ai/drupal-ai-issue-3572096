@@ -78,24 +78,14 @@ class Boolean extends RuleBase {
       $prompts[$key] = $prompt;
     }
     $total = [];
-    $instance = $this->aiPluginManager->createInstance($automatorConfig['ai_provider']);
+    $instance = $this->prepareLlmInstance('chat', $automatorConfig);
 
-    // Get configuration.
-    $config = [];
-    $configCast = $instance->getAvailableConfiguration('chat', $automatorConfig['ai_model']);
-    foreach ($automatorConfig as $key => $val) {
-      if (strpos($key, 'configuration_') === 0 && $val) {
-        $configKey = str_replace('configuration_', '', $key);
-        $config[$configKey] = CastUtility::typeCast($configCast[$configKey]['type'], $val);
-      }
-    }
     foreach ($prompts as $prompt) {
       // Create new messages.
       $input = new ChatInput([
         new ChatMessage("user", $prompt),
       ]);
 
-      $instance->setConfiguration($config);
       $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
 
       // Normalize the response.
@@ -123,7 +113,7 @@ class Boolean extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition) {
+  public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     // Transform string to boolean.
     foreach ($values as $key => $value) {
       $values[$key] = in_array($value['value'], ['TRUE', '1', 1]) ? TRUE : FALSE;

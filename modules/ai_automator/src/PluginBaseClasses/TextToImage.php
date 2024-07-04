@@ -2,6 +2,8 @@
 
 namespace Drupal\ai_automator\PluginBaseClasses;
 
+use Drupal\ai\OperationType\TextToImage\TextToImageInput;
+use Drupal\ai\Utility\CastUtility;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 
@@ -9,6 +11,11 @@ use Drupal\Core\Field\FieldDefinitionInterface;
  * This is a base class that can be used for image generators.
  */
 class TextToImage extends RuleBase {
+
+  /**
+   * {@inheritDoc}
+   */
+  protected string $llmType = 'text_to_image';
 
   /**
    * {@inheritDoc}
@@ -43,19 +50,18 @@ class TextToImage extends RuleBase {
       }
     }
 
-    // Get amount if it exists.
-    $amount = $automatorConfig['image_generation_amount'] ?? 1;
-
     // Generate the images.
     $images = [];
+    $instance = $this->prepareLlmInstance('text_to_image', $automatorConfig);
     foreach ($prompts as $prompt) {
       // The image binary.
-      for ($i = 0; $i < $amount; $i++) {
-        $image = $this->generateResponse($prompt, $automatorConfig, $entity, $fieldDefinition);
-        if ($image) {
+      $input = new TextToImageInput($prompt);
+      $response = $instance->textToImage($input, $automatorConfig['ai_model'])->getNormalized();
+      if (!empty($response)) {
+        foreach ($response as $imageBinary) {
           $images[] = [
             'filename' => $this->getFileName($automatorConfig),
-            'binary' => $image,
+            'binary' => $imageBinary,
           ];
         }
       }
@@ -66,7 +72,7 @@ class TextToImage extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition) {
+  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition, $automatorConfig) {
     if (!isset($value['filename'])) {
       return FALSE;
     }
@@ -77,7 +83,7 @@ class TextToImage extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition) {
+  public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, $automatorConfig) {
     $images = [];
     foreach ($values as $value) {
       $fileHelper = $this->getFileHelper();

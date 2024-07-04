@@ -73,8 +73,9 @@ class Lists extends RuleBase {
       $prompts[$key] = $prompt;
     }
     $total = [];
+    $instance = $this->prepareLlmInstance('chat', $automatorConfig);
     foreach ($prompts as $prompt) {
-      $values = $this->generateResponse($prompt, $automatorConfig, $entity, $fieldDefinition);
+      $values = $this->runChatMessage($prompt, $automatorConfig, $instance);
       if (!empty($values)) {
         $total = array_merge_recursive($total, $values);
       }
@@ -103,7 +104,7 @@ class Lists extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition) {
+  public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     $config = $fieldDefinition->getConfig($entity->bundle())->getSettings();
     $keys = array_keys($config['allowed_values']);
     $realValues = [];
