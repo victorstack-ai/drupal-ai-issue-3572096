@@ -3,6 +3,8 @@
 namespace Drupal\ai_automator\PluginBaseClasses;
 
 use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\OperationType\Chat\ChatInput;
+use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInput;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai_automator\Exceptions\AiAutomatorRequestErrorException;
@@ -14,6 +16,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Utility\Token;
@@ -185,7 +188,76 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
    * {@inheritDoc}
    */
   public function generate(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
+    // Generate the real prompt if needed.
+    $prompts = [];
+    // @phpstan-ignore-next-line
+    if (!empty($automatorConfig['mode']) && $automatorConfig['mode'] == 'token' && \Drupal::service('module_handler')->moduleExists('token')) {
+      $prompts[] = \Drupal::service('ai_automator.prompt_helper')->renderTokenPrompt($automatorConfig['token'], $entity); /* @phpstan-ignore-line */
+    } elseif ($this->needsPrompt()) {
+      // Run rule.
+      foreach ($entity->get($automatorConfig['base_field'])->getValue() as $i => $item) {
+        // Get tokens.
+        $tokens = $this->generateTokens($entity, $fieldDefinition, $automatorConfig, $i);
+        $prompts[] = \Drupal::service('ai_automator.prompt_helper')->renderPrompt($automatorConfig['prompt'], $tokens, $i); /* @phpstan-ignore-line */
+      }
+    }
 
+    // Build up the prompt.
+    $configs = [];
+    foreach ($automatorConfig as $key => $value) {
+      if (strpos($key, 'entity_field_enable_') !== FALSE && $value) {
+        $field = str_replace('entity_field_enable_', '', $key);
+        $promptPart = $automatorConfig['entity_field_generate_' . $field];
+        $configs[] = '"' . $field . '": "' . $promptPart . '"';
+      }
+    }
+
+    $total = [];
+    foreach ($entity->{$automatorConfig['base_field']} as $entityWrapper) {
+      if ($entityWrapper->entity) {
+        $fileEntity = $entityWrapper->entity;
+        if (in_array($fileEntity->getMimeType(), [
+          'video/mp4',
+        ])) {
+          $this->prepareToExplain($automatorConfig, $entityWrapper->entity);
+          $prompt = "The following images shows rasters of scenes from a video together with a timestamp when it happens in the video. The audio is transcribed below. Please follow the instructions below with the video as context, using images and transcripts.\n\n";
+          $prompt .= "Instructions:\n----------------------------\n" . $prompts[0] . "\n----------------------------\n\n";
+          $prompt .= "Transcription:\n----------------------------\n" . $this->transcription . "\n----------------------------\n\n";
+          $prompt .= "\n\nDo not include any explanations, only provide a RFC8259 compliant JSON response following this format without deviation.\n[{\"value\": \"requested value\"}].";
+          $instance = $this->prepareLlmInstance('chat', $automatorConfig);
+          $input = new ChatInput([
+            new ChatMessage('user', $prompt, $this->images),
+          ]);
+          $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
+          $json = json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE);
+          $values = $this->decodeValueArray($json);
+          $total = array_merge_recursive($total, $values);
+        }
+      }
+    }
+    return $total;
+  }
+
+
+  /**
+   * {@inheritDoc}
+   */
+  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
+    // Should be a string.
+    if (!is_string($value)) {
+      return FALSE;
+    }
+    // Otherwise it is ok.
+    return TRUE;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
+    // Then set the value.
+    $entity->set($fieldDefinition->getName(), $values);
+    return TRUE;
   }
 
   /**
@@ -261,6 +333,16 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
     $result = shell_exec($command);
     return $result ? TRUE : FALSE;
   }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
+    $form = parent::extraAdvancedFormFields($entity, $fieldDefinition, $formState, $defaultValues);
+    $this->extraProviderForm($form, $formState, 'speech_to_text', 'audio', $this->t('Speech To Text Provider'), $defaultValues);
+    return $form;
+  }
+
 
   /**
    * Generate the images and audio for OpenAI.

@@ -8,6 +8,7 @@ use Drupal\ai_automator\Attribute\AiAutomatorType;
 use Drupal\ai_automator\Exceptions\AiAutomatorResponseErrorException;
 use Drupal\ai_automator\PluginBaseClasses\VideoToText;
 use Drupal\ai_automator\PluginInterfaces\AiAutomatorTypeInterface;
+use Drupal\ai_interpolator\Exceptions\AiInterpolatorResponseErrorException;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -15,20 +16,21 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\file\Entity\File;
 
 /**
- * The rules for a video to html field.
+ * The rules for a text_long field.
+ *
  */
 #[AiAutomatorType(
-  id: 'llm_video_to_html',
-  label: new TranslatableMarkup('Video To Image (Experimental)'),
-  field_rule: 'image',
+  id: 'llm_video_to_video',
+  label: new TranslatableMarkup('Video To Video (Experimental)'),
+  field_rule: 'file',
   target: 'file',
 )]
-class LlmVideoToImage extends VideoToText implements AiAutomatorTypeInterface {
+class LlmVideoToVideo extends VideoToText implements AiAutomatorTypeInterface {
 
   /**
    * {@inheritDoc}
    */
-  public $title = 'Video To Image (Experimental)';
+  public $title = 'Video To Video (Experimental)';
 
   /**
    * {@inheritDoc}
@@ -80,13 +82,13 @@ class LlmVideoToImage extends VideoToText implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public function extraFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
+  public function extraFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $form_state, array $defaultValues = []) {
     $form['automator_cutting_prompt'] = [
       '#type' => 'textarea',
       '#title' => 'Cutting Prompt',
-      '#description' => $this->t('Any commands that you need to give to cut out the image(s).Can use Tokens if Token module is installed.'),
+      '#description' => $this->t('Any commands that you need to give to cut out the video(s). Specify if you want the video(s) to be mixed together in one video if you only want one video out. Can use Tokens if Token module is installed.'),
       '#attributes' => [
-        'placeholder' => $this->t('Cut out an image where they show two people holding hands.'),
+        'placeholder' => $this->t('Cut out all the videos where they are saying "Hello". Mix together in one video.'),
       ],
       '#default_value' => $defaultValues['automator_cutting_prompt'] ?? '',
       '#weight' => 24,
@@ -120,22 +122,11 @@ class LlmVideoToImage extends VideoToText implements AiAutomatorTypeInterface {
           'video/mp4',
         ])) {
           $this->prepareToExplain($automatorConfig, $entityWrapper->entity);
-          $prompt = "The following images shows rasters of scenes from a video together with a timestamp when it happens in the video. The audio is transcribed below. Please follow the instructions below with the video as context, using images and transcripts and try to figure out what image or images the person wants to cut out. Give back multiple timestamps if multiple images are wanted.\n\n";
+          $prompt = "The following images shows rasters of scenes from a video together with a timestamp when it happens in the video. The audio is transcribed below. Please follow the instructions below with the video as context, using images and transcripts and try to figure out what sections the person wants to cut out. Unless the persons specifices that they want the video mixed together in one video, give back multiple timestamps if needed. If the don't want it mixed, give back multiple values with just one start time and end time.\n\n";
           $prompt .= "Instructions:\n----------------------------\n" . $cutPrompt . "\n----------------------------\n\n";
           $prompt .= "Transcription:\n----------------------------\n" . $this->transcription . "\n----------------------------\n\n";
-          $prompt .= "\n\nDo not include any explanations, only provide a RFC8259 compliant JSON response following this format without deviation.\n[{\"value\": [{\"timestamp\": \"The timestamp to take an image in format h:i:s.ms\"}]].";
+          $prompt .= "\n\nDo not include any explanations, only provide a RFC8259 compliant JSON response following this format without deviation.\n[{\"value\": [{\"start_time\": \"The start time of the cut in format h:i:s.ms\", \"end_time\": \"The end time of the cut in format h:i:s.ms\"}]].";
           $instance = $this->prepareLlmInstance('chat', $automatorConfig);
-          $input = new ChatInput([
-            new ChatMessage('user', $prompt, $this->images),
-          ]);
-          $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
-          $json = json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE);
-          $values = $this->decodeValueArray($json);
-          // Run a second time to get the exact shot.
-          if (!isset($values[0][0]['timestamp'])) {
-            throw new AiAutomatorResponseErrorException('Could not find any timestamp..');
-          }
-          $this->createVideoRasterImages($automatorConfig, $entityWrapper->entity, $values[0]['value'][0]['timestamp']);
           $input = new ChatInput([
             new ChatMessage('user', $prompt, $this->images),
           ]);
@@ -154,7 +145,7 @@ class LlmVideoToImage extends VideoToText implements AiAutomatorTypeInterface {
    */
   public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     // Should have start and end time.
-    if (!isset($value['timestamp'])) {
+    if (!is_array($value) && !isset($value[0]['start_time']) && !isset($value[0]['end_time'])) {
       return FALSE;
     }
     // Otherwise it is ok.
@@ -170,9 +161,8 @@ class LlmVideoToImage extends VideoToText implements AiAutomatorTypeInterface {
     $this->createTempDirectory();
 
     // First cut out the videos.
-    $baseField = $automatorConfig['base_field'] ?? '';
+    $baseField = $automatorConfig['base_field'];
     $realPath = $this->fileSystem->realpath($entity->{$baseField}->entity->getFileUri());
-
     // Get the actual file name and replace it with _cut.
     $fileName = pathinfo($realPath, PATHINFO_FILENAME);
     $newFile = str_replace($fileName, $fileName . '_cut', $entity->{$baseField}->entity->getFileUri());
@@ -181,20 +171,36 @@ class LlmVideoToImage extends VideoToText implements AiAutomatorTypeInterface {
       $tmpNames = [];
       foreach ($keys as $key) {
         // Generate double files, but we only need the last one.
-        $tmpName = $this->fileSystem->tempnam($this->tmpDir, 'video') . '.jpg';
+        $tmpName = $this->fileSystem->tempnam($this->tmpDir, 'video') . '.mp4';
         $tmpNames[] = $tmpName;
 
-        $inputVideo = $this->video ?? $realPath;
-        $command = 'ffmpeg -y -nostdin -i "' . $inputVideo . '" -ss "' . $key['timestamp'] . '" -frames:v 1 ' . $tmpName;
-
+        $command = "ffmpeg -y -nostdin -i \"$realPath\" -ss {$key['start_time']} -to {$key['end_time']} -c:v libx264 -c:a aac -strict -2 $tmpName";
         exec($command, $status);
         if ($status) {
           throw new AiAutomatorResponseErrorException('Could not generate new videos.');
         }
       }
 
+      // If we only have one video, we can just rename it.
+      if (count($tmpNames) == 1) {
+        $endFile = $tmpNames[0];
+      } else {
+        // If we have more than one video, we need to mix them together.
+        $endFile = $this->fileSystem->tempnam($this->tmpDir, 'video') . '.mp4';
+        // Generate list file.
+        $text = '';
+        foreach ($tmpNames as $tmpName) {
+          $text .= "file '$tmpName'\n";
+        }
+        file_put_contents($this->tmpDir . 'list.txt', $text);
+        $command = "ffmpeg -y -nostdin -f concat -safe 0 -i {$this->tmpDir}list.txt -c:v libx264 -c:a aac -strict -2 $endFile";
+        exec($command, $status);
+        if ($status) {
+          throw new AiAutomatorResponseErrorException('Could not generate new videos.');
+        }
+      }
       // Move the file to the correct place.
-      $fixedFile = $this->fileSystem->move($tmpName, $newFile);
+      $fixedFile = $this->fileSystem->move($endFile, $newFile);
 
       // Generate the new file entity.
       $file = File::create([
@@ -203,7 +209,6 @@ class LlmVideoToImage extends VideoToText implements AiAutomatorTypeInterface {
         'uid' => $this->currentUser->id(),
       ]);
       $file->save();
-
       $files[] = ['target_id' => $file->id()];
     }
 

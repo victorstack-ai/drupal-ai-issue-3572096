@@ -448,7 +448,53 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
 
     // Normalize the response.
-    return json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE);
+    return $this->decodeValueArray(json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE));
+  }
+
+  /**
+   * Decode a value array.
+   *
+   * @param mixed $json
+   *   The input.
+   *
+   * @return array
+   *   The decoded array.
+   */
+  public function decodeValueArray($json) {
+    // Sometimes it doesn't become a valid JSON response, but many.
+    if (isset($json[0]['value'])) {
+      $values = [];
+      foreach ($json as $val) {
+        if (isset($val['value'])) {
+          $values[] = $val['value'];
+        }
+      }
+      return $values;
+    }
+    // Sometimes it sets the wrong key.
+    elseif (isset($json[0])) {
+      $values = [];
+      foreach ($json as $val) {
+        if (isset($val[key($val)])) {
+          $values[] = $val[key($val)];
+        }
+        return $values;
+      }
+    }
+    // Sometimes it does not return with values in GPT 3.5.
+    elseif (is_array($json) && isset($json[0][0])) {
+      $values = [];
+      foreach ($json as $vals) {
+        foreach ($vals as $val) {
+          if (isset($val)) {
+            $values[] = $val;
+          }
+        }
+      }
+      return $values;
+    } elseif (isset($json['value'])) {
+      return [$json['value']];
+    }
   }
 
 }

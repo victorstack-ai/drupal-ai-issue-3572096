@@ -80,15 +80,6 @@ class LlmVideoToHtml extends VideoToText implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
-    $form = parent::extraAdvancedFormFields($entity, $fieldDefinition, $formState, $defaultValues);
-    $this->extraProviderForm($form, $formState, 'speech_to_text', 'audio', $this->t('Speech To Text Provider'), $defaultValues);
-    return $form;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
   public function generate(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     // Tokenize prompt.
     $cutPrompt = $this->renderTokenPrompt($automatorConfig['generating_prompt'], $entity);
@@ -120,7 +111,8 @@ class LlmVideoToHtml extends VideoToText implements AiAutomatorTypeInterface {
             new ChatMessage('user', $prompt, $this->images),
           ]);
           $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
-          $values = json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE);
+          $json = json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE);
+          $values = $this->decodeValueArray($json);
           $total = array_merge_recursive($total, $values);
         }
       }
@@ -133,7 +125,7 @@ class LlmVideoToHtml extends VideoToText implements AiAutomatorTypeInterface {
    */
   public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     // Should be a string.
-    if (!isset($value['value']) || !is_string($value['value'])) {
+    if (!is_string($value)) {
       return FALSE;
     }
     // Otherwise it is ok.
@@ -155,7 +147,6 @@ class LlmVideoToHtml extends VideoToText implements AiAutomatorTypeInterface {
     $baseField = $automatorConfig['base_field'] ?? '';
     // Get the texts.
     foreach ($values as $value) {
-      $value = $value['value'];
       preg_match_all('/<img src="([^"]+)"(.*)data-crop="(.*)" \/>/', $value, $matches);
       foreach ($matches[1] as $i => $match) {
         $cropData = [];
