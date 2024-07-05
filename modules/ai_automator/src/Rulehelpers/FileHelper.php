@@ -180,4 +180,127 @@ class FileHelper {
     return FALSE;
   }
 
+  /**
+   * Get all media bundles as options.
+   *
+   * @return array
+   *   The media bundles.
+   */
+  public function getMediaBundles() {
+    $bundles = [];
+    $mediaTypeStorage = $this->entityTypeManager->getStorage('media_type');
+    foreach ($mediaTypeStorage->loadMultiple() as $mediaType) {
+      $bundles[$mediaType->id()] = $mediaType->label();
+    }
+    return $bundles;
+  }
+
+  /**
+   * Get the field definition of the medias field.
+   *
+   * @param string $mediaType
+   *   The media type.
+   *
+   * @return \Drupal\Core\Field\FieldDefinitionInterface
+   *   The field definition.
+   */
+  private function getMediaField($mediaType) {
+    $mediaStorage = $this->entityTypeManager->getStorage('media');
+    $mediaTypeInterface = $this->entityTypeManager->getStorage('media_type')->load($mediaType);
+    /* @var \Drupal\media\Entity\Media $media */
+    $media = $mediaStorage->create([
+      'name' => 'tmp',
+      'bundle' => $mediaType,
+    ]);
+    $sourceField = $media->getSource()->getSourceFieldDefinition($mediaTypeInterface);
+    return $sourceField;
+  }
+
+  /**
+   * Get media settings for a media type.
+   *
+   * @param string $mediaType
+   *   The media type.
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   The entity.
+   *
+   * @return array
+   *   The media settings.
+   */
+  public function getMediaSettings($mediaType, ContentEntityInterface $entity) {
+    $fileField = $this->getMediaField($mediaType);
+    return $fileField->getConfig($entity->bundle())->getSettings();
+  }
+
+  /**
+   * Create file path for media from field config.
+   *
+   * @param string $fileName
+   *   The file name.
+   * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
+   *   The field definition.
+   * @param string $mediaType
+   *   The media type.
+   *
+   * @return string
+   *   The file path.
+   */
+  public function createMediaFilePathFromFieldConfig($fileName, FieldDefinitionInterface $fieldDefinition, $mediaType) {
+    $entity = $this->entityTypeManager->getStorage('media')->create([
+      'name' => 'tmp',
+      'bundle' => $mediaType,
+    ]);
+    return $this->createFilePathFromFieldConfig($fileName, $fieldDefinition, $entity);
+  }
+
+  /**
+   * Generate media from a binary.
+   *
+   * @param string $fileName
+   *   The file name.
+   * @param string $binary
+   *   The binary string.
+   * @param string $mediaType
+   *   The media type.
+   * @param string $mediaName
+   *   The media name.
+   * @param array $params
+   *   The media params.
+   *
+   * @return \Drupal\media\Entity\Media|false
+   *   The media or false on failure.
+   */
+  public function generateMediaImageFromFile($fileName, $binary, $mediaType, $mediaName, $params = []) {
+    $sourceField = $this->getMediaField($mediaType);
+    $fileField = $sourceField->getName();
+    $mediaStorage = $this->entityTypeManager->getStorage('media');
+    $path = $this->createMediaFilePathFromFieldConfig($fileName, $sourceField, $mediaType);
+
+    $imageConfig = $sourceField->getConfig($mediaType)->getSettings();
+    if (!$imageConfig) {
+      return [];
+    }
+    $file = $this->generateFileFromBinary($binary, $path);
+    // Get resolution.
+    $resolution = getimagesize($file->uri->value);
+
+    // Prepare for Media.
+    $fileForMedia = [
+      'target_id' => $file->id(),
+      'alt' => $params['alt'] ?? '',
+      'title' => $params['title'] ?? '',
+      'width' => $resolution[0],
+      'height' => $resolution[1],
+    ];
+
+    /** @var \Drupal\media\Entity\Media */
+    $media = $mediaStorage->create([
+      'name' => $mediaName,
+      'bundle' => $mediaType,
+      $fileField => $fileForMedia,
+    ]);
+    $media->save();
+
+    return $media;
+  }
 }
