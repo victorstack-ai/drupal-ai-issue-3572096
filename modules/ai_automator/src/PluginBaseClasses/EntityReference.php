@@ -204,7 +204,7 @@ abstract class EntityReference extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition) {
+  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     if (!is_array($value)) {
       return FALSE;
     }
