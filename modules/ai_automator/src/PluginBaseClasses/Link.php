@@ -64,7 +64,7 @@ class Link extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition) {
+  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition, $automatorConfig) {
     $config = $fieldDefinition->getConfig($entity->bundle())->getSettings();
     // Has to have a link an be valid.
     if (empty($value['uri']) || !filter_var($value['uri'], FILTER_VALIDATE_URL)) {

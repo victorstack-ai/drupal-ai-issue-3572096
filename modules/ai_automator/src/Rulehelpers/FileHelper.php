@@ -140,6 +140,22 @@ class FileHelper {
   }
 
   /**
+   * Generate a file entity from a url by downloading it.
+   *
+   * @param string $url
+   *   The url.
+   * @param string $dest
+   *   The destination.
+   *
+   * @return \Drupal\file\FileInterface|false
+   *   The file or false on failure.
+   */
+  public function generateFileFromUrl(string $url, string $dest) {
+    $binary = file_get_contents($url);
+    return $this->generateFileFromBinary($binary, $dest);
+  }
+
+  /**
    * Generate a temporary file from a binary.
    *
    * @param string $binary

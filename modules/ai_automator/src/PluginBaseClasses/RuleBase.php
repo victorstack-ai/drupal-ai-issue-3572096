@@ -16,7 +16,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * This is a base class for all rule helpers.
+ * This is a base class for all LLM rule helpers.
  */
 abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPluginInterface {
 
