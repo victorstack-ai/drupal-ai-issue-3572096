@@ -135,16 +135,6 @@ final class AiAutomator extends ConfigEntityBase implements AiAutomatorInterface
   /**
    * {@inheritdoc}
    */
-  public function getPluginDependencies(PluginInspectionInterface $instance) {
-    $dependencies = parent::getPluginDependencies($instance);
-    // Set the field its connected to.
-    $dependencies['config'][] = 'field.field.' . $this->entity_type . '.' . $this->bundle . '.' . $this->field_name;
-    return $dependencies;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function calculateDependencies() {
     $dependencies = parent::calculateDependencies();
     // Set the dependencies its connected to.
