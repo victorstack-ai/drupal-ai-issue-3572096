@@ -75,4 +75,11 @@ class QueueWorkerProcessor implements AiAutomatorFieldProcessInterface, Containe
     return TRUE;
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  public function processorIsAllowed(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition) {
+    return TRUE;
+  }
+
 }

@@ -41,4 +41,17 @@ interface AiAutomatorFieldProcessInterface {
    */
   public function postProcessing(EntityInterface $entity);
 
+  /**
+   * Check if the processor is allowed.
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   *   The entity to check for modifications.
+   * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
+   *   Field definition interface.
+   *
+   * @return bool
+   *   If the processor is allowed.
+   */
+  public function processorIsAllowed(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition);
+
 }

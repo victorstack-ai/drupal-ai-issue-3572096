@@ -107,4 +107,11 @@ class DirectSaveProcessing implements AiAutomatorFieldProcessInterface, Containe
     $entity->ai_automator_status = AiAutomatorStatusField::STATUS_FINISHED;
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  public function processorIsAllowed(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition) {
+    return TRUE;
+  }
+
 }

@@ -389,7 +389,11 @@ class AiAutomatorFieldConfig {
     // Get possible processes.
     $workerOptions = [];
     foreach ($this->processes->getDefinitions() as $definition) {
-      $workerOptions[$definition['id']] = $definition['title'] . ' - ' . $definition['description'];
+      // Check so the processor is allowed.
+      $instance = $this->processes->createInstance($definition['id']);
+      if ($instance->processorIsAllowed($entity, $fieldInfo)) {
+        $workerOptions[$definition['id']] = $definition['title'] . ' - ' . $definition['description'];
+      }
     }
 
     $form['automator_container']['automator_advanced']['automator_worker_type'] = [
