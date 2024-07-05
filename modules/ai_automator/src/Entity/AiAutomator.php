@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\ai_automator\Entity;
 
 use Drupal\ai_automator\AiAutomatorInterface;
+use Drupal\Component\Plugin\PluginInspectionInterface;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 
 /**
@@ -130,5 +131,25 @@ final class AiAutomator extends ConfigEntityBase implements AiAutomatorInterface
    * The plugin config.
    */
   protected array $plugin_config;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getPluginDependencies(PluginInspectionInterface $instance) {
+    $dependencies = parent::getPluginDependencies($instance);
+    // Set the field its connected to.
+    $dependencies['config'][] = 'field.field.' . $this->entity_type . '.' . $this->bundle . '.' . $this->field_name;
+    return $dependencies;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function calculateDependencies() {
+    $dependencies = parent::calculateDependencies();
+    // Set the dependencies its connected to.
+    $this->addDependency('config', 'field.field.' . $this->entity_type . '.' . $this->bundle . '.' . $this->field_name);
+    return $dependencies;
+  }
 
 }
