@@ -123,6 +123,26 @@ abstract class ExternalBase implements AiAutomatorTypeInterface, ContainerFactor
   /**
    * {@inheritDoc}
    */
+  public function generate(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
+    // Generate the real prompt if needed.
+    $prompts = [];
+    // @phpstan-ignore-next-line
+    if (!empty($automatorConfig['mode']) && $automatorConfig['mode'] == 'token' && \Drupal::service('module_handler')->moduleExists('token')) {
+      $prompts[] = \Drupal::service('ai_automator.prompt_helper')->renderTokenPrompt($automatorConfig['token'], $entity); /* @phpstan-ignore-line */
+    } elseif ($this->needsPrompt()) {
+      // Run rule.
+      foreach ($entity->get($automatorConfig['base_field'])->getValue() as $i => $item) {
+        // Get tokens.
+        $tokens = $this->generateTokens($entity, $fieldDefinition, $automatorConfig, $i);
+        $prompts[] = \Drupal::service('ai_automator.prompt_helper')->renderPrompt($automatorConfig['prompt'], $tokens, $i); /* @phpstan-ignore-line */
+      }
+    }
+    return $prompts;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     return TRUE;
   }
