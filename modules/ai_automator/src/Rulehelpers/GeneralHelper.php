@@ -342,6 +342,26 @@ class GeneralHelper {
   }
 
   /**
+   * Helper function to enable/disable form field tokens from the entity.
+   *
+   * @param array $form
+   *   The form element, passed by reference.
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   The entity.
+   * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
+   *   The field definition.
+   */
+  public function addTokenConfigurationToggle(array &$form, $entity, $fieldDefinition, $defaultValues) {
+    $form['automator_token_configuration_toggle'] = [
+      '#type' => 'checkbox',
+      '#title' => 'Dynamic Configuration',
+      '#description' => $this->t('If you want to set configuration values based on the entity, this will expose token fields for this.'),
+      '#default_value' => $defaultValues['automator_token_configuration_toggle'] ?? FALSE,
+    ];
+  }
+
+
+  /**
    * Helper function to offer a form field as tokens from the entity.
    *
    * @param string $id
@@ -370,7 +390,7 @@ class GeneralHelper {
       ]),
       '#states' => [
         'visible' => [
-          'input[name="interpolation_token_configuration_toggle"]' => [
+          'input[name="automator_token_configuration_toggle"]' => [
             'checked' => TRUE,
           ],
         ],
@@ -392,7 +412,7 @@ class GeneralHelper {
 
     if ($this->moduleHandler->moduleExists('token')) {
       // @phpstan-ignore-next-line
-      $mergeForm["{$id}_override"]['token_help'] = \Drupal::service('@token.tree_builder')->buildRenderable([
+      $mergeForm["{$id}_override"]['token_help'] = \Drupal::service('token.tree_builder')->buildRenderable([
         $this->aiAutomatorFieldConfig->getEntityTokenType($entity->getEntityTypeId()),
         'current-user',
       ]);
