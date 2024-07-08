@@ -59,18 +59,7 @@ class Boolean extends RuleBase {
    */
   public function generate(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     // Generate the real prompt if needed.
-    $prompts = [];
-    // @phpstan-ignore-next-line
-    if (!empty($automatorConfig['mode']) && $automatorConfig['mode'] == 'token' && \Drupal::service('module_handler')->moduleExists('token')) {
-      $prompts[] = \Drupal::service('ai_automator.prompt_helper')->renderTokenPrompt($automatorConfig['token'], $entity); /* @phpstan-ignore-line */
-    } elseif ($this->needsPrompt()) {
-      // Run rule.
-      foreach ($entity->get($automatorConfig['base_field'])->getValue() as $i => $item) {
-        // Get tokens.
-        $tokens = $this->generateTokens($entity, $fieldDefinition, $automatorConfig, $i);
-        $prompts[] = \Drupal::service('ai_automator.prompt_helper')->renderPrompt($automatorConfig['prompt'], $tokens, $i); /* @phpstan-ignore-line */
-      }
-    }
+    $prompts = parent::generate($entity, $fieldDefinition, $automatorConfig);
 
     // Add JSON output.
     foreach ($prompts as $key => $prompt) {
@@ -101,7 +90,7 @@ class Boolean extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition) {
+  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     // Has to be string boolean.
     if (!in_array($value['value'], ['TRUE', 'FALSE', '0', '1', 0, 1])) {
       return FALSE;

@@ -34,22 +34,12 @@ class SimpleTextCompletion extends RuleBase {
    */
   public function generate(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     // Generate the real prompt if needed.
-    $prompts = [];
-    // @phpstan-ignore-next-line
-    if (!empty($automatorConfig['mode']) && $automatorConfig['mode'] == 'token' && \Drupal::service('module_handler')->moduleExists('token')) {
-      $prompts[] = \Drupal::service('ai_automator.prompt_helper')->renderTokenPrompt($automatorConfig['token'], $entity); /* @phpstan-ignore-line */
-    }
-    elseif ($this->needsPrompt()) {
-      // Run rule.
-      foreach ($entity->get($automatorConfig['base_field'])->getValue() as $i => $item) {
-        // Get tokens.
-        $tokens = $this->generateTokens($entity, $fieldDefinition, $automatorConfig, $i);
-        $prompts[] = \Drupal::service('ai_automator.prompt_helper')->renderPrompt($automatorConfig['prompt'], $tokens, $i); /* @phpstan-ignore-line */
-      }
-    }
+    $prompts = parent::generate($entity, $fieldDefinition, $automatorConfig);
+
     $total = [];
+    $instance = $this->prepareLlmInstance('text_completion', $automatorConfig);
     foreach ($prompts as $prompt) {
-      $value = $this->generateResponse($prompt, $automatorConfig, $entity, $fieldDefinition);
+      $value = $this->runChatMessage($prompt, $automatorConfig, $instance);
       if (!empty($value)) {
         $total = array_merge_recursive($total, $value);
       }

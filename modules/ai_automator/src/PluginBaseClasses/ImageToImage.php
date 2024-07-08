@@ -74,7 +74,7 @@ class ImageToImage extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition) {
+  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     if (!isset($value['filename'])) {
       return FALSE;
     }

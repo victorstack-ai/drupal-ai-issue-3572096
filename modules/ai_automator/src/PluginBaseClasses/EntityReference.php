@@ -101,7 +101,7 @@ abstract class EntityReference extends RuleBase {
             '#title' => $info->getLabel(),
             '#description' => 'Check this box to enable this field for the generation.',
             '#weight' => 20,
-            '#default_value' => $fieldDefinition->getConfig($entity->bundle())->getThirdPartySetting('ai_automator', 'automator_entity_field_enable_' . $field, FALSE),
+            '#default_value' => $defaultValues['automator_entity_field_enable_' . $field] ?? FALSE,
           ];
 
           $form['ai_automator_fields']['automator_entity_field_generate_' . $field] = [
@@ -109,7 +109,7 @@ abstract class EntityReference extends RuleBase {
             '#title' => $info->getLabel(),
             '#description' => 'Describe specifically how this field should be filled out.',
             '#weight' => 20,
-            '#default_value' => $fieldDefinition->getConfig($entity->bundle())->getThirdPartySetting('ai_automator', 'automator_entity_field_generate_' . $field, ''),
+            '#default_value' => $defaultValues['automator_entity_field_generate_' . $field] ?? '',
             '#states' => [
               'visible' => [
                 ':input[name="automator_entity_field_enable_' . $field . '"]' => ['checked' => TRUE],
@@ -151,18 +151,7 @@ abstract class EntityReference extends RuleBase {
    */
   public function generate(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     // Generate the real prompt if needed.
-    $prompts = [];
-    // @phpstan-ignore-next-line
-    if (!empty($automatorConfig['mode']) && $automatorConfig['mode'] == 'token' && \Drupal::service('module_handler')->moduleExists('token')) {
-      $prompts[] = \Drupal::service('ai_automator.prompt_helper')->renderTokenPrompt($automatorConfig['token'], $entity); /* @phpstan-ignore-line */
-    } elseif ($this->needsPrompt()) {
-      // Run rule.
-      foreach ($entity->get($automatorConfig['base_field'])->getValue() as $i => $item) {
-        // Get tokens.
-        $tokens = $this->generateTokens($entity, $fieldDefinition, $automatorConfig, $i);
-        $prompts[] = \Drupal::service('ai_automator.prompt_helper')->renderPrompt($automatorConfig['prompt'], $tokens, $i); /* @phpstan-ignore-line */
-      }
-    }
+    $prompts = parent::generate($entity, $fieldDefinition, $automatorConfig);
 
     // Build up the prompt.
     $configs = [];
@@ -215,7 +204,7 @@ abstract class EntityReference extends RuleBase {
    * {@inheritDoc}
    */
   public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
-    $target = $fieldDefinition->getConfig($entity->bundle())->getThirdPartySetting('ai_automator', 'automator_entity_reference_bundle', '');
+    $target = $automatorConfig['entity_reference_bundle'] ?? '';
     $baseFields = $this->getBaseFields($entity->getEntityTypeId());
     $storage = \Drupal::entityTypeManager()->getStorage($entity->getEntityTypeId());
     $textFormat = $this->getGeneralHelper()->getTextFormat($fieldDefinition);
