@@ -2,9 +2,6 @@
 
 namespace Drupal\ai_automator\PluginBaseClasses;
 
-use Drupal\ai\OperationType\Chat\ChatInput;
-use Drupal\ai\OperationType\Chat\ChatMessage;
-use Drupal\ai\Utility\CastUtility;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -12,7 +9,7 @@ use Drupal\Core\Form\FormStateInterface;
 /**
  * This is a base class that can be used for LLMs complex text chat.
  */
-class ComplexTextChat extends SimpleTextChat {
+class ComplexTextChat extends RuleBase {
 
   /**
    * {@inheritDoc}
