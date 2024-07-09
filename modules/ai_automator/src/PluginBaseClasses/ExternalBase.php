@@ -2,23 +2,16 @@
 
 namespace Drupal\ai_automator\PluginBaseClasses;
 
-use Drupal\ai\AiProviderPluginManager;
-use Drupal\ai\OperationType\Chat\ChatInput;
-use Drupal\ai\OperationType\Chat\ChatMessage;
-use Drupal\ai\Service\AiProviderFormHelper;
-use Drupal\ai\Utility\CastUtility;
 use Drupal\ai_automator\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * This is a base class for all rule helpers.
  */
-abstract class ExternalBase implements AiAutomatorTypeInterface, ContainerFactoryPluginInterface {
+abstract class ExternalBase implements AiAutomatorTypeInterface {
 
   use StringTranslationTrait;
 
