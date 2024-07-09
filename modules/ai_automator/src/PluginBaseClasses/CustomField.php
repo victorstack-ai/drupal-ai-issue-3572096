@@ -51,6 +51,7 @@ class CustomField extends RuleBase {
   public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
     $config = $fieldDefinition->getConfig($entity->bundle())->getSettings();
 
+    $form = parent::extraAdvancedFormFields($entity, $fieldDefinition, $formState, $defaultValues);
     if (isset($config['field_settings'])) {
       foreach ($config['field_settings'] as $key => $value) {
         $form["automator_llm_custom_value_" . $key] = [
@@ -107,14 +108,7 @@ class CustomField extends RuleBase {
     $instance = $this->prepareLlmInstance('chat', $automatorConfig);
     foreach ($prompts as $prompt) {
       // Create new messages.
-      $input = new ChatInput([
-        new ChatMessage("user", $prompt),
-      ]);
-
-      $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
-
-      // Normalize the response.
-      $values = json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE);
+      $values = $this->runChatMessage($prompt, $automatorConfig, $instance);
 
       if (!empty($values)) {
         $total = array_merge_recursive($total, $values);
