@@ -460,6 +460,26 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
    *   The response.
    */
   public function runChatMessage(string $prompt, array $automatorConfig, $instance) {
+    $text = $this->runRawChatMessage($prompt, $automatorConfig, $instance);
+
+    // Normalize the response.
+    return $this->decodeValueArray(json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $text))), TRUE));
+  }
+
+  /**
+   * Run a chat message.
+   *
+   * @param string $prompt
+   *   The prompt.
+   * @param array $automatorConfig
+   *   The automator configuration.
+   * @param \Drupal\ai\Plugin\ProviderProxy $instance
+   *   The LLM instance.
+   *
+   * @return string
+   *   The response.
+   */
+  public function runRawChatMessage(string $prompt, array $automatorConfig, $instance) {
     // Create new messages.
     $input = new ChatInput([
       new ChatMessage("user", $prompt),
@@ -468,7 +488,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
 
     // Normalize the response.
-    return $this->decodeValueArray(json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE));
+    return $response->getText();
   }
 
   /**
