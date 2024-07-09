@@ -42,14 +42,7 @@ class FaqField extends RuleBase {
     $instance = $this->prepareLlmInstance('chat', $automatorConfig);
     foreach ($prompts as $prompt) {
       // Create new messages.
-      $input = new ChatInput([
-        new ChatMessage("user", $prompt),
-      ]);
-
-      $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
-
-      // Normalize the response.
-      $values = json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE);
+      $values = $this->runChatMessage($prompt, $automatorConfig, $instance);
       if (!empty($values)) {
         $total = array_merge_recursive($total, $values);
       }
