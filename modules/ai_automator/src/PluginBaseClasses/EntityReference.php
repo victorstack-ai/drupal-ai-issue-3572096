@@ -70,7 +70,7 @@ abstract class EntityReference extends RuleBase {
       foreach ($bundles as $bundle => $info) {
         $options[$bundle] = $info['label'];
       }
-      $chosenBundle = $defaultValues['entity_reference_bundle'] ?? '';
+      $chosenBundle = $defaultValues['automator_entity_reference_bundle'] ?? '';
       $form['automator_entity_reference_bundle'] = [
         '#type' => 'select',
         '#title' => t('Bundle'),
@@ -175,14 +175,7 @@ abstract class EntityReference extends RuleBase {
     $instance = $this->prepareLlmInstance('chat', $automatorConfig);
     foreach ($prompts as $prompt) {
       // Create new messages.
-      $input = new ChatInput([
-        new ChatMessage("user", $prompt),
-      ]);
-
-      $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
-
-      // Normalize the response.
-      $values = json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE);
+      $values = $this->runChatMessage($prompt, $automatorConfig, $instance);
       if (!empty($values)) {
         $total = array_merge_recursive($total, $values);
       }
