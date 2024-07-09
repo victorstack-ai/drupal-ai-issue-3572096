@@ -22,4 +22,5 @@ class LlmTaxonomy extends Taxonomy implements AiAutomatorTypeInterface {
    * {@inheritDoc}
    */
   public $title = 'LLM: Taxonomy';
+
 }
