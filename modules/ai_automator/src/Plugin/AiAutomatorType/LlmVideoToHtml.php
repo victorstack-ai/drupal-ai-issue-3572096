@@ -17,7 +17,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  */
 #[AiAutomatorType(
   id: 'llm_video_to_image',
-  label: new TranslatableMarkup('Video To HTML (Experimental)'),
+  label: new TranslatableMarkup('LLM: Video To HTML (Experimental)'),
   field_rule: 'text_long',
   target: '',
 )]
@@ -26,7 +26,7 @@ class LlmVideoToHtml extends VideoToText implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public $title = 'Video To HTML (Experimental)';
+  public $title = 'LLM: Video To HTML (Experimental)';
 
   /**
    * {@inheritDoc}

@@ -12,7 +12,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  */
 #[AiAutomatorType(
   id: 'llm_media_image_generation',
-  label: new TranslatableMarkup('LLM Media Image Generation'),
+  label: new TranslatableMarkup('LLM: Media Image Generation'),
   field_rule: 'entity_reference',
   target: 'media',
 )]
@@ -21,6 +21,6 @@ class LlmMediaImageGeneration extends TextToMediaImage implements AiAutomatorTyp
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM Media Image Generation';
+  public $title = 'LLM: Media Image Generation';
 
 }

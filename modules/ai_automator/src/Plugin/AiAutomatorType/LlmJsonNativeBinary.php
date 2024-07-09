@@ -11,7 +11,7 @@ use Drupal\ai_automator\PluginBaseClasses\TextToJsonField;
  */
 #[AiAutomatorType(
   id: 'llm_json_native_binary_field',
-  label: new TranslatableMarkup('LLM JSON Field'),
+  label: new TranslatableMarkup('LLM: JSON Field'),
   field_rule: 'json_native_binary',
   target: '',
 )]
@@ -20,6 +20,6 @@ class LlmJsonNativeBinary extends TextToJsonField implements AiAutomatorTypeInte
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM JSON Field';
+  public $title = 'LLM: JSON Field';
 
 }

@@ -12,7 +12,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  */
 #[AiAutomatorType(
   id: 'llm_office_hours',
-  label: new TranslatableMarkup('LLM Office Hours'),
+  label: new TranslatableMarkup('LLM: Office Hours'),
   field_rule: 'office_hours',
   target: '',
 )]
@@ -21,6 +21,6 @@ class LlmOfficeHours extends OfficeHours implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM Office Hours';
+  public $title = 'LLM: Office Hours';
 
 }

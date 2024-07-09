@@ -12,7 +12,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  */
 #[AiAutomatorType(
   id: 'llm_boolean',
-  label: new TranslatableMarkup('LLM Boolean'),
+  label: new TranslatableMarkup('LLM: Boolean'),
   field_rule: 'boolean',
   target: '',
 )]
@@ -21,5 +21,5 @@ class LlmBoolean extends Boolean implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM Boolean';
+  public $title = 'LLM: Boolean';
 }

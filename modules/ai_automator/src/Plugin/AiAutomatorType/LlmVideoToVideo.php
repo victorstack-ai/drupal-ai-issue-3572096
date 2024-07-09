@@ -21,7 +21,7 @@ use Drupal\file\Entity\File;
  */
 #[AiAutomatorType(
   id: 'llm_video_to_video',
-  label: new TranslatableMarkup('Video To Video (Experimental)'),
+  label: new TranslatableMarkup('LLM: Video To Video (Experimental)'),
   field_rule: 'file',
   target: 'file',
 )]
@@ -30,7 +30,7 @@ class LlmVideoToVideo extends VideoToText implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public $title = 'Video To Video (Experimental)';
+  public $title = 'LLM: Video To Video (Experimental)';
 
   /**
    * {@inheritDoc}

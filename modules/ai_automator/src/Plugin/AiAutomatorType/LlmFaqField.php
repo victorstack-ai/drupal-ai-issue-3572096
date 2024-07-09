@@ -12,7 +12,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  */
 #[AiAutomatorType(
   id: 'llm_faq_field',
-  label: new TranslatableMarkup('LLM FAQ Field'),
+  label: new TranslatableMarkup('LLM: FAQ Field'),
   field_rule: 'faqfield',
   target: '',
 )]
@@ -21,6 +21,6 @@ class LlmFaqField extends FaqField implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM FAQ Field';
+  public $title = 'LLM: FAQ Field';
 
 }

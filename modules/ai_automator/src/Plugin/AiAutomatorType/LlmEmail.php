@@ -12,7 +12,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  */
 #[AiAutomatorType(
   id: 'llm_email',
-  label: new TranslatableMarkup('LLM Email'),
+  label: new TranslatableMarkup('LLM: Email'),
   field_rule: 'email',
   target: '',
 )]
@@ -21,6 +21,6 @@ class LlmEmail extends Email implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM Email';
+  public $title = 'LLM: Email';
 
 }

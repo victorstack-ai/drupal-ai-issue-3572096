@@ -12,7 +12,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  */
 #[AiAutomatorType(
   id: 'llm_float',
-  label: new TranslatableMarkup('LLM Float'),
+  label: new TranslatableMarkup('LLM: Float'),
   field_rule: 'float',
   target: '',
 )]
@@ -21,6 +21,6 @@ class LlmFloat extends Numeric implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM Float';
+  public $title = 'LLM: Float';
 
 }

@@ -12,7 +12,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  */
 #[AiAutomatorType(
   id: 'llm_link',
-  label: new TranslatableMarkup('LLM Link'),
+  label: new TranslatableMarkup('LLM: Link'),
   field_rule: 'link',
   target: '',
 )]
@@ -21,6 +21,6 @@ class LlmLink extends Link implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM Link';
+  public $title = 'LLM: Link';
 
 }

@@ -12,7 +12,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  */
 #[AiAutomatorType(
   id: 'llm_decimal',
-  label: new TranslatableMarkup('LLM Decimal'),
+  label: new TranslatableMarkup('LLM: Decimal'),
   field_rule: 'decimal',
   target: '',
 )]
@@ -21,5 +21,5 @@ class LlmDecimal extends Numeric implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM Decimal';
+  public $title = 'LLM: Decimal';
 }

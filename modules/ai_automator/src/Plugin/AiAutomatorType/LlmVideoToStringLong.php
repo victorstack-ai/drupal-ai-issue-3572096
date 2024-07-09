@@ -12,7 +12,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  */
 #[AiAutomatorType(
   id: 'llm_video_to_string_long',
-  label: new TranslatableMarkup('LLM Video to Text'),
+  label: new TranslatableMarkup('LLM: Video to Text'),
   field_rule: 'string_long',
   target: '',
 )]
@@ -21,6 +21,6 @@ class LlmVideoToStringLong extends VideoToText implements AiAutomatorTypeInterfa
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM Video to Text';
+  public $title = 'LLM: Video to Text';
 
 }

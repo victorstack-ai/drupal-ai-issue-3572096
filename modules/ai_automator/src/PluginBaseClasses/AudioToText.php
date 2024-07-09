@@ -17,7 +17,7 @@ class AudioToText extends RuleBase implements AiAutomatorTypeInterface, Containe
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM Audio To Text';
+  public $title = 'LLM: Audio To Text';
 
   /**
    * {@inheritDoc}

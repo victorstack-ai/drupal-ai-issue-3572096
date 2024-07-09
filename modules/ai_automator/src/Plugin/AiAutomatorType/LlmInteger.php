@@ -14,7 +14,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  */
 #[AiAutomatorType(
   id: 'llm_integer',
-  label: new TranslatableMarkup('LLM Integer'),
+  label: new TranslatableMarkup('LLM: Integer'),
   field_rule: 'integer',
   target: '',
 )]
@@ -23,7 +23,7 @@ class LlmInteger extends Numeric implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM Integer';
+  public $title = 'LLM: Integer';
 
   /**
    * {@inheritDoc}

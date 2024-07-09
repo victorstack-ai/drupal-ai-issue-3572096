@@ -9,17 +9,10 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * The rules for an entity reference field.
- *
- * @AiInterpolatorFieldRule(
- *   id = "ai_interpolator_openai_entity_reference",
- *   title = @Translation("OpenAI Entity Reference"),
- *   field_rule = "entity_reference",
- *   target = "any"
- * )
  */
 #[AiAutomatorType(
   id: 'llm_entity_reference',
-  label: new TranslatableMarkup('LLM Entity Reference'),
+  label: new TranslatableMarkup('LLM: Entity Reference'),
   field_rule: 'entity_reference',
   target: 'any',
 )]
@@ -28,6 +21,6 @@ class LlmEntityReference extends EntityReference implements AiAutomatorTypeInter
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM Entity Reference';
+  public $title = 'LLM: Entity Reference';
 
 }

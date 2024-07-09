@@ -12,7 +12,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  */
 #[AiAutomatorType(
   id: 'llm_simple_text_with_summary',
-  label: new TranslatableMarkup('LLM Text (simple)'),
+  label: new TranslatableMarkup('LLM: Text (simple)'),
   field_rule: 'text_with_summary',
   target: '',
 )]
@@ -21,5 +21,5 @@ class LlmSimpleTextWithSummary extends SimpleTextChat implements AiAutomatorType
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM Text (simple)';
+  public $title = 'LLM: Text (simple)';
 }

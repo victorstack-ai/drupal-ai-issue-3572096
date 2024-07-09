@@ -12,7 +12,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  */
 #[AiAutomatorType(
   id: 'llm_list_string',
-  label: new TranslatableMarkup('LLM List String'),
+  label: new TranslatableMarkup('LLM: List'),
   field_rule: 'list_string',
   target: '',
 )]
@@ -21,6 +21,6 @@ class LlmListString extends Lists implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM List String';
+  public $title = 'LLM: List';
 
 }

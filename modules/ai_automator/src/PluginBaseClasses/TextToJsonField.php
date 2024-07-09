@@ -72,7 +72,7 @@ class TextToJsonField extends SimpleTextChat {
   /**
    * {@inheritDoc}
    */
-  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition) {
+  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     // Check so its valid JSON.
     if (empty($value)) {
       return FALSE;

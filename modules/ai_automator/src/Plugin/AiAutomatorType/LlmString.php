@@ -12,7 +12,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  */
 #[AiAutomatorType(
   id: 'llm_string',
-  label: new TranslatableMarkup('LLM String'),
+  label: new TranslatableMarkup('LLM: Text'),
   field_rule: 'string',
   target: '',
 )]
@@ -21,6 +21,6 @@ class LlmString extends ComplexTextChat implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM String';
+  public $title = 'LLM: Text';
 
 }

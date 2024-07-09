@@ -12,7 +12,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  */
 #[AiAutomatorType(
   id: 'llm_audio_to_text_long',
-  label: new TranslatableMarkup('LLM Audio to Text Long'),
+  label: new TranslatableMarkup('LLM: Audio to Text'),
   field_rule: 'text_long',
   target: '',
 )]
@@ -21,5 +21,5 @@ class LlmAudioToTextLong extends AudioToText implements AiAutomatorTypeInterface
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM Audio to Text Long';
+  public $title = 'LLM: Audio to Text';
 }

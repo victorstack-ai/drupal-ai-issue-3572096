@@ -11,7 +11,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  */
 #[AiAutomatorType(
   id: 'llm_chart_from_text',
-  label: new TranslatableMarkup('LLM Chart From Text'),
+  label: new TranslatableMarkup('LLM: Chart From Text'),
   field_rule: 'chart_config',
   target: '',
 )]
@@ -21,5 +21,5 @@ class LlmChartFromText extends Chart {
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM Chart From Text';
+  public $title = 'LLM: Chart From Text';
 }

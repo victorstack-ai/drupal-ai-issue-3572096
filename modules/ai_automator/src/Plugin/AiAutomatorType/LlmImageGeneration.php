@@ -13,7 +13,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  */
 #[AiAutomatorType(
   id: 'llm_image_generation',
-  label: new TranslatableMarkup('LLM Image Generation'),
+  label: new TranslatableMarkup('LLM: Image Generation'),
   field_rule: 'image',
   target: 'file',
 )]
@@ -22,6 +22,6 @@ class LlmImageGeneration extends TextToImage implements AiAutomatorTypeInterface
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM Image Generation';
+  public $title = 'LLM: Image Generation';
 
 }

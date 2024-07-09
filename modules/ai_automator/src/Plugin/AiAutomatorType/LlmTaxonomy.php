@@ -12,7 +12,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  */
 #[AiAutomatorType(
   id: 'llm_taxonomy',
-  label: new TranslatableMarkup('LLM Taxonomy'),
+  label: new TranslatableMarkup('LLM: Taxonomy'),
   field_rule: 'entity_reference',
   target: 'taxonomy_term',
 )]
@@ -21,5 +21,5 @@ class LlmTaxonomy extends Taxonomy implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM Taxonomy';
+  public $title = 'LLM: Taxonomy';
 }

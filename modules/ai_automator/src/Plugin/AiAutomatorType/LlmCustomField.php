@@ -12,7 +12,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  */
 #[AiAutomatorType(
   id: 'llm_custom_field',
-  label: new TranslatableMarkup('LLM Custom field'),
+  label: new TranslatableMarkup('LLM: Custom field'),
   field_rule: 'custom',
   target: '',
 )]
@@ -21,6 +21,6 @@ class LlmCustomField extends CustomField implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public $title = 'LLM Custom Field';
+  public $title = 'LLM: Custom Field';
 
 }
