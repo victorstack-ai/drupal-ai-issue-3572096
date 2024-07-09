@@ -2,16 +2,13 @@
 
 namespace Drupal\ai_automator\PluginBaseClasses;
 
-use Drupal\ai\OperationType\Chat\ChatInput;
-use Drupal\ai\OperationType\Chat\ChatMessage;
-use Drupal\ai\Utility\CastUtility;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 
 /**
  * This is a base class that can be used for LLMs json output.
  */
-class TextToJsonField extends SimpleTextChat {
+class TextToJsonField extends RuleBase {
 
   /**
    * {@inheritDoc}
@@ -39,28 +36,10 @@ class TextToJsonField extends SimpleTextChat {
       $prompts[$key] = $prompt;
     }
     $total = [];
-    $instance = $this->aiPluginManager->createInstance($automatorConfig['ai_provider']);
-
-    // Get configuration.
-    $config = [];
-    $configCast = $instance->getAvailableConfiguration('chat', $automatorConfig['ai_model']);
-    foreach ($automatorConfig as $key => $val) {
-      if (strpos($key, 'configuration_') === 0 && $val) {
-        $configKey = str_replace('configuration_', '', $key);
-        $config[$configKey] = CastUtility::typeCast($configCast[$configKey]['type'], $val);
-      }
-    }
+    $instance = $this->prepareLlmInstance('chat', $automatorConfig);
     foreach ($prompts as $prompt) {
-      // Create new messages.
-      $input = new ChatInput([
-        new ChatMessage("user", $prompt),
-      ]);
-
-      $instance->setConfiguration($config);
-      $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
-
       // Normalize the response.
-      $values = json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE);
+      $values = str_replace("\n", "", trim(str_replace(['```json', '```'], '', $this->runRawChatMessage($prompt, $automatorConfig, $instance))));
 
       if (!empty($values)) {
         $total[] = $values;
