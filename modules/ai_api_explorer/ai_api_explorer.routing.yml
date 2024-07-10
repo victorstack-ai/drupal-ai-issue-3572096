@@ -47,3 +47,10 @@ ai_api_explorer.audio_to_audio_form:
     _form: 'Drupal\ai_api_explorer\Form\AudioToAudioGenerationForm'
   requirements:
     _permission: 'access ai prompt'
+ai_api_explorer.speech_to_speech_form:
+  path: '/admin/config/development/ai-speech-to-speech'
+  defaults:
+    _title: 'AI Speech To Speech Generation Explorer'
+    _form: 'Drupal\ai_api_explorer\Form\SpeechToSpeechGenerationForm'
+  requirements:
+    _permission: 'access ai prompt'

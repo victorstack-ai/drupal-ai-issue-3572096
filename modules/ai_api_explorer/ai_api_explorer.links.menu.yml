@@ -45,3 +45,9 @@ ai_api_explorer.audio_to_audio_form:
   parent: ai_api_explorer.main
   route_name: ai_api_explorer.audio_to_audio_form
   weight: 6
+ai_api_explorer.speech_to_speech_form:
+  title: Speech-To-Speech Explorer
+  description: Contains a form where you can experiment and test the AI speech to speech tool with prompts.
+  parent: ai_api_explorer.main
+  route_name: ai_api_explorer.speech_to_speech_form
+  weight: 7
