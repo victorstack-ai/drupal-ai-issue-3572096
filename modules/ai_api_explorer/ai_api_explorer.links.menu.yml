@@ -39,3 +39,9 @@ ai_api_explorer.moderation_form:
   parent: ai_api_explorer.main
   route_name: ai_api_explorer.moderation_form
   weight: 5
+ai_api_explorer.audio_to_audio_form:
+  title: Audio-To-Audio Explorer
+  description: Contains a form where you can experiment and test the AI audio to audio tool with prompts.
+  parent: ai_api_explorer.main
+  route_name: ai_api_explorer.audio_to_audio_form
+  weight: 6
