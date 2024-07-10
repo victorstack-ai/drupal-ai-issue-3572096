@@ -210,7 +210,7 @@ class AudioToAudioGenerationForm extends FormBase {
   public function normalizeCodeExample(AiProviderInterface|ProviderProxy $provider, FormStateInterface $form_state, string $filename): string {
     // Generation code.
     $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
-    $code .= '$audio = file_get_contents("' . $filename . '");<br>';
+    $code .= '$binary = file_get_contents("' . $filename . '");<br>';
     if (count($provider->getConfiguration())) {
     $code .= '$config = [<br>';
       foreach ($provider->getConfiguration() as $key => $value) {
@@ -226,7 +226,7 @@ class AudioToAudioGenerationForm extends FormBase {
     $code .= "\$ai_provider = \Drupal::service('ai.provider')->createInstance('" . $form_state->getValue('ata_ai_provider') . '\');<br>';
     $code .= "\$ai_provider->setConfiguration(\$config);<br>";
     $code .= "// Normalize the input.<br>";
-    $code .= "\$audio_file = new \Drupal\ai\OperationType\GenericType\AudioFile(\$audio, 'audio/mp3', '" . $filename . "');<br>";
+    $code .= "\$audio_file = new \Drupal\ai\OperationType\GenericType\AudioFile(\$binary, 'audio/mp3', '" . $filename . "');<br>";
     $code .= "\$input = new \Drupal\ai\OperationType\AudioToAudio\AudioToAudioInput(\$audio_file);<br>";
     $code .= "// \$response will be a AudioFile with the text.<br>";
     $code .= "\$response = \$ai_provider->audioToAudio(\$input, '" . $form_state->getValue('ata_ai_model') . '\', ["your_module_name"]);';
