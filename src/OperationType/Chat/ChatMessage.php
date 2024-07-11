@@ -4,13 +4,13 @@ namespace Drupal\ai\OperationType\Chat;
 
 use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\Core\File\MimeType\MimeTypeGuesser;
-use Drupal\custom_field\Plugin\CustomField\FieldType\ImageType;
 use Drupal\file\Entity\File;
 
 /**
- * Each of the chat messages for chat input.
+ * One chat messages for chat input.
  */
 class ChatMessage {
+
   /**
    * The role of the message.
    *

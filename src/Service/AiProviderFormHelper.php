@@ -199,6 +199,9 @@ class AiProviderFormHelper {
         $real_key = trim(str_replace($prefix, '', $key));
         $type = $schema[$real_key]['type'] ?? 'string';
         $configuration[$real_key] = CastUtility::typeCast($type, trim($value));
+        if ($type == 'boolean' || $type == 'bool') {
+          $configuration[$real_key] = empty($value) || $value == 'false' ? FALSE : TRUE;
+        }
       }
     }
     return $configuration;
@@ -267,7 +270,7 @@ class AiProviderFormHelper {
       if ($config_level == AiProviderFormHelper::FORM_CONFIGURATION_REQUIRED && empty($definition['required'])) {
         continue;
       }
-      $set_key = $prefix . '_configuration_' . $key . "\n";
+      $set_key = $prefix . '_configuration_' . $key;
       $form[$prefix][$set_key]['#type'] = $this->mapSchemaTypeToFormType($definition);
       $form[$prefix][$set_key]['#required'] = $definition['required'] ?? FALSE;
       $form[$prefix][$set_key]['#title'] = $definition['label'] ?? $key;
@@ -305,7 +308,7 @@ class AiProviderFormHelper {
 
       case 'int':
       case 'float':
-        return 'number';
+        return 'textfield';
 
       case 'string':
       default:

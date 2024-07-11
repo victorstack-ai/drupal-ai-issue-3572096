@@ -7,13 +7,18 @@ namespace Drupal\ai_api_explorer\Form;
 use Drupal\ai\AiProviderInterface;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai\OperationType\Chat\StreamedChatMessageInterface;
+use Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface;
 use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
+use Drupal\provider_openai\OpenAiChatMessageIterator;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Provides a form to prompt AI for answers.
@@ -82,6 +87,7 @@ class ChatGenerationForm extends FormBase {
       return $form;
     }
     $form['#attached']['library'][] = 'ai_api_explorer/explorer';
+    $form['#attached']['library'][] = 'ai_api_explorer/stream';
 
     $form['markup'] = [
       '#markup' => '<div class="ai-three-info">',
@@ -149,9 +155,8 @@ class ChatGenerationForm extends FormBase {
     $form['actions']['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Ask The AI'),
-      '#ajax' => [
-        'callback' => '::getResponse',
-        'wrapper' => 'ai-text-response',
+      '#attributes' => [
+        'data-search-api-ai-ajax' => 'ai-text-response',
       ],
       '#suffix' => '</div>',
     ];
@@ -186,6 +191,13 @@ class ChatGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function getResponse(array &$form, FormStateInterface $form_state) {
+
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function submitForm(array &$form, FormStateInterface $form_state) {
     $provider = $this->aiProviderHelper->generateAiProviderFromFormSubmit($form, $form_state, 'chat', 'chat');
     $values = $form_state->getValues();
     // Get the messages.
@@ -201,7 +213,8 @@ class ChatGenerationForm extends FormBase {
         $image = "";
         if (isset($files['files']['image_' . $index])) {
           $raw_file = file_get_contents($files['files']['image_' . $index]->getPathname());
-          $image = new ImageFile($raw_file,  $files['files']['image_' . $index]->getClientMimeType(), $files['files']['image_' . $index]->getClientOriginalName());      }
+          $image = new ImageFile($raw_file,  $files['files']['image_' . $index]->getClientMimeType(), $files['files']['image_' . $index]->getClientOriginalName());
+        }
         if ($role && $message) {
           $images = [];
           if ($image) {
@@ -210,17 +223,15 @@ class ChatGenerationForm extends FormBase {
           $messages[] = new ChatMessage($role, $message, $images);
         }
       }
-
     }
 
     $input = new ChatInput($messages);
 
-    $response = NULL;
+    $message = NULL;
     try {
       $response = $provider->chat($input, $form_state->getValue('chat_ai_model'), ['chat_generation'])->getNormalized();
-    }
-    catch (\Exception $e) {
-      $response = $this->explorerHelper->renderException($e);
+    } catch (\Exception $e) {
+      $message = $this->explorerHelper->renderException($e);
     }
 
     // Generation code for normalization.
@@ -228,19 +239,38 @@ class ChatGenerationForm extends FormBase {
     $code .= $this->rawCodeExample($provider, $form_state, $messages);
 
     if (is_object($response) && get_class($response) == ChatMessage::class) {
-      $form['response']['#context']['texts'] = '<h4>Role: ' . $response->getRole() . "</h4><p>" . $response->getText() . '</p>' . $code;
+      $form_state->setRebuild();
+      $response = new Response('<h4>Role: ' . $response->getRole() . "</h4><p>" . $response->getText() . '</p>' . $code);
+      $form_state->setResponse($response);
+    } else if (is_object($response) && $response instanceof StreamedChatMessageIteratorInterface) {
+      $http_response = new StreamedResponse();
+      $http_response->setCallback(function () use ($response, $code) {
+        foreach ($response as $key => $chat_message) {
+          if ($chat_message->getRole() && !$key) {
+            echo '<h4>Role: ' . $chat_message->getRole() . "</h4><p>";
+          }
+          echo $chat_message->getText();
+          ob_flush();
+          flush();
+        }
+        echo $code;
+        ob_flush();
+        flush();
+      });
+      $form_state->setResponse($http_response);
     }
     else {
-      $form['response']['#context']['texts'] = '<p>' . $response . '</p>';
+      $form_state->setRebuild();
+      $response = new Response($message);
+      $form_state->setResponse($response);
     }
-    return $form['response'];
   }
 
   /**
-   * {@inheritdoc}
+   * Sends the chat message.
+   *
+   *
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
-  }
 
   /**
    * Gets the normalized code example.
@@ -291,7 +321,26 @@ class ChatGenerationForm extends FormBase {
       $code .= "\$ai_provider->setConfiguration(\$config);<br>";
     }
     $code .= "// Normalized \$response will be a ChatMessage object.<br>";
-    $code .= "\$response = \$ai_provider->chat(\$input, '" . $form_state->getValue('chat_ai_model') . '\', ["your_module_name"])->getNormalized();';
+    $code .= "\$response = \$ai_provider->chat(\$input, '" . $form_state->getValue('chat_ai_model') . '\', ["your_module_name"])->getNormalized();<br>';
+
+    // If there is a streaming response.
+    if ($show_config && !empty($provider->getConfiguration()['stream'])) {
+      $code .= "<br><br>// If you want to stream the response normalized you have to make sure<br>";
+      $code .= "// the provider supports it and have a fallback if not. This shows how. <br><br>";
+      $code .= "// It is a stream response.<br>";
+      $code .= "if (\$response instanceof \Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface) {<br>";
+      $code .= "&nbsp;&nbsp;// This is a stream response.<br>";
+      $code .= "&nbsp;&nbsp;// You can loop through the response and output it as it comes in.<br>";
+      $code .= "/* @var \Drupal\ai\OperationType\Chat\StreamedChatMessage \$chat_message */<br>";
+      $code .= "&nbsp;&nbsp;foreach (\$response as \$chat_message) {<br>";
+      $code .= "&nbsp;&nbsp;&nbsp;&nbsp;echo \$chat_message->getText();<br>";
+      $code .= "&nbsp;&nbsp;}<br>";
+      $code .= "} else {<br>";
+      $code .= "&nbsp;&nbsp;// This is a normal response.<br>";
+      $code .= "&nbsp;&nbsp;echo \$response->getText();<br>";
+      $code .= "}<br>";
+
+    }
     $code .= "</code></details>";
     return $code;
   }

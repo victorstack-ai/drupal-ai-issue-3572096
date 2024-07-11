@@ -6,6 +6,7 @@ use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
 use Drupal\ai\Exception\AiResponseErrorException;
 use Drupal\ai\Exception\AiUnsafePromptException;
+use Drupal\provider_openai\OpenAiChatMessageIterator;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
 use Drupal\ai\OperationType\Chat\ChatMessage;
@@ -304,9 +305,16 @@ class OpenAiProvider extends AiProviderClientBase implements
       'model' => $model_id,
       'messages' => $chat_input,
     ] + $this->configuration;
-    $response = $this->client->chat()->create($payload)->toArray();
 
-    $message = new ChatMessage($response['choices'][0]['message']['role'], $response['choices'][0]['message']['content']);
+    if ($this->configuration['stream']) {
+      $response = $this->client->chat()->createStreamed($payload);
+      $message = new OpenAiChatMessageIterator($response);
+    }
+    else {
+      $response = $this->client->chat()->create($payload)->toArray();
+      $message = new ChatMessage($response['choices'][0]['message']['role'], $response['choices'][0]['message']['content']);
+    }
+
     return new ChatOutput($message, $response, []);
   }
 
