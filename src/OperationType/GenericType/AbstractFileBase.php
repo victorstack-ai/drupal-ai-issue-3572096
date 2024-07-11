@@ -8,7 +8,7 @@ use Drupal\file\Entity\File;
 /**
  * The file base.
  */
-abstract class AbstractFileBase implements FileBase {
+abstract class AbstractFileBase implements FileBaseInterface {
 
   /**
    * The mime type of the file.
@@ -59,6 +59,16 @@ abstract class AbstractFileBase implements FileBase {
    */
   public function getBinary(): string {
     return $this->binary;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getAsBase64EncodedString() {
+    if ($this->mime_type) {
+      return "data:" . $this->mime_type . ";base64," . base64_encode($this->binary);
+    }
+    return base64_encode($this->binary);
   }
 
   /**

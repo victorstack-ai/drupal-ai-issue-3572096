@@ -54,3 +54,10 @@ ai_api_explorer.speech_to_speech_form:
     _form: 'Drupal\ai_api_explorer\Form\SpeechToSpeechGenerationForm'
   requirements:
     _permission: 'access ai prompt'
+ai_api_explorer.image_and_audio_to_video_form:
+  path: '/admin/config/development/ai-image-and-audio-to-video'
+  defaults:
+    _title: 'AI Image and Audio to Video Generation Explorer'
+    _form: 'Drupal\ai_api_explorer\Form\ImageAndAudioToVideoGenerationForm'
+  requirements:
+    _permission: 'access ai prompt'

@@ -51,3 +51,9 @@ ai_api_explorer.speech_to_speech_form:
   parent: ai_api_explorer.main
   route_name: ai_api_explorer.speech_to_speech_form
   weight: 7
+ai_api_explorer.image_and_audio_to_video_form:
+  title: Image-and-Audio-to-Video Explorer
+  description: Contains a form where you can experiment and test the AI image and audio to video tool with prompts.
+  parent: ai_api_explorer.main
+  route_name: ai_api_explorer.image_and_audio_to_video_form
+  weight: 8

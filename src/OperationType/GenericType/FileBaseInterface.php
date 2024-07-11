@@ -6,9 +6,9 @@ use Drupal\Core\File\MimeType\MimeTypeGuesser;
 use Drupal\file\Entity\File;
 
 /**
- * The file base.
+ * The file base interface.
  */
-interface FileBase {
+interface FileBaseInterface {
 
   /**
    * The constructor.

@@ -286,7 +286,7 @@ class OpenAiProvider extends AiProviderClientBase implements
             $content[] = [
               'type' => 'image_url',
               'image_url' => [
-                'url' => $image,
+                'url' => $image->getAsBase64EncodedString(),
               ],
             ];
           }

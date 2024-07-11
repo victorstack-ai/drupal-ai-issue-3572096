@@ -7,6 +7,7 @@ namespace Drupal\ai_api_explorer\Form;
 use Drupal\ai\AiProviderInterface;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\Core\Form\FormBase;
@@ -200,8 +201,7 @@ class ChatGenerationForm extends FormBase {
         $image = "";
         if (isset($files['files']['image_' . $index])) {
           $raw_file = file_get_contents($files['files']['image_' . $index]->getPathname());
-          $image = 'data:' . $files['files']['image_' . $index]->getClientMimeType() . ';base64,' . base64_encode($raw_file);
-        }
+          $image = new ImageFile($raw_file,  $files['files']['image_' . $index]->getClientMimeType(), $files['files']['image_' . $index]->getClientOriginalName());      }
         if ($role && $message) {
           $images = [];
           if ($image) {
@@ -274,7 +274,15 @@ class ChatGenerationForm extends FormBase {
 
     $code .= '$input = new \Drupal\ai\OperationType\Chat\ChatInput([<br>';
     foreach ($messages as $message) {
-      $code .= '&nbsp;&nbsp;new \Drupal\ai\OperationType\Chat\ChatMessage("' . $message->getRole() . '", "' . $message->getText() . '"),<br>';
+      if (count($message->getImages())) {
+        $code .= '&nbsp;&nbsp;// Assume a File entity being used with variable $file.<br>';
+        $code .= '&nbsp;&nbsp;$image = new \Drupal\ai\OperationType\GenericType\ImageFile();<br>';
+        $code .= '&nbsp;&nbsp;$image->setFileFromFile($file);<br>';
+        $code .= '&nbsp;&nbsp;new \Drupal\ai\OperationType\Chat\ChatMessage("' . $message->getRole() . '", "' . $message->getText() . '", $image),<br>';
+      }
+      else {
+        $code .= '&nbsp;&nbsp;new \Drupal\ai\OperationType\Chat\ChatMessage("' . $message->getRole() . '", "' . $message->getText() . '"),<br>';
+      }
     }
     $code .= ']);<br><br>';
 

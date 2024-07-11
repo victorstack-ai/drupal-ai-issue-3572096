@@ -2,7 +2,9 @@
 
 namespace Drupal\ai\OperationType\Chat;
 
+use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\Core\File\MimeType\MimeTypeGuesser;
+use Drupal\custom_field\Plugin\CustomField\FieldType\ImageType;
 use Drupal\file\Entity\File;
 
 /**
@@ -24,9 +26,9 @@ class ChatMessage {
   private string $text;
 
   /**
-   * The base64 encoded images in an array.
+   * The images files in an array.
    *
-   * @var array
+   * @var \Drupal\ai\OperationType\GenericType\ImageFile[]
    */
   private array $images;
 
@@ -37,7 +39,7 @@ class ChatMessage {
    *   The role of the message.
    * @param string $text
    *   The text.
-   * @param array $images
+   * @param \Drupal\ai\OperationType\GenericType\ImageFile[] $images
    *   The images.
    */
   public function __construct(string $role = "", string $text = "", array $images = []) {
@@ -89,7 +91,7 @@ class ChatMessage {
   /**
    * Get the images.
    *
-   * @return array
+   * @return \Drupal\ai\OperationType\GenericType\ImageFile[]
    *   The images.
    */
   public function getImages(): array {
@@ -99,10 +101,10 @@ class ChatMessage {
   /**
    * Set the image.
    *
-   * @param string $image
+   * @param \Drupal\ai\OperationType\GenericType\ImageFile $image
    *   The image.
    */
-  public function setImage(string $image): void {
+  public function setImage(ImageFile $image): void {
     $this->images[] = $image;
   }
 
@@ -115,7 +117,7 @@ class ChatMessage {
    *   The mime type.
    */
   public function setImageFromBinary(string $binary, string $mime_type): void {
-    $this->images[] = 'data:' . $mime_type . ';base64,' . base64_encode($binary);
+    $this->images[] = new ImageFile($binary, $mime_type);
   }
 
   /**
@@ -127,7 +129,8 @@ class ChatMessage {
   public function setImageFromUrl(string $url): void {
     // Get mime type from the uri.
     $mime_type = $this->getFileMimeTypeGuesser()->guessMimeType($url);
-    $this->images[] = 'data:' . $mime_type . ';base64,' . base64_encode((file_get_contents($url)));
+    $filename = basename($url);
+    $this->images[] = new ImageFile(file_get_contents($url), $mime_type, $filename);
   }
 
   /**
@@ -139,7 +142,8 @@ class ChatMessage {
   public function setImageFromUri(string $uri): void {
     // Get mime type from the uri.
     $mime_type = $this->getFileMimeTypeGuesser()->guessMimeType($uri);
-    $this->images[] = 'data:' . $mime_type . ';base64,' . base64_encode((file_get_contents($uri)));
+    $filename = basename($uri);
+    $this->images[] = new ImageFile(file_get_contents($uri), $mime_type, $filename);
   }
 
   /**
@@ -149,7 +153,7 @@ class ChatMessage {
    *  The file.
    */
   public function setImageFromFile(File $file): void {
-    $this->images[] = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getFileUri()));
+    $this->images[] = new ImageFile(file_get_contents($file->getFileUri()), $file->getMimeType(), $file->getFilename());
   }
 
   /**
