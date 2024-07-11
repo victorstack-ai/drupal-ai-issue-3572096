@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Form;
 
+use Drupal\ai\OperationType\GenericType\AudioFile;
+use Drupal\ai\OperationType\SpeechToText\SpeechToTextInput;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -141,7 +143,8 @@ class SpeechToTextGenerationForm extends FormBase {
     $provider = $this->aiProviderHelper->generateAiProviderFromFormSubmit($form, $form_state, 'speech_to_text', 'stt');
     $files = $this->requestStack->getCurrentRequest()->files->all();
     $file = reset($files);
-    $raw_file = file_get_contents($file['file']->getPathname());
+    $audio_file = new AudioFile(file_get_contents($file['file']->getPathname()), $file['file']->getMimeType(), $file['file']->getClientOriginalName());
+    $raw_file = new SpeechToTextInput($audio_file);
 
     try {
       $response = $provider->speechToText($raw_file, $form_state->getValue('stt_ai_model'), ['ai_api_explorer'])->getNormalized();

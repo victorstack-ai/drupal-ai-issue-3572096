@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_automator\PluginBaseClasses;
 
+use Drupal\ai\OperationType\GenericType\AudioFile;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInput;
 use Drupal\ai_automator\PluginBaseClasses\RuleBase;
 use Drupal\ai_automator\PluginInterfaces\AiAutomatorTypeInterface;
@@ -69,7 +70,7 @@ class AudioToText extends RuleBase implements AiAutomatorTypeInterface, Containe
           'audio/aac',
           'audio/wav',
         ])) {
-          $input = new SpeechToTextInput(file_get_contents($fileEntity->getFileUri()));
+          $input = new SpeechToTextInput(new AudioFile(file_get_contents($fileEntity->getFileUri()), $fileEntity->getMimeType(), $fileEntity->getFilename()));
           $response = $instance->speechToText($input, $automatorConfig['ai_model'], ['ai_automator_speech_to_text']);
           $values[] = $response->getNormalized();
         }

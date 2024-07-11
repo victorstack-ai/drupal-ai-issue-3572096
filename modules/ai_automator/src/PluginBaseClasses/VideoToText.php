@@ -5,6 +5,7 @@ namespace Drupal\ai_automator\PluginBaseClasses;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai\OperationType\GenericType\AudioFile;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInput;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai_automator\Exceptions\AiAutomatorRequestErrorException;
@@ -376,7 +377,7 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
     ];
     $instance = $this->aiPluginManager->createInstance($automatorConfig['ai_provider_audio']);
 
-    $input = new SpeechToTextInput(file_get_contents($this->tmpDir . '/audio.mp3'));
+    $input = new SpeechToTextInput(new AudioFile(file_get_contents($this->tmpDir . '/audio.mp3'), 'audio/mpeg', 'audio.mp3'));
     $this->transcription = $instance->speechToText($input, $automatorConfig['ai_model_audio'])->getNormalized();
   }
 

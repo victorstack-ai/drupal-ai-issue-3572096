@@ -2,6 +2,7 @@
 
 namespace Drupal\ai\OperationType\SpeechToText;
 
+use Drupal\ai\OperationType\GenericType\AudioFile;
 use Drupal\ai\OperationType\InputInterface;
 
 /**
@@ -9,40 +10,50 @@ use Drupal\ai\OperationType\InputInterface;
  */
 class SpeechToTextInput implements InputInterface {
   /**
-   * The binary to convert to text.
+   * The audio file to convert to text.
    *
-   * @var string
+   * @var \Drupal\ai\OperationType\GenericType\AudioFile
    */
-  private string $binary;
+  private AudioFile $file;
 
   /**
    * The constructor.
    *
-   * @param string $binary
-   *   The binary to convert to text.
+   * @param \Drupal\ai\OperationType\GenericType\AudioFile $file
+   *   The file to convert to text.
    */
-  public function __construct(string $binary) {
-    $this->binary = $binary;
+  public function __construct(AudioFile $file) {
+    $this->file = $file;
   }
 
   /**
-   * Get the mp3 binary to convert into text.
+   * Get the file to convert into text.
+   *
+   * @return \Drupal\ai\OperationType\GenericType\AudioFile
+   *   The text.
+   */
+  public function getFile(): AudioFile {
+    return $this->file;
+  }
+
+  /**
+   * Get the file as binary.
    *
    * @return string
-   *   The text.
+   *   The binary.
    */
   public function getBinary(): string {
-    return $this->binary;
+    return $this->file->getBinary();
   }
 
   /**
-   * Set the mp3 binary to convert into text.
+   * Set the file to convert into text.
    *
-   * @param string $binary
-   *   The text.
+   * @param \Drupal\ai\OperationType\GenericType\AudioFile $file
+   *   The file.
    */
-  public function setBinary(string $binary) {
-    $this->binary = $binary;
+  public function setFile(AudioFile $file) {
+    $this->file = $file;
   }
 
   /**
