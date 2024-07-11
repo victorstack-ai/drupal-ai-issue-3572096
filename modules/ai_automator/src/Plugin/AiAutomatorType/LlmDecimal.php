@@ -22,4 +22,5 @@ class LlmDecimal extends Numeric implements AiAutomatorTypeInterface {
    * {@inheritDoc}
    */
   public $title = 'LLM: Decimal';
+
 }

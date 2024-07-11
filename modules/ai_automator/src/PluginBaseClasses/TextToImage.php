@@ -58,10 +58,10 @@ class TextToImage extends RuleBase {
       $input = new TextToImageInput($prompt);
       $response = $instance->textToImage($input, $automatorConfig['ai_model'])->getNormalized();
       if (!empty($response)) {
-        foreach ($response as $imageBinary) {
+        foreach ($response as $image) {
           $images[] = [
             'filename' => $this->getFileName($automatorConfig),
-            'binary' => $imageBinary,
+            'binary' => $image->getAsBinary(),
           ];
         }
       }

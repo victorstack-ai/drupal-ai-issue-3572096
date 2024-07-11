@@ -28,8 +28,8 @@ trait GenerateMediaTrait {
    * @param string $path
    *   An optional path instead of the field configuration one.
    *
-   * @return \Drupal\media\Entity\Media[]
-   *   The media entity.
+   * @return array
+   *   The media entities prepared for a media field.
    */
   public function getAsMediaReference(string $media_type, string $file_name, string $path = NULL): array {
     // Check that the media module is installed or fail.

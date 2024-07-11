@@ -18,7 +18,7 @@ trait GenerateBase64Trait {
    * @return array
    *   An array of base64 encoded strings.
    */
-  public function getAsBase64EncodedString(string $data_url_scheme = ''): array {
+  public function getAsBase64EncodedStrings(string $data_url_scheme = ''): array {
     $strings = [];
     /* @param \Drupal\ai\OperationType\GenericType\FileBase $file */
     foreach ($this->getNormalized() as $file) {

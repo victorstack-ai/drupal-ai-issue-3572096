@@ -13,6 +13,7 @@ use Drupal\ai\OperationType\Chat\ChatOutput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInterface;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsOutput;
+use Drupal\ai\OperationType\GenericType\AudioFile;
 use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\OperationType\Moderation\ModerationInput;
 use Drupal\ai\OperationType\Moderation\ModerationInterface;
@@ -379,8 +380,9 @@ class OpenAiProvider extends AiProviderClientBase implements
       'input' => $input,
     ] + $this->configuration;
     $response = $this->client->audio()->speech($payload);
+    $output = new AudioFile($response, 'audio/mpeg', 'openai.mp3');
     // Return a normalized response.
-    return new TextToSpeechOutput([$response], $response, []);
+    return new TextToSpeechOutput([$output], $response, []);
   }
 
   /**

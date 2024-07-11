@@ -175,13 +175,14 @@ class TextToImageGenerationForm extends FormBase {
   public function getResponse(array &$form, FormStateInterface $form_state) {
     $provider = $this->aiProviderHelper->generateAiProviderFromFormSubmit($form, $form_state, 'text_to_image', 'image_generator');
     try {
-      $images = $provider->textToImage($form_state->getValue('prompt'), $form_state->getValue('image_generator_ai_model'), ['ai_api_explorer']);
+      $images = $provider->textToImage($form_state->getValue('prompt'), $form_state->getValue('image_generator_ai_model'), ['ai_api_explorer'])->getNormalized();
       $response = '';
-      foreach ($images->getAsBase64EncodedString() as $base64) {
-        $response .= '<img src="' . $base64 . '" />';
+      /* @var \Drupal\ai\OperationType\GenericType\ImageFile $image */
+      foreach ($images as $image) {
+        $response .= '<img src="' . $image->getAsBase64EncodedString() . '" />';
       }
       if ($form_state->getValue('save_as_media')) {
-        $images->getAsMediaReference($form_state->getValue('save_as_media'), 'image.png');
+        $images[0]->getAsMediaEntity($form_state->getValue('save_as_media'), 'public://', 'image.png');
       }
     }
     catch (\Exception $e) {
@@ -202,7 +203,6 @@ class TextToImageGenerationForm extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
   }
-
 
   /**
    * Gets the normalized code example.
@@ -234,19 +234,18 @@ class TextToImageGenerationForm extends FormBase {
     $code .= "\$ai_provider->setConfiguration(\$config);<br>";
     $code .= "// Normalize the input.<br>";
     $code .= "\$input = new \Drupal\ai\OperationType\TextToImage\TextToImageInput(\$prompt);<br>";
-    $code .= "\$response = \$ai_provider->textToImage(\$input, '" . $form_state->getValue('image_generator_ai_model') . '\', ["tag_1", "tag_2"]);<br><br>';
-    $code .= "// Possibility #1 - get an array of \Drupal\ai\OperationType\GenericType\ImageFile.<br>";
-    $code .= '$binaries = $response->getNormalized();<br>';
-    $code .= "// Possibility #2 - get an array of base64 encoded strings.<br>";
-    $code .= '$base64 = $response->getAsBase64EncodedString();<br>';
-    $code .= "// Possibility #3 - get an array of media entities.<br>";
-    $code .= '$media = $response->getAsMediaReference("image", "image.png");<br>';
-    $code .= "// Possibility #4 - get an array of file entities.<br>";
-    $code .= '$file = $response->getAsFileReference("public://image.png");<br>';
-    $code .= "// Possibility #5 - get the raw response from the provider.<br>";
+    $code .= "// This gets an array of \Drupal\ai\OperationType\GenericType\ImageFile.<br>";
+    $code .= "\$normalized = \$ai_provider->textToImage(\$input, '" . $form_state->getValue('image_generator_ai_model') . '\', ["tag_1", "tag_2"])->getNormalized();<br><br>';
+    $code .= "// Examples Possibility #1 - get binary from the first image.<br>";
+    $code .= '$binaries = $normalized[0]->getAsBinary();<br>';
+    $code .= "// Examples Possibility #2 - get as base 64 encoded string from the first image.<br>";
+    $code .= '$base64 = $normalized[0]->getAsBase64EncodedString();<br>';
+    $code .= "// Examples Possibility #3 - get as generated media from the first image.<br>";
+    $code .= '$media = $normalized[0]->getAsMediaEntity("image", "public://", "image.png");<br>';
+    $code .= "// Examples Possibility #4 - get as image file entity from the first image.<br>";
+    $code .= '$file = $normalized[0]->getAsImageEntity("public://", "image.png");<br><br>';
+    $code .= "// Another possibility is to get the raw response from the provider.<br>";
     $code .= '$raw = $response->getRaw();<br>';
-    $code .= "// Possibility #6 - get an array of binaries.<br>";
-    $code .= '$raw = $response->getAsBinary();<br>';
     $code .= "</code></details>";
     return $code;
   }

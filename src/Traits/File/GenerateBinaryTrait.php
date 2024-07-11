@@ -15,7 +15,7 @@ trait GenerateBinaryTrait {
    * @return \Drupal\file\Entity\File[]
    *   The file entity.
    */
-  public function getAsBinary(): array {
+  public function getAsBinaries(): array {
     $strings = [];
     /* @var \Drupal\ai\OperationType\GenericType\FileBase $file */
     foreach ($this->getNormalized() as $file) {

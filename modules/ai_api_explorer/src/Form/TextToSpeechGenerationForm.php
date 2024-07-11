@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Form;
 
+use Drupal\ai\AiProviderInterface;
+use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\Core\File\FileExists;
 use Drupal\Core\Form\FormBase;
@@ -196,7 +198,7 @@ class TextToSpeechGenerationForm extends FormBase {
       if ($form_state->getValue('save_as_media')) {
         $audio->getAsMediaReference($form_state->getValue('save_as_media'), 'text-to-speech.mp3');
       }
-      $audio_normalized = $audio->getNormalized();
+      $audio_normalized = $audio->getAsBinaries();
       // Save the binary data to a file.
       $file_url = $this->fileSystem->saveData($audio_normalized[0], 'public://text-to-speech-test.mp3', FileExists::Replace);
       $response .= '<audio controls><source src="' . $this->fileUrlGenerator->generateAbsoluteString($file_url) . '" type="audio/mpeg"></audio>';
@@ -205,28 +207,7 @@ class TextToSpeechGenerationForm extends FormBase {
       $response = $this->explorerHelper->renderException($e);
     }
     // Generation code.
-    $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
-    $code .= '$prompt = "' . $form_state->getValue('prompt') . '";<br>';
-    $code .= '$config = [<br>';
-    foreach ($provider->getConfiguration() as $key => $value) {
-      if (is_string($value)) {
-        $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '",<br>';
-      }
-      else {
-        $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ',<br>';
-      }
-    }
-
-    $code .= '];<br><br>';
-    $code .= "\$ai_provider = \Drupal::service('ai.provider')->createInstance('" . $form_state->getValue('tts_ai_provider') . '\');<br>';
-    $code .= "\$ai_provider->setConfiguration(\$config);<br>";
-    $code .= "// \$response will be a string with the audio binary.<br>";
-    $code .= "\$response = \$ai_provider->textToSpeech(\$prompt, '" . $form_state->getValue('tts_ai_model') . '\', ["your_module_name"])->getNormalized();';
-    if ($form_state->getValue('save_as_media')) {
-      $code .= "<br>// We save it as media.";
-      $code .= "<br>\$media = \$response->getAsMediaReference('" . $form_state->getValue('save_as_media') . "', 'audio.mp3');";
-    }
-    $code .= "</code></details>";
+    $code = $this->normalizeCodeExample($provider, $form_state, $form_state->getValue('prompt'));
 
     $form['response']['#context'] = [
       'audios' => '<h2>Audio will appear here.</h2>' . $response . $code,
@@ -238,6 +219,57 @@ class TextToSpeechGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+  }
+
+  /**
+   * Gets the normalized code example.
+   *
+   * @param \Drupal\ai\AiProviderInterface|\Drupal\ai\Plugin\ProviderProxy $provider
+   *   The provider.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param string $prompt
+   *   The prompt.
+   *
+   * @return string
+   *   The normalized code example.
+   */
+  public function normalizeCodeExample(AiProviderInterface|ProviderProxy $provider, FormStateInterface $form_state, string $prompt): string {
+    $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
+    $code .= '$prompt = "' . $prompt . '";<br>';
+    $code .= '$config = [<br>';
+    foreach ($provider->getConfiguration() as $key => $value) {
+      if (is_string($value)) {
+        $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '",<br>';
+      } else {
+        $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ',<br>';
+      }
+    }
+
+    $code .= '];<br><br>';
+    $code .= "\$ai_provider = \Drupal::service('ai.provider')->createInstance('" . $form_state->getValue('tts_ai_provider') . '\');<br>';
+    $code .= "\$ai_provider->setConfiguration(\$config);<br>";
+    $code .= "// \$response will be a string with the audio binary.<br>";
+    $code .= "\$response = \$ai_provider->textToSpeech(\$prompt, '" . $form_state->getValue('tts_ai_model') . '\', ["your_module_name"]);<br><br>';
+    $code .= "// Possibility #1 - get an array of \Drupal\ai\OperationType\GenericType\AudioFile.<br>";
+    $code .= '$binaries = $response->getNormalized();<br>';
+    $code .= "// Possibility #2 - get an array of base64 encoded strings.<br>";
+    $code .= '$base64 = $response->getAsBase64EncodedStrings();<br>';
+    $code .= "// Possibility #3 - get an array of media entities.<br>";
+    $code .= '$media = $response->getAsMediaEntities("audio", "audio.mp3");<br>';
+    $code .= "// Possibility #4 - get an array of file entities.<br>";
+    $code .= '$file = $response->getAsFileEntities("public://audio.mp3");<br>';
+    $code .= "// Possibility #5 - get an array of referenced media entities for a media field.<br>";
+    $code .= '$media = $response->getAsMediaReference("audio", "audio.mp3");<br>';
+    $code .= "// Possibility #6 - get an array of reference file entities for a file field.<br>";
+    $code .= '$file = $response->getAsFileReference("public://audio.mp3");<br>';
+    $code .= "// Possibility #7 - get the raw response from the provider.<br>";
+    $code .= '$raw = $response->getRaw();<br>';
+    $code .= "// Possibility #8 - get an array of binaries.<br>";
+    $code .= '$raw = $response->getAsBinaries();<br>';
+    $code .= "</code></details>";
+
+    return $code;
   }
 
 }

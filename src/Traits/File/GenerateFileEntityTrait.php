@@ -8,24 +8,26 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 
 /**
- * Trait to add the possibility to store medias directly in the processor.
+ * Trait to add the possibility to store files directly in the processor.
  *
  * @package Drupal\ai\Traits\File
  */
-trait GenerateFileTrait {
+trait GenerateFileEntityTrait {
+
+  use GenerateFileTrait;
 
   /**
-   * Generate file.
+   * Generate file entities.
    *
    * @param string $file_path
    *   The path to the file.
    * @param array $data
    *   The optional data to be saved.
    *
-   * @return array
-   *   The file entity prepare for a file field.
+   * @return \Drupal\file\Entity\File[]
+   *   The file entity.
    */
-  public function getAsFileReference(string $file_path, $data = []): array {
+  public function getAsFileEntities(string $file_path, $data = []): array {
     // Check that the media module is installed or fail.
     if (!\Drupal::moduleHandler()->moduleExists('file')) {
       throw new AiBrokenOutputException('File module is not installed, getAsFileReference will not work.');
@@ -53,29 +55,9 @@ trait GenerateFileTrait {
         'filename' => basename($file_path),
       ]);
       $file->save();
-      $files[] = ['target_id' => $file->id()];
+      $files[] = $file;
     }
     return $files;
-  }
-
-  /**
-   * Get the file system.
-   *
-   * @return \Drupal\Core\File\FileSystemInterface
-   *   The file system.
-   */
-  private function getFileFileSystem(): FileSystemInterface {
-    return \Drupal::service('file_system');
-  }
-
-  /**
-   * Get the current user.
-   *
-   * @return \Drupal\Core\Session\AccountProxyInterface
-   *   The current user.
-   */
-  private function getFileCurrentUser(): AccountProxyInterface {
-    return \Drupal::currentUser();
   }
 
 }
