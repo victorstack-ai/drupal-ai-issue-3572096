@@ -245,6 +245,8 @@ class TextToImageGenerationForm extends FormBase {
     $code .= '$file = $response->getAsFileReference("public://image.png");<br>';
     $code .= "// Possibility #5 - get the raw response from the provider.<br>";
     $code .= '$raw = $response->getRaw();<br>';
+    $code .= "// Possibility #6 - get an array of binaries.<br>";
+    $code .= '$raw = $response->getAsBinary();<br>';
     $code .= "</code></details>";
     return $code;
   }
