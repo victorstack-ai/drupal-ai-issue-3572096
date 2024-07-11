@@ -188,7 +188,7 @@ class OpenAiProvider extends AiProviderClientBase implements
     }
     if ($model_id == 'text-embedding-3-large') {
       return [
-        'dimension' => [
+        'dimensions' => [
           'default' => 3072,
         ],
       ];

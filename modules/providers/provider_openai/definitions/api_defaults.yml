@@ -199,7 +199,7 @@ embeddings:
     default: ''
     required: true
   configuration:
-    dimension:
+    dimensions:
       label: 'Vector Dimension'
       type: 'integer'
       default: 1536
