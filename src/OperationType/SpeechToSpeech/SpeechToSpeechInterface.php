@@ -28,6 +28,6 @@ interface SpeechToSpeechInterface extends OperationTypeInterface {
    * @return \Drupal\ai\OperationType\SpeechToSpeech\SpeechToSpeechOutput
    *   The audio output object.
    */
-  public function SpeechToSpeech(string|array|SpeechToSpeechInput $input, string $model_id, array $tags = []): SpeechToSpeechOutput;
+  public function speechToSpeech(string|array|SpeechToSpeechInput $input, string $model_id, array $tags = []): SpeechToSpeechOutput;
 
 }

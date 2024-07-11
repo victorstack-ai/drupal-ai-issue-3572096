@@ -249,8 +249,10 @@ class TextToSpeechGenerationForm extends FormBase {
     $code .= '];<br><br>';
     $code .= "\$ai_provider = \Drupal::service('ai.provider')->createInstance('" . $form_state->getValue('tts_ai_provider') . '\');<br>';
     $code .= "\$ai_provider->setConfiguration(\$config);<br><br>";
+    $code .= "// Trigger a reponse.<br>";
+    $code .= "\$response = \$ai_provider->textToSpeech(\$prompt, '" . $form_state->getValue('tts_ai_model') . '\', ["your_module_name"]);<br><br>';
     $code .= "// This gets an array of \Drupal\ai\OperationType\GenericType\AudioFile.<br>";
-    $code .= "\$response = \$ai_provider->textToSpeech(\$prompt, '" . $form_state->getValue('tts_ai_model') . '\', ["your_module_name"])->getNormalized();<br><br>';
+    $code .= "\$normalized = \$response->getNormalized();<br><br>";
     $code .= "// Examples Possibility #1 - get binary from the first audio.<br>";
     $code .= '$binaries = $normalized[0]->getAsBinary();<br>';
     $code .= "// Examples Possibility #2 - get as base 64 encoded string from the first audio.<br>";
