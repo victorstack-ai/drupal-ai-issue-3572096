@@ -347,17 +347,16 @@ class OpenAiProvider extends AiProviderClientBase implements
     $response = $this->client->images()->create($payload)->toArray();
 
     $images = [];
-    if ($this->configuration['response_format'] === 'url') {
-      if (empty($response['data'][0])) {
-        throw new AiResponseErrorException('No image data found in the response.');
+
+    if (empty($response['data'][0])) {
+      throw new AiResponseErrorException('No image data found in the response.');
+    }
+    foreach ($response['data'] as $data) {
+      if ($this->configuration['response_format'] === 'url') {
+        $images[] = new ImageFile(file_get_contents($data['url']), 'image/png', 'dalle.png');
       }
-      foreach ($response['data'] as $data) {
-        if ($this->configuration['response_format'] === 'url') {
-          $images[] = new ImageFile(file_get_contents($data['url']), 'image/png', 'dalle.png');
-        }
-        else {
-          $images[] = new ImageFile(base64_decode($data['b64_json']), 'image/png', 'dalle.png');
-        }
+      else {
+        $images[] = new ImageFile(base64_decode($data['b64_json']), 'image/png', 'dalle.png');
       }
     }
     return new TextToImageOutput($images, $response, []);
