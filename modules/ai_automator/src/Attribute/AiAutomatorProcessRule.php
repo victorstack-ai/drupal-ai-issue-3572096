@@ -35,4 +35,5 @@ final class AiAutomatorProcessRule extends AttributeBase {
     public readonly ?string $deriver = NULL,
   ) {
   }
+
 }

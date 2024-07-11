@@ -72,7 +72,6 @@ class Lists extends RuleBase {
     return $total;
   }
 
-
   /**
    * {@inheritDoc}
    */
@@ -106,7 +105,8 @@ class Lists extends RuleBase {
             $realValue = $key;
           }
         }
-      } else {
+      }
+      else {
         $realValue = $value;
       }
       $realValues[] = $realValue;

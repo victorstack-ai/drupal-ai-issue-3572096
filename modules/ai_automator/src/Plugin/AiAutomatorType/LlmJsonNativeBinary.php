@@ -3,9 +3,10 @@
 namespace Drupal\ai_automator\Plugin\AiAutomatorType;
 
 use Drupal\ai_automator\Attribute\AiAutomatorType;
+use Drupal\ai_automator\PluginBaseClasses\TextToJsonField;
 use Drupal\ai_automator\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\ai_automator\PluginBaseClasses\TextToJsonField;
+
 /**
  * The rules for an json_native_binary field.
  */

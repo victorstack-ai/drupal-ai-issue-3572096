@@ -211,15 +211,9 @@ class MistralProvider extends AiProviderClientBase implements
   }
 
   /**
-   * Undocumented function
-   *
-   * @param [type] $errno
-   * @param [type] $errstr
-   * @param [type] $file
-   * @param [type] $line
-   * @return void
+   * Error catcher for the Mistral API.
    */
-  function errorCatcher($errno, $errstr, $file, $line) {
+  protected function errorCatcher($errno, $errstr, $file, $line) {
     throw new AiResponseErrorException("Something undefined was broken in the response from Mistral AI");
   }
 

@@ -22,4 +22,5 @@ class LlmChartFromText extends Chart {
    * {@inheritDoc}
    */
   public $title = 'LLM: Chart From Text';
+
 }

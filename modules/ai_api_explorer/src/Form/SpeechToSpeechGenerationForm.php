@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Drupal\ai_api_explorer\Form;
 
 use Drupal\ai\AiProviderInterface;
-use Drupal\ai\OperationType\SpeechToSpeech\SpeechToSpeechInput;
 use Drupal\ai\OperationType\GenericType\AudioFile;
+use Drupal\ai\OperationType\SpeechToSpeech\SpeechToSpeechInput;
 use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\Core\File\FileExists;
@@ -201,8 +201,8 @@ class SpeechToSpeechGenerationForm extends FormBase {
    *   The provider.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
-   * @param string $prompt
-   *   The prompt.
+   * @param string $filename
+   *   The filename.
    *
    * @return string
    *   The normalized code example.
@@ -212,11 +212,12 @@ class SpeechToSpeechGenerationForm extends FormBase {
     $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
     $code .= '$binary = file_get_contents("' . $filename . '");<br>';
     if (count($provider->getConfiguration())) {
-    $code .= '$config = [<br>';
+      $code .= '$config = [<br>';
       foreach ($provider->getConfiguration() as $key => $value) {
         if (is_string($value)) {
           $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '",<br>';
-        } else {
+        }
+        else {
           $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ',<br>';
         }
       }
@@ -245,4 +246,5 @@ class SpeechToSpeechGenerationForm extends FormBase {
     $code .= "</code></details>";
     return $code;
   }
+
 }

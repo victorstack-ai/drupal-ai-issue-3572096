@@ -15,6 +15,7 @@ use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\provider_ollama\OllamaControlApi;
+use GuzzleHttp\Client as GuzzleClient;
 use OpenAI\Client;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Yaml\Yaml;
@@ -158,7 +159,7 @@ class OllamaProvider extends AiProviderClientBase implements
       $host .= '/v1';
 
       // Set longer timeout.
-      $client = new \GuzzleHttp\Client(['timeout' => 600]);
+      $client = new GuzzleClient(['timeout' => 600]);
 
       $this->client = \OpenAI::factory()
         ->withHttpClient($client)

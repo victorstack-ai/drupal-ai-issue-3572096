@@ -22,4 +22,5 @@ class LlmBoolean extends Boolean implements AiAutomatorTypeInterface {
    * {@inheritDoc}
    */
   public $title = 'LLM: Boolean';
+
 }

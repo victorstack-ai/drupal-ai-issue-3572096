@@ -17,7 +17,7 @@ trait GenerateBinaryTrait {
    */
   public function getAsBinaries(): array {
     $strings = [];
-    /* @var \Drupal\ai\OperationType\GenericType\FileBase $file */
+    /** @var \Drupal\ai\OperationType\GenericType\FileBase $file */
     foreach ($this->getNormalized() as $file) {
       $strings[] = $file->getBinary();
     }

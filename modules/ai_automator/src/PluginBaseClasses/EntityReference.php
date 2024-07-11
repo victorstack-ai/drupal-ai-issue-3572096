@@ -2,8 +2,6 @@
 
 namespace Drupal\ai_automator\PluginBaseClasses;
 
-use Drupal\ai\OperationType\Chat\ChatInput;
-use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -65,7 +63,7 @@ abstract class EntityReference extends RuleBase {
     $bundles = \Drupal::service('entity_type.bundle.info')->getBundleInfo($targetType);
     if ($bundles) {
       $options = [
-        '' => t('Select a bundle'),
+        '' => $this->t('Select a bundle'),
       ];
       foreach ($bundles as $bundle => $info) {
         $options[$bundle] = $info['label'];
@@ -73,9 +71,9 @@ abstract class EntityReference extends RuleBase {
       $chosenBundle = $defaultValues['automator_entity_reference_bundle'] ?? '';
       $form['automator_entity_reference_bundle'] = [
         '#type' => 'select',
-        '#title' => t('Bundle'),
+        '#title' => $this->t('Bundle'),
         '#options' => $options,
-        '#description' => 'Select the bundle to use to create the entity reference.',
+        '#description' => $this->t('Select the bundle to use to create the entity reference.'),
         '#weight' => 20,
         '#default_value' => $chosenBundle,
       ];
@@ -85,11 +83,11 @@ abstract class EntityReference extends RuleBase {
     if ($chosenBundle || !$bundles) {
       $fields = \Drupal::service('entity_field.manager')->getFieldDefinitions($targetType, $chosenBundle);
       $options = [
-        '' => t('Select a field'),
+        '' => $this->t('Select a field'),
       ];
       $form['ai_automator_fields'] = [
         '#type' => 'details',
-        '#title' => t('Fields to generate'),
+        '#title' => $this->t('Fields to generate'),
         '#weight' => 20,
         '#open' => TRUE,
       ];
@@ -99,7 +97,7 @@ abstract class EntityReference extends RuleBase {
           $form['ai_automator_fields']['automator_entity_field_enable_' . $field] = [
             '#type' => 'checkbox',
             '#title' => $info->getLabel(),
-            '#description' => 'Check this box to enable this field for the generation.',
+            '#description' => $this->t('Check this box to enable this field for the generation.'),
             '#weight' => 20,
             '#default_value' => $defaultValues['automator_entity_field_enable_' . $field] ?? FALSE,
           ];
@@ -107,7 +105,7 @@ abstract class EntityReference extends RuleBase {
           $form['ai_automator_fields']['automator_entity_field_generate_' . $field] = [
             '#type' => 'textarea',
             '#title' => $info->getLabel(),
-            '#description' => 'Describe specifically how this field should be filled out.',
+            '#description' => $this->t('Describe specifically how this field should be filled out.'),
             '#weight' => 20,
             '#default_value' => $defaultValues['automator_entity_field_generate_' . $field] ?? '',
             '#states' => [
@@ -139,10 +137,10 @@ abstract class EntityReference extends RuleBase {
       }
     }
     if ($formState->getValue('automator_enabled') && !$isEnabled && $foundField) {
-      $formState->setErrorByName('ai_automator_fields', t('You need to enable at least one field to generate.'));
+      $formState->setErrorByName('ai_automator_fields', $this->t('You need to enable at least one field to generate.'));
     }
     if ($formState->getValue('automator_enabled') && $formState->getValue('automator_entity_reference_bundle') && !$foundField) {
-      \Drupal::messenger()->addWarning(t('AI Automator Warning: Because of the structure of the entity reference, you now to go back and edit the prompts for the fields before it works.'));
+      \Drupal::messenger()->addWarning($this->t('AI Automator Warning: Because of the structure of the entity reference, you now to go back and edit the prompts for the fields before it works.'));
     }
   }
 
@@ -233,7 +231,7 @@ abstract class EntityReference extends RuleBase {
    *
    * @param string $fieldName
    *   The field name.
-   * @param ContentEntityInterface $entity
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity.
    *
    * @return bool

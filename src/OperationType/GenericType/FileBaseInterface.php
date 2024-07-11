@@ -90,7 +90,7 @@ interface FileBaseInterface {
    * Sets the file from a Drupal file.
    *
    * @param \Drupal\file\Entity\File $file
-   *  The file.
+   *   The file.
    */
   public function setFileFromFile(File $file): void;
 

@@ -49,13 +49,14 @@ trait GenerateMediaEntityTrait {
     }
 
     $medias = [];
-    /* @var \Drupal\ai\OperationType\GenericType\FileBase $data */
+    /** @var \Drupal\ai\OperationType\GenericType\FileBase $data */
     foreach ($this->getNormalized() as $data) {
       // Create the file, depending on type.
       $file = NULL;
       if ($base_field->getType() === 'image') {
         $file = $this->getAsImageReference($path, [$data])[0];
-      } else {
+      }
+      else {
         $file = $this->getAsFileReference($path, [$data])[0];
       }
 

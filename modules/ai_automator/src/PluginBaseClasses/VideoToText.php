@@ -98,10 +98,12 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
    *   Inherited plugin id.
    * @param mixed $plugin_definition
    *   Inherited plugin definition.
+   * @param \Drupal\ai\AiProviderPluginManager $pluginManager
+   *   The AI provider plugin manager.
+   * @param \Drupal\ai\Service\AiProviderFormHelper $formHelper
+   *   The AI provider form helper.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityManager
    *   The entity type manager.
-   * @param \Drupal\ai_interpolator_openai\OpenAiRequester $openAi
-   *   The OpenAI requester.
    * @param \Drupal\Core\File\FileSystemInterface $fileSystem
    *   The File system interface.
    * @param \Drupal\Core\Utility\Token $token
@@ -127,7 +129,7 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
     ModuleHandlerInterface $moduleHandler,
     AccountProxyInterface $currentUser,
     EntityFieldManagerInterface $fieldManager,
-    EntityTypeBundleInfo $entityTypeBundleInfo
+    EntityTypeBundleInfo $entityTypeBundleInfo,
   ) {
     parent::__construct($plugin_id, $plugin_definition, $pluginManager, $formHelper);
     $this->entityManager = $entityManager;
@@ -228,7 +230,6 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
     return $total;
   }
 
-
   /**
    * {@inheritDoc}
    */
@@ -305,7 +306,7 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
     $realPath = $this->fileSystem->realpath($video->getFileUri());
     $command = "ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 \"$realPath\"";
     $result = shell_exec($command);
-    [$width, $height] = explode('x', $result);
+    [$width] = explode('x', $result);
     $ratio = $width / $originalWidth;
     $newCropData = [];
     foreach ($cropData as $key => $value) {
@@ -332,7 +333,6 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
     $this->extraProviderForm($form, $formState, 'speech_to_text', 'audio', $this->t('Speech To Text Provider'), $defaultValues);
     return $form;
   }
-
 
   /**
    * Generate the images and audio for OpenAI.
@@ -395,7 +395,6 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
     $command = "ffmpeg -y -nostdin  -i \"$realPath\" -vf \"select='gt(scene,0.1)',scale=640:-1,drawtext=fontsize=45:fontcolor=yellow:box=1:boxcolor=black:x=(W-tw)/2:y=H-th-10:text='%{pts\:hms}'\" -vsync vfr {$this->tmpDir}output_frame_%04d.jpeg";
     // If its timestamp, just get 0.5 seconds before and after.
     if ($timestamp) {
-      //$selection = 'between(t,' .  . ',' . $this->calculateFfmpegTimestamp($timestamp, -0.5) . ')';
       $command = "ffmpeg -y -nostdin -ss " . $timestamp . " -i \"$realPath\" -t 3 -vf \"scale=640:-1,drawtext=fontsize=45:fontcolor=yellow:box=1:boxcolor=black:x=(W-tw)/2:y=H-th-10:text='%{pts\:hms}'\" -vsync vfr {$this->tmpDir}output_frame_%04d.jpeg";
     }
 
@@ -480,4 +479,5 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
 
     return substr($date->format('H:i:s.u'), 0, -3);
   }
+
 }

@@ -4,7 +4,6 @@ namespace Drupal\ai_automator\PluginBaseClasses;
 
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
-use Drupal\ai\Utility\CastUtility;
 use Drupal\ai_automator\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
@@ -82,7 +81,6 @@ class Chart extends RuleBase implements AiAutomatorTypeInterface {
 
     return $total;
   }
-
 
   /**
    * {@inheritDoc}

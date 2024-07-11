@@ -25,7 +25,7 @@ services:
     arguments: ['@entity_type.manager', '@entity_field.manager']
   ai_automator.rule_helper.general:
     class: Drupal\ai_automator\Rulehelpers\GeneralHelper
-    arguments: ['@entity_field.manager', '@module_handler', '@ai_automator.field_config', '@token', '@current_user', '@entity_type.manager']
+    arguments: ['@entity_field.manager', '@module_handler', '@ai_automator.field_config', '@token', '@current_user', '@entity_type.manager', '@token.tree_builder']
   ai_automator.rule_helper.file:
     class: Drupal\ai_automator\Rulehelpers\FileHelper
     arguments: ['@entity_type.manager', '@file_system', '@file.repository', '@token', '@current_user']

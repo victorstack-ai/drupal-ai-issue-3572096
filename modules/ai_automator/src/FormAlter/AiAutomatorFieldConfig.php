@@ -110,7 +110,6 @@ class AiAutomatorFieldConfig {
     // Get the field config.
     $fields = $this->fieldManager->getFieldDefinitions($entity->getEntityTypeId(), $entity->bundle());
 
-
     /** @var \Drupal\field\Entity\FieldConfig */
     $fieldInfo = $fields[$fieldName] ?? NULL;
 
@@ -259,7 +258,7 @@ class AiAutomatorFieldConfig {
       '#weight' => 11,
       '#states' => [
         'visible' => [
-          ':input[name="automator_mode' . '"]' => [
+          ':input[name="automator_mode"]' => [
             'value' => 'base',
           ],
         ],
@@ -324,7 +323,7 @@ class AiAutomatorFieldConfig {
         '#weight' => 11,
         '#states' => [
           'visible' => [
-            ':input[name="automator_mode' . '"]' => [
+            ':input[name="automator_mode"]' => [
               'value' => 'token',
             ],
           ],
@@ -508,7 +507,7 @@ class AiAutomatorFieldConfig {
       $aiConfig->set('plugin_config', $pluginConfig);
       $aiConfig->save();
     }
-    else if ($aiConfig) {
+    elseif ($aiConfig) {
       // Remove it if disabled and exists.
       $aiConfig->delete();
     }

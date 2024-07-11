@@ -28,6 +28,6 @@ interface ImageToVideoInterface extends OperationTypeInterface {
    * @return \Drupal\ai\OperationType\ImageToVideo\ImageToVideoOutput
    *   The video output object.
    */
-  public function ImageToVideo(string|array|ImageToVideoInput $input, string $model_id, array $tags = []): ImageToVideoOutput;
+  public function imageToVideo(string|array|ImageToVideoInput $input, string $model_id, array $tags = []): ImageToVideoOutput;
 
 }

@@ -136,7 +136,7 @@ class ChatGenerationForm extends FormBase {
     ];
     $form['prompts']['image_2'] = [
       '#type' => 'file',
-      // Only jpg, png files are allowed in this case, since that covers most models.
+      // Only jpg, png files are allowed, since that covers most models.
       '#accept' => '.jpg, .png',
       '#title' => $this->t('Image'),
       '#description' => $this->t('Attach an image to the call. Note that not all models support images and will throw an error.'),
@@ -201,7 +201,8 @@ class ChatGenerationForm extends FormBase {
         $image = "";
         if (isset($files['files']['image_' . $index])) {
           $raw_file = file_get_contents($files['files']['image_' . $index]->getPathname());
-          $image = new ImageFile($raw_file,  $files['files']['image_' . $index]->getClientMimeType(), $files['files']['image_' . $index]->getClientOriginalName());      }
+          $image = new ImageFile($raw_file, $files['files']['image_' . $index]->getClientMimeType(), $files['files']['image_' . $index]->getClientOriginalName());
+        }
         if ($role && $message) {
           $images = [];
           if ($image) {

@@ -2,25 +2,25 @@
 
 namespace Drupal\Tests\ai_interpolator\Unit;
 
-use Drupal\ai_interpolator\AiFieldRules;
-use Drupal\ai_interpolator\AiInterpolatorRuleRunner;
-use Drupal\ai_interpolator\Annotation\AiInterpolatorFieldRule;
-use Drupal\ai_interpolator\Exceptions\AiInterpolatorRuleNotFoundException;
+use Drupal\ai_automator\AiAutomatorRuleRunner;
+use Drupal\ai_automator\AiFieldRules;
+use Drupal\ai_automator\Annotation\AiAutomatorFieldRule;
+use Drupal\ai_automator\Exceptions\AiAutomatorRuleNotFoundException;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManager;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Tests\UnitTestCase;
 
 /**
- * @coversDefaultClass \Drupal\ai_interpolator\AiInterpolatorRuleRunner
- * @group ai_interpolator
+ * @coversDefaultClass \Drupal\ai_automator\AiAutomatorRuleRunner
+ * @group ai_automator
  */
-class AiInterpolatorRuleRunnerTest extends UnitTestCase {
+class AiAutomatorRuleRunnerTest extends UnitTestCase {
 
   /**
    * The status field under test.
    */
-  protected AiInterpolatorRuleRunner $statusField;
+  protected AiAutomatorRuleRunner $ruleRunner;
 
   /**
    * {@inheritdoc}
@@ -34,7 +34,7 @@ class AiInterpolatorRuleRunnerTest extends UnitTestCase {
       ->will($this->returnCallback(
         function ($ruleName) {
           if ($ruleName == 'string') {
-            $rule = $this->createMock(AiInterpolatorFieldRule::class);
+            $rule = $this->createMock(AiAutomatorFieldRule::class);
             $rule
               ->method('generateTokens')
               ->willReturn(
@@ -65,7 +65,7 @@ class AiInterpolatorRuleRunnerTest extends UnitTestCase {
     $interpolatorConfig = [
       'rule' => 'none_exisiting',
     ];
-    $this->expectException(AiInterpolatorRuleNotFoundException::class);
+    $this->expectException(AiAutomatorRuleNotFoundException::class);
     $this->expectExceptionMessage('The rule could not be found: none_existing');
     $this->ruleRunner->generateResponse($contentEntity, $fieldDefinition, $interpolatorConfig);
   }

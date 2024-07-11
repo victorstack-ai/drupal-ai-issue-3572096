@@ -122,7 +122,8 @@ abstract class ExternalBase implements AiAutomatorTypeInterface {
     // @phpstan-ignore-next-line
     if (!empty($automatorConfig['mode']) && $automatorConfig['mode'] == 'token' && \Drupal::service('module_handler')->moduleExists('token')) {
       $prompts[] = \Drupal::service('ai_automator.prompt_helper')->renderTokenPrompt($automatorConfig['token'], $entity); /* @phpstan-ignore-line */
-    } elseif ($this->needsPrompt()) {
+    }
+    elseif ($this->needsPrompt()) {
       // Run rule.
       foreach ($entity->get($automatorConfig['base_field'])->getValue() as $i => $item) {
         // Get tokens.

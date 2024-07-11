@@ -2,9 +2,6 @@
 
 namespace Drupal\ai_automator\PluginBaseClasses;
 
-use Drupal\ai\OperationType\Chat\ChatInput;
-use Drupal\ai\OperationType\Chat\ChatMessage;
-use Drupal\ai\Utility\CastUtility;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -36,17 +33,7 @@ class CustomField extends RuleBase {
   }
 
   /**
-   * Adds the custom form fields.
-   *
-   * @param string $prefix
-   *   The prefix.
-   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
-   *   The entity.
-   * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
-   *   The field definition.
-   *
-   * @return array
-   *   The form.
+   * {@inheritDoc}
    */
   public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
     $config = $fieldDefinition->getConfig($entity->bundle())->getSettings();

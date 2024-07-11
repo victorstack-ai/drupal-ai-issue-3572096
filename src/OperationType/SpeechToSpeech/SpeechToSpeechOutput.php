@@ -2,7 +2,6 @@
 
 namespace Drupal\ai\OperationType\SpeechToSpeech;
 
-use Drupal\ai\OperationType\GenericType\AudioFile;
 use Drupal\ai\OperationType\OutputInterface;
 
 /**

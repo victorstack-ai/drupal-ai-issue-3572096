@@ -26,11 +26,11 @@ class TextToImageOutput implements OutputInterface {
   /**
    * The metadata from the AI provider.
    *
-   * @var \Drupal\ai\OperationType\GenericType\ImageType[] $normalized
+   * @param \Drupal\ai\OperationType\GenericType\ImageType[] $normalized
    *   The metadata.
-   * @var mixed $rawOutput
+   * @param mixed $rawOutput
    *   The raw output
-   * @var mixed $metadata
+   * @param mixed $metadata
    *   The metadata
    */
   private mixed $metadata;

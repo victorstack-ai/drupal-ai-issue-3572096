@@ -26,11 +26,11 @@ class TextToSpeechOutput implements OutputInterface {
   /**
    * The metadata from the AI provider.
    *
-   * @var \Drupal\ai\OperationType\GenericType\AudioType[] $normalized
+   * @param \Drupal\ai\OperationType\GenericType\AudioType[] $normalized
    *   The audio object.
-   * @var mixed $rawOutput
+   * @param mixed $rawOutput
    *   The raw output from the AI provider.
-   * @var mixed $metadata
+   * @param mixed $metadata
    *   The metadata from the AI provider.
    */
   private mixed $metadata;

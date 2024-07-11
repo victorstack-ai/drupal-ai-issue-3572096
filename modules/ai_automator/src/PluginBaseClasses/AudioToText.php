@@ -4,7 +4,6 @@ namespace Drupal\ai_automator\PluginBaseClasses;
 
 use Drupal\ai\OperationType\GenericType\AudioFile;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInput;
-use Drupal\ai_automator\PluginBaseClasses\RuleBase;
 use Drupal\ai_automator\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
@@ -99,4 +98,5 @@ class AudioToText extends RuleBase implements AiAutomatorTypeInterface, Containe
     $entity->set($fieldDefinition->getName(), $values);
     return TRUE;
   }
+
 }

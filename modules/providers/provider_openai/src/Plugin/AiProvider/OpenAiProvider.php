@@ -280,7 +280,7 @@ class OpenAiProvider extends AiProviderClientBase implements
           [
             'type' => 'text',
             'text' => $message->getText(),
-          ]
+          ],
         ];
         if (count($message->getImages())) {
           foreach ($message->getImages() as $image) {

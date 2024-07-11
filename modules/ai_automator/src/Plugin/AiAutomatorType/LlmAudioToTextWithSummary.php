@@ -22,4 +22,5 @@ class LlmAudioToTextWithSummary extends AudioToText implements AiAutomatorTypeIn
    * {@inheritDoc}
    */
   public $title = 'LLM: Audio to Text';
+
 }

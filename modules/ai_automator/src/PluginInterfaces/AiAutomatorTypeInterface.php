@@ -74,7 +74,7 @@ interface AiAutomatorTypeInterface {
    * @return array
    *   Form array with key starting with automator_{type}.
    */
-  public function extraFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues =[]);
+  public function extraFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []);
 
   /**
    * Adds extra advanced form fields to configuration.

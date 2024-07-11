@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Drupal\ai_automator\Entity;
 
 use Drupal\ai_automator\AiAutomatorInterface;
-use Drupal\Component\Plugin\PluginInspectionInterface;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 
 /**

@@ -211,4 +211,5 @@ class LlmVideoToImage extends VideoToText implements AiAutomatorTypeInterface {
     $entity->set($fieldDefinition->getName(), $files);
     return TRUE;
   }
+
 }

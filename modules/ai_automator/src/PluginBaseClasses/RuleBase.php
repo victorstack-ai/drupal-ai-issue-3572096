@@ -59,7 +59,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     $plugin_id,
     $plugin_definition,
     AiProviderPluginManager $pluginManager,
-    AiProviderFormHelper $formHelper
+    AiProviderFormHelper $formHelper,
   ) {
     $this->aiPluginManager = $pluginManager;
     $this->formHelper = $formHelper;
@@ -264,7 +264,8 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     // @phpstan-ignore-next-line
     if (!empty($automatorConfig['mode']) && $automatorConfig['mode'] == 'token' && \Drupal::service('module_handler')->moduleExists('token')) {
       $prompts[] = \Drupal::service('ai_automator.prompt_helper')->renderTokenPrompt($automatorConfig['token'], $entity); /* @phpstan-ignore-line */
-    } elseif ($this->needsPrompt()) {
+    }
+    elseif ($this->needsPrompt()) {
       // Run rule.
       foreach ($entity->get($automatorConfig['base_field'])->getValue() as $i => $item) {
         // Get tokens.
@@ -318,11 +319,21 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     return $form['automator_container']['automator_advanced']['ajax_prefix' . $suffix];
   }
 
-
   /**
    * Load one extra provider form.
    *
    * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $formState
+   *   The form state.
+   * @param string $type
+   *   The operation type.
+   * @param string $suffix
+   *   The suffix.
+   * @param string $title
+   *   The title.
+   * @param array $defaultValues
+   *   The default values.
    */
   public function extraProviderForm(&$form, FormStateInterface $formState, $type, $suffix, $title, $defaultValues = []) {
     $suffix = '_' . ltrim($suffix, '_');
@@ -422,7 +433,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
    *
    * @param string $operationType
    *   The operation type.
-   * @param array automatorConfig
+   * @param array $automatorConfig
    *   The automator configuration.
    *
    * @return \Drupal\ai\Plugin\ProviderProxy
@@ -532,7 +543,8 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
         }
       }
       return $values;
-    } elseif (isset($json['value'])) {
+    }
+    elseif (isset($json['value'])) {
       return [$json['value']];
     }
   }

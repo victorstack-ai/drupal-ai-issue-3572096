@@ -5,7 +5,6 @@ namespace Drupal\ai\Traits\File;
 use Drupal\ai\Exception\AiBrokenOutputException;
 use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
-use Drupal\Core\Session\AccountProxyInterface;
 
 /**
  * Trait to add the possibility to store images directly in the processor.
@@ -42,7 +41,7 @@ trait GenerateImageEntityTrait {
     $data = !empty($data) ? $data : $this->getNormalized();
 
     $files = [];
-    /* @var \Drupal\ai\OperationType\GenericType\FileBase $save_data */
+    /** @var \Drupal\ai\OperationType\GenericType\FileBase $save_data */
     foreach ($data as $save_data) {
       // Generate a file from string and rename if it already exists.
       $file_path = $file_system->saveData($save_data->getBinary(), $file_path, FileExists::Rename);

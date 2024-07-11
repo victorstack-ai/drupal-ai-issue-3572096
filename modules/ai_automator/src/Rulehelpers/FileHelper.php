@@ -63,7 +63,8 @@ class FileHelper {
     FileSystemInterface $fileSystem,
     FileRepositoryInterface $fileRepo,
     Token $token,
-    AccountProxyInterface $currentUser) {
+    AccountProxyInterface $currentUser,
+  ) {
     $this->entityTypeManager = $entityTypeManager;
     $this->fileSystem = $fileSystem;
     $this->fileRepo = $fileRepo;
@@ -207,7 +208,7 @@ class FileHelper {
   private function getMediaField($mediaType) {
     $mediaStorage = $this->entityTypeManager->getStorage('media');
     $mediaTypeInterface = $this->entityTypeManager->getStorage('media_type')->load($mediaType);
-    /* @var \Drupal\media\Entity\Media $media */
+    /** @var \Drupal\media\Entity\Media $media */
     $media = $mediaStorage->create([
       'name' => 'tmp',
       'bundle' => $mediaType,

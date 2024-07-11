@@ -45,7 +45,6 @@ class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterfa
    */
   protected EntityFieldManagerInterface $fieldManager;
 
-
   /**
    * Constructs a new AiClientBase abstract class.
    *
@@ -71,7 +70,7 @@ class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterfa
     AiProviderFormHelper $formHelper,
     EntityTypeBundleInfo $entityTypeBundleInfo,
     EntityTypeManagerInterface $entityTypeManager,
-    EntityFieldManagerInterface $fieldManager
+    EntityFieldManagerInterface $fieldManager,
   ) {
     parent::__construct($plugin_id, $plugin_definition, $pluginManager, $formHelper);
     $this->entityTypeBundleInfo = $entityTypeBundleInfo;

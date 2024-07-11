@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Drupal\ai_api_explorer\Form;
 
 use Drupal\ai\AiProviderInterface;
-use Drupal\ai\OperationType\AudioToAudio\AudioToAudioInput;
 use Drupal\ai\OperationType\GenericType\AudioFile;
 use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\OperationType\ImageAndAudioToVideo\ImageAndAudioToVideoInput;
@@ -188,7 +187,8 @@ class ImageAndAudioToVideoGenerationForm extends FormBase {
     $response = '';
     try {
       $video_normalized = $provider->ImageAndAudioToVideo($input, $form_state->getValue('ata_ai_model'), ['ai_api_explorer'])->getNormalized();
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       $response = $this->explorerHelper->renderException($e);
     }
 
@@ -218,8 +218,8 @@ class ImageAndAudioToVideoGenerationForm extends FormBase {
    *   The provider.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
-   * @param string $prompt
-   *   The prompt.
+   * @param string $filename
+   *   The filename.
    *
    * @return string
    *   The normalized code example.
@@ -233,7 +233,8 @@ class ImageAndAudioToVideoGenerationForm extends FormBase {
       foreach ($provider->getConfiguration() as $key => $value) {
         if (is_string($value)) {
           $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '",<br>';
-        } else {
+        }
+        else {
           $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ',<br>';
         }
       }
@@ -250,4 +251,5 @@ class ImageAndAudioToVideoGenerationForm extends FormBase {
     $code .= "</code></details>";
     return $code;
   }
+
 }

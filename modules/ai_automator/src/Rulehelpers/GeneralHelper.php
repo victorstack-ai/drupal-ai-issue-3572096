@@ -12,6 +12,7 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Utility\Token;
 use Drupal\file\FileInterface;
+use Drupal\token\TreeBuilder;
 
 /**
  * Helper functions for most rules.
@@ -63,6 +64,13 @@ class GeneralHelper {
   protected $entityTypeManager;
 
   /**
+   * The token tree builder.
+   *
+   * @var Drupal\token\TreeBuilder
+   */
+  protected $tokenTreeBuilder;
+
+  /**
    * Constructor for the class.
    *
    * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entityFieldManager
@@ -77,6 +85,8 @@ class GeneralHelper {
    *   The current user.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity type manager.
+   * @param \Drupal\token\TreeBuilder $tokenTreeBuilder
+   *   The token tree builder.
    */
   public function __construct(
     EntityFieldManagerInterface $entityFieldManager,
@@ -84,7 +94,8 @@ class GeneralHelper {
     AiAutomatorFieldConfig $aiAutomatorFieldConfig,
     Token $token,
     AccountProxyInterface $currentUser,
-    EntityTypeManagerInterface $entityTypeManager
+    EntityTypeManagerInterface $entityTypeManager,
+    TreeBuilder $tokenTreeBuilder,
   ) {
     $this->entityFieldManager = $entityFieldManager;
     $this->moduleHandler = $moduleHandler;
@@ -92,6 +103,7 @@ class GeneralHelper {
     $this->token = $token;
     $this->currentUser = $currentUser;
     $this->entityTypeManager = $entityTypeManager;
+    $this->tokenTreeBuilder = $tokenTreeBuilder;
   }
 
   /**
@@ -155,9 +167,11 @@ class GeneralHelper {
         }
       }
       return $values;
-    } elseif (isset($json['value'])) {
+    }
+    elseif (isset($json['value'])) {
       return [$json['value']];
-    } else {
+    }
+    else {
       return [$response['choices'][0]['message']['content']];
     }
   }
@@ -277,7 +291,7 @@ class GeneralHelper {
    * @param array $form
    *   The form element, passed by reference.
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
-   *   The entity
+   *   The entity.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The field definition.
    * @param array $extraJoiners
@@ -285,9 +299,9 @@ class GeneralHelper {
    * @param string $defaultJoiner
    *   The default joiner.
    */
-  public function addJoinerConfigurationFormField($id, array &$form, ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition,  array $extraJoiners = [], $defaultJoiner = "") {
+  public function addJoinerConfigurationFormField($id, array &$form, ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $extraJoiners = [], $defaultJoiner = "") {
     $joiners = [
-      '' => $this->t('-- Don\'t join --'),
+      '' => $this->t("-- Don't join --"),
       ', ' => $this->t('Comma, with space (, )'),
       ' ' => $this->t('Space ( )'),
       '.' => $this->t('Period, with space (. )'),
@@ -316,7 +330,7 @@ class GeneralHelper {
       '#description' => $this->t('If you selected other, please specify the joiner.'),
       '#states' => [
         'visible' => [
-          'select[name="' . $id .'_joiner"]' => [
+          'select[name="' . $id . '_joiner"]' => [
             'value' => 'other',
           ],
         ],
@@ -350,6 +364,8 @@ class GeneralHelper {
    *   The entity.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The field definition.
+   * @param array $defaultValues
+   *   The default values.
    */
   public function addTokenConfigurationToggle(array &$form, $entity, $fieldDefinition, $defaultValues) {
     $form['automator_token_configuration_toggle'] = [
@@ -359,7 +375,6 @@ class GeneralHelper {
       '#default_value' => $defaultValues['automator_token_configuration_toggle'] ?? FALSE,
     ];
   }
-
 
   /**
    * Helper function to offer a form field as tokens from the entity.
@@ -410,17 +425,15 @@ class GeneralHelper {
       '#default_value' => $fieldDefinition->getConfig($entity->bundle())->getThirdPartySetting('ai_automator', "{$id}_token", ''),
     ];
 
-    if ($this->moduleHandler->moduleExists('token')) {
-      // @phpstan-ignore-next-line
-      $mergeForm["{$id}_override"]['token_help'] = \Drupal::service('token.tree_builder')->buildRenderable([
-        $this->aiAutomatorFieldConfig->getEntityTokenType($entity->getEntityTypeId()),
-        'current-user',
-      ]);
-    }
+    $mergeForm["{$id}_override"]['token_help'] = $this->tokenTreeBuilder->buildRenderable([
+      $this->aiAutomatorFieldConfig->getEntityTokenType($entity->getEntityTypeId()),
+      'current-user',
+    ]);
 
     if ($wrapper) {
       $newForm[$wrapper] = $mergeForm;
-    } else {
+    }
+    else {
       $newForm = $mergeForm;
     }
 
@@ -502,12 +515,12 @@ class GeneralHelper {
   /**
    * Preprocess the image style.
    *
-   * @param FileInterface $imageEntity
+   * @param \Drupal\file\FileInterface $imageEntity
    *   The image entity.
    * @param string $imageStyle
    *   The image style.
    *
-   * @return FileInterface
+   * @return \Drupal\file\FileInterface
    *   A temporary image entity.
    */
   public function preprocessImageStyle(FileInterface $imageEntity, $imageStyle) {

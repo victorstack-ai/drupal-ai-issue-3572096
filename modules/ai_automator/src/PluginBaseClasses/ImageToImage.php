@@ -11,7 +11,6 @@ use Drupal\file\Entity\File;
  */
 class ImageToImage extends RuleBase {
 
-
   /**
    * {@inheritDoc}
    */

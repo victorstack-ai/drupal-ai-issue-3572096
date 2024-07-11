@@ -4,7 +4,6 @@ namespace Drupal\ai\OperationType\Chat;
 
 use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\Core\File\MimeType\MimeTypeGuesser;
-use Drupal\custom_field\Plugin\CustomField\FieldType\ImageType;
 use Drupal\file\Entity\File;
 
 /**
@@ -121,7 +120,7 @@ class ChatMessage {
   }
 
   /**
-   * sets the image from an url.
+   * Sets the image from an url.
    *
    * @param string $url
    *   The url.
@@ -150,7 +149,7 @@ class ChatMessage {
    * Sets the image from a Drupal file.
    *
    * @param \Drupal\file\Entity\File $file
-   *  The file.
+   *   The file.
    */
   public function setImageFromFile(File $file): void {
     $this->images[] = new ImageFile(file_get_contents($file->getFileUri()), $file->getMimeType(), $file->getFilename());

@@ -177,7 +177,7 @@ class TextToImageGenerationForm extends FormBase {
     try {
       $images = $provider->textToImage($form_state->getValue('prompt'), $form_state->getValue('image_generator_ai_model'), ['ai_api_explorer'])->getNormalized();
       $response = '';
-      /* @var \Drupal\ai\OperationType\GenericType\ImageFile $image */
+      /** @var \Drupal\ai\OperationType\GenericType\ImageFile $image */
       foreach ($images as $image) {
         $response .= '<img src="' . $image->getAsBase64EncodedString() . '" />';
       }
@@ -224,7 +224,8 @@ class TextToImageGenerationForm extends FormBase {
     foreach ($provider->getConfiguration() as $key => $value) {
       if (is_string($value)) {
         $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '",<br>';
-      } else {
+      }
+      else {
         $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ',<br>';
       }
     }

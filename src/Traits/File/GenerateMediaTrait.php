@@ -51,7 +51,7 @@ trait GenerateMediaTrait {
     }
 
     $medias = [];
-    /* @var \Drupal\ai\OperationType\GenericType\FileBase $data */
+    /** @var \Drupal\ai\OperationType\GenericType\FileBase $data */
     foreach ($this->getNormalized() as $data) {
       // Create the file, depending on type.
       $file = NULL;

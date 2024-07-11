@@ -23,7 +23,7 @@ abstract class AbstractFileBase implements FileBaseInterface {
    *
    * @var string
    */
-  private string $mime_type;
+  private string $mimeType;
 
   /**
    * The filename if it exists.
@@ -33,7 +33,7 @@ abstract class AbstractFileBase implements FileBaseInterface {
   private string $filename;
 
   /**
-   * The binary of the file
+   * The binary of the file.
    *
    * @var string
    */
@@ -44,7 +44,7 @@ abstract class AbstractFileBase implements FileBaseInterface {
    */
   public function __construct(string $binary = "", string $mime_type = "", string $filename = "") {
     $this->binary = $binary;
-    $this->mime_type = $mime_type;
+    $this->mimeType = $mime_type;
     $this->filename = $filename;
   }
 
@@ -52,7 +52,7 @@ abstract class AbstractFileBase implements FileBaseInterface {
    * {@inheritdoc}
    */
   public function getMimeType(): string {
-    return $this->mime_type;
+    return $this->mimeType;
   }
 
   /**
@@ -73,8 +73,8 @@ abstract class AbstractFileBase implements FileBaseInterface {
    * {@inheritdoc}
    */
   public function getAsBase64EncodedString() {
-    if ($this->mime_type) {
-      return "data:" . $this->mime_type . ";base64," . base64_encode($this->binary);
+    if ($this->mimeType) {
+      return "data:" . $this->mimeType . ";base64," . base64_encode($this->binary);
     }
     return base64_encode($this->binary);
   }
@@ -83,7 +83,7 @@ abstract class AbstractFileBase implements FileBaseInterface {
    * {@inheritdoc}
    */
   public function setMimeType(string $mime_type): void {
-    $this->mime_type = $mime_type;
+    $this->mimeType = $mime_type;
   }
 
   /**
@@ -105,7 +105,7 @@ abstract class AbstractFileBase implements FileBaseInterface {
    */
   public function setFileFromUrl(string $url): void {
     // Get mime type from the uri.
-    $this->mime_type = $this->getFileMimeTypeGuesser()->guessMimeType($url);
+    $this->mimeType = $this->getFileMimeTypeGuesser()->guessMimeType($url);
     $this->binary = file_get_contents($url);
     $this->filename = basename($url);
   }
@@ -115,7 +115,7 @@ abstract class AbstractFileBase implements FileBaseInterface {
    */
   public function setFileFromUri(string $uri): void {
     // Get mime type from the uri.
-    $this->mime_type = $this->getFileMimeTypeGuesser()->guessMimeType($uri);
+    $this->mimeType = $this->getFileMimeTypeGuesser()->guessMimeType($uri);
     $this->binary = file_get_contents($uri);
     $this->filename = basename($uri);
   }
@@ -124,7 +124,7 @@ abstract class AbstractFileBase implements FileBaseInterface {
    * {@inheritdoc}
    */
   public function setFileFromFile(File $file): void {
-    $this->mime_type = $file->getMimeType();
+    $this->mimeType = $file->getMimeType();
     $this->binary = file_get_contents($file->getFileUri());
     $this->filename = $file->getFilename();
   }
@@ -133,7 +133,7 @@ abstract class AbstractFileBase implements FileBaseInterface {
    * Get as binary with same naming convention.
    *
    * @return string
-   *  The binary.
+   *   The binary.
    */
   public function getAsBinary(): string {
     return $this->getBinary();
@@ -344,7 +344,8 @@ abstract class AbstractFileBase implements FileBaseInterface {
   /**
    * Get the entity type manager.
    *
-   * return \Drupal\Core\Entity\EntityTypeManagerInterface
+   * @return \Drupal\Core\Entity\EntityTypeManagerInterface
+   *   The entity type manager.
    */
   public function getEntityTypeManager(): EntityTypeManagerInterface {
     return \Drupal::service('entity_type.manager');

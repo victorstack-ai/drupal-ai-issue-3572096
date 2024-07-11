@@ -26,7 +26,7 @@ trait GenerateBase64Trait {
       if ($data_url_scheme) {
         $base64 = $data_url_scheme . ';base64,' . $base64;
       }
-      else if ($file->getMimeType()) {
+      elseif ($file->getMimeType()) {
         $base64 = 'data:' . $file->getMimeType() . ';charset=utf-8;base64,' . $base64;
       }
       $strings[] = $base64;

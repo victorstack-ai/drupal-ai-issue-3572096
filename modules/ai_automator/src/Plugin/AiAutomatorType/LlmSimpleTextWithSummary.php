@@ -22,4 +22,5 @@ class LlmSimpleTextWithSummary extends SimpleTextChat implements AiAutomatorType
    * {@inheritDoc}
    */
   public $title = 'LLM: Text (simple)';
+
 }

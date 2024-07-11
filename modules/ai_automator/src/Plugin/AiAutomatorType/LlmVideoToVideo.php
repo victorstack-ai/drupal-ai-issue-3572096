@@ -8,7 +8,6 @@ use Drupal\ai_automator\Attribute\AiAutomatorType;
 use Drupal\ai_automator\Exceptions\AiAutomatorResponseErrorException;
 use Drupal\ai_automator\PluginBaseClasses\VideoToText;
 use Drupal\ai_automator\PluginInterfaces\AiAutomatorTypeInterface;
-use Drupal\ai_interpolator\Exceptions\AiInterpolatorResponseErrorException;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -17,7 +16,6 @@ use Drupal\file\Entity\File;
 
 /**
  * The rules for a text_long field.
- *
  */
 #[AiAutomatorType(
   id: 'llm_video_to_video',
@@ -184,7 +182,8 @@ class LlmVideoToVideo extends VideoToText implements AiAutomatorTypeInterface {
       // If we only have one video, we can just rename it.
       if (count($tmpNames) == 1) {
         $endFile = $tmpNames[0];
-      } else {
+      }
+      else {
         // If we have more than one video, we need to mix them together.
         $endFile = $this->fileSystem->tempnam($this->tmpDir, 'video') . '.mp4';
         // Generate list file.
@@ -216,4 +215,5 @@ class LlmVideoToVideo extends VideoToText implements AiAutomatorTypeInterface {
     $entity->set($fieldDefinition->getName(), $files);
     return TRUE;
   }
+
 }

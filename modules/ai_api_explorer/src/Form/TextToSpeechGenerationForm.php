@@ -241,7 +241,8 @@ class TextToSpeechGenerationForm extends FormBase {
     foreach ($provider->getConfiguration() as $key => $value) {
       if (is_string($value)) {
         $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '",<br>';
-      } else {
+      }
+      else {
         $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ',<br>';
       }
     }

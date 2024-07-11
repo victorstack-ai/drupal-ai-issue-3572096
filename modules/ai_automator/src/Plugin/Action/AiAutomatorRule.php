@@ -51,13 +51,19 @@ class AiAutomatorRule extends ActionBase implements ConfigurableInterface, Plugi
   protected AiAutomatorRuleRunner $ruleRunner;
 
   /**
+   * Constructor.
+   */
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityFieldManagerInterface $fieldManager, AiAutomatorTypeManager $automatorType, AiAutomatorRuleRunner $ruleRunner) {
+    $this->setAiAutomatorTypeManager($automatorType);
+    $this->setAiAutomatorRuleRunner($ruleRunner);
+    $this->setFieldManager($fieldManager);
+  }
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): static {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
-    $instance->setAiAutomatorTypeManager($container->get('plugin.manager.ai_automator'));
-    $instance->setAiAutomatorRuleRunner($container->get('ai_automator.rule_runner'));
-    $instance->setFieldManager($container->get('entity_field.manager'));
     return $instance;
   }
 
@@ -67,7 +73,7 @@ class AiAutomatorRule extends ActionBase implements ConfigurableInterface, Plugi
    * @throws \Drupal\Core\Entity\EntityStorageException
    */
   public function execute($entity = NULL) {
-    /* @var \Drupal\ai_automator\Entity\AiAutomator $automator */
+    /** @var \Drupal\ai_automator\Entity\AiAutomator $automator */
     $automator = $this->entityTypeManager->getStorage('ai_automator')->load($this->configuration['automator']);
     // The rule failed somehow.
     if (is_null($automator)) {

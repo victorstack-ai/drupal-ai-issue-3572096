@@ -46,6 +46,8 @@ class ProcessFieldEvent extends Event {
 
   /**
    * The changes made.
+   *
+   * @var array
    */
   public $actions = [];
 
@@ -85,4 +87,5 @@ class ProcessFieldEvent extends Event {
   public function setNeutral() {
     $this->actions[] = self::FIELD_NEUTRAL;
   }
+
 }

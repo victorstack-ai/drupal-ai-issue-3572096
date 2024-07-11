@@ -77,7 +77,7 @@ class HuggingfaceConfigForm extends ConfigFormBase {
         '#type' => 'fieldset',
         '#title' => $type_info['label'],
         '#description' => $this->t('Add the models you want to use for @link by autocompleting them. Follow the link to @link for the full list.', [
-          '@link' => Link::fromTextAndUrl($type_info['label'], Url::fromUri('https://huggingface.co/models?pipeline_tag=' . $type_info['filter'] .'&sort=trending'))->toString(),
+          '@link' => Link::fromTextAndUrl($type_info['label'], Url::fromUri('https://huggingface.co/models?pipeline_tag=' . $type_info['filter'] . '&sort=trending'))->toString(),
         ]),
         '#prefix' => '<div id="' . $type . '-wrapper">',
         '#suffix' => '</div>',

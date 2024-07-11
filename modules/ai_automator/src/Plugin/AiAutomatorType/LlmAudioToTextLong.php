@@ -22,4 +22,5 @@ class LlmAudioToTextLong extends AudioToText implements AiAutomatorTypeInterface
    * {@inheritDoc}
    */
   public $title = 'LLM: Audio to Text';
+
 }
