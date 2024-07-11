@@ -194,13 +194,13 @@ class TextToSpeechGenerationForm extends FormBase {
 
     $response = '';
     try {
-      $audio = $provider->textToSpeech($form_state->getValue('prompt'), $form_state->getValue('tts_ai_model'), ['ai_api_explorer']);
+      $audio = $provider->textToSpeech($form_state->getValue('prompt'), $form_state->getValue('tts_ai_model'), ['ai_api_explorer'])->getNormalized();
       if ($form_state->getValue('save_as_media')) {
-        $audio->getAsMediaReference($form_state->getValue('save_as_media'), 'text-to-speech.mp3');
+        $audio[0]->getAsMediaEntity($form_state->getValue('save_as_media'), '', 'text-to-speech.mp3');
       }
-      $audio_normalized = $audio->getAsBinaries();
+      $audio_normalized = $audio[0]->getAsBinary();
       // Save the binary data to a file.
-      $file_url = $this->fileSystem->saveData($audio_normalized[0], 'public://text-to-speech-test.mp3', FileExists::Replace);
+      $file_url = $this->fileSystem->saveData($audio_normalized, 'public://text-to-speech-test.mp3', FileExists::Replace);
       $response .= '<audio controls><source src="' . $this->fileUrlGenerator->generateAbsoluteString($file_url) . '" type="audio/mpeg"></audio>';
     }
     catch (\Exception $e) {
@@ -248,25 +248,19 @@ class TextToSpeechGenerationForm extends FormBase {
 
     $code .= '];<br><br>';
     $code .= "\$ai_provider = \Drupal::service('ai.provider')->createInstance('" . $form_state->getValue('tts_ai_provider') . '\');<br>';
-    $code .= "\$ai_provider->setConfiguration(\$config);<br>";
-    $code .= "// \$response will be a string with the audio binary.<br>";
-    $code .= "\$response = \$ai_provider->textToSpeech(\$prompt, '" . $form_state->getValue('tts_ai_model') . '\', ["your_module_name"]);<br><br>';
-    $code .= "// Possibility #1 - get an array of \Drupal\ai\OperationType\GenericType\AudioFile.<br>";
-    $code .= '$binaries = $response->getNormalized();<br>';
-    $code .= "// Possibility #2 - get an array of base64 encoded strings.<br>";
-    $code .= '$base64 = $response->getAsBase64EncodedStrings();<br>';
-    $code .= "// Possibility #3 - get an array of media entities.<br>";
-    $code .= '$media = $response->getAsMediaEntities("audio", "audio.mp3");<br>';
-    $code .= "// Possibility #4 - get an array of file entities.<br>";
-    $code .= '$file = $response->getAsFileEntities("public://audio.mp3");<br>';
-    $code .= "// Possibility #5 - get an array of referenced media entities for a media field.<br>";
-    $code .= '$media = $response->getAsMediaReference("audio", "audio.mp3");<br>';
-    $code .= "// Possibility #6 - get an array of reference file entities for a file field.<br>";
-    $code .= '$file = $response->getAsFileReference("public://audio.mp3");<br>';
-    $code .= "// Possibility #7 - get the raw response from the provider.<br>";
+    $code .= "\$ai_provider->setConfiguration(\$config);<br><br>";
+    $code .= "// This gets an array of \Drupal\ai\OperationType\GenericType\AudioFile.<br>";
+    $code .= "\$response = \$ai_provider->textToSpeech(\$prompt, '" . $form_state->getValue('tts_ai_model') . '\', ["your_module_name"])->getNormalized();<br><br>';
+    $code .= "// Examples Possibility #1 - get binary from the first audio.<br>";
+    $code .= '$binaries = $normalized[0]->getAsBinary();<br>';
+    $code .= "// Examples Possibility #2 - get as base 64 encoded string from the first audio.<br>";
+    $code .= '$base64 = $normalized[0]->getAsBase64EncodedString();<br>';
+    $code .= "// Examples Possibility #3 - get as generated media from the first audio.<br>";
+    $code .= '$media = $normalized[0]->getAsMediaEntity("audio", "public://", "audio.mp3");<br>';
+    $code .= "// Examples Possibility #4 - get as file entity from the first audio.<br>";
+    $code .= '$file = $normalized[0]->getAsFileEntity("public://", "audio.mp3");<br><br>';
+    $code .= "// Another possibility is to get the raw response from the provider.<br>";
     $code .= '$raw = $response->getRaw();<br>';
-    $code .= "// Possibility #8 - get an array of binaries.<br>";
-    $code .= '$raw = $response->getAsBinaries();<br>';
     $code .= "</code></details>";
 
     return $code;
