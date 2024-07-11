@@ -178,7 +178,7 @@ class AudioToAudioGenerationForm extends FormBase {
     }
 
     // Save the binary data to a file.
-    $file_url = $this->fileSystem->saveData($audio_normalized->getBinary(), 'public://audio-to-audio-test.mp3', FileExists::Replace);
+    $file_url = $this->fileSystem->saveData($audio_normalized[0]->getBinary(), 'public://audio-to-audio-test.mp3', FileExists::Replace);
     $response .= '<audio controls><source src="' . $this->fileUrlGenerator->generateAbsoluteString($file_url) . '" type="audio/mpeg"></audio>';
 
     $code = $this->normalizeCodeExample($provider, $form_state, $file_name);
@@ -229,7 +229,19 @@ class AudioToAudioGenerationForm extends FormBase {
     $code .= "\$audio_file = new \Drupal\ai\OperationType\GenericType\AudioFile(\$binary, 'audio/mp3', '" . $filename . "');<br>";
     $code .= "\$input = new \Drupal\ai\OperationType\AudioToAudio\AudioToAudioInput(\$audio_file);<br>";
     $code .= "// \$response will be a AudioFile with the text.<br>";
-    $code .= "\$response = \$ai_provider->audioToAudio(\$input, '" . $form_state->getValue('ata_ai_model') . '\', ["your_module_name"]);';
+    $code .= "\$response = \$ai_provider->audioToAudio(\$input, '" . $form_state->getValue('ata_ai_model') . '\', ["your_module_name"]);<br><br>';
+    $code .= "// This gets an array of \Drupal\ai\OperationType\GenericType\AudioFile.<br>";
+    $code .= "\$normalized = \$response->getNormalized();<br><br>";
+    $code .= "// Examples Possibility #1 - get binary from the first audio.<br>";
+    $code .= '$binaries = $normalized[0]->getAsBinary();<br>';
+    $code .= "// Examples Possibility #2 - get as base 64 encoded string from the first audio.<br>";
+    $code .= '$base64 = $normalized[0]->getAsBase64EncodedString();<br>';
+    $code .= "// Examples Possibility #3 - get as generated media from the first audio.<br>";
+    $code .= '$media = $normalized[0]->getAsMediaEntity("audio", "public://", "audio.mp3");<br>';
+    $code .= "// Examples Possibility #4 - get as file entity from the first audio.<br>";
+    $code .= '$file = $normalized[0]->getAsFileEntity("public://", "audio.mp3");<br><br>';
+    $code .= "// Another possibility is to get the raw response from the provider.<br>";
+    $code .= '$raw = $response->getRaw();<br>';
     $code .= "</code></details>";
     return $code;
   }

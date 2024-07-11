@@ -13,9 +13,9 @@ class AudioToAudioOutput implements OutputInterface {
   /**
    * The audio file.
    *
-   * @var \Drupal\ai\OperationType\GenericType\AudioFile
+   * @var \Drupal\ai\OperationType\GenericType\AudioFile[]
    */
-  private AudioFile $normalized;
+  private array $normalized;
 
   /**
    * The raw output from the AI provider.
@@ -34,14 +34,14 @@ class AudioToAudioOutput implements OutputInterface {
   /**
    * The constructor.
    *
-   * @param \Drupal\ai\OperationType\GenericType\AudioFile $normalized
+   * @param \Drupal\ai\OperationType\GenericType\AudioFile[] $normalized
    *   The audio file.
    * @param mixed $rawOutput
    *   The raw output from the AI provider.
    * @param mixed $metadata
    *   The metadata from the AI provider.
    */
-  public function __construct(AudioFile $normalized, mixed $rawOutput, mixed $metadata) {
+  public function __construct(array $normalized, mixed $rawOutput, mixed $metadata) {
     $this->normalized = $normalized;
     $this->rawOutput = $rawOutput;
     $this->metadata = $metadata;
@@ -50,10 +50,10 @@ class AudioToAudioOutput implements OutputInterface {
   /**
    * Returns a audio file object.
    *
-   * @return \Drupal\ai\OperationType\GenericType\AudioFile
+   * @return \Drupal\ai\OperationType\GenericType\AudioFile[]
    *   The audio file object.
    */
-  public function getNormalized(): AudioFile {
+  public function getNormalized(): array {
     return $this->normalized;
   }
 
