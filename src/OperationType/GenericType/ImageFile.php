@@ -3,8 +3,8 @@
 namespace Drupal\ai\OperationType\GenericType;
 
 /**
- * The Audio file.
+ * The Image file.
  */
-class AudioFile extends AbstractFileBase {
+class ImageFile extends AbstractFileBase {
 
 }

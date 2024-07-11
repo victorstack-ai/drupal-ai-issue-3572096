@@ -41,9 +41,10 @@ trait GenerateFileTrait {
 
     $files = [];
     $file_storage = \Drupal::entityTypeManager()->getStorage('file');
+    /* @var \Drupal\ai\OperationType\GenericType\FileBase $save_date */
     foreach ($data as $save_data) {
       // Generate a file from string and rename if it already exists.
-      $file_path = $file_system->saveData($save_data, $file_path, FileExists::Rename);
+      $file_path = $file_system->saveData($save_data->getBinary(), $file_path, FileExists::Rename);
       // Generate a file entity.
       $file = $file_storage->create([
         'uri' => $file_path,

@@ -13,6 +13,7 @@ use Drupal\ai\OperationType\Chat\ChatOutput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInterface;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsOutput;
+use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\OperationType\Moderation\ModerationInput;
 use Drupal\ai\OperationType\Moderation\ModerationInterface;
 use Drupal\ai\OperationType\Moderation\ModerationOutput;
@@ -351,10 +352,10 @@ class OpenAiProvider extends AiProviderClientBase implements
       }
       foreach ($response['data'] as $data) {
         if ($this->configuration['response_format'] === 'url') {
-          $images[] = file_get_contents($data['url']);
+          $images[] = new ImageFile(file_get_contents($data['url']), 'image/png', 'dalle.png');
         }
         else {
-          $images[] = base64_decode($data['b64_json']);
+          $images[] = new ImageFile(base64_decode($data['b64_json']), 'image/png', 'dalle.png');
         }
       }
     }

@@ -4,6 +4,7 @@ namespace Drupal\ai\OperationType\TextToImage;
 
 use Drupal\ai\OperationType\OutputInterface;
 use Drupal\ai\Traits\File\GenerateBase64Trait;
+use Drupal\ai\Traits\File\GenerateBinaryTrait;
 use Drupal\ai\Traits\File\GenerateImageTrait;
 use Drupal\ai\Traits\File\GenerateMediaTrait;
 
@@ -12,15 +13,16 @@ use Drupal\ai\Traits\File\GenerateMediaTrait;
  */
 class TextToImageOutput implements OutputInterface {
 
-  // We want to be able to generate into media, images and base64.
+  // We want to be able to generate into binary, media, images and base64.
+  use GenerateBinaryTrait;
   use GenerateMediaTrait;
   use GenerateImageTrait;
   use GenerateBase64Trait;
 
   /**
-   * The normalized image binaries.
+   * The normalized ImageType.
    *
-   * @var array
+   * @var \Drupal\ai\OperationType\GenericType\ImageType[]
    */
   private array $normalized;
 
@@ -34,21 +36,26 @@ class TextToImageOutput implements OutputInterface {
   /**
    * The metadata from the AI provider.
    *
-   * @var mixed
+   * @var \Drupal\ai\OperationType\GenericType\ImageType[] $normalized
+   *   The metadata.
+   * @var mixed $rawOutput
+   *   The raw output
+   * @var mixed $metadata
+   *   The metadata
    */
   private mixed $metadata;
 
-  public function __construct(mixed $normalized, mixed $rawOutput, mixed $metadata) {
+  public function __construct(array $normalized, mixed $rawOutput, mixed $metadata) {
     $this->normalized = $normalized;
     $this->rawOutput = $rawOutput;
     $this->metadata = $metadata;
   }
 
   /**
-   * Returns an array of image binaries.
+   * Returns an array of ImageType objects.
    *
-   * @return array
-   *   The image binaries.
+   * @return \Drupal\ai\OperationType\GenericType\ImageType[]
+   *   The ImageType objects.
    */
   public function getNormalized(): array {
     return $this->normalized;
