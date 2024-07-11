@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Form;
 
+use Drupal\ai\AiProviderInterface;
+use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -175,8 +177,8 @@ class TextToImageGenerationForm extends FormBase {
     try {
       $images = $provider->textToImage($form_state->getValue('prompt'), $form_state->getValue('image_generator_ai_model'), ['ai_api_explorer']);
       $response = '';
-      foreach ($images->getAsBase64EncodedString() as $image) {
-        $response .= '<img src="data:image/png;charset=utf-8;base64,' . $image . '" />';
+      foreach ($images->getAsBase64EncodedString() as $base64) {
+        $response .= '<img src="' . $base64 . '" />';
       }
       if ($form_state->getValue('save_as_media')) {
         $images->getAsMediaReference($form_state->getValue('save_as_media'), 'image.png');
@@ -187,28 +189,7 @@ class TextToImageGenerationForm extends FormBase {
     }
 
     // Generation code.
-    $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
-    $code .= "use Drupal\ai\Enum\Bundles;<br><br>";
-    $code .= '$prompt = "' . $form_state->getValue('prompt') . '";<br>';
-    $code .= '$config = [<br>';
-    foreach ($provider->getConfiguration() as $key => $value) {
-      if (is_string($value)) {
-        $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '",<br>';
-      }
-      else {
-        $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ',<br>';
-      }
-    }
-
-    $code .= '];<br><br>';
-    $code .= "\$ai_provider = \Drupal::service('ai.provider')->createInstance('" . $form_state->getValue('image_generator_ai_provider') . '\');<br>';
-    $code .= "\$ai_provider->setConfiguration(\$config);<br>";
-    $code .= "\$response = \$ai_provider->invokeModelResponse(Bundles::TextToImage, '" . $form_state->getValue('image_generator_ai_model') . '\', $prompt, ["tag_1", "tag_2"], TRUE);';
-    if ($form_state->getValue('save_as_media')) {
-      $code .= "<br>// We save it as media.";
-      $code .= "<br>\$media = \$response->getAsMediaReference('" . $form_state->getValue('save_as_media') . "', 'image.png');";
-    }
-    $code .= "</code></details>";
+    $code = $this->normalizeCodeExample($provider, $form_state, $form_state->getValue('prompt'));
 
     $form['response']['#context'] = [
       'images' => '<div id="ai-image-response"><h2>Image will appear here.</h2>' . $response . $code . '</div>',
@@ -220,6 +201,52 @@ class TextToImageGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+  }
+
+
+  /**
+   * Gets the normalized code example.
+   *
+   * @param \Drupal\ai\AiProviderInterface|\Drupal\ai\Plugin\ProviderProxy $provider
+   *   The provider.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param string $prompt
+   *   The prompt.
+   *
+   * @return string
+   *   The normalized code example.
+   */
+  public function normalizeCodeExample(AiProviderInterface|ProviderProxy $provider, FormStateInterface $form_state, string $prompt): string {
+    $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
+    $code .= '$prompt = "' . $prompt . '";<br>';
+    $code .= '$config = [<br>';
+    foreach ($provider->getConfiguration() as $key => $value) {
+      if (is_string($value)) {
+        $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '",<br>';
+      } else {
+        $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ',<br>';
+      }
+    }
+
+    $code .= '];<br><br>';
+    $code .= "\$ai_provider = \Drupal::service('ai.provider')->createInstance('" . $form_state->getValue('image_generator_ai_provider') . '\');<br>';
+    $code .= "\$ai_provider->setConfiguration(\$config);<br>";
+    $code .= "// Normalize the input.<br>";
+    $code .= "\$input = new \Drupal\ai\OperationType\TextToImage\TextToImageInput(\$prompt);<br>";
+    $code .= "\$response = \$ai_provider->textToImage(\$input, '" . $form_state->getValue('image_generator_ai_model') . '\', ["tag_1", "tag_2"]);<br><br>';
+    $code .= "// Possibility #1 - get an array of \Drupal\ai\OperationType\GenericType\ImageFile.<br>";
+    $code .= '$binaries = $response->getNormalized();<br>';
+    $code .= "// Possibility #2 - get an array of base64 encoded strings.<br>";
+    $code .= '$base64 = $response->getAsBase64EncodedString();<br>';
+    $code .= "// Possibility #3 - get an array of media entities.<br>";
+    $code .= '$media = $response->getAsMediaReference("image", "image.png");<br>';
+    $code .= "// Possibility #4 - get an array of file entities.<br>";
+    $code .= '$file = $response->getAsFileReference("public://image.png");<br>';
+    $code .= "// Possibility #5 - get the raw response from the provider.<br>";
+    $code .= '$raw = $response->getRaw();<br>';
+    $code .= "</code></details>";
+    return $code;
   }
 
 }
