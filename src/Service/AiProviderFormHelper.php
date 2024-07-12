@@ -279,7 +279,11 @@ class AiProviderFormHelper {
       if (isset($definition['constraints'])) {
         foreach ($definition['constraints'] as $form_key => $value) {
           if ($form_key == 'options') {
-            $form[$prefix][$set_key]['#options'] = array_combine($value, $value);
+            $options = array_combine($value, $value);
+            if (empty($definition['required'])) {
+              $options = ['' => 'Select an option'] + $options;
+            }
+            $form[$prefix][$set_key]['#options'] = $options;
             continue;
           }
           $form[$prefix][$set_key]['#' . $form_key] = $value;
@@ -309,6 +313,9 @@ class AiProviderFormHelper {
       case 'int':
       case 'float':
         return 'textfield';
+
+      case 'string_long':
+        return 'textarea';
 
       case 'string':
       default:

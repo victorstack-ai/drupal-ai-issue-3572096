@@ -112,8 +112,8 @@ class HuggingfaceProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function getModelSettings(string $model_id): array {
-    return [];
+  public function getModelSettings(string $model_id, array $generalConfig = []): array {
+    return $generalConfig;
   }
 
   /**

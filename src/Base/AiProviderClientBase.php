@@ -106,6 +106,13 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   protected array $tags = [];
 
   /**
+   * Streamed output wanted.
+   *
+   * @var bool
+   */
+  protected bool $streamed = FALSE;
+
+  /**
    * The plugin definition.
    *
    * @var \Drupal\Core\Plugin\PluginDefinitionInterface|array
@@ -208,11 +215,13 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    *
    * @param string $model_id
    *   The model ID.
+   * @param array $generalConfig
+   *   The general configuration.
    *
    * @return array
    *   The plugin configuration array.
    */
-  abstract public function getModelSettings(string $model_id): array;
+  abstract public function getModelSettings(string $model_id, array $generalConfig = []): array;
 
   /**
    * {@inheritDoc}
@@ -247,8 +256,8 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    */
   public function getAvailableConfiguration(string $operation_type, string $model_id): array {
     $generalConfig = $this->getApiDefinition()[$operation_type]['configuration'] ?? [];
-    $modelConfig = $this->getModelSettings($model_id);
-    return empty($modelConfig) ? $generalConfig : array_replace_recursive($generalConfig, $modelConfig);
+    $modelConfig = $this->getModelSettings($model_id, $generalConfig);
+    return $modelConfig;
   }
 
   /**
@@ -302,6 +311,16 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    */
   public function removeTag(string $tag): void {
     $this->tags = array_diff($this->tags, [$tag]);
+  }
+
+  /**
+   * Set the streamed output.
+   *
+   * @param bool $streamed
+   *   Streamed output or not.
+   */
+  public function streamedOutput(bool $streamed = TRUE): void {
+    $this->streamed = $streamed;
   }
 
   /**

@@ -131,70 +131,49 @@ class OpenAiProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function getModelSettings(string $model_id): array {
+  public function getModelSettings(string $model_id, array $generalConfig = []): array {
     // If its GPT 3.5 the max tokens are 2048.
     if (preg_match('/gpt-3.5/', $model_id)) {
-      return [
-        'max_tokens' => [
-          'default' => 2048,
-        ],
-      ];
+      $generalConfig['max_tokens']['default'] = 2048;
     }
     if ($model_id == 'dall-e-3') {
-      return [
-        'n' => [
-          'default' => 1,
-          'constraints' => [
-            'min' => 1,
-            'max' => 1,
+      $generalConfig['quality'] = [
+        'label' => 'Quality',
+        'description' => 'The quality of the images that will be generated.',
+        'type' => 'string',
+        'default' => 'standard',
+        'required' => FALSE,
+        'constraints' => [
+          'options' => [
+            'hd',
+            'standard',
           ],
-        ],
-        'quality' => [
-          'label' => 'Quality',
-          'description' => 'The quality of the images that will be generated.',
-          'type' => 'string',
-          'default' => 'standard',
-          'required' => FALSE,
-          'constraints' => [
-            'options' => [
-              'hd',
-              'standard',
-            ],
-          ],
-        ],
-        'size' => [
-          'default' => '1792x1024',
-          'constraints' => [
-            'options' => [
-              '1024x1024',
-              '1024x1792',
-              '1792x1024',
-            ],
-          ],
-        ],
-        'style' => [
-          'label' => 'Style',
-          'description' => 'The style of the images that will be generated.',
-          'type' => 'string',
-          'default' => 'vivid',
-          'required' => FALSE,
-          'constraints' => [
-            'options' => [
-              'vivid',
-              'neutral',
-            ],
+        ]
+      ];
+      $generalConfig['size']['default'] = '1024x1024';
+      $generalConfig['size']['constraints']['options'] = [
+        '1024x1024',
+        '1024x1792',
+        '1792x1024',
+      ];
+      $generalConfig['style'] = [
+        'label' => 'Style',
+        'description' => 'The style of the images that will be generated.',
+        'type' => 'string',
+        'default' => 'vivid',
+        'required' => FALSE,
+        'constraints' => [
+          'options' => [
+            'vivid',
+            'neutral',
           ],
         ],
       ];
     }
     if ($model_id == 'text-embedding-3-large') {
-      return [
-        'dimensions' => [
-          'default' => 3072,
-        ],
-      ];
+      $generalConfig['dimensions']['default'] = 3072;
     }
-    return [];
+    return $generalConfig;
   }
 
   /**
@@ -306,7 +285,7 @@ class OpenAiProvider extends AiProviderClientBase implements
       'messages' => $chat_input,
     ] + $this->configuration;
 
-    if ($this->configuration['stream']) {
+    if ($this->streamed) {
       $response = $this->client->chat()->createStreamed($payload);
       $message = new OpenAiChatMessageIterator($response);
     }

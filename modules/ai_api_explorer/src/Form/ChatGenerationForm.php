@@ -148,6 +148,12 @@ class ChatGenerationForm extends FormBase {
       '#description' => $this->t('Attach an image to the call. Note that not all models support images and will throw an error.'),
     ];
 
+    $form['streamed'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Streamed'),
+      '#description' => $this->t('If the provider supports streaming, the response will be streamed.'),
+    ];
+
     $form['actions'] = [
       '#type' => 'actions',
     ];
@@ -229,6 +235,10 @@ class ChatGenerationForm extends FormBase {
 
     $message = NULL;
     try {
+      // If we should stream.
+      if ($form_state->getValue('streamed')) {
+        $provider->streamedOutput();
+      }
       $response = $provider->chat($input, $form_state->getValue('chat_ai_model'), ['chat_generation'])->getNormalized();
     } catch (\Exception $e) {
       $message = $this->explorerHelper->renderException($e);
@@ -324,7 +334,7 @@ class ChatGenerationForm extends FormBase {
     $code .= "\$response = \$ai_provider->chat(\$input, '" . $form_state->getValue('chat_ai_model') . '\', ["your_module_name"])->getNormalized();<br>';
 
     // If there is a streaming response.
-    if ($show_config && !empty($provider->getConfiguration()['stream'])) {
+    if ($form_state->getValue('streamed')) {
       $code .= "<br><br>// If you want to stream the response normalized you have to make sure<br>";
       $code .= "// the provider supports it and have a fallback if not. This shows how. <br><br>";
       $code .= "// It is a stream response.<br>";
