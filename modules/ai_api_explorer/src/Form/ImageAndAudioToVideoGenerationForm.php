@@ -185,6 +185,7 @@ class ImageAndAudioToVideoGenerationForm extends FormBase {
     $image_file = new ImageFile($raw_file, $mime_type, $file_name);
     $input = new ImageAndAudioToVideoInput($image_file, $audio_file);
     $response = '';
+    $video_normalized = [];
     try {
       $video_normalized = $provider->ImageAndAudioToVideo($input, $form_state->getValue('ata_ai_model'), ['ai_api_explorer'])->getNormalized();
     }
@@ -192,6 +193,7 @@ class ImageAndAudioToVideoGenerationForm extends FormBase {
       $response = $this->explorerHelper->renderException($e);
     }
 
+    $code = "";
     // Save the binary data to a file.
     if ($video_normalized) {
       $file_url = $this->fileSystem->saveData($video_normalized->getBinary(), 'public://image-and-audio-to-video-test.mp4', FileExists::Replace);

@@ -73,10 +73,7 @@ class Chart extends RuleBase implements AiAutomatorTypeInterface {
       $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
       // Normalize the response.
       $values = [str_replace(['```csv', '```'], '', $response->getText())];
-
-      if (!empty($values)) {
-        $total = array_merge_recursive($total, $values);
-      }
+      $total = array_merge_recursive($total, $values);
     }
 
     return $total;

@@ -51,19 +51,13 @@ class AiAutomatorRule extends ActionBase implements ConfigurableInterface, Plugi
   protected AiAutomatorRuleRunner $ruleRunner;
 
   /**
-   * Constructor.
-   */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityFieldManagerInterface $fieldManager, AiAutomatorTypeManager $automatorType, AiAutomatorRuleRunner $ruleRunner) {
-    $this->setAiAutomatorTypeManager($automatorType);
-    $this->setAiAutomatorRuleRunner($ruleRunner);
-    $this->setFieldManager($fieldManager);
-  }
-
-  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): static {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
+    $instance->setAiAutomatorTypeManager($container->get('plugin.manager.ai_automator_type'));
+    $instance->setAiAutomatorRuleRunner($container->get('ai_automator.rule_runner'));
+    $instance->setFieldManager($container->get('entity_field.manager'));
     return $instance;
   }
 
@@ -189,6 +183,7 @@ class AiAutomatorRule extends ActionBase implements ConfigurableInterface, Plugi
   protected function getAvailableEcaRules() {
     $definitions = $this->entityTypeManager->getStorage('ai_automator')->loadMultiple();
     $options = [];
+    /** @var \Drupal\ai_automator\Entity\AiAutomator $definition */
     foreach ($definitions as $definition) {
       // Only show the ECA automators.
       if ($definition->get('worker_type') == 'eca') {
@@ -204,7 +199,7 @@ class AiAutomatorRule extends ActionBase implements ConfigurableInterface, Plugi
    * @param \Drupal\ai_automator\PluginManager\AiAutomatorTypeManager $automatorType
    *   The AI Automator type manager.
    */
-  private function setAiAutomatorTypeManager(AiAutomatorTypeManager $automatorType): void {
+  protected function setAiAutomatorTypeManager(AiAutomatorTypeManager $automatorType): void {
     $this->automatorType = $automatorType;
   }
 
@@ -214,7 +209,7 @@ class AiAutomatorRule extends ActionBase implements ConfigurableInterface, Plugi
    * @param \Drupal\ai_automator\AiAutomatorRuleRunner $ruleRunner
    *   The AI Automator rule runner.
    */
-  private function setAiAutomatorRuleRunner(AiAutomatorRuleRunner $ruleRunner): void {
+  protected function setAiAutomatorRuleRunner(AiAutomatorRuleRunner $ruleRunner): void {
     $this->ruleRunner = $ruleRunner;
   }
 
@@ -224,7 +219,7 @@ class AiAutomatorRule extends ActionBase implements ConfigurableInterface, Plugi
    * @param \Drupal\Core\Entity\EntityFieldManagerInterface $fieldManager
    *   The field manager.
    */
-  private function setFieldManager(EntityFieldManagerInterface $fieldManager): void {
+  protected function setFieldManager(EntityFieldManagerInterface $fieldManager): void {
     $this->fieldManager = $fieldManager;
   }
 

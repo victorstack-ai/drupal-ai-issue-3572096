@@ -174,6 +174,7 @@ class GeneralHelper {
     else {
       return [$response['choices'][0]['message']['content']];
     }
+    return [];
   }
 
   /**
@@ -258,7 +259,7 @@ class GeneralHelper {
    *   The fields found.
    */
   public function getFieldsOfType(ContentEntityInterface $entity, $type, $target = NULL) {
-    $fields = $this->entityFieldManager->getFieldDefinitions($entity->getEntityTypeId(), $entity->bundle()); /* @phpstan-ignore-line */
+    $fields = $this->entityFieldManager->getFieldDefinitions($entity->getEntityTypeId(), $entity->bundle());
     $names = [];
     foreach ($fields as $fieldDefinition) {
       $fieldTarget = $fieldDefinition->getFieldStorageDefinition()->getSettings()['target_type'] ?? NULL;
@@ -304,7 +305,7 @@ class GeneralHelper {
       '' => $this->t("-- Don't join --"),
       ', ' => $this->t('Comma, with space (, )'),
       ' ' => $this->t('Space ( )'),
-      '.' => $this->t('Period, with space (. )'),
+      '. ' => $this->t('Period, with space (. )'),
       '\n' => $this->t('New line (\n)'),
       '\t' => $this->t('Tab (\t)'),
       '<br />' => $this->t('HTML Break (&#x3c;br />)'),
@@ -465,7 +466,7 @@ class GeneralHelper {
       $this->aiAutomatorFieldConfig->getEntityTokenType($entity->getEntityTypeId()) => $entity,
       'user' => $this->currentUser,
     ]);
-    return $entityValue ?? $configValue;
+    return !$entityValue && $configValue ? $configValue : $entityValue;
   }
 
   /**

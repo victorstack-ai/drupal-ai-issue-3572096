@@ -5,6 +5,7 @@ namespace Drupal\ai_automator\Rulehelpers;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -133,7 +134,7 @@ class FileHelper {
     $path = substr($dest, 0, -(strlen($dest) + 1));
     // Create directory if not existsing.
     $this->fileSystem->prepareDirectory($path, FileSystemInterface::CREATE_DIRECTORY);
-    $file = $this->fileRepo->writeData($binary, $dest, FileSystemInterface::EXISTS_RENAME);
+    $file = $this->fileRepo->writeData($binary, $dest, FileExists::Rename);
     if ($file->save()) {
       return $file;
     }
@@ -174,7 +175,7 @@ class FileHelper {
       unlink($tmpName);
       $tmpName .= '.' . $fileType;
     }
-    $file = $this->fileRepo->writeData($binary, $tmpName, FileSystemInterface::EXISTS_RENAME);
+    $file = $this->fileRepo->writeData($binary, $tmpName, FileExists::Rename);
     if ($file->save()) {
       return $file;
     }

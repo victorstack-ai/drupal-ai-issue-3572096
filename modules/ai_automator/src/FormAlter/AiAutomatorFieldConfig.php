@@ -143,7 +143,7 @@ class AiAutomatorFieldConfig {
       '#title' => $this->t('Enable AI Automator'),
       '#description' => $this->t('If you want this value to be auto filled from AI'),
       '#weight' => 15,
-      '#default_value' => !empty($aiConfig),
+      '#default_value' => !is_null($aiConfig),
       '#attributes' => [
         'name' => 'automator_enabled',
       ],
@@ -155,7 +155,7 @@ class AiAutomatorFieldConfig {
     }
 
     $chosenRule = $formState->getValue('automator_rule') ?? NULL;
-    if (empty($chosenRule) && !empty($aiConfig)) {
+    if (empty($chosenRule) && !is_null($aiConfig)) {
       $chosenRule = $aiConfig->get('rule');
     }
     $chosenRule = $chosenRule ? $chosenRule : key($rulesOptions);
@@ -222,7 +222,7 @@ class AiAutomatorFieldConfig {
       ],
     ];
 
-    $defaultValues = !empty($aiConfig) ? $aiConfig->get('plugin_config') : [];
+    $defaultValues = !is_null($aiConfig) ? $aiConfig->get('plugin_config') : [];
     $subForm = $rule->extraFormFields($entity, $fieldInfo, $formState, $defaultValues);
     $form['automator_container'] = array_merge($form['automator_container'], $subForm);
 
@@ -238,7 +238,7 @@ class AiAutomatorFieldConfig {
         '#title' => $this->t('Automator Input Mode'),
         '#description' => $this->t('If you have token installed you can use it in advanced mode, otherwise it uses base mode.'),
         '#options' => $modeOptions,
-        '#default_value' => !empty($aiConfig) ? $aiConfig->get('input_mode') : 'base',
+        '#default_value' => !is_null($aiConfig) ? $aiConfig->get('input_mode') : 'base',
         '#weight' => 5,
         '#attributes' => [
           'name' => 'automator_mode',
@@ -277,7 +277,7 @@ class AiAutomatorFieldConfig {
       '#title' => $this->t('Automator Base Field'),
       '#description' => $this->t('This is the field that will be used as context field for generating data into this field.'),
       '#options' => $baseFieldOptions,
-      '#default_value' => !empty($aiConfig) ? $aiConfig->get('base_field') : NULL,
+      '#default_value' => !is_null($aiConfig) ? $aiConfig->get('base_field') : NULL,
       '#weight' => 5,
     ];
 
@@ -290,7 +290,7 @@ class AiAutomatorFieldConfig {
         '#attributes' => [
           'placeholder' => $rule->placeholderText(),
         ],
-        '#default_value' => !empty($aiConfig) ? $aiConfig->get('prompt') : NULL,
+        '#default_value' => !is_null($aiConfig) ? $aiConfig->get('prompt') : NULL,
         '#weight' => 10,
       ];
 
@@ -336,7 +336,7 @@ class AiAutomatorFieldConfig {
           '#type' => 'textarea',
           '#title' => $this->t('Automator Prompt (Token)'),
           '#description' => $this->t('The prompt to use to fill this field.'),
-          '#default_value' => !empty($aiConfig) ? $aiConfig->get('token') : NULL,
+          '#default_value' => !is_null($aiConfig) ? $aiConfig->get('token') : NULL,
         ];
 
         // Because we have to invoke this only if the module is installed, no
@@ -353,7 +353,7 @@ class AiAutomatorFieldConfig {
       '#type' => 'checkbox',
       '#title' => $this->t('Edit when changed'),
       '#description' => $this->t('By default the initial value or manual set value will not be overriden. If you check this, it will override if the base text field changes its value.'),
-      '#default_value' => !empty($aiConfig) ? $aiConfig->get('edit_mode') : FALSE,
+      '#default_value' => !is_null($aiConfig) ? $aiConfig->get('edit_mode') : FALSE,
       '#weight' => 20,
     ];
 
@@ -373,7 +373,7 @@ class AiAutomatorFieldConfig {
       '#type' => 'textfield',
       '#title' => $this->t('Automator Label'),
       '#description' => $this->t('The label of the automator for referencing.'),
-      '#default_value' => !empty($aiConfig) ? $aiConfig->get('label') : $fieldInfo->getLabel() . ' Default',
+      '#default_value' => !is_null($aiConfig) ? $aiConfig->get('label') : $fieldInfo->getLabel() . ' Default',
     ];
 
     $form['automator_container']['automator_advanced']['automator_weight'] = [
@@ -382,7 +382,7 @@ class AiAutomatorFieldConfig {
       '#max' => 1000,
       '#title' => $this->t('Automator Weight'),
       '#description' => $this->t('If you have fields dependent on each other, you can sequentially order the processing using weights. The higher the value, the later it is run.'),
-      '#default_value' => !empty($aiConfig) ? $aiConfig->get('weight') : 100,
+      '#default_value' => !is_null($aiConfig) ? $aiConfig->get('weight') : 100,
     ];
 
     // Get possible processes.
@@ -400,7 +400,7 @@ class AiAutomatorFieldConfig {
       '#title' => $this->t('Automator Worker'),
       '#options' => $workerOptions,
       '#description' => $this->t('This defines how the saving of an interpolation happens. Direct saving is the easiest, but since it can take time you need to have longer timeouts.'),
-      '#default_value' => !empty($aiConfig) ? $aiConfig->get('worker_type') : 'direct',
+      '#default_value' => !is_null($aiConfig) ? $aiConfig->get('worker_type') : 'direct',
     ];
 
     $subForm = $rule->extraAdvancedFormFields($entity, $fieldInfo, $formState, $defaultValues);

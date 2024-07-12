@@ -3,6 +3,8 @@
 namespace Drupal\ai_automator\PluginBaseClasses;
 
 use Drupal\ai_automator\PluginInterfaces\AiAutomatorTypeInterface;
+use Drupal\ai_automator\Traits\FileHelperTrait;
+use Drupal\ai_automator\Traits\GeneralHelperTrait;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -13,6 +15,8 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
  */
 abstract class ExternalBase implements AiAutomatorTypeInterface {
 
+  use FileHelperTrait;
+  use GeneralHelperTrait;
   use StringTranslationTrait;
 
   /**
@@ -146,26 +150,6 @@ abstract class ExternalBase implements AiAutomatorTypeInterface {
    */
   public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     $entity->set($fieldDefinition->getName(), $values);
-  }
-
-  /**
-   * Gets the general helper.
-   *
-   * @return \Drupal\ai_automator\Rulehelpers\GeneralHelper
-   *   The general helper.
-   */
-  public function getGeneralHelper() {
-    return \Drupal::service('ai_automator.rule_helper.general');
-  }
-
-  /**
-   * Gets the file helper.
-   *
-   * @return \Drupal\ai_automator\Rulehelpers\FileHelper
-   *   The file helper.
-   */
-  public function getFileHelper() {
-    return \Drupal::service('ai_automator.rule_helper.file');
   }
 
 }

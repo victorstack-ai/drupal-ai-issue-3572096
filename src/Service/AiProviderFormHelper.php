@@ -49,7 +49,7 @@ class AiProviderFormHelper {
   }
 
   /**
-   * Helper function to generate a full list of available LLM providers.
+   * Helper function to generate a full list of available providers.
    *
    * @param array $form
    *   The form array to add the configuration to, passed by reference.
@@ -78,9 +78,6 @@ class AiProviderFormHelper {
     $provider = $provider_id;
     if (!$provider_id) {
       $provider = $form_state->getValue($prefix . 'ai_provider');
-      if (!$provider && !empty($defaultValues['provider_id'])) {
-        $provider = $defaultValues['provider_id'];
-      }
       if (!$provider && !empty($defaults['provider_id'])) {
         $provider = $defaults['provider_id'];
       }

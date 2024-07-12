@@ -3,6 +3,7 @@
 namespace Drupal\ai_automator\PluginBaseClasses;
 
 use Drupal\ai\OperationType\TextToImage\TextToImageInput;
+use Drupal\ai_automator\Traits\FileHelperTrait;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 
@@ -10,6 +11,8 @@ use Drupal\Core\Field\FieldDefinitionInterface;
  * This is a base class that can be used for image generators.
  */
 class TextToImage extends RuleBase {
+
+  use FileHelperTrait;
 
   /**
    * {@inheritDoc}
@@ -105,16 +108,6 @@ class TextToImage extends RuleBase {
    */
   public function getFileName(array $args = []) {
     return 'ai_generated.jpg';
-  }
-
-  /**
-   * Gets the file helper.
-   *
-   * @return \Drupal\ai_automator\Rulehelpers\FileHelper
-   *   The file helper.
-   */
-  public function getFileHelper() {
-    return \Drupal::service('ai_automator.rule_helper.file');
   }
 
 }

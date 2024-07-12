@@ -170,6 +170,7 @@ class AudioToAudioGenerationForm extends FormBase {
     $audio_file = new AudioFile($raw_file, $mime_type, $file_name);
     $input = new AudioToAudioInput($audio_file);
     $response = '';
+    $audio_normalized = [];
     try {
       $audio_normalized = $provider->audioToAudio($input, $form_state->getValue('ata_ai_model'), ['ai_api_explorer'])->getNormalized();
     }

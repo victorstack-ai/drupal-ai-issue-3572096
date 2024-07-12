@@ -75,6 +75,8 @@ class CustomField extends RuleBase {
     // Generate the real prompt if needed.
     $prompts = parent::generate($entity, $fieldDefinition, $automatorConfig);
 
+    $example = [];
+    $oneShot = [];
     foreach ($automatorConfig as $key => $value) {
       if (str_starts_with($key, 'llm_custom_value_')) {
         $example[substr($key, strlen('llm_custom_value_'))] = $value;
@@ -101,7 +103,7 @@ class CustomField extends RuleBase {
         $total = array_merge_recursive($total, $values);
       }
     }
-    return $values;
+    return $total;
   }
 
   /**

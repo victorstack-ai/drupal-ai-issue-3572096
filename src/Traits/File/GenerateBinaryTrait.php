@@ -12,16 +12,11 @@ trait GenerateBinaryTrait {
   /**
    * Generate binary string.
    *
-   * @return \Drupal\file\Entity\File[]
-   *   The file entity.
+   * @return string
+   *   The binary string.
    */
-  public function getAsBinaries(): array {
-    $strings = [];
-    /** @var \Drupal\ai\OperationType\GenericType\FileBase $file */
-    foreach ($this->getNormalized() as $file) {
-      $strings[] = $file->getBinary();
-    }
-    return $strings;
+  public function getAsBinary(): string {
+    return $this->getBinary();
   }
 
 }

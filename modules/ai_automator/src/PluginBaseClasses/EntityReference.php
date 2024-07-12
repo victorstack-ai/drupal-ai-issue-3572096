@@ -2,14 +2,94 @@
 
 namespace Drupal\ai_automator\PluginBaseClasses;
 
+use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Entity\EntityTypeBundleInfo;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Session\AccountProxyInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * This is a base class that can be used for LLMs entity reference rule.
  */
 abstract class EntityReference extends RuleBase {
+
+  /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
+   * The current user.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface
+   */
+  protected $currentUser;
+
+  /**
+   * The entity type bundle.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeBundleInfo
+   */
+  protected $entityTypeBundleInfo;
+
+  /**
+   * The entity field manager.
+   *
+   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
+   */
+  protected $entityFieldManager;
+
+  /**
+   * Constructs a new AiClientBase abstract class.
+   *
+   * @param \Drupal\ai\AiProviderPluginManager $pluginManager
+   *   The plugin manager.
+   * @param \Drupal\ai\Service\AiProviderFormHelper $formHelper
+   *   The form helper.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity type manager.
+   * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
+   *   The current user.
+   * @param \Drupal\Core\Entity\EntityTypeBundleInfo $entityTypeBundleInfo
+   *   The entity type bundle info.
+   * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entityFieldManager
+   *   The entity field manager.
+   */
+  final public function __construct(
+    AiProviderPluginManager $pluginManager,
+    AiProviderFormHelper $formHelper,
+    EntityTypeManagerInterface $entityTypeManager,
+    AccountProxyInterface $currentUser,
+    EntityTypeBundleInfo $entityTypeBundleInfo,
+    EntityFieldManagerInterface $entityFieldManager,
+  ) {
+    parent::__construct($pluginManager, $formHelper);
+    $this->entityTypeManager = $entityTypeManager;
+    $this->currentUser = $currentUser;
+    $this->entityTypeBundleInfo = $entityTypeBundleInfo;
+    $this->entityFieldManager = $entityFieldManager;
+  }
+
+  /**
+   * Load from dependency injection container.
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    return new static(
+      $container->get('ai.provider'),
+      $container->get('ai.form_helper'),
+      $container->get('entity_type.manager'),
+      $container->get('current_user'),
+      $container->get('entity_type.bundle.info'),
+      $container->get('entity_field.manager')
+    );
+  }
 
   /**
    * Allowed field types initially.
@@ -60,7 +140,8 @@ abstract class EntityReference extends RuleBase {
     // Load the target type.
     $targetType = $fieldDefinition->getFieldStorageDefinition()->getSettings()['target_type'];
     // Check if the target type has bundles.
-    $bundles = \Drupal::service('entity_type.bundle.info')->getBundleInfo($targetType);
+    $bundles = $this->entityTypeBundleInfo->getBundleInfo($targetType);
+    $chosenBundle = NULL;
     if ($bundles) {
       $options = [
         '' => $this->t('Select a bundle'),
@@ -81,7 +162,7 @@ abstract class EntityReference extends RuleBase {
 
     // If bundle is chosen or if there are no bundles, show the fields.
     if ($chosenBundle || !$bundles) {
-      $fields = \Drupal::service('entity_field.manager')->getFieldDefinitions($targetType, $chosenBundle);
+      $fields = $this->entityFieldManager->getFieldDefinitions($targetType, $chosenBundle);
       $options = [
         '' => $this->t('Select a field'),
       ];
@@ -139,9 +220,6 @@ abstract class EntityReference extends RuleBase {
     if ($formState->getValue('automator_enabled') && !$isEnabled && $foundField) {
       $formState->setErrorByName('ai_automator_fields', $this->t('You need to enable at least one field to generate.'));
     }
-    if ($formState->getValue('automator_enabled') && $formState->getValue('automator_entity_reference_bundle') && !$foundField) {
-      \Drupal::messenger()->addWarning($this->t('AI Automator Warning: Because of the structure of the entity reference, you now to go back and edit the prompts for the fields before it works.'));
-    }
   }
 
   /**
@@ -197,14 +275,14 @@ abstract class EntityReference extends RuleBase {
   public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     $target = $automatorConfig['entity_reference_bundle'] ?? '';
     $baseFields = $this->getBaseFields($entity->getEntityTypeId());
-    $storage = \Drupal::entityTypeManager()->getStorage($entity->getEntityTypeId());
+    $storage = $this->entityTypeManager->getStorage($entity->getEntityTypeId());
     $textFormat = $this->getGeneralHelper()->getTextFormat($fieldDefinition);
 
     $targets = [];
     foreach ($values as $parts) {
-      // @var \Drupal\Core\Entity\ContentEntityInterface $newEntity */
+      /** @var \Drupal\Core\Entity\ContentEntityInterface $newEntity */
       $newEntity = $storage->create([
-        $baseFields['owner'] => \Drupal::currentUser()->id(),
+        $baseFields['owner'] => $this->currentUser->id(),
         $baseFields['status'] => 1,
         $baseFields['bundle'] => $target,
       ]);
@@ -249,7 +327,7 @@ abstract class EntityReference extends RuleBase {
    *   The base fields.
    */
   public function getBaseFields($entityType) {
-    $entityTypeDef = \Drupal::entityTypeManager()->getDefinition($entityType);
+    $entityTypeDef = $this->entityTypeManager->getDefinition($entityType);
 
     // Get the entity keys.
     $entityKeys = $entityTypeDef->getKeys();

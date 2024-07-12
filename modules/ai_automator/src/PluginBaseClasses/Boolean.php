@@ -83,7 +83,7 @@ class Boolean extends RuleBase {
         $total = array_merge_recursive($total, $values);
       }
     }
-    return $values;
+    return $total;
   }
 
   /**

@@ -170,6 +170,7 @@ class SpeechToSpeechGenerationForm extends FormBase {
     $audio_file = new AudioFile($raw_file, $mime_type, $file_name);
     $input = new SpeechToSpeechInput($audio_file);
     $response = '';
+    $audio_normalized = [];
     try {
       $audio_normalized = $provider->speechToSpeech($input, $form_state->getValue('sts_ai_model'), ['ai_api_explorer'])->getNormalized();
     }

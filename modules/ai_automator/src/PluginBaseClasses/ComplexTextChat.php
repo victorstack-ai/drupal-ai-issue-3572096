@@ -43,15 +43,15 @@ class ComplexTextChat extends RuleBase {
     }
 
     // If we should join, we do that.
-    if (isset($interpolatorConfig['joiner']) && $interpolatorConfig['joiner']) {
-      $joiner = $interpolatorConfig['joiner'];
+    if (isset($automatorConfig['joiner']) && $automatorConfig['joiner']) {
+      $joiner = $automatorConfig['joiner'];
       if ($joiner == 'other') {
-        $joiner = $interpolatorConfig['joiner_other'];
+        $joiner = $automatorConfig['joiner_other'];
       }
       // Reset values.
-      $values = [$this->getGeneralHelper()->joinValues($values, $joiner)];
+      $total = [$this->getGeneralHelper()->joinValues($total, $joiner)];
     }
-    return $values;
+    return $total;
   }
 
 }

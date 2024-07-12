@@ -15,23 +15,19 @@ trait GenerateBase64Trait {
    * @param string $data_url_scheme
    *   Add a data url scheme, like 'data:image/png'.
    *
-   * @return array
-   *   An array of base64 encoded strings.
+   * @return string
+   *   A base64 encoded string.
    */
-  public function getAsBase64EncodedStrings(string $data_url_scheme = ''): array {
-    $strings = [];
-    /* @param \Drupal\ai\OperationType\GenericType\FileBase $file */
-    foreach ($this->getNormalized() as $file) {
-      $base64 = base64_encode($file->getBinary());
-      if ($data_url_scheme) {
-        $base64 = $data_url_scheme . ';base64,' . $base64;
-      }
-      elseif ($file->getMimeType()) {
-        $base64 = 'data:' . $file->getMimeType() . ';charset=utf-8;base64,' . $base64;
-      }
-      $strings[] = $base64;
+  public function getAsBase64EncodedString(string $data_url_scheme = ''): string {
+    $base64 = base64_encode($this->getBinary());
+    if ($data_url_scheme) {
+      $base64 = $data_url_scheme . ';base64,' . $base64;
     }
-    return $strings;
+    elseif ($this->getMimeType()) {
+      $base64 = 'data:' . $this->getMimeType() . ';base64,' . $base64;
+    }
+
+    return $base64;
   }
 
 }

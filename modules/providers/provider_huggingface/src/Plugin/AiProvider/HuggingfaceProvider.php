@@ -159,9 +159,9 @@ class HuggingfaceProvider extends AiProviderClientBase implements
       $chat_input = "";
       foreach ($input->getMessages() as $message) {
         $chat_input .= $message->getRole() . ': ' . $message->getText() . "\n";
-      }
-      if (count($message->getImages())) {
-        throw new AiMissingFeatureException('Images are not supported by Huggingface.');
+        if (count($message->getImages())) {
+          throw new AiMissingFeatureException('Images are not supported by Huggingface.');
+        }
       }
     }
     $response = json_decode($this->client->textGeneration($model_id, $chat_input), TRUE);

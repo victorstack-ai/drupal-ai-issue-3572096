@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_automator\PluginBaseClasses;
 
+use Drupal\ai_automator\Traits\FileHelperTrait;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\file\Entity\File;
@@ -10,6 +11,8 @@ use Drupal\file\Entity\File;
  * This is a base class that can be used for image generators from images.
  */
 class ImageToImage extends RuleBase {
+
+  use FileHelperTrait;
 
   /**
    * {@inheritDoc}
@@ -107,16 +110,6 @@ class ImageToImage extends RuleBase {
    */
   public function getFileName(array $args = []) {
     return 'ai_generated.jpg';
-  }
-
-  /**
-   * Gets the file helper.
-   *
-   * @return \Drupal\ai_automator\Rulehelpers\FileHelper
-   *   The file helper.
-   */
-  public function getFileHelper() {
-    return \Drupal::service('ai_automator.rule_helper.file');
   }
 
   /**

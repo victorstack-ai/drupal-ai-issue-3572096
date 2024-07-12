@@ -90,14 +90,8 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
   protected EntityTypeBundleInfo $entityTypeBundleInfo;
 
   /**
-   * Construct a boolean field.
+   * Construct a video to text field.
    *
-   * @param array $configuration
-   *   Inherited configuration.
-   * @param string $plugin_id
-   *   Inherited plugin id.
-   * @param mixed $plugin_definition
-   *   Inherited plugin definition.
    * @param \Drupal\ai\AiProviderPluginManager $pluginManager
    *   The AI provider plugin manager.
    * @param \Drupal\ai\Service\AiProviderFormHelper $formHelper
@@ -118,9 +112,6 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
    *   The entity type bundle info.
    */
   public function __construct(
-    array $configuration,
-    $plugin_id,
-    $plugin_definition,
     AiProviderPluginManager $pluginManager,
     AiProviderFormHelper $formHelper,
     EntityTypeManagerInterface $entityManager,
@@ -131,7 +122,7 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
     EntityFieldManagerInterface $fieldManager,
     EntityTypeBundleInfo $entityTypeBundleInfo,
   ) {
-    parent::__construct($plugin_id, $plugin_definition, $pluginManager, $formHelper);
+    parent::__construct($pluginManager, $formHelper);
     $this->entityManager = $entityManager;
     $this->fileSystem = $fileSystem;
     $this->token = $token;
@@ -147,9 +138,6 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     // @phpstan-ignore-next-line
     return new static(
-      $configuration,
-      $plugin_id,
-      $plugin_definition,
       $container->get('ai.provider'),
       $container->get('ai.form_helper'),
       $container->get('entity_type.manager'),

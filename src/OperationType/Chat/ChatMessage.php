@@ -3,13 +3,16 @@
 namespace Drupal\ai\OperationType\Chat;
 
 use Drupal\ai\OperationType\GenericType\ImageFile;
-use Drupal\Core\File\MimeType\MimeTypeGuesser;
+use Drupal\ai\Traits\File\FileMimeTypeTrait;
 use Drupal\file\Entity\File;
 
 /**
  * Each of the chat messages for chat input.
  */
 class ChatMessage {
+
+  use FileMimeTypeTrait;
+
   /**
    * The role of the message.
    *
@@ -153,16 +156,6 @@ class ChatMessage {
    */
   public function setImageFromFile(File $file): void {
     $this->images[] = new ImageFile(file_get_contents($file->getFileUri()), $file->getMimeType(), $file->getFilename());
-  }
-
-  /**
-   * Get the file mime type guesser.
-   *
-   * @return \Drupal\Core\File\MimeType\MimeTypeGuesser
-   *   The stream wrapper.
-   */
-  public function getFileMimeTypeGuesser(): MimeTypeGuesser {
-    return \Drupal::service('file.mime_type.guesser');
   }
 
 }

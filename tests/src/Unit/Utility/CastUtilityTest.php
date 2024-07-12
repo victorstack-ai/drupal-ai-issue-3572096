@@ -20,12 +20,13 @@ class CastUtilityTest extends UnitTestCase {
    *   The parameter type.
    * @param mixed $value
    *   The passed value.
-   * @param $expected
+   * @param mixed $expected
    *   The value returned from casting.
    *
    * @dataProvider typeAndValueProvider
    *
    * @return void
+   *   Nothing.
    */
   public function testTypeCasting(string $type, mixed $value, $expected): void {
     $this->assertSame($expected, CastUtility::typeCast($type, $value));
@@ -35,18 +36,19 @@ class CastUtilityTest extends UnitTestCase {
    * Provides types, values and expected values for testing.
    *
    * @return array
+   *   Types, values and expected values.
    */
-  protected function typeAndValueProvider(): array {
+  public function typeAndValueProvider(): array {
     return [
       ["int", "1", 1],
       ["integer", "1", 1],
       ["float", "1", 1.0],
-      ["bool", 1, true],
-      ["bool", "1", false],
-      ["bool", "TRUE", true],
-      ["boolean", 1, true],
-      ["boolean", "1", false],
-      ["boolean", "TRUE", true],
+      ["bool", 1, TRUE],
+      ["bool", "1", FALSE],
+      ["bool", "TRUE", TRUE],
+      ["boolean", 1, TRUE],
+      ["boolean", "1", FALSE],
+      ["boolean", "TRUE", TRUE],
       ["string", 1, "1"],
       ["array", 1, [1]],
     ];

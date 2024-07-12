@@ -177,6 +177,7 @@ class LlmVideoToImage extends VideoToText implements AiAutomatorTypeInterface {
     $fileName = pathinfo($realPath, PATHINFO_FILENAME);
     $newFile = str_replace($fileName, $fileName . '_cut', $entity->{$baseField}->entity->getFileUri());
 
+    $tmpName = "";
     foreach ($values as $keys) {
       $tmpNames = [];
       foreach ($keys as $key) {

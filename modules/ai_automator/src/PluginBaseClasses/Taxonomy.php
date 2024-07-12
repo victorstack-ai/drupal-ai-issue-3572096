@@ -2,14 +2,69 @@
 
 namespace Drupal\ai_automator\PluginBaseClasses;
 
+use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\Session\AccountProxyInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * This is a base class that can be used for LLMs taxonomy rules.
  */
-class Taxonomy extends RuleBase {
+class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
+
+  /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
+   * The current user.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface
+   */
+  protected $currentUser;
+
+  /**
+   * Constructs a new AiClientBase abstract class.
+   *
+   * @param \Drupal\ai\AiProviderPluginManager $pluginManager
+   *   The plugin manager.
+   * @param \Drupal\ai\Service\AiProviderFormHelper $formHelper
+   *   The form helper.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity type manager.
+   * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
+   *   The current user.
+   */
+  final public function __construct(
+    AiProviderPluginManager $pluginManager,
+    AiProviderFormHelper $formHelper,
+    EntityTypeManagerInterface $entityTypeManager,
+    AccountProxyInterface $currentUser,
+  ) {
+    parent::__construct($pluginManager, $formHelper);
+    $this->entityTypeManager = $entityTypeManager;
+    $this->currentUser = $currentUser;
+  }
+
+  /**
+   * Load from dependency injection container.
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    return new static(
+      $container->get('ai.provider'),
+      $container->get('ai.form_helper'),
+      $container->get('entity_type.manager'),
+      $container->get('current_user'),
+    );
+  }
 
   /**
    * {@inheritDoc}
@@ -246,7 +301,7 @@ class Taxonomy extends RuleBase {
   protected function getTaxonomyList(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition) {
     $config = $fieldDefinition->getConfig($entity->bundle())->getSettings();
     /** @var \Drupal\taxonomy\TermStorage */
-    $storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
+    $storage = $this->entityTypeManager->getStorage('taxonomy_term');
     $returnTerms = [];
     // Get vocabularies and get taxonomies from that.
     foreach ($config['handler_settings']['target_bundles'] as $vid) {
@@ -271,7 +326,7 @@ class Taxonomy extends RuleBase {
    */
   protected function generateTag($name, array $settings) {
     /** @var \Drupal\taxonomy\TermStorage */
-    $storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
+    $storage = $this->entityTypeManager->getStorage('taxonomy_term');
     $bundle = !empty($settings['handler_settings']['auto_create_bundle']) ? $settings['handler_settings']['auto_create_bundle'] : key($settings['handler_settings']['target_bundles']);
 
     if (!$name || !$bundle) {
@@ -281,7 +336,7 @@ class Taxonomy extends RuleBase {
       'vid' => $bundle,
       'name' => $name,
       'status' => 1,
-      'uid' => \Drupal::currentUser()->id(),
+      'uid' => $this->currentUser->id(),
     ]);
     $term->save();
     return $term;

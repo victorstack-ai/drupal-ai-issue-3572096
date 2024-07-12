@@ -168,8 +168,6 @@ class AiAutomatorStatusField {
       'required' => TRUE,
     ]);
     $config->save();
-
-    return isset($fields[self::FIELD_NAME]);
   }
 
   /**

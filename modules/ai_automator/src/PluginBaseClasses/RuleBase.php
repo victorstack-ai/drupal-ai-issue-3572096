@@ -8,6 +8,7 @@ use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai\Utility\CastUtility;
 use Drupal\ai_automator\PluginInterfaces\AiAutomatorTypeInterface;
+use Drupal\ai_automator\Traits\GeneralHelperTrait;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -20,6 +21,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPluginInterface {
 
+  use GeneralHelperTrait;
   use StringTranslationTrait;
 
   /**
@@ -46,18 +48,12 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
   /**
    * Constructs a new AiClientBase abstract class.
    *
-   * @param string $plugin_id
-   *   Plugin ID.
-   * @param mixed $plugin_definition
-   *   Plugin definition.
    * @param \Drupal\ai\AiProviderPluginManager $pluginManager
    *   The plugin manager.
    * @param \Drupal\ai\Service\AiProviderFormHelper $formHelper
    *   The form helper.
    */
   public function __construct(
-    $plugin_id,
-    $plugin_definition,
     AiProviderPluginManager $pluginManager,
     AiProviderFormHelper $formHelper,
   ) {
@@ -70,8 +66,6 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
-      $plugin_id,
-      $plugin_definition,
       $container->get('ai.provider'),
       $container->get('ai.form_helper')
     );
@@ -288,16 +282,6 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
    */
   public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     $entity->set($fieldDefinition->getName(), $values);
-  }
-
-  /**
-   * Gets the general helper.
-   *
-   * @return \Drupal\ai_automator\Rulehelpers\GeneralHelper
-   *   The general helper.
-   */
-  public function getGeneralHelper() {
-    return \Drupal::service('ai_automator.rule_helper.general');
   }
 
   /**
@@ -547,6 +531,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     elseif (isset($json['value'])) {
       return [$json['value']];
     }
+    return [];
   }
 
 }

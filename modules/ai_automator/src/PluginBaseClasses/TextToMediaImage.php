@@ -5,6 +5,7 @@ namespace Drupal\ai_automator\PluginBaseClasses;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\OperationType\TextToImage\TextToImageInput;
 use Drupal\ai\Service\AiProviderFormHelper;
+use Drupal\ai_automator\Traits\FileHelperTrait;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfo;
@@ -18,6 +19,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * This is a base class that can be used for image generators.
  */
 class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterface {
+
+  use FileHelperTrait;
 
   /**
    * {@inheritDoc}
@@ -48,10 +51,6 @@ class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterfa
   /**
    * Constructs a new AiClientBase abstract class.
    *
-   * @param string $plugin_id
-   *   Plugin ID.
-   * @param mixed $plugin_definition
-   *   Plugin definition.
    * @param \Drupal\ai\AiProviderPluginManager $pluginManager
    *   The plugin manager.
    * @param \Drupal\ai\Service\AiProviderFormHelper $formHelper
@@ -64,15 +63,13 @@ class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterfa
    *   The field manager.
    */
   final public function __construct(
-    $plugin_id,
-    $plugin_definition,
     AiProviderPluginManager $pluginManager,
     AiProviderFormHelper $formHelper,
     EntityTypeBundleInfo $entityTypeBundleInfo,
     EntityTypeManagerInterface $entityTypeManager,
     EntityFieldManagerInterface $fieldManager,
   ) {
-    parent::__construct($plugin_id, $plugin_definition, $pluginManager, $formHelper);
+    parent::__construct($pluginManager, $formHelper);
     $this->entityTypeBundleInfo = $entityTypeBundleInfo;
     $this->entityTypeManager = $entityTypeManager;
     $this->fieldManager = $fieldManager;
@@ -83,8 +80,6 @@ class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterfa
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
-      $plugin_id,
-      $plugin_definition,
       $container->get('ai.provider'),
       $container->get('ai.form_helper'),
       $container->get('entity_type.bundle.info'),
@@ -228,16 +223,6 @@ class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterfa
    */
   public function getFileName(array $args = []) {
     return 'ai_generated.jpg';
-  }
-
-  /**
-   * Gets the file helper.
-   *
-   * @return \Drupal\ai_automator\Rulehelpers\FileHelper
-   *   The file helper.
-   */
-  public function getFileHelper() {
-    return \Drupal::service('ai_automator.rule_helper.file');
   }
 
 }
