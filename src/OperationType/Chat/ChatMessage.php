@@ -7,7 +7,7 @@ use Drupal\ai\Traits\File\FileMimeTypeTrait;
 use Drupal\file\Entity\File;
 
 /**
- * Each of the chat messages for chat input.
+ * One chat messages for chat input.
  */
 class ChatMessage {
 

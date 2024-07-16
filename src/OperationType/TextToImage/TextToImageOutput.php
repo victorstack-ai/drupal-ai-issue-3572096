@@ -26,6 +26,22 @@ class TextToImageOutput implements OutputInterface {
   /**
    * The metadata from the AI provider.
    *
+<<<<<<< HEAD
+   * @param \Drupal\ai\OperationType\GenericType\ImageType[] $normalized
+   *   The metadata.
+   * @param mixed $rawOutput
+   *   The raw output
+   * @param mixed $metadata
+   *   The metadata
+=======
+   * @var mixed
+>>>>>>> chat-stream
+   */
+  private mixed $metadata;
+
+  /**
+   * The constructor.
+   *
    * @param \Drupal\ai\OperationType\GenericType\ImageType[] $normalized
    *   The metadata.
    * @param mixed $rawOutput
@@ -33,8 +49,6 @@ class TextToImageOutput implements OutputInterface {
    * @param mixed $metadata
    *   The metadata
    */
-  private mixed $metadata;
-
   public function __construct(array $normalized, mixed $rawOutput, mixed $metadata) {
     $this->normalized = $normalized;
     $this->rawOutput = $rawOutput;

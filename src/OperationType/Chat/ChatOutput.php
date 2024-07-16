@@ -5,16 +5,16 @@ namespace Drupal\ai\OperationType\Chat;
 use Drupal\ai\OperationType\OutputInterface;
 
 /**
- * Data transfer output object for text to speech output.
+ * Data transfer output object for chat output.
  */
 class ChatOutput implements OutputInterface {
 
   /**
    * The chat message.
    *
-   * @var \Drupal\ai\OperationType\Chat\ChatMessage
+   * @var \Drupal\ai\OperationType\Chat\ChatMessage|\Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface
    */
-  private ChatMessage $normalized;
+  private ChatMessage|StreamedChatMessageIteratorInterface $normalized;
 
   /**
    * The raw output from the AI provider.
@@ -30,7 +30,17 @@ class ChatOutput implements OutputInterface {
    */
   private mixed $metadata;
 
-  public function __construct(ChatMessage $normalized, mixed $rawOutput, mixed $metadata) {
+  /**
+   * The constructor.
+   *
+   * @param \Drupal\ai\OperationType\Chat\ChatMessage|\Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface $normalized
+   *   The chat message.
+   * @param mixed $rawOutput
+   *   The raw output from the AI provider.
+   * @param mixed $metadata
+   *   The metadata from the AI provider.
+   */
+  public function __construct(ChatMessage|StreamedChatMessageIteratorInterface $normalized, mixed $rawOutput, mixed $metadata) {
     $this->normalized = $normalized;
     $this->rawOutput = $rawOutput;
     $this->metadata = $metadata;
@@ -39,10 +49,10 @@ class ChatOutput implements OutputInterface {
   /**
    * Returns the new chat message.
    *
-   * @return \Drupal\ai\OperationType\Chat\ChatMessage
+   * @return \Drupal\ai\OperationType\Chat\ChatMessage|\Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface
    *   The text string.
    */
-  public function getNormalized(): ChatMessage {
+  public function getNormalized(): ChatMessage|StreamedChatMessageIteratorInterface {
     return $this->normalized;
   }
 
