@@ -11,12 +11,15 @@ use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Large Language Model plugin manager.
  */
 final class AiProviderPluginManager extends DefaultPluginManager {
+
+  use StringTranslationTrait;
 
   /**
    * The event dispatcher.
@@ -128,6 +131,50 @@ final class AiProviderPluginManager extends DefaultPluginManager {
       }
     }
     return $providers;
+  }
+
+  /**
+   * Get simple default provider options for an operation type.
+   *
+   * @param string $operation_type
+   *   The operation type.
+   *
+   * @return string
+   *   The simple default provider option.
+   */
+  public function getSimpleDefaultProviderOptions(string $operation_type): string {
+    $default_provider = $this->getDefaultProviderForOperationType($operation_type);
+    return !empty($default_provider['provider_id']) && !empty($default_provider['model_id']) ?
+      $default_provider['provider_id'] . '__' . $default_provider['model_id'] : '';
+  }
+
+  /**
+   * Gets a simple options list of providers and models for an operation type.
+   *
+   * @param string $operation_type
+   *   The operation type.
+   * @param bool $empty
+   *   If empty choices should be included.
+   * @param bool $setup
+   *   If the provider should be required to be setup.
+   *
+   * @return array
+   *   Key that is __ separated for provider and model.
+   */
+  public function getSimpleProviderModelOptions(string $operation_type, bool $empty = TRUE, bool $setup = TRUE): array {
+    $providers = $this->getProvidersForOperationType($operation_type, $setup);
+    $options = [];
+    if ($empty) {
+      $options[''] = $this->t('- None -');
+    }
+    foreach ($providers as $id => $definition) {
+      $provider = $this->createInstance($id);
+      $models = $provider->getConfiguredModels($operation_type);
+      foreach ($models as $model_id => $model_name) {
+        $options[$id . '__' . $model_id] = $definition['label'] . ' - ' . $model_name;
+      }
+    }
+    return $options;
   }
 
   /**
