@@ -160,7 +160,7 @@ class ChatGenerationForm extends FormBase {
       '#type' => 'submit',
       '#value' => $this->t('Ask The AI'),
       '#attributes' => [
-        'data-search-api-ai-ajax' => 'ai-text-response',
+        'data-response' => 'ai-text-response',
       ],
       '#suffix' => '</div>',
     ];
@@ -327,6 +327,10 @@ class ChatGenerationForm extends FormBase {
     $code .= "\$ai_provider = \Drupal::service('ai.provider')->createInstance('" . $form_state->getValue('chat_ai_provider') . '\');<br>';
     if ($show_config) {
       $code .= "\$ai_provider->setConfiguration(\$config);<br>";
+    }
+    if ($form_state->getValue('streamed')) {
+      $code .= "// If you want to stream the response normalized you have to make sure<br>";
+      $code .= "\$ai_provider->streamedOutput();<br>";
     }
     $code .= "// Normalized \$response will be a ChatMessage object.<br>";
     $code .= "\$response = \$ai_provider->chat(\$input, '" . $form_state->getValue('chat_ai_model') . '\', ["your_module_name"])->getNormalized();<br>';

@@ -5,7 +5,7 @@
   Drupal.behaviors.chatFormStream = {
     attach: (context) => {
 
-      let streamElements = $('[data-search-api-ai-ajax]', context);
+      let streamElements = $('[data-response]', context);
       once('data-streamed', streamElements).forEach((item) => {
         const element = $(item);
         const form = element.closest('form');
@@ -14,7 +14,7 @@
         element.click((event) => {
           event.preventDefault();
           const clickedElement = $(event.currentTarget);
-          const responseField = $('#' + clickedElement.attr('data-search-api-ai-ajax'));
+          const responseField = $('#' + clickedElement.attr('data-response'));
           let data = form.serializeArray();
 
           // Push an event for the current submission.
