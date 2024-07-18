@@ -178,42 +178,6 @@ final class AiProviderPluginManager extends DefaultPluginManager {
   }
 
   /**
-   * Loads the actual provider from a simple option.
-   *
-   * @param string $option
-   *   The option from simple options list.
-   *
-   * @return \Drupal\ai\AiProviderInterface|\Drupal\ai\Plugin\ProviderProxy|null
-   */
-  public function loadProviderFromSimpleOption(string $option): AiProviderInterface|ProviderProxy|NULL {
-    $parts = explode('__', $option);
-    if (count($parts) === 2) {
-      $provider = $this->createInstance($parts[0]);
-      if ($provider->isUsable()) {
-        return $provider;
-      }
-    }
-    return NULL;
-  }
-
-  /**
-   * Get model name from simple option.
-   *
-   * @param string $option
-   *   The option from simple options list.
-   *
-   * @return string
-   *   The model name.
-   */
-  public function getModelNameFromSimpleOption(string $option): string {
-    $parts = explode('__', $option);
-    if (count($parts) === 2) {
-      return $parts[1];
-    }
-    return '';
-  }
-
-  /**
    * Get operation types.
    *
    * @return array
