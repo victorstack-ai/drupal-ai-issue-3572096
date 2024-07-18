@@ -1,0 +1,10 @@
+name: AI Validations
+description: This enables you to use AI to validate your fields.
+package: AI
+type: module
+core_version_requirement: ^10.3 || ^11
+
+
+dependencies:
+  - ai:ai
+  - field_validation:field_validation (>=3.0.0-beta3)
