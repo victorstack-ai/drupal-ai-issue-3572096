@@ -42,23 +42,29 @@ class CustomField extends RuleBase {
     if (isset($config['field_settings'])) {
       foreach ($config['field_settings'] as $key => $value) {
         $form["automator_llm_custom_value_" . $key] = [
-          '#type' => 'textfield',
+          '#type' => 'textarea',
           '#title' => $value['widget_settings']['label'],
           '#description' => $this->t('One sentence how the %label should be filled out. For instance "the original quote".', [
             '%label' => $value['widget_settings']['label'],
           ]),
+          '#attributes' => [
+            'rows' => 2,
+          ],
           '#default_value' => $defaultValues["automator_llm_custom_value_" . $key] ?? '',
           '#weight' => 14,
         ];
 
         $form["automator_llm_custom_oneshot_" . $key] = [
-          '#type' => 'textfield',
+          '#type' => 'textarea',
           '#title' => $this->t('Example %label', [
             '%label' => $value['widget_settings']['label'],
           ]),
           '#description' => $this->t('One example %label of a filled out value for one shot learning. For instance "To be or not to be".', [
             '%label' => $value['widget_settings']['label'],
           ]),
+          '#attributes' => [
+            'rows' => 2,
+          ],
           '#default_value' => $defaultValues["automator_llm_custom_oneshot_" . $key] ?? '',
           '#weight' => 14,
         ];
