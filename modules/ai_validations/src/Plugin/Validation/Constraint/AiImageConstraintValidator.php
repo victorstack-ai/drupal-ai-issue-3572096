@@ -6,15 +6,14 @@ use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\GenericType\ImageFile;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManager;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 
 /**
  * AiImage constraint.
- *
  */
 final class AiImageConstraintValidator extends ConstraintValidator implements ContainerInjectionInterface {
 
@@ -56,7 +55,7 @@ final class AiImageConstraintValidator extends ConstraintValidator implements Co
   }
 
   /**
-   * @return void
+   * {@inheritdoc}
    */
   public function validate(mixed $data, Constraint $constraint) {
     if (empty($constraint->provider)) {
@@ -79,7 +78,7 @@ final class AiImageConstraintValidator extends ConstraintValidator implements Co
       new ChatMessage('system', $prompt),
       new ChatMessage('user', $data, [$image]),
     ]);
-    // Give it to the AI
+    // Give it to the AI.
     $model = $this->aiPluginManager->getModelNameFromSimpleOption($constraint->provider);
     $message = $provider->chat($messages, $model)->getNormalized();
     $response_ok = FALSE;

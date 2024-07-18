@@ -36,7 +36,7 @@ class AiTranslateForm extends FormBase {
    * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
    *   The language manager.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, LanguageManagerInterface $language_manager) {
+  final public function __construct(EntityTypeManagerInterface $entity_type_manager, LanguageManagerInterface $language_manager) {
     $this->entityTypeManager = $entity_type_manager;
     $this->languageManager = $language_manager;
   }
@@ -91,11 +91,12 @@ class AiTranslateForm extends FormBase {
       if ($lang_from !== $langcode && !$entity->hasTranslation($langcode)) {
         $additional = Link::createFromRoute($this->t('Translate using AI'),
           'ai_translate.translate_content', [
-          'entity_type' => $entity_type,
-          'entity_id' => $entity_id,
-          'lang_from' => $lang_from,
-          'lang_to' => $langcode,
-        ])->toString();
+            'entity_type' => $entity_type,
+            'entity_id' => $entity_id,
+            'lang_from' => $lang_from,
+            'lang_to' => $langcode,
+          ]
+        )->toString();
       }
       else {
         $additional = $this->t('NA');

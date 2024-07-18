@@ -2,12 +2,16 @@
 
 namespace Drupal\ai\OperationType\Chat;
 
+/**
+ * Streamed chat message interface.
+ */
 interface StreamedChatMessageInterface {
 
   /**
    * Get role.
    *
    * @return string
+   *   The role.
    */
   public function getRole(): string;
 
@@ -23,6 +27,7 @@ interface StreamedChatMessageInterface {
    * Get text.
    *
    * @return string
+   *   The text.
    */
   public function getText(): string;
 
@@ -38,6 +43,7 @@ interface StreamedChatMessageInterface {
    * Get metadata.
    *
    * @return array
+   *   The metadata.
    */
   public function getMetadata(): array;
 

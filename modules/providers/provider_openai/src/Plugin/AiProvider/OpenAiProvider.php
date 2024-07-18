@@ -6,7 +6,6 @@ use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
 use Drupal\ai\Exception\AiResponseErrorException;
 use Drupal\ai\Exception\AiUnsafePromptException;
-use Drupal\provider_openai\OpenAiChatMessageIterator;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
 use Drupal\ai\OperationType\Chat\ChatMessage;
@@ -33,6 +32,7 @@ use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\File\FileExists;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\provider_openai\OpenAiChatMessageIterator;
 use OpenAI\Client;
 use Symfony\Component\Yaml\Yaml;
 
@@ -148,7 +148,7 @@ class OpenAiProvider extends AiProviderClientBase implements
             'hd',
             'standard',
           ],
-        ]
+        ],
       ];
       $generalConfig['size']['default'] = '1024x1024';
       $generalConfig['size']['constraints']['options'] = [

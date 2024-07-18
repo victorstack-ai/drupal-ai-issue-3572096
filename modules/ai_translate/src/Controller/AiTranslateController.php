@@ -52,7 +52,7 @@ class AiTranslateController extends ControllerBase {
    * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager
    *   The entity field manager.
    */
-  public function __construct(
+  final public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
     EntityFieldManagerInterface $entity_field_manager,
   ) {
@@ -183,7 +183,7 @@ class AiTranslateController extends ControllerBase {
         return '';
       }
     }
-    $prompt_text =<<<PROMPT
+    $prompt_text = <<<PROMPT
 You are a helpful translator that can translate text and understand context when translating.
 You will be given a context text to translate from the source language $lang_from to the target language $lang_to.
 Only respond with the actual translation and nothing else.

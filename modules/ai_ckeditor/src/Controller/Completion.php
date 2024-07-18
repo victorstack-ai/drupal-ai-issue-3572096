@@ -20,17 +20,17 @@ class Completion implements ContainerInjectionInterface {
   /**
    * The AI Provider.
    *
-   * @var \Drupal\ai\AiProviderPluginManager;
+   * @var \Drupal\ai\AiProviderPluginManager
    */
   protected $aiProvider;
 
   /**
    * The Completion controller constructor.
    *
-   * @param \Drupal\ai\AiProviderPluginManager $api
+   * @param \Drupal\ai\AiProviderPluginManager $aiProvider
    *   The AI Provider.
    */
-  public function __construct(AiProviderPluginManager $aiProvider) {
+  final public function __construct(AiProviderPluginManager $aiProvider) {
     $this->aiProvider = $aiProvider;
   }
 
@@ -67,7 +67,7 @@ class Completion implements ContainerInjectionInterface {
       // You can loop through the response and output it as it comes in.
       $response = new StreamedResponse();
       $response->setCallback(function () use ($message): void {
-        /* @var StreamedChatMessage $chat_message */
+        /** @var StreamedChatMessage $chat_message */
         foreach ($message as $chat_message) {
           $text = $chat_message->getText();
           echo $text;
@@ -76,7 +76,8 @@ class Completion implements ContainerInjectionInterface {
         }
       });
       $response->send();
-    } else {
+    }
+    else {
       // This is a normal response.
       $response = new Response(
         'Content',

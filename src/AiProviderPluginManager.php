@@ -184,6 +184,7 @@ final class AiProviderPluginManager extends DefaultPluginManager {
    *   The option from simple options list.
    *
    * @return \Drupal\ai\AiProviderInterface|\Drupal\ai\Plugin\ProviderProxy|null
+   *   The provider or NULL.
    */
   public function loadProviderFromSimpleOption(string $option): AiProviderInterface|ProviderProxy|NULL {
     $parts = explode('__', $option);

@@ -14,7 +14,6 @@ use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
-use Drupal\provider_openai\OpenAiChatMessageIterator;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -218,7 +217,7 @@ class ChatGenerationForm extends FormBase {
         $image = "";
         if (isset($files['files']['image_' . $index])) {
           $raw_file = file_get_contents($files['files']['image_' . $index]->getPathname());
-          $image = new ImageFile($raw_file,  $files['files']['image_' . $index]->getClientMimeType(), $files['files']['image_' . $index]->getClientOriginalName());
+          $image = new ImageFile($raw_file, $files['files']['image_' . $index]->getClientMimeType(), $files['files']['image_' . $index]->getClientOriginalName());
         }
         if ($role && $message) {
           $images = [];
@@ -233,13 +232,15 @@ class ChatGenerationForm extends FormBase {
     $input = new ChatInput($messages);
 
     $message = NULL;
+    $response = NULL;
     try {
       // If we should stream.
       if ($form_state->getValue('streamed')) {
         $provider->streamedOutput();
       }
       $response = $provider->chat($input, $form_state->getValue('chat_ai_model'), ['chat_generation'])->getNormalized();
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       $message = $this->explorerHelper->renderException($e);
     }
 
@@ -251,7 +252,8 @@ class ChatGenerationForm extends FormBase {
       $form_state->setRebuild();
       $response = new Response('<h4>Role: ' . $response->getRole() . "</h4><p>" . $response->getText() . '</p>' . $code);
       $form_state->setResponse($response);
-    } else if (is_object($response) && $response instanceof StreamedChatMessageIteratorInterface) {
+    }
+    elseif (is_object($response) && $response instanceof StreamedChatMessageIteratorInterface) {
       $http_response = new StreamedResponse();
       $http_response->setCallback(function () use ($response, $code) {
         foreach ($response as $key => $chat_message) {
@@ -274,12 +276,6 @@ class ChatGenerationForm extends FormBase {
       $form_state->setResponse($response);
     }
   }
-
-  /**
-   * Sends the chat message.
-   *
-   *
-   */
 
   /**
    * Gets the normalized code example.

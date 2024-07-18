@@ -31,7 +31,7 @@ class AiImageConstraintFieldValidationRule extends ConstraintFieldValidationRule
   /**
    * {@inheritdoc}
    */
-  public function __construct($configuration, $plugin_id, $plugin_definition, LoggerInterface $logger, Token $token_service,  AiProviderPluginManager $aiProvider) {
+  final public function __construct($configuration, $plugin_id, $plugin_definition, LoggerInterface $logger, Token $token_service, AiProviderPluginManager $aiProvider) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $logger, $token_service);
     $this->aiProvider = $aiProvider;
     $this->setConfiguration($configuration);
@@ -54,14 +54,14 @@ class AiImageConstraintFieldValidationRule extends ConstraintFieldValidationRule
   /**
    * {@inheritdoc}
    */
-  public function getConstraintName(): string{
+  public function getConstraintName(): string {
     return "AiImagePrompt";
   }
 
   /**
    * {@inheritdoc}
    */
-  public function isPropertyConstraint(): bool{
+  public function isPropertyConstraint(): bool {
     return TRUE;
   }
 
@@ -81,7 +81,7 @@ class AiImageConstraintFieldValidationRule extends ConstraintFieldValidationRule
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildConfigurationForm($form, $form_state);
 
-    if($this->configuration['prompt'] == '') {
+    if ($this->configuration['prompt'] == '') {
       $this->configuration['prompt'] = 'You can only answer with XTRUE or XFALSE.
 Take the following image and check if Queen Elisabeth is on the image.
 If it is answer XTRUE, if its not answer XFALSE. ';

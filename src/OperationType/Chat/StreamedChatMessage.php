@@ -2,6 +2,9 @@
 
 namespace Drupal\ai\OperationType\Chat;
 
+/**
+ * Streamed chat message.
+ */
 class StreamedChatMessage implements StreamedChatMessageInterface {
 
   /**
@@ -65,7 +68,7 @@ class StreamedChatMessage implements StreamedChatMessageInterface {
   /**
    * {@inheritdoc}
    */
-  public function getMetadata(): array{
+  public function getMetadata(): array {
     return $this->metadata;
   }
 

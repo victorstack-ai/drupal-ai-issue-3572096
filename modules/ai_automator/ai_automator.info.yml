@@ -1,6 +1,6 @@
 name: AI Automator
 description: Automate anything and everything using AI.
-package: AI Automator
+package: AI (Experimental)
 type: module
 core_version_requirement: ^10.3 || ^11
 

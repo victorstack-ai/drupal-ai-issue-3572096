@@ -2,7 +2,6 @@
 
 namespace Drupal\ai_validations\Plugin\Validation\Constraint;
 
-
 use Symfony\Component\Validator\Constraint;
 
 /**
@@ -14,7 +13,26 @@ use Symfony\Component\Validator\Constraint;
  * )
  */
 class AiImageConstraint extends Constraint {
-  public $prompt = null;
+
+  /**
+   * The prompt.
+   *
+   * @var string
+   */
+  public $prompt = NULL;
+
+  /**
+   * The message that will be shown if the constraint is violated.
+   *
+   * @var string
+   */
   public $message = '';
+
+  /**
+   * The provider.
+   *
+   * @var string
+   */
   public $provider = '';
+
 }

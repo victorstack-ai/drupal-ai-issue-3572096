@@ -4,14 +4,16 @@ namespace Drupal\provider_openai;
 
 use Drupal\ai\OperationType\Chat\StreamedChatMessage;
 use Drupal\ai\OperationType\Chat\StreamedChatMessageIterator;
-use Generator;
 
+/**
+ * OpenAI Chat message iterator.
+ */
 class OpenAiChatMessageIterator extends StreamedChatMessageIterator {
 
   /**
    * {@inheritdoc}
    */
-  public function getIterator(): Generator {
+  public function getIterator(): \Generator {
     foreach ($this->iterator->getIterator() as $data) {
       yield new StreamedChatMessage(
         $data->choices[0]->delta->role ?? '',

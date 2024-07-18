@@ -5,14 +5,13 @@ namespace Drupal\ai_validations\Plugin\Validation\Constraint;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 
 /**
  * AiText constraint.
- *
  */
 final class AiTextConstraintValidator extends ConstraintValidator implements ContainerInjectionInterface {
 
@@ -22,7 +21,6 @@ final class AiTextConstraintValidator extends ConstraintValidator implements Con
    * @var \Drupal\ai\AiProviderPluginManager
    */
   protected $aiPluginManager;
-
 
   /**
    * Creates a new Aiprovider instance.
@@ -44,7 +42,7 @@ final class AiTextConstraintValidator extends ConstraintValidator implements Con
   }
 
   /**
-   * @return void
+   * {@inheritdoc}
    */
   public function validate(mixed $data, Constraint $constraint) {
     if (empty($constraint->provider)) {
@@ -53,14 +51,13 @@ final class AiTextConstraintValidator extends ConstraintValidator implements Con
     }
     $provider = $this->aiPluginManager->loadProviderFromSimpleOption($constraint->provider);
 
-
     $prompt = $constraint->prompt . PHP_EOL . $constraint->message;
     // Format the requested CHatInput for textual validation.
     $messages = new ChatInput([
       new ChatMessage('system', $prompt),
       new ChatMessage('user', $data),
     ]);
-    // Give it to the AI
+    // Give it to the AI.
     $model = $this->aiPluginManager->getModelNameFromSimpleOption($constraint->provider);
     $message = $provider->chat($messages, $model)->getNormalized();
     $response_ok = FALSE;

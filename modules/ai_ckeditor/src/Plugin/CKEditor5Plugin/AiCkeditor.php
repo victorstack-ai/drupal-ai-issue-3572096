@@ -56,8 +56,10 @@ class AiCkeditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
    *   The plugin_id for the plugin instance.
    * @param \Drupal\ckeditor5\Plugin\CKEditor5PluginDefinition $plugin_definition
    *   The plugin implementation definition.
+   * @param \Drupal\ai\AiProviderPluginManager $provider_manager
+   *   The AI provider manager.
    */
-  public function __construct(array $configuration, string $plugin_id, CKEditor5PluginDefinition $plugin_definition, AiProviderPluginManager $provider_manager) {
+  final public function __construct(array $configuration, string $plugin_id, CKEditor5PluginDefinition $plugin_definition, AiProviderPluginManager $provider_manager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->providerManager = $provider_manager;
   }

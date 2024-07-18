@@ -8,9 +8,7 @@
 use Drupal\Core\Url;
 
 /**
- * Implements hook_install();
- *
- * @param $is_syncing
+ * Implements hook_install().
  */
 function ai_translate_hook_install($is_syncing) {
   _ai_translate_check_default_provider_and_model();
@@ -23,15 +21,14 @@ function ai_translate_requirements($phase) {
   $requirements = [];
   if ($phase === 'runtime') {
     $sets = \Drupal::service('ai.provider')->getDefaultProviderForOperationType('chat');
-    if (!isset ($sets['provider_id']) || $sets['provider_id'] == '') {
+    if (empty($sets['provider_id'])) {
       $requirements['ai_translate'] = [
         'title' => t('AI Default Chat Provider'),
         'value' => t('Please provide a default Chat AI provider'),
-        'description' => t('The AI_translate needs a default chat ai to be configured in the  <a href=":url">AI module settings</a>. Please configure a default Chat AI system. ', [':url' => Url::fromRoute('ai.settings_form')->toString()]),
+        'description' => t('The AI_translate needs a default chat ai to be configured in the  <a href=":url">AI module settings</a>. Please configure a default Chat AI system.', [':url' => Url::fromRoute('ai.settings_form')->toString()]),
         'severity' => REQUIREMENT_ERROR,
       ];
     }
   }
   return $requirements;
 }
-
