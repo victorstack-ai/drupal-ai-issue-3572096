@@ -6,8 +6,6 @@
  */
 
 use Drupal\ai_automator\AiAutomatorStatusField;
-use Drupal\Core\Link;
-use Drupal\Core\Url;
 
 /**
  * Implements hook_uninstall().
@@ -26,15 +24,4 @@ function ai_automator_uninstall($is_syncing) {
     }
   }
   _ai_automator_entity_can_save_toggle(TRUE);
-}
-
-/**
- * Implements hook_install().
- */
-function ai_automator_install() {
-  $url = Url::fromUri('https://www.drupal.org/project/ai_automator', ['attributes' => ['target' => '_blank']]);
-  // Set a message to display after installation.
-  \Drupal::messenger()->addWarning(t('Note that the AI Automator does not do anything by itself, additional module have to be installed. Read more @link.', [
-    '@link' => Link::fromTextAndUrl(t('here'), $url)->toString(),
-  ]));
 }
