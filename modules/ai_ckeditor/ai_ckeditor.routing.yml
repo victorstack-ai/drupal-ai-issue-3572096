@@ -1,0 +1,8 @@
+ai_ckeditor.generate_completion:
+  methods: [POST]
+  path: '/api/ai-ckeditor/completion'
+  defaults:
+    _title: 'AI CKEditor Generate Completion'
+    _controller: 'Drupal\ai_ckeditor\Controller\Completion::generate'
+  requirements:
+    _permission: 'use ai ckeditor'

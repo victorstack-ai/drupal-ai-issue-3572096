@@ -218,7 +218,7 @@ class ChatGenerationForm extends FormBase {
         $image = "";
         if (isset($files['files']['image_' . $index])) {
           $raw_file = file_get_contents($files['files']['image_' . $index]->getPathname());
-          $image = new ImageFile($raw_file, $files['files']['image_' . $index]->getClientMimeType(), $files['files']['image_' . $index]->getClientOriginalName());
+          $image = new ImageFile($raw_file,  $files['files']['image_' . $index]->getClientMimeType(), $files['files']['image_' . $index]->getClientOriginalName());
         }
         if ($role && $message) {
           $images = [];

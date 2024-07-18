@@ -58,6 +58,12 @@ chat:
         min: 0
         max: 1
         step: 0.1
+    stream:
+      label: 'Stream'
+      description: 'Whether to stream the response or return the entire response.'
+      type: 'boolean'
+      default: false
+      required: false
 text_to_image:
   input:
     description: 'Image generation prompt.'

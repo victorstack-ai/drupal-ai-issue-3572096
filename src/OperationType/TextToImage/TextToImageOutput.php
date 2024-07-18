@@ -32,6 +32,7 @@ class TextToImageOutput implements OutputInterface {
    *   The raw output
    * @param mixed $metadata
    *   The metadata
+   * @var mixed
    */
   private mixed $metadata;
 

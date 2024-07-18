@@ -32,6 +32,7 @@ class TextToSpeechOutput implements OutputInterface {
    *   The raw output from the AI provider.
    * @param mixed $metadata
    *   The metadata from the AI provider.
+   * @var mixed $metadata
    */
   private mixed $metadata;
 
