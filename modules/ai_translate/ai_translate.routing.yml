@@ -1,0 +1,7 @@
+ai_translate.translate_content:
+  path: '/ai_translate/translate/{entity_type}/{entity_id}/{lang_from}/{lang_to}'
+  defaults:
+    _controller: '\Drupal\ai_translate\Controller\AiTranslateController::translate'
+    _title: 'AI powered Translation'
+  requirements:
+    _permission: 'create ai content translation'

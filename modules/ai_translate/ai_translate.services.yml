@@ -1,0 +1,5 @@
+services:
+  ai_translate.subscriber:
+    class: Drupal\ai_translate\Routing\AiTranslateRouteSubscriber
+    tags:
+      - { name: event_subscriber }

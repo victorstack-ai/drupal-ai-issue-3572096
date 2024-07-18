@@ -1,0 +1,34 @@
+<?php
+
+/**
+ * @file
+ * The AI translate module.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Url;
+
+/**
+ * Implements hook_help() for module help info.
+ */
+function ai_translate_plugin_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.ai':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('This module will integrate AI with our Drupal system. It will add a Translate link to translate an entire piece of content into anothe language in one click.');
+      $output .= ' ' . t('For more information, see the <a href=":drupal-org-help">online documentation for the ai_translate module</a>.', [':drupal-org-help' => 'https://www.drupal.org/project/ai']);
+      $output .= '</p>';
+      return $output;
+  }
+}
+
+/**
+ * Check if default provider is chosen and model is selected.
+ */
+function _ai_translate_check_default_provider_and_model() {
+  $sets = \Drupal::service('ai.provider')->getDefaultProviderForOperationType('chat');
+  if (empty($sets['provider_id'])) {
+    \Drupal::messenger()->addMessage(t('Please set a default chat provider & model in the <a href=":url">AI module settings</a>.', [':url' => Url::fromRoute('ai.settings_form')->toString()]), 'error', FALSE);
+  }
+}
