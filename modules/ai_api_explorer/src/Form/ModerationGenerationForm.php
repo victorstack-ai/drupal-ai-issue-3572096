@@ -160,7 +160,7 @@ class ModerationGenerationForm extends FormBase {
    *   The normalized code example.
    */
   public function normalizeCodeExample(AiProviderInterface|ProviderProxy $provider, FormStateInterface $form_state, string $prompt): string {
-    $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Normalized Code Example</summary><code class=\"ai-code\">";
+    $code = "<details class=\"ai-code-wrapper\"><summary>Normalized Code Example</summary><code class=\"ai-code\">";
     $code .= "\$ai_provider = \Drupal::service('ai.provider')->createInstance('" . $form_state->getValue('moderation_ai_provider') . '\');<br>';
     $code .= "// Normalized \$response will be a ModerationResponse object.<br>";
     $code .= "\$prompt = '" . $prompt . "';<br>";

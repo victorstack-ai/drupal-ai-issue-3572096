@@ -154,7 +154,7 @@ class SpeechToTextGenerationForm extends FormBase {
     }
 
     // Generation code.
-    $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
+    $code = "<details class=\"ai-code-wrapper\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
     $code .= '$audio = file_get_contents("' . $file['file']->getClientOriginalName() . '");<br>';
     $code .= '$config = [<br>';
     foreach ($provider->getConfiguration() as $key => $value) {

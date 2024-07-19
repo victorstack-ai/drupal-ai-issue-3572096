@@ -218,7 +218,7 @@ class TextToImageGenerationForm extends FormBase {
    *   The normalized code example.
    */
   public function normalizeCodeExample(AiProviderInterface|ProviderProxy $provider, FormStateInterface $form_state, string $prompt): string {
-    $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
+    $code = "<details class=\"ai-code-wrapper\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
     $code .= '$prompt = "' . $prompt . '";<br>';
     $code .= '$config = [<br>';
     foreach ($provider->getConfiguration() as $key => $value) {

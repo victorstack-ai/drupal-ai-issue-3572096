@@ -228,7 +228,7 @@ class ImageAndAudioToVideoGenerationForm extends FormBase {
    */
   public function normalizeCodeExample(AiProviderInterface|ProviderProxy $provider, FormStateInterface $form_state, string $filename): string {
     // Generation code.
-    $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
+    $code = "<details class=\"ai-code-wrapper\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
     $code .= '$binary = file_get_contents("' . $filename . '");<br>';
     if (count($provider->getConfiguration())) {
       $code .= '$config = [<br>';

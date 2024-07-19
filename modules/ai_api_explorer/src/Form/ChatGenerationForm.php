@@ -291,7 +291,7 @@ class ChatGenerationForm extends FormBase {
    *   The normalized code example.
    */
   public function normalizeCodeExample(AiProviderInterface|ProviderProxy $provider, FormStateInterface $form_state, array $messages): string {
-    $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Normalized Code Example</summary><code class=\"ai-code\">";
+    $code = "<details class=\"ai-code-wrapper\"><summary>Normalized Code Example</summary><code class=\"ai-code\">";
     $code .= '// Use this when you want to be able to swap the provider. <br>';
     $show_config = count($provider->getConfiguration()) ? TRUE : FALSE;
     if ($show_config) {
@@ -368,7 +368,7 @@ class ChatGenerationForm extends FormBase {
    *   The normalized code example.
    */
   public function rawCodeExample(AiProviderInterface|ProviderProxy $provider, FormStateInterface $form_state, array $messages): string {
-    $code = "<br><details style=\"background: #ccc; padding: 5px;\"><summary>Raw Code Example</summary><code class=\"ai-code\">";
+    $code = "<br><details class=\"ai-code-wrapper\"><summary>Raw Code Example</summary><code class=\"ai-code\">";
     $code .= '// Another way if you know you always will use ' . $provider->getPluginDefinition()['label'] . ' and want its way of doing stuff. Not recommended. <br>';
     $code .= '$config = [<br>';
     foreach ($provider->getConfiguration() as $key => $value) {

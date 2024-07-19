@@ -38,3 +38,16 @@ code.ai-code {
   white-space: pre-wrap;
   padding: 20px;
 }
+
+.ai-code-wrapper {
+  background: #ccc;
+  padding: 5px;
+}
+
+.gin--dark-mode .ai-three-info, .gin--dark-mode .ai-left-side {
+  background: #c5c5c512;
+}
+
+.gin--dark-mode .ai-code-wrapper {
+  background: #000;
+}

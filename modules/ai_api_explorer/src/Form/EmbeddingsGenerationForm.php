@@ -146,7 +146,7 @@ class EmbeddingsGenerationForm extends FormBase {
       $response = $this->explorerHelper->renderException($e);
     }
     // Generation code.
-    $code = "<details style=\"background: #ccc; padding: 5px;\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
+    $code = "<details class=\"ai-code-wrapper\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
     $code .= '$prompt = "' . $form_state->getValue('prompt') . '";<br>';
     $config = $provider->getConfiguration();
     if (count($config)) {
