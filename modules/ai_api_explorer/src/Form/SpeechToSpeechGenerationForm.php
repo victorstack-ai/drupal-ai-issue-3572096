@@ -122,18 +122,17 @@ class SpeechToSpeechGenerationForm extends FormBase {
     // Load the LLM configurations.
     $this->aiProviderHelper->generateAiProvidersForm($form, $form_state, 'speech_to_speech', 'sts', AiProviderFormHelper::FORM_CONFIGURATION_FULL);
 
-    $form['actions'] = [
-      '#type' => 'actions',
-    ];
-
-    $form['actions']['submit'] = [
+    $form['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Generate an Audio File'),
       '#ajax' => [
         'callback' => '::getResponse',
         'wrapper' => 'ai-audio-response',
       ],
-      '#suffix' => '</div>',
+    ];
+
+    $form['end_markup'] = [
+      '#markup' => '</div>',
     ];
 
     $form['response'] = [

@@ -136,18 +136,17 @@ class TextToImageGenerationForm extends FormBase {
       ];
     }
 
-    $form['actions'] = [
-      '#type' => 'actions',
-    ];
-
-    $form['actions']['submit'] = [
+    $form['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Generate an Image'),
       '#ajax' => [
         'callback' => '::getResponse',
         'wrapper' => 'ai-image-response',
       ],
-      '#suffix' => '</div>',
+    ];
+
+    $form['end_markup'] = [
+      '#markup' => '</div>',
     ];
 
     $form['response'] = [

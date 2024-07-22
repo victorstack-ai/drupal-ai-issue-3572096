@@ -153,18 +153,17 @@ class TextToSpeechGenerationForm extends FormBase {
       ];
     }
 
-    $form['actions'] = [
-      '#type' => 'actions',
-    ];
-
-    $form['actions']['submit'] = [
+    $form['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Generate an Audio Response'),
       '#ajax' => [
         'callback' => '::getResponse',
         'wrapper' => 'ai-audio-response',
       ],
-      '#suffix' => '</div>',
+    ];
+
+    $form['end_markup'] = [
+      '#markup' => '</div>',
     ];
 
     $form['response'] = [

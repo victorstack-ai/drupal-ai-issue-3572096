@@ -152,17 +152,16 @@ class ChatGenerationForm extends FormBase {
       '#description' => $this->t('If the provider supports streaming, the response will be streamed.'),
     ];
 
-    $form['actions'] = [
-      '#type' => 'actions',
-    ];
-
-    $form['actions']['submit'] = [
+    $form['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Ask The AI'),
       '#attributes' => [
         'data-response' => 'ai-text-response',
       ],
-      '#suffix' => '</div>',
+    ];
+
+    $form['end_markup'] = [
+      '#markup' => '</div>',
     ];
 
     $form['response'] = [

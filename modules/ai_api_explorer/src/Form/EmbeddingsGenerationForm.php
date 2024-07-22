@@ -100,18 +100,17 @@ class EmbeddingsGenerationForm extends FormBase {
     // Load the LLM configurations.
     $this->aiProviderHelper->generateAiProvidersForm($form, $form_state, 'embeddings', 'embed', AiProviderFormHelper::FORM_CONFIGURATION_FULL);
 
-    $form['actions'] = [
-      '#type' => 'actions',
-    ];
-
-    $form['actions']['submit'] = [
+    $form['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Generate Embeddings'),
       '#ajax' => [
         'callback' => '::getResponse',
         'wrapper' => 'ai-embeddings-response',
       ],
-      '#suffix' => '</div>',
+    ];
+
+    $form['end_markup'] = [
+      '#markup' => '</div>',
     ];
 
     $form['response'] = [

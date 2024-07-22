@@ -7,11 +7,13 @@
 
       let streamElements = $('[data-response]', context);
       once('data-streamed', streamElements).forEach((item) => {
+        console.log(item);
         const element = $(item);
         const form = element.closest('form');
 
         // Set up a click handler to submit the form and stream the response back.
         element.click((event) => {
+          console.log('click');
           event.preventDefault();
           const clickedElement = $(event.currentTarget);
           const responseField = $('#' + clickedElement.attr('data-response'));

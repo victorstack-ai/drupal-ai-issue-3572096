@@ -131,18 +131,17 @@ class ImageAndAudioToVideoGenerationForm extends FormBase {
     // Load the LLM configurations.
     $this->aiProviderHelper->generateAiProvidersForm($form, $form_state, 'image_and_audio_to_video', 'ata', AiProviderFormHelper::FORM_CONFIGURATION_FULL);
 
-    $form['actions'] = [
-      '#type' => 'actions',
-    ];
-
-    $form['actions']['submit'] = [
+    $form['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Generate an Video File'),
       '#ajax' => [
         'callback' => '::getResponse',
         'wrapper' => 'ai-video-response',
       ],
-      '#suffix' => '</div>',
+    ];
+
+    $form['end_markup'] = [
+      '#markup' => '</div>',
     ];
 
     $form['response'] = [

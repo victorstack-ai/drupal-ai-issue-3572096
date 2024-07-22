@@ -86,10 +86,6 @@ class ModerationGenerationForm extends FormBase {
     // Load the LLM configurations.
     $this->aiProviderHelper->generateAiProvidersForm($form, $form_state, 'moderation', 'moderation', AiProviderFormHelper::FORM_CONFIGURATION_FULL);
 
-    $form['actions'] = [
-      '#type' => 'actions',
-    ];
-
     $form['actions']['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Ask The AI'),
@@ -97,7 +93,10 @@ class ModerationGenerationForm extends FormBase {
         'callback' => '::getResponse',
         'wrapper' => 'ai-text-response',
       ],
-      '#suffix' => '</div>',
+    ];
+
+    $form['end_markup'] = [
+      '#markup' => '</div>',
     ];
 
     $form['response'] = [
