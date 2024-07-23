@@ -215,7 +215,7 @@ PROMPT;
       // Error handling for the API call.
       return $exception->getMessage();
     }
-    $cleaned = trim($message->getText(), ' ');
+    $cleaned = trim(trim($message->getText(), '```'), ' ');
     return trim($cleaned, '"');
   }
 
