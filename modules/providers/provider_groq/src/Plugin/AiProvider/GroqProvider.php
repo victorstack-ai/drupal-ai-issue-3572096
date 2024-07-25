@@ -4,6 +4,7 @@ namespace Drupal\provider_groq\Plugin\AiProvider;
 
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
+use Drupal\ai\Exception\AiRateLimitException;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
 use Drupal\ai\OperationType\Chat\ChatMessage;
@@ -159,7 +160,18 @@ class GroqProvider extends AiProviderClientBase implements
       'model' => $model_id,
       'messages' => $chat_input,
     ] + $this->configuration;
-    $response = $this->client->chat()->create($payload);
+    try {
+      $response = $this->client->chat()->create($payload);
+    }
+    catch (\Exception $e) {
+      // Try to figure out rate limit issues.
+      if (strpos($e->getMessage(), 'Rate limit reached for model') !== FALSE) {
+        throw new AiRateLimitException($e->getMessage());
+      }
+      else {
+        throw $e;
+      }
+    }
     $message = new ChatMessage($response['choices'][0]['message']['role'], $response['choices'][0]['message']['content']);
     return new ChatOutput($message, $response, []);
   }

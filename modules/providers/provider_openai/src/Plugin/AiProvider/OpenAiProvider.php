@@ -4,6 +4,8 @@ namespace Drupal\provider_openai\Plugin\AiProvider;
 
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
+use Drupal\ai\Exception\AiQuotaException;
+use Drupal\ai\Exception\AiRateLimitException;
 use Drupal\ai\Exception\AiResponseErrorException;
 use Drupal\ai\Exception\AiUnsafePromptException;
 use Drupal\ai\OperationType\Chat\ChatInput;
@@ -284,6 +286,22 @@ class OpenAiProvider extends AiProviderClientBase implements
       'model' => $model_id,
       'messages' => $chat_input,
     ] + $this->configuration;
+    try {
+      $response = $this->client->chat()->create($payload)->toArray();
+    }
+    catch (\Exception $e) {
+      // Try to figure out rate limit issues.
+      if (strpos($e->getMessage(), 'Request too large') !== FALSE) {
+        throw new AiRateLimitException($e->getMessage());
+      }
+      // Try to figure out quota issues.
+      if (strpos($e->getMessage(), 'You exceeded your current quota') !== FALSE) {
+        throw new AiQuotaException($e->getMessage());
+      }
+      else {
+        throw $e;
+      }
+    }
 
     if ($this->streamed) {
       $response = $this->client->chat()->createStreamed($payload);
@@ -331,8 +349,22 @@ class OpenAiProvider extends AiProviderClientBase implements
       'model' => $model_id,
       'prompt' => $input,
     ] + $this->configuration;
-    $response = $this->client->images()->create($payload)->toArray();
-
+    try {
+      $response = $this->client->images()->create($payload)->toArray();
+    }
+    catch (\Exception $e) {
+      // Try to figure out rate limit issues.
+      if (strpos($e->getMessage(), 'Request too large') !== FALSE) {
+        throw new AiRateLimitException($e->getMessage());
+      }
+      // Try to figure out quota issues.
+      if (strpos($e->getMessage(), 'You exceeded your current quota') !== FALSE) {
+        throw new AiQuotaException($e->getMessage());
+      }
+      else {
+        throw $e;
+      }
+    }
     $images = [];
 
     if (empty($response['data'][0])) {
@@ -365,8 +397,25 @@ class OpenAiProvider extends AiProviderClientBase implements
       'model' => $model_id,
       'input' => $input,
     ] + $this->configuration;
+    try {
+      $response = $this->client->audio()->speech($payload);
+    }
+    catch (\Exception $e) {
+      // Try to figure out rate limit issues.
+      if (strpos($e->getMessage(), 'Request too large') !== FALSE) {
+        throw new AiRateLimitException($e->getMessage());
+      }
+      // Try to figure out quota issues.
+      if (strpos($e->getMessage(), 'You exceeded your current quota') !== FALSE) {
+        throw new AiQuotaException($e->getMessage());
+      }
+      else {
+        throw $e;
+      }
+    }
     $response = $this->client->audio()->speech($payload);
     $output = new AudioFile($response, 'audio/mpeg', 'openai.mp3');
+
     // Return a normalized response.
     return new TextToSpeechOutput([$output], $response, []);
   }
@@ -387,7 +436,22 @@ class OpenAiProvider extends AiProviderClientBase implements
       'model' => $model_id,
       'file' => $input,
     ] + $this->configuration;
-    $response = $this->client->audio()->transcribe($payload)->toArray();
+    try {
+      $response = $this->client->audio()->transcribe($payload)->toArray();
+    }
+    catch (\Exception $e) {
+      // Try to figure out rate limit issues.
+      if (strpos($e->getMessage(), 'Request too large') !== FALSE) {
+        throw new AiRateLimitException($e->getMessage());
+      }
+      // Try to figure out quota issues.
+      if (strpos($e->getMessage(), 'You exceeded your current quota') !== FALSE) {
+        throw new AiQuotaException($e->getMessage());
+      }
+      else {
+        throw $e;
+      }
+    }
 
     return new SpeechToTextOutput($response['text'], $response, []);
   }
@@ -408,7 +472,22 @@ class OpenAiProvider extends AiProviderClientBase implements
       'model' => $model_id,
       'input' => $input,
     ] + $this->configuration;
-    $response = $this->client->embeddings()->create($payload)->toArray();
+    try {
+      $response = $this->client->embeddings()->create($payload)->toArray();
+    }
+    catch (\Exception $e) {
+      // Try to figure out rate limit issues.
+      if (strpos($e->getMessage(), 'Request too large') !== FALSE) {
+        throw new AiRateLimitException($e->getMessage());
+      }
+      // Try to figure out quota issues.
+      if (strpos($e->getMessage(), 'You exceeded your current quota') !== FALSE) {
+        throw new AiQuotaException($e->getMessage());
+      }
+      else {
+        throw $e;
+      }
+    }
 
     return new EmbeddingsOutput($response['data'][0]['embedding'], $response, []);
   }
@@ -428,7 +507,22 @@ class OpenAiProvider extends AiProviderClientBase implements
       'model' => 'text-moderation-latest',
       'input' => $prompt,
     ] + $this->configuration;
-    $response = $this->client->moderations()->create($payload)->toArray();
+    try {
+      $response = $this->client->moderations()->create($payload)->toArray();
+    }
+    catch (\Exception $e) {
+      // Try to figure out rate limit issues.
+      if (strpos($e->getMessage(), 'Request too large') !== FALSE) {
+        throw new AiRateLimitException($e->getMessage());
+      }
+      // Try to figure out quota issues.
+      if (strpos($e->getMessage(), 'You exceeded your current quota') !== FALSE) {
+        throw new AiQuotaException($e->getMessage());
+      }
+      else {
+        throw $e;
+      }
+    }
 
     if (!empty($response['results'][0]['flagged'])) {
       throw new AiUnsafePromptException('The prompt was flagged by the moderation model.');

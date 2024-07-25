@@ -5,6 +5,7 @@ namespace Drupal\provider_huggingface\Plugin\AiProvider;
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
 use Drupal\ai\Exception\AiMissingFeatureException;
+use Drupal\ai\Exception\AiRateLimitException;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
 use Drupal\ai\OperationType\Chat\ChatMessage;
@@ -164,7 +165,16 @@ class HuggingfaceProvider extends AiProviderClientBase implements
         }
       }
     }
-    $response = json_decode($this->client->textGeneration($model_id, $chat_input), TRUE);
+    try {
+      $response = json_decode($this->client->textGeneration($model_id, $chat_input), TRUE);
+    }
+    catch (\Exception $e) {
+      // If the rate limit is reach, special error.
+      if (strpos($e->getMessage(), 'Rate limit reached') !== FALSE) {
+        throw new AiRateLimitException($e->getMessage());
+      }
+      throw $e;
+    }
     // We remove the inputted text.
     $message = new ChatMessage('', str_replace($chat_input, '', $response[0]['generated_text']));
     return new ChatOutput($message, $response, []);

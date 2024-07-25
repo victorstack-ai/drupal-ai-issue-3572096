@@ -4,6 +4,7 @@ namespace Drupal\provider_anthropic\Plugin\AiProvider;
 
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
+use Drupal\ai\Exception\AiQuotaException;
 use Drupal\ai\Exception\AiResponseErrorException;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
@@ -150,7 +151,18 @@ class AnthropicProvider extends AiProviderClientBase implements
     // Unset Max Tokens.
     $max_tokens = $payload['max_tokens'];
     unset($payload['max_tokens']);
-    $response = $this->client->messages()->maxTokens($max_tokens)->create($payload)->content;
+    try {
+      $response = $this->client->messages()->maxTokens($max_tokens)->create($payload)->content;
+    }
+    catch (\Exception $e) {
+      // Try to figure out credit issues.
+      if (strpos($e->getMessage(), 'credit balance is too low ') !== FALSE) {
+        throw new AiQuotaException($e->getMessage());
+      }
+      else {
+        throw $e;
+      }
+    }
     if (!isset($response[0]['text'])) {
       throw new AiResponseErrorException('Invalid response from Anthropic');
     }

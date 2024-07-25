@@ -48,7 +48,9 @@ class MistralProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function getConfiguredModels(string $operation_type = NULL): array {
+    set_error_handler([$this, 'errorCatcher'], E_ALL);
     $response = $this->getClient()->models()->list()->toArray();
+    restore_error_handler();
     $models = [];
     if ($operation_type == 'chat') {
       if (isset($response['data'])) {
@@ -211,10 +213,10 @@ class MistralProvider extends AiProviderClientBase implements
   }
 
   /**
-   * Error catcher for the Mistral API.
+   * Error catcher.
    */
   public function errorCatcher($errno, $errstr, $file, $line) {
-    throw new AiResponseErrorException("Something undefined was broken in the response from Mistral AI");
+    throw new AiResponseErrorException("Something undefined was broken in the response from Mistral AI: $errstr");
   }
 
 }

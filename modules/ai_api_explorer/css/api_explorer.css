@@ -44,7 +44,8 @@ code.ai-code {
   padding: 5px;
 }
 
-.gin--dark-mode .ai-three-info, .gin--dark-mode .ai-left-side {
+.gin--dark-mode .ai-three-info,
+.gin--dark-mode .ai-left-side {
   background: #c5c5c512;
 }
 
