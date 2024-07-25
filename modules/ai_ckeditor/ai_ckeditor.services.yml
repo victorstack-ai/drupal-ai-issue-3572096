@@ -1,0 +1,4 @@
+services:
+  plugin.manager.ai_ckeditor:
+    class: Drupal\ai_ckeditor\PluginManager\AiCKEditorPluginManager
+    parent: default_plugin_manager
