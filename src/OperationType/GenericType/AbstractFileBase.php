@@ -74,6 +74,16 @@ abstract class AbstractFileBase implements FileBaseInterface {
   /**
    * {@inheritdoc}
    */
+  public function getFileType(): string {
+    if (str_contains($this->filename, '.')) {
+      return substr($this->filename, strrpos($this->filename, '.') + 1);
+    }
+    return '';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function setMimeType(string $mime_type): void {
     $this->mimeType = $mime_type;
   }
@@ -90,6 +100,13 @@ abstract class AbstractFileBase implements FileBaseInterface {
    */
   public function setBinary(string $binary): void {
     $this->binary = $binary;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function resetMimeTypeFromFileName(): void {
+    $this->mimeType = $this->getFileMimeTypeGuesser()->guessMimeType($this->filename);
   }
 
   /**

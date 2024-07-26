@@ -10,14 +10,14 @@ abstract class StreamedChatMessageIterator implements StreamedChatMessageIterato
   /**
    * The iterator.
    *
-   * @var \IteratorAggregate
+   * @var \Traversable
    */
   protected $iterator;
 
   /**
    * Constructor.
    */
-  public function __construct(\IteratorAggregate $iterator) {
+  public function __construct(\Traversable $iterator) {
     $this->iterator = $iterator;
   }
 

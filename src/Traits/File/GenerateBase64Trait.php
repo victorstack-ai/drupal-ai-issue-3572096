@@ -12,16 +12,16 @@ trait GenerateBase64Trait {
   /**
    * Generate base64 encoded string.
    *
-   * @param string $data_url_scheme
+   * @param string|null $data_url_scheme
    *   Add a data url scheme, like 'data:image/png'.
    *
    * @return string
    *   A base64 encoded string.
    */
-  public function getAsBase64EncodedString(string $data_url_scheme = ''): string {
+  public function getAsBase64EncodedString(string $data_url_scheme = NULL): string {
     $base64 = base64_encode($this->getBinary());
-    if ($data_url_scheme) {
-      $base64 = $data_url_scheme . ';base64,' . $base64;
+    if (!is_null($data_url_scheme)) {
+      $base64 = $data_url_scheme . $base64;
     }
     elseif ($this->getMimeType()) {
       $base64 = 'data:' . $this->getMimeType() . ';base64,' . $base64;

@@ -116,8 +116,8 @@ class ChatGenerationForm extends FormBase {
     $form['prompts']['system_prompt']['message_1'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Message'),
+      '#default_value' => "You are an helpful assistant.",
       '#required' => FALSE,
-      '#default_value' => $this->t('You are an helpful assistant'),
     ];
 
     $form['prompts']['role_2'] = [
@@ -141,7 +141,7 @@ class ChatGenerationForm extends FormBase {
     $form['prompts']['image_2'] = [
       '#type' => 'file',
       // Only jpg, png files are allowed, since that covers most models.
-      '#accept' => '.jpg, .png',
+      '#accept' => '.jpg, .png, .jpeg',
       '#title' => $this->t('Image'),
       '#description' => $this->t('Attach an image to the call. Note that not all models support images and will throw an error.'),
     ];
@@ -149,7 +149,7 @@ class ChatGenerationForm extends FormBase {
     $form['streamed'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Streamed'),
-      '#description' => $this->t('If the provider supports streaming, the response will be streamed.'),
+      '#description' => $this->t('If the provider supports streaming, the response will be streamed. <strong>Currently the image chat will not work with streaming in this explorer (however in the API it works).</strong>'),
     ];
 
     $form['submit'] = [
@@ -157,6 +157,10 @@ class ChatGenerationForm extends FormBase {
       '#value' => $this->t('Ask The AI'),
       '#attributes' => [
         'data-response' => 'ai-text-response',
+      ],
+      '#ajax' => [
+        'callback' => '::getResponse',
+        'wrapper' => 'ai-text-response',
       ],
     ];
 
@@ -194,13 +198,7 @@ class ChatGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function getResponse(array &$form, FormStateInterface $form_state) {
-
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+    // This runs on streamed.
     $provider = $this->aiProviderHelper->generateAiProviderFromFormSubmit($form, $form_state, 'chat', 'chat');
     $values = $form_state->getValues();
     // Get the messages.
@@ -248,9 +246,9 @@ class ChatGenerationForm extends FormBase {
     $code .= $this->rawCodeExample($provider, $form_state, $messages);
 
     if (is_object($response) && get_class($response) == ChatMessage::class) {
+      $form['response']['#context']['texts'] = '<h4>Role: ' . $response->getRole() . "</h4><p>" . $response->getText() . '</p>' . $code;
       $form_state->setRebuild();
-      $response = new Response('<h4>Role: ' . $response->getRole() . "</h4><p>" . $response->getText() . '</p>' . $code);
-      $form_state->setResponse($response);
+      return $form['response'];
     }
     elseif (is_object($response) && $response instanceof StreamedChatMessageIteratorInterface) {
       $http_response = new StreamedResponse();
@@ -270,9 +268,88 @@ class ChatGenerationForm extends FormBase {
       $form_state->setResponse($http_response);
     }
     else {
+      $form['response']['#context']['texts'] = $message;
       $form_state->setRebuild();
-      $response = new Response($message);
-      $form_state->setResponse($response);
+      return $form['response'];
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    // This runs on normal submit.
+    $provider = $this->aiProviderHelper->generateAiProviderFromFormSubmit($form, $form_state, 'chat', 'chat');
+    $values = $form_state->getValues();
+    // Get the messages.
+    $messages = [];
+    // Get potential files.
+    $files = $this->requestStack->getCurrentRequest()->files->all();
+    foreach ($values as $key => $value) {
+      if (strpos($key, 'role_') === 0) {
+        $index = substr($key, 5);
+        $role = $value;
+        $message = $values['message_' . $index];
+        // Load the file.
+        $image = "";
+        if (isset($files['files']['image_' . $index])) {
+          $raw_file = file_get_contents($files['files']['image_' . $index]->getPathname());
+          $image = new ImageFile($raw_file, $files['files']['image_' . $index]->getClientMimeType(), $files['files']['image_' . $index]->getClientOriginalName());
+        }
+        if ($role && $message) {
+          $images = [];
+          if ($image) {
+            $images[] = $image;
+          }
+          $messages[] = new ChatMessage($role, $message, $images);
+        }
+      }
+    }
+
+    $input = new ChatInput($messages);
+
+    $message = NULL;
+    $response = NULL;
+
+    try {
+      // If we should stream.
+      if ($form_state->getValue('streamed')) {
+        $provider->streamedOutput();
+      }
+      $response = $provider->chat($input, $form_state->getValue('chat_ai_model'), ['chat_generation'])->getNormalized();
+    }
+    catch (\Exception $e) {
+      $message = $this->explorerHelper->renderException($e);
+    }
+
+    // Generation code for normalization.
+    $code = $this->normalizeCodeExample($provider, $form_state, $messages);
+    $code .= $this->rawCodeExample($provider, $form_state, $messages);
+
+    if (is_object($response) && get_class($response) == ChatMessage::class) {
+      $form['response']['#context']['texts'] = '<h4>Role: ' . $response->getRole() . "</h4><p>" . $response->getText() . '</p>' . $code;
+      $form_state->setRebuild();
+      return $form['response'];
+    } elseif (is_object($response) && $response instanceof StreamedChatMessageIteratorInterface) {
+      $http_response = new StreamedResponse();
+      $http_response->setCallback(function () use ($response, $code) {
+        foreach ($response as $key => $chat_message) {
+          if ($chat_message->getRole() && !$key) {
+            echo '<h4>Role: ' . $chat_message->getRole() . "</h4><p>";
+          }
+          echo $chat_message->getText();
+          ob_flush();
+          flush();
+        }
+        echo $code;
+        ob_flush();
+        flush();
+      });
+      $form_state->setResponse($http_response);
+    } else {
+      $form['response']['#context']['texts'] = $message;
+      $form_state->setRebuild();
+      return $form['response'];
     }
   }
 

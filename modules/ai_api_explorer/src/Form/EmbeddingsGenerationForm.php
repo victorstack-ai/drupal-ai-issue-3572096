@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Form;
 
+use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
+use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -94,7 +96,13 @@ class EmbeddingsGenerationForm extends FormBase {
       '#title' => $this->t('Enter your prompt here. When submitted, your provider will generate a response. Please note that each query counts against your API usage if your provider is a paid provider.'),
       '#description' => $this->t('Based on the complexity of your prompt, traffic, and other factors, a response can take time to complete. Please allow the operation to finish.'),
       '#default_value' => $input,
-      '#required' => TRUE,
+    ];
+
+    $form['image'] = [
+      '#type' => 'file',
+      '#accept' => '.jpg, .jpeg, .png',
+      '#title' => $this->t('(OR) upload an image here if its an image embeddings model. When submitted, your provider will generate a response. Please note that each query counts against your API usage if your provider is a paid provider.'),
+      '#description' => $this->t('Based on the complexity of your prompt, traffic, and other factors, a response can take time to complete. Please allow the operation to finish.'),
     ];
 
     // Load the LLM configurations.
@@ -137,8 +145,25 @@ class EmbeddingsGenerationForm extends FormBase {
    */
   public function getResponse(array &$form, FormStateInterface $form_state) {
     $provider = $this->aiProviderHelper->generateAiProviderFromFormSubmit($form, $form_state, 'embeddings', 'embed');
+    $files = $this->requestStack->getCurrentRequest()->files->all();
+    $file = reset($files);
+    $mime_type = $file['image']->getMimeType();
+    $raw_file = file_get_contents($file['image']->getPathname());
+    $file_name = $file['image']->getClientOriginalName();
+
+    // Normalize the input.
+    $input = new EmbeddingsInput();
+    if ($file) {
+      $image_file = new ImageFile($raw_file, $mime_type, $file_name);
+      // Because its octect/stream sometimes.
+      $image_file->resetMimeTypeFromFileName();
+      $input->setImage($image_file);
+    }
+    else {
+      $input->setPrompt($form_state->getValue('prompt'));
+    }
     try {
-      $embeddings = $provider->embeddings($form_state->getValue('prompt'), $form_state->getValue('embed_ai_model'), ['ai_api_explorer']);
+      $embeddings = $provider->embeddings($input, $form_state->getValue('embed_ai_model'), ['ai_api_explorer']);
       $response = implode(', ', $embeddings->getNormalized());
     }
     catch (\Exception $e) {
