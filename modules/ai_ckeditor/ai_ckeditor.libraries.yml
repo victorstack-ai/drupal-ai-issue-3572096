@@ -1,12 +1,9 @@
 ai_ckeditor:
-  css:
-    theme:
-      css/form.css: { preprocess: false, minified: false }
-      css/status.css: { preprocess: false, minified: false }
   js:
     js/build/aickeditor.js: { preprocess: false, minified: true }
   dependencies:
     - core/ckeditor5
+    - editor/drupal.editor.dialog
 
 admin.ai_ckeditor:
   css:
