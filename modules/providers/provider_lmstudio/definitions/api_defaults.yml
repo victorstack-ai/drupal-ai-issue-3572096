@@ -63,5 +63,5 @@ embeddings:
     dimensions:
       label: 'Vector Dimension'
       type: 'integer'
-      default: 1536
+      default: 768
       required: false
