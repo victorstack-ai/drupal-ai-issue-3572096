@@ -147,13 +147,13 @@ class EmbeddingsGenerationForm extends FormBase {
     $provider = $this->aiProviderHelper->generateAiProviderFromFormSubmit($form, $form_state, 'embeddings', 'embed');
     $files = $this->requestStack->getCurrentRequest()->files->all();
     $file = reset($files);
-    $mime_type = $file['image']->getMimeType();
-    $raw_file = file_get_contents($file['image']->getPathname());
-    $file_name = $file['image']->getClientOriginalName();
 
     // Normalize the input.
     $input = new EmbeddingsInput();
     if ($file) {
+      $mime_type = $file['image']->getMimeType();
+      $raw_file = file_get_contents($file['image']->getPathname());
+      $file_name = $file['image']->getClientOriginalName();
       $image_file = new ImageFile($raw_file, $mime_type, $file_name);
       // Because its octect/stream sometimes.
       $image_file->resetMimeTypeFromFileName();
