@@ -3,6 +3,7 @@ description: Automate anything and everything using AI.
 package: AI (Experimental)
 type: module
 core_version_requirement: ^10.3 || ^11
+lifecycle: experimental
 
 dependencies:
   - ai:ai
