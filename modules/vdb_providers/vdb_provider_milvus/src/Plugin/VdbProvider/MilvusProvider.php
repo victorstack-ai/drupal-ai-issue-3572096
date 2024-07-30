@@ -140,8 +140,8 @@ class MilvusProvider extends AiVdbProviderClientBase
       VdbSimilarityMetrics::InnerProduct => 'IP',
     };
     $collections = $this->getCollections($database);
-    if (!in_array($collection_name, $collections['data'])) {
-      $this->getClient()->collections()->create(
+    if (!isset($collections['data']) || !in_array($collection_name, $collections['data'])) {
+      $response = $this->getClient()->collections()->create(
         collectionName: $collection_name,
         dimension: $dimension,
         dbName: $database,

@@ -54,7 +54,7 @@ class MilvusConfigForm extends ConfigFormBase {
     ];
 
     $form['api_key'] = [
-      '#type' => 'password',
+      '#type' => 'key_select',
       '#title' => $this->t('API Key'),
       '#description' => $this->t('The API key to use for authentication. This is optional if your Milvus Vector Database is installed within your hosting environment (e.g. when using via DDEV).'),
       '#default_value' => $config->get('api_key'),

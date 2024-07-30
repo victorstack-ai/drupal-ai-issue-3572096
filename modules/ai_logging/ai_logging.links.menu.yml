@@ -1,14 +1,8 @@
-entity.ai_log.collection:
-  title: 'AI Logs'
-  description: 'List of ai logs.'
-  route_name: entity.ai_log.collection
-  parent: system.admin_content
-
 ai_log.logging:
   title: 'AI Logging'
   description: 'Settings for AI Logging'
   parent: ai.admin_settings
-  route_name: ai.settings.menu
+  route_name: ai_logging.list_page
 
 ai_log.settings_menu:
   title: "AI Logging Settings"

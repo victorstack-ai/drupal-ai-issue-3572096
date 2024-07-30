@@ -134,6 +134,9 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     if (!isset($config['metric'])) {
       $config['metric'] = NULL;
     }
+    if (!isset($config['database_name'])) {
+      $config['database_name'] = 'default';
+    }
     return $config;
   }
 
@@ -196,6 +199,16 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       '#default_value' => $this->configuration['chat_model'] ?? $default_model,
       '#options' => $this->tokenizer->getSupportedModels(),
       '#required' => TRUE,
+    ];
+
+    $form['database_name'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Database Name'),
+      '#description' => $this->t('The database name to use.'),
+      '#default_value' => $this->configuration['database_name'] ?? NULL,
+      '#required' => TRUE,
+      '#pattern' => '[a-zA-Z0-9_]*',
+      '#disabled' => (bool) FALSE,
     ];
 
     $form['collection'] = [
@@ -274,7 +287,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state): void {
     $vdb_client = $this->vdbProviderManager->createInstance($this->configuration['database']);
     $collections = $vdb_client->getCollections();
-    if (!in_array($this->configuration['collection'], $collections['data'])) {
+    if (!isset($collections['data']) ||!in_array($this->configuration['collection'], $collections['data'])) {
       $vdb_client->createCollection(
         collection_name: $form_state->getValue('collection'),
         dimension: $form_state->getValue('embeddings_engine_configuration')['dimensions'],

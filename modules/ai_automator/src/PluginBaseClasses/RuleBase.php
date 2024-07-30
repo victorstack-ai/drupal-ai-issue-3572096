@@ -153,7 +153,10 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     $defaults = $this->aiPluginManager->getDefaultProviderForOperationType($this->llmType);
     $provider = $formState->getValue('automator_ai_provider');
     if (!$provider) {
-      $provider = $defaultValues['automator_ai_provider'] ?? $defaults['provider_id'];
+      $provider = $defaultValues['automator_ai_provider'] ?? NULL;
+      if (empty($defaults['provider_id'])) {
+        $provider = $defaults['provider_id'];
+      }
     }
     $form['automator_ai_provider'] = [
       '#type' => 'select',
