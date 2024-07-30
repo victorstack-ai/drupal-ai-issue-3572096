@@ -46,21 +46,21 @@ class AiLogFormSettings extends ConfigFormBase {
 
     $form['prompt_logging'] = [
       '#type' => 'checkbox',
-      '#title' => t('Log prompts'),
+      '#title' => t('Log requests'),
       '#description' => t('Log all or selective prompts and responses in the database.'),
       '#default_value' => $config->get('prompt_logging'),
     ];
 
     $form['prompt_logging_output'] = [
       '#type' => 'checkbox',
-      '#title' => t('Log prompt output'),
+      '#title' => t('Log response'),
       '#description' => t('Also log the output of the AI requests.'),
       '#default_value' => $config->get('prompt_logging_output'),
     ];
 
     $form['prompt_logging_tags'] = [
       '#type' => 'textfield',
-      '#title' => t('Prompt Tags'),
+      '#title' => t('Request Tags'),
       '#description' => t('Log prompts and responses with these tags in the database. Separate tags with commas. Empty means all.'),
       '#default_value' => $config->get('prompt_logging_tags'),
       '#states' => [

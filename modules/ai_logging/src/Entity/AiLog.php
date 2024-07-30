@@ -169,7 +169,7 @@ final class AiLog extends ContentEntityBase implements AiLogInterface {
       ->setDisplayConfigurable('view', TRUE);
 
     $fields['output_text'] = BaseFieldDefinition::create('string_long')
-      ->setLabel(t('Output Text'))
+      ->setLabel(t('Response'))
       ->setDescription(t('The output text for the ai log.'))
       ->setSettings([
         'default_value' => '',

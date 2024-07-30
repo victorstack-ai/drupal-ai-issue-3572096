@@ -80,7 +80,7 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
         'prompt' => $this->getInputText($event->getInput()),
       ]);
       if ($this->aiSettings->get('prompt_logging_output')) {
-        $log->set('output_text', json_encode($event->getOutput()));
+        $log->set('output_text', json_encode($event->getOutput()->getRawOutput()));
       }
       $log->save();
     }
