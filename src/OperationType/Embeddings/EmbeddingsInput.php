@@ -60,10 +60,10 @@ class EmbeddingsInput implements InputInterface {
   /**
    * Set the prompt.
    *
-   * @param array $prompt
+   * @param string $prompt
    *   The prompt.
    */
-  public function setPrompt(array $prompt) {
+  public function setPrompt(string $prompt) {
     $this->prompt = $prompt;
   }
 
