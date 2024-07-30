@@ -1,0 +1,70 @@
+ai_assistant_api.ai_assistant.*:
+  type: config_entity
+  label: AI Assistant
+  mapping:
+    id:
+      type: string
+      label: ID
+    label:
+      type: label
+      label: Label
+    uuid:
+      type: string
+    description:
+      type: string
+      label: Description
+    system_role:
+      type: string
+      label: System Role
+    rag_enabled:
+      type: boolean
+      label: RAG Enabled
+    assistant_message:
+      type: string
+      label: Assistant Message
+      required: true
+    no_results_message:
+      type: string
+      label: No Results Message
+      required: true
+    error_message:
+      type: string
+      label: Error Message
+      required: true
+    llm_provider:
+      type: string
+      label: LLM Provider
+      required: true
+    llm_model:
+      type: string
+      label: LLM Model
+      required: true
+    llm_configuration:
+      type: sequence
+      label: LLM Configuration in JSON
+      required: false
+    rag_databases:
+      type: sequence
+      sequence:
+        type: mapping
+        mapping:
+          search_api_index:
+            type: entity_reference
+            entity_type: search_api_index
+            label: Search API Indexes
+          rag_description:
+            type: string
+            label: Description
+            required: true
+          rag_threshold:
+            type: float
+            label: Score Threshold
+            required: true
+          rag_min_results:
+            type: integer
+            label: Number of min results
+            required: true
+          rag_max_results:
+            type: integer
+            label: Number of max results
+            required: true

@@ -57,3 +57,9 @@ ai_api_explorer.image_and_audio_to_video_form:
   parent: ai_api_explorer.main
   route_name: ai_api_explorer.image_and_audio_to_video_form
   weight: 8
+ai_api_explorer.vector_db_form:
+  title: Vector DB Explorer
+  description: Contains a form where you can try out the results you get back from the vector databases.
+  parent: ai_api_explorer.main
+  route_name: ai_api_explorer.vector_db_query
+  weight: 20

@@ -133,7 +133,7 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    *   Plugin ID.
    * @param mixed $plugin_definition
    *   Plugin definition.
-   * @param \GuzzleHttp\ClientInterface $http_client
+   * @param \Psr\Http\Client\ClientInterface $http_client
    *   The HTTP client.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory.
@@ -151,8 +151,8 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    *   The file system.
    */
   final public function __construct(
-    $plugin_id,
-    $plugin_definition,
+    string $plugin_id,
+    mixed $plugin_definition,
     ClientInterface $http_client,
     ConfigFactoryInterface $config_factory,
     LoggerChannelFactoryInterface $logger_factory,

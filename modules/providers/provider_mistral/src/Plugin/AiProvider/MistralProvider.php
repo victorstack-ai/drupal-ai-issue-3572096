@@ -219,4 +219,12 @@ class MistralProvider extends AiProviderClientBase implements
     throw new AiResponseErrorException("Something undefined was broken in the response from Mistral AI: $errstr");
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function maxEmbeddingsInput($model_id = ''): int {
+    // TODO: this is playing safe. Ideally, we should provide real number per model.
+    return 1024;
+  }
+
 }

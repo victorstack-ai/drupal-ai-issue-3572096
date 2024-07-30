@@ -30,4 +30,12 @@ interface EmbeddingsInterface extends OperationTypeInterface {
    */
   public function embeddings(string|EmbeddingsInput $input, string $model_id, array $tags = []): EmbeddingsOutput;
 
+  /**
+   * Max input string length for Embedding LLM.
+   *
+   * @return int
+   *   Max input string length in bytes.
+   */
+  public function maxEmbeddingsInput(string $model_id = ''): int;
+
 }

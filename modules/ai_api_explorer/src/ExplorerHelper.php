@@ -29,4 +29,22 @@ class ExplorerHelper {
     return $message;
   }
 
+  /**
+   * Function to render an error.
+   *
+   * @param string $message
+   *   The error message to render.
+   *
+   * @return string
+   *   The rendered error.
+   */
+  public static function renderError(string $message): string {
+    $message = '<div class="ai-error">';
+    $message .= '<h2>' . t('An error occurred') . '</h2>';
+    $message .= '<p>' . t('The following error occurred while processing your request:') . '</p>';
+    $message .= '<p><em>' . $message . '</em></p>';
+    $message .= '</div>';
+    return $message;
+  }
+
 }

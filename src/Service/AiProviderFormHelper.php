@@ -141,6 +141,49 @@ class AiProviderFormHelper {
   }
 
   /**
+   * Validate the LLM Provider form.
+   *
+   * @param array $form
+   *   The form array to add the configuration to, passed by reference.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param string $operation_type
+   *   The operation type.
+   * @param string $prefix
+   *   If you want to add a prefix to the form parts generated.
+   */
+  public function validateAiProvidersConfig(array &$form, FormStateInterface $form_state, string $operation_type, string $prefix) {
+    $prefix = $prefix ? rtrim($prefix, '_') . '_' : '';
+    $provider = $form_state->getValue($prefix . 'ai_provider');
+    $model = $form_state->getValue($prefix . 'ai_model');
+    $llmInstance = $this->aiProviderPluginManager->createInstance($provider);
+    $schema = $llmInstance->getAvailableConfiguration($operation_type, $model);
+    foreach ($form_state->getValues() as $key => $value) {
+      if (strpos($key, $prefix) === 0) {
+        $real_key = trim(str_replace($prefix . 'ajax_prefix_configuration_', '', $key));
+        if (!empty($schema[$real_key]['constraints'])) {
+          if (!empty($schema[$real_key]['constraints']['min'])) {
+            if ($value < $schema[$real_key]['constraints']['min']) {
+              $form_state->setErrorByName($key, $this->t('The value for @key must be at least @min.', [
+                '@key' => $schema[$real_key]['label'],
+                '@min' => $schema[$real_key]['constraints']['min'],
+              ]));
+            }
+          }
+          if (!empty($schema[$real_key]['constraints']['max'])) {
+            if ($value > $schema[$real_key]['constraints']['max']) {
+              $form_state->setErrorByName($key, $this->t('The value for @key must be at most @max.', [
+                '@key' => $schema[$real_key]['label'],
+                '@max' => $schema[$real_key]['constraints']['max'],
+              ]));
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
    * Generate a configured LLM Provider from the form values.
    *
    * @param array $form

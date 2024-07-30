@@ -18,7 +18,7 @@ embeddings:
     default: 'Once upon a time in London.'
     required: true
   configuration:
-    dimension:
+    dimensions:
       label: 'Vector Dimension'
       type: 'integer'
       default: 1024

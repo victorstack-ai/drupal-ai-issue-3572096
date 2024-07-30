@@ -1,0 +1,46 @@
+<?php
+
+/**
+ * @file
+ * Contains ai_logging install hooks.
+ */
+
+use Drupal\Core\Config\FileStorage;
+
+/**
+ * Implements hook_update_N().
+ */
+function ai_logging_update_10301() {
+  // Install the ai_logging tables.
+  // Get the entity type definition.
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('ai_log');
+
+  // Get the base table name from the entity type definition.
+  $table_name = $entity_type->getBaseTable();
+
+  // Check if the table already exists.
+  if (!\Drupal::database()->schema()->tableExists($table_name)) {
+    // Create the table using the entity schema definition.
+    \Drupal::entityDefinitionUpdateManager()->installEntityType($entity_type);
+  }
+
+  // Also install the view.
+  $module_path = \Drupal::service('extension.list.module')->getPath('ai_logging');
+  $config_path = $module_path . '/config/install';
+  $source_storage = new FileStorage($config_path);
+  $config_name = 'views.view.ai_logging';
+  $config_data = $source_storage->read($config_name);
+  if ($config_data) {
+    // Get the config factory.
+    $config = \Drupal::configFactory()->getEditable($config_name);
+
+    // Set the configuration values.
+    foreach ($config_data as $key => $value) {
+      $config->set($key, $value);
+    }
+
+    // Save the configuration.
+    $config->save();
+  }
+
+}

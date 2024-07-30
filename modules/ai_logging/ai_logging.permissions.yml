@@ -1,0 +1,3 @@
+administer ai_log:
+  title: 'Administer ai logs'
+  restrict access: true

@@ -1,0 +1,4 @@
+services:
+  ai_search.embedding_strategy:
+    class: Drupal\ai_search\EmbeddingStrategyPluginManager
+    parent: default_plugin_manager

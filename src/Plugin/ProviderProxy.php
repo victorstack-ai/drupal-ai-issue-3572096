@@ -109,20 +109,28 @@ class ProviderProxy {
       return $method->invokeArgs($this->plugin, $arguments);
     }
 
+    // If input is not set, input is model ID
+    if (!isset($arguments[1])) {
+      $arguments[1] = $arguments[0];
+      $arguments[0] = NULL;
+    }
+
     // Tags might not always be set.
     if (!isset($arguments[2])) {
       $arguments[2] = [];
     }
+
     // Normalize the configuration.
     $this->plugin->configuration = $this->plugin->normalizeConfiguration($operation_type, $arguments[1]);
 
     // Set some default tags.
-    $this->plugin->setTag($this->plugin->getPluginId());
     $this->plugin->setTag($operation_type);
-    $this->plugin->setTag($arguments[1]);
+    foreach ($arguments[2] as $tag) {
+      $this->plugin->setTag($tag);
+    }
 
     // Invoke the pre generate response event.
-    $pre_generate_event = new PreGenerateResponseEvent($this->plugin->getPluginId(), $operation_type, $this->plugin->configuration, $arguments[0], $arguments[1], $arguments[2]);
+    $pre_generate_event = new PreGenerateResponseEvent($this->plugin->getPluginId(), $operation_type, $this->plugin->configuration, $arguments[0], $arguments[1], $this->plugin->getTags());
     $this->eventDispatcher->dispatch($pre_generate_event, PreGenerateResponseEvent::EVENT_NAME);
     // Get the possible new auth, configuration and input from the event.
     $this->plugin->configuration = $pre_generate_event->getConfiguration();
@@ -178,7 +186,7 @@ class ProviderProxy {
     }
 
     // Invoke the post generate response event.
-    $post_generate_event = new PostGenerateResponseEvent($this->plugin->getPluginId(), $operation_type, $this->plugin->configuration, $arguments[0], $arguments[1], $response, $arguments[2]);
+    $post_generate_event = new PostGenerateResponseEvent($this->plugin->getPluginId(), $operation_type, $this->plugin->configuration, $arguments[0], $arguments[1], $response, $this->plugin->getTags());
     $this->eventDispatcher->dispatch($post_generate_event, PostGenerateResponseEvent::EVENT_NAME);
     // Get a potential new response from the event.
     $response = $post_generate_event->getOutput();

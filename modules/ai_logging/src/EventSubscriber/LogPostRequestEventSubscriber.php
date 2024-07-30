@@ -5,6 +5,7 @@ namespace Drupal\ai_logging\EventSubscriber;
 use Drupal\ai\Event\PostGenerateResponseEvent;
 use Drupal\ai\OperationType\InputInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
@@ -19,11 +20,11 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class LogPostRequestEventSubscriber implements EventSubscriberInterface {
 
   /**
-   * The logger factory.
+   * The entity type manager.
    *
-   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  protected $loggerFactory;
+  protected $entityTypeManager;
 
   /**
    * The AI settings.
@@ -42,8 +43,8 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
   /**
    * Constructor.
    */
-  public function __construct(LoggerChannelFactoryInterface $loggerFactory, ConfigFactoryInterface $configFactory, ModuleHandlerInterface $moduleHandler) {
-    $this->loggerFactory = $loggerFactory;
+  public function __construct(EntityTypeManagerInterface $entityTypeManager, ConfigFactoryInterface $configFactory, ModuleHandlerInterface $moduleHandler) {
+    $this->entityTypeManager = $entityTypeManager;
     $this->aiSettings = $configFactory->get('ai_logging.settings');
     $this->moduleHandler = $moduleHandler;
   }
@@ -69,22 +70,20 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
   public function logPostRequest(PostGenerateResponseEvent $event) {
     // If logging is enabled, log the prompt and response.
     if ($this->shouldLoggingHappen($event->getOperationType(), $event->getTags())) {
-      $context = [
-        '@provider' => $event->getProviderId(),
-        '@model' => $event->getModelId(),
-        '@type' => $event->getOperationType(),
-        '@prompt' => $this->getInputText($event->getInput()),
-        '@config' => json_encode($event->getConfiguration()),
-        '@response' => 'Not logged',
-      ];
+      $storage = $this->entityTypeManager->getStorage('ai_log');
+      /** @var \Drupal\ai_logging\Entity\AiLog $log */
+      $log = $storage->create([
+        'provider' => $event->getProviderId(),
+        'model' => $event->getModelId(),
+        'operation_type' => $event->getOperationType(),
+        'configuration' => json_encode($event->getConfiguration()),
+        'tags' => $event->getTags(),
+        'prompt' => $this->getInputText($event->getInput()),
+      ]);
       if ($this->aiSettings->get('prompt_logging_output')) {
-        $context['@response'] = json_encode($event->getOutput());
+        $log->set('output_text', json_encode($event->getOutput()));
       }
-      // Check if the prompt explorer is installed.
-      if ($this->moduleHandler->moduleExists('ai_api_explorer')) {
-        $context['link'] = $this->getContextLink($event);
-      }
-      $this->loggerFactory->get('ai')->info("Provider: @provider||Model: @model||Operation Type: @type||Configuration: @config||Prompt: @prompt||Response: @response", $context);
+      $log->save();
     }
   }
 

@@ -18,6 +18,9 @@ chat:
       type: 'integer'
       default: 4096
       required: false
+      constraints:
+        min: 0
+        max: 4096
     temperature:
       label: 'Temperature'
       description: 'Sampling temperature 0-1. Higher values mean more random output.'
@@ -58,12 +61,6 @@ chat:
         min: 0
         max: 1
         step: 0.1
-    stream:
-      label: 'Stream'
-      description: 'Whether to stream the response or return the entire response.'
-      type: 'boolean'
-      default: false
-      required: false
 text_to_image:
   input:
     description: 'Image generation prompt.'

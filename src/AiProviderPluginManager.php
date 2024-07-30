@@ -71,9 +71,19 @@ final class AiProviderPluginManager extends DefaultPluginManager {
   }
 
   /**
-   * {@inheritdoc}
+   * Create a provider proxy instance around an AI Provider.
+   *
+   * @param $plugin_id
+   *   The plugin ID.
+   * @param array $configuration
+   *   The configuration for the plugin.
+   * @return ProviderProxy
+   *   The provider proxy.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\PluginException
+   *   A plugin exception.
    */
-  public function createInstance($plugin_id, array $configuration = []) {
+  public function createInstance($plugin_id, array $configuration = []): ProviderProxy {
     $plugin = parent::createInstance($plugin_id, $configuration);
     return new ProviderProxy($plugin, $this->eventDispatcher, $this->loggerFactory);
   }

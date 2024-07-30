@@ -16,3 +16,9 @@ ai.admin_providers:
   description: 'Configure the core Provider Settings.'
   parent: ai.admin_settings
   route_name: ai.admin_providers
+
+ai.admin_vdb_providers:
+  title: 'Vector DBs Settings'
+  description: 'Configure the core Vector DB Settings.'
+  parent: ai.admin_settings
+  route_name: ai.admin_vdb_providers

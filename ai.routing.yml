@@ -21,3 +21,11 @@ ai.admin_providers:
     _title: 'AI Providers'
   requirements:
     _permission: 'administer ai'
+
+ai.admin_vdb_providers:
+  path: '/admin/config/ai/vdb_providers'
+  defaults:
+    _controller: '\Drupal\ai\Controller\ProviderSetupList::list'
+    _title: 'Vector Database Providers'
+  requirements:
+    _permission: 'administer ai'

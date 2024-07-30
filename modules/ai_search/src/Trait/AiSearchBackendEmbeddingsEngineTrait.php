@@ -1,0 +1,180 @@
+<?php
+
+namespace Drupal\ai_search\Trait;
+
+use Drupal\ai\AiProviderInterface;
+use Drupal\ai\Plugin\ProviderProxy;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Form\SubformStateInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+
+/**
+ * Trait for Search API AI Embeddings Engine.
+ *
+ * This will add some of the function that are not needed for the interface
+ * with empty implementations. This adds logic for loading and storing
+ * embedding engines.
+ */
+trait AiSearchBackendEmbeddingsEngineTrait {
+
+  use StringTranslationTrait;
+
+  /**
+   * The configuration.
+   *
+   * @var array
+   */
+  protected array $engineConfiguration = [];
+
+  /**
+   * Sets the configuration.
+   *
+   * @param array $configuration
+   *   The configuration.
+   */
+  public function setEngineConfiguration(array $configuration): void {
+    $this->engineConfiguration = $configuration;
+  }
+
+  /**
+   * Set the embeddings engine configuration.
+   *
+   * @return array
+   *   The configuration.
+   */
+  public function defaultEngineConfiguration(): array {
+    // Keys must start with 'embeddings_engine',
+    // see AiSearchBackendPluginBase::buildConfigurationForm().
+    return [
+      'embeddings_engine' => NULL,
+      'embeddings_engine_configuration' => [
+        'dimensions' => 768,
+      ],
+    ];
+  }
+
+  /**
+   * Builds the engine part of the configuration form.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array
+   *   The form array.
+   */
+  public function engineConfigurationForm(array $form, FormStateInterface $form_state): array {
+    // It might be a Sub form state, so we need to get the complete form state.
+    if ($form_state instanceof SubformStateInterface) {
+      $form_state = $form_state->getCompleteFormState();
+    }
+    if (empty($this->engineConfiguration)) {
+      $this->engineConfiguration = $this->defaultEngineConfiguration();
+    }
+
+    $form['embeddings_engine'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Embeddings Engine'),
+      '#options' => $this->getEmbeddingEnginesOptions(),
+      '#required' => TRUE,
+      '#default_value' => $this->getConfiguration()['embeddings_engine'] ?? $this->defaultEngineConfiguration()['embeddings_engine'],
+      '#description' => $this->t('The service to use for embeddings. If you change this, everything will be needed to be reindexed.'),
+      '#weight' => 20,
+      '#ajax' => [
+        'callback' => [$this, 'updateEmbeddingEngineConfigurationForm'],
+        'wrapper' => 'embedding-engine-configuration-wrapper',
+        'method' => 'replaceWith',
+        'effect' => 'fade',
+      ],
+    ];
+
+    $form['embeddings_engine_configuration'] = [
+      '#type' => 'details',
+      '#open' => TRUE,
+      '#attributes' => ['id' => 'embedding-engine-configuration-wrapper'],
+      '#title' => $this->t('Embeddings Engine Configuration'),
+      '#weight' => 25,
+    ];
+
+    $form['embeddings_engine_configuration']['dimensions'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Dimensions'),
+      '#description' => $this->t('The number of dimensions for the embeddings.'),
+      '#default_value' => $this->engineConfiguration['embeddings_engine_configuration']['dimensions'] ?? '',
+      '#required' => TRUE,
+      '#disabled' => TRUE,
+    ];
+
+    // If the embeddings engine is set, add the configuration form.
+    if (!empty($this->engineConfiguration['embeddings_engine']) || $form_state->getValue('embeddings_engine')) {
+      $plugin_manager = \Drupal::service('ai.provider');
+      $parts = explode('__', $this->engineConfiguration['embeddings_engine'] ?? $form_state->get('embeddings_engine'));
+      $rule = $plugin_manager->createInstance($parts[0])->getAvailableConfiguration('embeddings', $parts[1]);
+      foreach ($rule as $key => $value) {
+        $form['embeddings_engine_configuration'][$key]['#default_value'] = $value['default'];
+      }
+    }
+
+    return $form;
+  }
+
+  /**
+   * Load the embeddings engine with a configuration.
+   *
+   * @return \Drupal\ai\AiProviderInterface
+   */
+  public function loadEmbeddingsEngine(): AiProviderInterface|ProviderProxy {
+    $plugin_manager = \Drupal::service('ai.provider');
+    $parts = explode('__', $this->engineConfiguration['embeddings_engine']);
+    return $plugin_manager->createInstance($parts[0]);
+  }
+
+  /**
+   * Returns the embeddings engine.
+   *
+   * @return string
+   *   The embeddings engine.
+   */
+  public function getEmbeddingsEngine(): string {
+    return $this->engineConfiguration['embeddings_engine'];
+  }
+
+  /**
+   * Returns all available embedding engines as options.
+   *
+   * @return array
+   *   The embedding engines.
+   */
+  public function getEmbeddingEnginesOptions(): array {
+    $options = [];
+    $plugin_manager = \Drupal::service('ai.provider');
+    foreach ($plugin_manager->getProvidersForOperationType('embeddings') as $id => $definition) {
+      $provider = $plugin_manager->createInstance($id);
+      foreach ($provider->getConfiguredModels('embeddings') as $model => $label) {
+        $options[$id . '__' . $model] = $definition['label']->__toString() . ' | ' . $label;
+      }
+    }
+    // Send a warning message if there are no available embedding engines.
+    if (empty($options)) {
+      \Drupal::messenger()->addWarning('No embedding engines available. Please install and enable an embedding engine module before continuing.');
+    }
+    return $options;
+  }
+
+  /**
+   * Callback to update the embedding engine configuration form.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array
+   *   The updated form.
+   */
+  public function updateEmbeddingEngineConfigurationForm(array $form, FormStateInterface $form_state): array {
+    return $form['backend_config']['embeddings_engine_configuration'];
+  }
+
+}

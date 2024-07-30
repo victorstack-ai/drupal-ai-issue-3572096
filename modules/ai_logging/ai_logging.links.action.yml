@@ -1,0 +1,5 @@
+ai_log.add_form:
+  title: 'Add ai log'
+  route_name: entity.ai_log.add_form
+  appears_on:
+    - entity.ai_log.collection

@@ -205,4 +205,12 @@ class HuggingfaceProvider extends AiProviderClientBase implements
     return $this->keyRepository->getKey($this->getConfig()->get('api_key'))->getKeyValue();
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function maxEmbeddingsInput($model_id = ''): int {
+    // TODO: this is playing safe. Ideally, we should provide real number per model.
+    return 1024;
+  }
+
 }

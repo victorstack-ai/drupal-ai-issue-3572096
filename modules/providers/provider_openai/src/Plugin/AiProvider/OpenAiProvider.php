@@ -135,7 +135,7 @@ class OpenAiProvider extends AiProviderClientBase implements
    */
   public function getModelSettings(string $model_id, array $generalConfig = []): array {
     // If its GPT 3.5 the max tokens are 2048.
-    if (preg_match('/gpt-3.5/', $model_id)) {
+    if (preg_match('/gpt-3.5-turbo/', $model_id)) {
       $generalConfig['max_tokens']['default'] = 2048;
     }
     if ($model_id == 'dall-e-3') {
@@ -628,6 +628,15 @@ class OpenAiProvider extends AiProviderClientBase implements
     }
 
     return $models;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function maxEmbeddingsInput($model_id = ''): int {
+    // TODO: This corresponds to OpenAI API.
+    // Ideally, we should provide real number per model.
+    return 8191;
   }
 
 }

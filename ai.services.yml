@@ -6,3 +6,13 @@ services:
   ai.form_helper:
     class: Drupal\ai\Service\AiProviderFormHelper
     arguments: ['@ai.provider']
+  ai.vdb_provider:
+    class: Drupal\ai\AiVdbProviderPluginManager
+    parent: default_plugin_manager
+    arguments: [ '@service_container' ]
+  ai.tokenizer:
+    class: Drupal\ai\Utility\Tokenizer
+    arguments: ['@ai.provider']
+  ai.text_chunker:
+    class: Drupal\ai\Utility\TextChunker
+    arguments: ['@ai.tokenizer']

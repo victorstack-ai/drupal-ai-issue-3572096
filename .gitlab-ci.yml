@@ -8,6 +8,7 @@ include:
 
 variables:
   _TARGET_DRUPAL: 10.3
+  _TARGET_PHP: 8.2
   _PHPUNIT_EXTRA: --verbose
   OPT_IN_TEST_PREVIOUS_MAJOR: 0
   OPT_IN_TEST_PREVIOUS_MINOR: 0

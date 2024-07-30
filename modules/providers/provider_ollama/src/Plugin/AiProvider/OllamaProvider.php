@@ -221,4 +221,12 @@ class OllamaProvider extends AiProviderClientBase implements
     return $host;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function maxEmbeddingsInput($model_id = ''): int {
+    // TODO: this is playing safe. Ideally, we should provide real number per model.
+    return 1024;
+  }
+
 }

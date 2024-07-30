@@ -101,7 +101,7 @@ class AiSettingsForm extends ConfigFormBase {
         '#type' => 'select',
         '#title' => $this->t('Default Provider'),
         '#options' => $options,
-        '#default_value' => $default_provider,
+        '#default_value' => !empty($providers[$default_provider]) ? $default_provider : '',
         '#ajax' => [
           'callback' => '::loadModels',
           'wrapper' => 'model__' . $operation_type['id'],
@@ -116,16 +116,14 @@ class AiSettingsForm extends ConfigFormBase {
       ];
 
       // Add the model id field if the provider is set.
-      if ($default_provider) {
-        if (isset($providers[$default_provider])) {
-          $models = $providers[$default_provider]->getConfiguredModels($operation_type['id']);
-          $form['default_providers'][$operation_type['id']]['model']['model__' . $operation_type['id']] = [
-            '#type' => 'select',
-            '#title' => $this->t('Default Model'),
-            '#default_value' => $default_providers[$operation_type['id']]['model_id'] ?? '',
-            '#options' => $models,
-          ];
-        }
+      if ($default_provider && !empty($providers[$default_provider])) {
+        $models = $providers[$default_provider]->getConfiguredModels($operation_type['id']);
+        $form['default_providers'][$operation_type['id']]['model']['model__' . $operation_type['id']] = [
+          '#type' => 'select',
+          '#title' => $this->t('Default Model'),
+          '#default_value' => $default_providers[$operation_type['id']]['model_id'] ?? '',
+          '#options' => $models,
+        ];
       }
     }
 
