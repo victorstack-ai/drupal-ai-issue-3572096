@@ -247,6 +247,12 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
   public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
     if (!empty($this->configuration['database'])) {
       $vdb_client = $this->vdbProviderManager->createInstance($this->configuration['database']);
+      $collections = $vdb_client->getCollections();
+      // Check so the collection doesn't exist already.
+      $entity = $form_state->getFormObject()->getEntity();
+      if ($entity->isNew() && isset($collections['data']) && in_array($form_state->getValue('collection'), $collections['data'])) {
+        $form_state->setErrorByName('collection', $this->t('The collection already exists in the selected vector database.'));
+      }
 
       // Ensure the vector database selected has already been configured to avoid
       // a fatal error.
@@ -263,6 +269,16 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
         ]));
       }
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function preDelete() {
+    $this->getClient()->dropCollection(
+      collection_name: $this->configuration['collection'],
+      database: $this->configuration['database_name']
+    );
   }
 
   /**

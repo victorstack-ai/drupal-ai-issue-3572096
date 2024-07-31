@@ -9,6 +9,7 @@ use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\vdb_provider_milvus\MilvusV2;
 use HelgeSverre\Milvus\Milvus;
 
 /**
@@ -92,7 +93,7 @@ class MilvusProvider extends AiVdbProviderClientBase
    * This is the client for inference.
    *
    * @return \HelgeSverre\Milvus\Milvus
-   *   The OpenAI client.
+   *   The Milvus client.
    */
   public function getClient(): Milvus {
     if (empty($this->client)) {
@@ -111,6 +112,30 @@ class MilvusProvider extends AiVdbProviderClientBase
       );
     }
     return $this->client;
+  }
+
+  /**
+   * Get v2 client.
+   *
+   * This is needed for creating collections.
+   *
+   * @return \Drupal\vdb_provider_milvus\MilvusV2
+   *   The Milvus v2 client.
+   */
+  public function getV2Client(): MilvusV2 {
+    $service = \Drupal::service('milvus_v2.api');
+    $config = $this->getConfig();
+    $token = $this->configuration['api_key'] ?? $config->get('api_key');
+    if ($token) {
+      $token = $this->keyRepository->getKey($token)->getKeyValue();
+    }
+
+    $server = $this->configuration['api_key'] ?? $config->get('server');
+    $port = $this->configuration['port'] ?? $config->get('port');
+    $service->setBaseUrl($server ?? $this->baseHost);
+    $service->setPort($port ?? $this->port);
+    $service->setApiKey($token);
+    return $service;
   }
 
   /**
@@ -141,12 +166,26 @@ class MilvusProvider extends AiVdbProviderClientBase
     };
     $collections = $this->getCollections($database);
     if (!isset($collections['data']) || !in_array($collection_name, $collections['data'])) {
-      $response = $this->getClient()->collections()->create(
+      /*$response = json_decode($this->getClient()->collections()->create(
         collectionName: $collection_name,
         dimension: $dimension,
         dbName: $database,
         metricType: $metric_name,
+      ), TRUE);
+      print_r($response);
+      exit;*/
+      $client = $this->getV2Client();
+      $response = $client->createCollection(
+        $collection_name,
+        $database,
+        $dimension,
+        $metric_name,
       );
+      if (!isset($response['code']) || ($response['code'] !== 0 && $response['code'] !== 200)) {
+        print_r($response);
+        exit;
+        throw new \Exception('Failed to create collection');
+      }
     }
   }
 
@@ -171,11 +210,15 @@ class MilvusProvider extends AiVdbProviderClientBase
     array $data,
     string $database = 'default'
   ): void {
-    $this->getClient()->vector()->insert(
+    $response = json_decode($this->getClient()->vector()->insert(
       collectionName: $collection_name,
       data: $data,
       dbName: $database,
-    );
+    ), TRUE);
+
+    if (!isset($response['code']) || ($response['code'] !== 0 && $response['code'] !== 200)) {
+      throw new \Exception("Failed to create collection: ");
+    }
   }
 
   /**
