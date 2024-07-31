@@ -3,7 +3,6 @@ ai_ckeditor.dialog:
   defaults:
     _title: 'AI CKEditor Dialog'
     _form: '\Drupal\ai_ckeditor\Form\AiCKEditorDialogForm'
-    uuid: null
   requirements:
     _permission: 'use ai ckeditor'
 

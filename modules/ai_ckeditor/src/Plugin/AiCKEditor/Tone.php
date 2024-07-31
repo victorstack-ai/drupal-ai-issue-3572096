@@ -110,6 +110,10 @@ final class Tone extends AiCKEditorPluginBase {
       ];
     }
 
+    $form['description'] = [
+      '#markup' => '<p>' . $this->pluginDefinition['description'] . '</p>',
+    ];
+
     $form['tone'] = [
       '#type' => 'entity_autocomplete',
       '#title' => $this->t('Choose tone'),
@@ -187,7 +191,7 @@ final class Tone extends AiCKEditorPluginBase {
 
     $response->addCommand(new EditorDialogSave([
       'attributes' => [
-        'value' => strip_tags($values["config"]["plugin_config"]["response_text"]),
+        'value' => strip_tags($values["plugin_config"]["response_text"]),
         'returnsHtml' => FALSE,
       ],
     ]));
@@ -210,11 +214,11 @@ final class Tone extends AiCKEditorPluginBase {
     $values = $form_state->getValues();
 
     try {
-      if (is_array($values['config']['plugin_config']['tone']) && reset($values['config']['plugin_config']['tone']) instanceof Term) {
-        $term = reset($values['config']['plugin_config']['tone']);
+      if (is_array($values['plugin_config']['tone']) && reset($values['plugin_config']['tone']) instanceof Term) {
+        $term = reset($values['plugin_config']['tone']);
       } else {
         $term = $this->entityTypeManager->getStorage('taxonomy_term')
-          ->load($values['config']['plugin_config']['tone']);
+          ->load($values['plugin_config']['tone']);
       }
 
       if (empty($term)) {
@@ -225,16 +229,16 @@ final class Tone extends AiCKEditorPluginBase {
         $term->save();
       }
 
-      $prompt = 'Change the tone of the following text to be ' . $term->label() . ' using the same language as the following text:\r\n"' . $values["config"]["plugin_config"]["selected_text"];
+      $prompt = 'Change the tone of the following text to be ' . $term->label() . ' using the same language as the following text:\r\n"' . $values["plugin_config"]["selected_text"];
       $text = $this->getResponse($prompt);
       $form_state->setRebuild();
-      $form['config']['plugin_config']['response_text']['#value'] = $text;
+      $form['plugin_config']['response_text']['#value'] = $text;
     } catch (\Exception $e) {
       $this->logger->error("There was an error in the Tone AI plugin for CKEditor.");
-      $form['config']['plugin_config']['response_text']['#value'] = "There was an error in the Tone AI plugin for CKEditor.";
+      $form['plugin_config']['response_text']['#value'] = "There was an error in the Tone AI plugin for CKEditor.";
     }
 
-    return $form['config']['plugin_config']['response_text'];
+    return $form['plugin_config']['response_text'];
   }
 
 }

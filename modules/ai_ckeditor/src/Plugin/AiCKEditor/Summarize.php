@@ -73,9 +73,13 @@ final class Summarize extends AiCKEditorPluginBase {
 
     if (empty($storage['selected_text'])) {
       return [
-        '#markup' => '<p>' . $this->t('You must select some text before you can change its tone.') . '</p>',
+        '#markup' => '<p>' . $this->t('You must select some text before you can summarize it.') . '</p>',
       ];
     }
+
+    $form['description'] = [
+      '#markup' => '<p>' . $this->pluginDefinition['description'] . '</p>',
+    ];
 
     $form['selected_text'] = [
       '#type' => 'textarea',
@@ -137,7 +141,7 @@ final class Summarize extends AiCKEditorPluginBase {
 
     $response->addCommand(new EditorDialogSave([
       'attributes' => [
-        'value' => strip_tags($values["config"]["plugin_config"]["response_text"]),
+        'value' => strip_tags($values["plugin_config"]["response_text"]),
         'returnsHtml' => FALSE,
       ],
     ]));
@@ -160,16 +164,16 @@ final class Summarize extends AiCKEditorPluginBase {
     $values = $form_state->getValues();
 
     try {
-      $prompt = 'Summarize the following text using the same language as the following text:\r\n"' . $values["config"]["plugin_config"]["selected_text"];
+      $prompt = 'Summarize the following text using the same language as the following text:\r\n"' . $values["plugin_config"]["selected_text"];
       $text = $this->getResponse($prompt);
       $form_state->setRebuild();
-      $form['config']['plugin_config']['response_text']['#value'] = $text;
+      $form['plugin_config']['response_text']['#value'] = $text;
     } catch (\Exception $e) {
       $this->logger->error("There was an error in the Summarize AI plugin for CKEditor.");
-      $form['config']['plugin_config']['response_text']['#value'] = "There was an error in the Summarize AI plugin for CKEditor.";
+      $form['plugin_config']['response_text']['#value'] = "There was an error in the Summarize AI plugin for CKEditor.";
     }
 
-    return $form['config']['plugin_config']['response_text'];
+    return $form['plugin_config']['response_text'];
   }
 
 }

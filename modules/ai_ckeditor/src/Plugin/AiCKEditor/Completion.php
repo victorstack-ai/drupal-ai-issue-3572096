@@ -59,6 +59,10 @@ final class Completion extends AiCKEditorPluginBase {
    * {@inheritdoc}
    */
   public function buildCkEditorModalForm(array $form, FormStateInterface $form_state) {
+    $form['description'] = [
+      '#markup' => '<p>' . $this->pluginDefinition['description'] . '</p>',
+    ];
+
     $form['text_to_submit'] = [
       '#type' => 'textarea',
       '#title' => $this->t('What would you like to ask or get ideas for?'),
@@ -119,7 +123,7 @@ final class Completion extends AiCKEditorPluginBase {
 
     $response->addCommand(new EditorDialogSave([
       'attributes' => [
-        'value' => strip_tags($values["config"]["plugin_config"]["response_text"]),
+        'value' => strip_tags($values["plugin_config"]["response_text"]),
         'returnsHtml' => FALSE,
       ],
     ]));
@@ -142,15 +146,15 @@ final class Completion extends AiCKEditorPluginBase {
     $values = $form_state->getValues();
 
     try {
-      $text = $this->getResponse($values["config"]["plugin_config"]["text_to_submit"]);
+      $text = $this->getResponse($values["plugin_config"]["text_to_submit"]);
       $form_state->setRebuild();
-      $form['config']['plugin_config']['response_text']['#value'] = $text;
+      $form['plugin_config']['response_text']['#value'] = $text;
     } catch (\Exception $e) {
       $this->logger->error("There was an error in the Completion AI plugin for CKEditor.");
-      $form['config']['plugin_config']['response_text']['#value'] = "There was an error in the Summarize AI plugin for CKEditor.";
+      $form['plugin_config']['response_text']['#value'] = "There was an error in the Summarize AI plugin for CKEditor.";
     }
 
-    return $form['config']['plugin_config']['response_text'];
+    return $form['plugin_config']['response_text'];
   }
 
 }
