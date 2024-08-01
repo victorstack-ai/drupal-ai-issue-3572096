@@ -89,21 +89,29 @@ implements EmbeddingStrategyInterface {
     $metadata = '';
     $main_fields = '';
     foreach ($fields as $field) {
-
       // The fields original comes from the Search API
       // ItemInterface::getFields() method. Ensure that is still the case.
       if (!$field instanceof FieldInterface) {
         continue;
       }
 
+      // Get the label field.
+      $entity = $field->getDatasource();
+      $entity_type = $this->entityTypeManager->getDefinition($entity->getEntityTypeId());
+      $label_key = $entity_type->getKey('label');
+
       $value = $this->compositeValues($field);
-      // TODO: Put title field name into configuration, do not assume 'title'.
-      if (($field->getLabel() == 'title') && (strlen($value) < 255)) {
+      // The title field.
+      if ($field->getFieldIdentifier() == $label_key) {
         $title = $value;
-      } elseif (strlen($value) < 255) {
-        $metadata .= $field->getLabel() . ": " . $value . "\n\n";
-      } else {
+      }
+      // The embeddings fields.
+      elseif ($field->getType() == 'embeddings') {
         $main_fields .= $value . "\n\n";
+      }
+      // Everything else is metadata.
+      else {
+        $metadata .= $field->getLabel() . ": " . $value . "\n\n";
       }
     }
     return [
@@ -137,7 +145,7 @@ implements EmbeddingStrategyInterface {
     if (strlen($title . $main_fields . $metadata) <= $this->chunkSize) {
       // Ideal situation, all fits min single embedding.
       $chunks = $this->textChunker->chunkText(
-        "# " . strtoupper($title) . "\n\n" . $main_fields . "\n\n" . $metadata,
+        $this->prepareChunkText($title, $main_fields, $metadata),
         $this->chunkSize,
         $this->chunkMinOverlap
       );
@@ -151,7 +159,7 @@ implements EmbeddingStrategyInterface {
           $this->chunkMinOverlap
         );
         foreach ($main_chunks as $main_chunk) {
-          $chunks[] = '# ' . strtoupper($title) . "\n\n" . $main_chunk . "\n\n" . $metadata;
+          $chunks[] = $this->prepareChunkText($title, $main_chunk, $metadata);
         }
       } else {
         // Both metadata and main fields need chunking.
@@ -170,12 +178,38 @@ implements EmbeddingStrategyInterface {
         );
         foreach ($main_chunks as $main_chunk) {
           foreach ($metadata_chunks as $metadata_chunk) {
-            $chunks[] = '# ' . strtoupper($title) . "\n\n" . $main_chunk . "\n\n" . $metadata_chunk;
+            $chunks[] = $this->prepareChunkText($title, $main_chunk, $metadata_chunk);
           }
         }
       }
     }
     return $chunks;
+  }
+
+  /**
+   * Render the chunks.
+   *
+   * @param string $title
+   *   The title content.
+   * @param string $main_chunk
+   *   The main field content.
+   * @param string $metadata_chunk
+   *   The metadata related content.
+   *
+   * @return string
+   *   The rendered chunk.
+   */
+  protected function prepareChunkText(string $title, string $main_chunk, string $metadata_chunk): string {
+    $parts = [];
+    // Only render the title if it is not empty.
+    if (!empty($title)) {
+      $parts[] = '# ' . strtoupper($title);
+    }
+    $parts[] = $main_chunk;
+    if (!empty($metadata_chunk)) {
+      $parts[] = $metadata_chunk;
+    }
+    return implode("\n\n", $parts);
   }
 
   /**

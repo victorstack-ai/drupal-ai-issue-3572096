@@ -6,6 +6,7 @@ use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\ai_search\EmbeddingStrategyInterface;
 use Drupal\ai\Utility\TextChunker;
+use Drupal\Core\Entity\EntityTypeManager;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use League\HTMLToMarkdown\Converter\TableConverter;
@@ -75,6 +76,7 @@ abstract class EmbeddingStrategyPluginBase
     protected AiProviderPluginManager $aiProviderManager,
     protected HtmlConverter $converter,
     protected TextChunker $textChunker,
+    protected EntityTypeManager $entityTypeManager,
   ) {
     // Set the default converter settings.
     $this->converter->getConfig()->setOption('strip_tags', true);
@@ -125,6 +127,7 @@ abstract class EmbeddingStrategyPluginBase
       $ai_provider,
       new HtmlConverter(),
       $text_chunker,
+      $container->get('entity_type.manager'),
     );
   }
 

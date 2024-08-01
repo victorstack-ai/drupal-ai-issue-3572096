@@ -276,6 +276,16 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function supportsDataType($type) {
+    if ($type === 'embeddings') {
+      return TRUE;
+    }
+    return FALSE;
+  }
+
+  /**
    * Get the chat model options that the tokenizer supports.
    *
    * @return array
