@@ -68,7 +68,7 @@ class MilvusConfigForm extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $this->config(static::CONFIG_NAME)
-      ->set('server', $form_state->getValue('server'))
+      ->set('server', rtrim($form_state->getValue('server'), '/'))
       ->set('port', $form_state->getValue('port'))
       ->set('api_key', $form_state->getValue('api_key'))
       ->save();
