@@ -272,16 +272,6 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function preDelete() {
-    $this->getClient()->dropCollection(
-      collection_name: $this->configuration['collection'],
-      database: $this->configuration['database_name']
-    );
-  }
-
-  /**
    * Get the chat model options that the tokenizer supports.
    *
    * @return array
