@@ -53,7 +53,7 @@ class EmbeddingsInput implements InputInterface {
    * @return \Drupal\ai\OperationType\GenericType\ImageFile
    *   The image.
    */
-  public function getImage(): ImageFile {
+  public function getImage(): ImageFile|null {
     return $this->image;
   }
 

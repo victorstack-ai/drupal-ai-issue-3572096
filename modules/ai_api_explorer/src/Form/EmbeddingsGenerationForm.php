@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Form;
 
+use Drupal\ai\AiProviderInterface;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 use Drupal\ai\OperationType\GenericType\ImageFile;
+use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -169,30 +171,7 @@ class EmbeddingsGenerationForm extends FormBase {
     catch (\Exception $e) {
       $response = $this->explorerHelper->renderException($e);
     }
-    // Generation code.
-    $code = "<details class=\"ai-code-wrapper\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
-    $code .= '$prompt = "' . $form_state->getValue('prompt') . '";<br>';
-    $config = $provider->getConfiguration();
-    if (count($config)) {
-      $code .= '$config = [<br>';
-      foreach ($config as $key => $value) {
-        if (is_string($value)) {
-          $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '",<br>';
-        }
-        else {
-          $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ',<br>';
-        }
-      }
-
-      $code .= '];<br><br>';
-    }
-    $code .= "\$ai_provider = \Drupal::service('ai.provider')->createInstance('" . $form_state->getValue('embed_ai_provider') . '\');<br>';
-    if (count($config)) {
-      $code .= "\$ai_provider->setConfiguration(\$config);<br>";
-    }
-    $code .= "// \$response will be an array with the embeddings.<br>";
-    $code .= "\$response = \$ai_provider->embeddings(\$prompt, '" . $form_state->getValue('embed_ai_model') . '\', ["your_module_name"])->getNormalized();';
-    $code .= "</code></details>";
+    $code = $this->normalizeCodeExample($provider, $form_state, $form_state->getValue('prompt'), $file ? $file_name : NULL);
 
     $form['response']['#context'] = [
       'embeddings' => '<h2>Embeddings will appear here</h2>' . $response . $code,
@@ -204,6 +183,61 @@ class EmbeddingsGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+  }
+
+
+  /**
+   * Gets the normalized code example.
+   *
+   * @param \Drupal\ai\AiProviderInterface|\Drupal\ai\Plugin\ProviderProxy $provider
+   *   The provider.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param string $prompt
+   *   The prompt.
+   * @param string $filename
+   *   The filename.
+   *
+   * @return string
+   *   The normalized code example.
+   */
+  public function normalizeCodeExample(AiProviderInterface|ProviderProxy $provider, FormStateInterface $form_state, string $prompt = "", string $filename = NULL): string {
+    // Generation code.
+    $code = "<details class=\"ai-code-wrapper\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
+    if ($filename) {
+      $code .= '$binary = file_get_contents("' . $filename . '");<br>';
+    }
+    if (count($provider->getConfiguration())) {
+      $code .= '$config = [<br>';
+      foreach ($provider->getConfiguration() as $key => $value) {
+        if (is_string($value)) {
+          $code .= '&nbsp;&nbsp;"' . $key . '" => "' . $value . '",<br>';
+        } else {
+          $code .= '&nbsp;&nbsp;"' . $key . '" => ' . $value . ',<br>';
+        }
+      }
+
+      $code .= '];<br><br>';
+    }
+
+    $code .= "\$ai_provider = \Drupal::service('ai.provider')->createInstance('" . $form_state->getValue('embed_ai_provider') . '\');<br>';
+    $code .= "\$ai_provider->setConfiguration(\$config);<br>";
+    $code .= "// Normalize the input.<br>";
+    $code .= "\$input = new \Drupal\ai\OperationType\Embeddings\EmbeddingsInput();<br>";
+    if ($filename) {
+      $code .= "\$image_file = new \Drupal\ai\OperationType\GenericType\ImageFile(\$binary, 'image/jpg', '" . $filename . "');<br>";
+      $code .= "\$input->setImage(\$image_file);<br>";
+    }
+    else {
+      $code .= "\$input->setPrompt('" . $prompt . "');<br>";
+    }
+    $code .= "\$response = \$ai_provider->embeddings(\$input, '" . $form_state->getValue('embed_ai_model') . '\', ["your_module_name"]);<br><br>';
+    $code .= "// This gets an array of vector numbers (unless other output is possible).<br>";
+    $code .= "\$normalized = \$response->getNormalized();<br><br>";
+    $code .= "// Another possibility is to get the raw response from the provider.<br>";
+    $code .= '$raw = $response->getRaw();<br>';
+    $code .= "</code></details>";
+    return $code;
   }
 
 }
