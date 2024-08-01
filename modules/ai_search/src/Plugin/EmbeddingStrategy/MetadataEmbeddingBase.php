@@ -94,11 +94,14 @@ implements EmbeddingStrategyInterface {
       if (!$field instanceof FieldInterface) {
         continue;
       }
+      $label_key = '';
 
       // Get the label field.
       $entity = $field->getDatasource();
-      $entity_type = $this->entityTypeManager->getDefinition($entity->getEntityTypeId());
-      $label_key = $entity_type->getKey('label');
+      if ($entity) {
+        $entity_type = $this->entityTypeManager->getDefinition($entity->getEntityTypeId());
+        $label_key = $entity_type->getKey('label');
+      }
 
       $value = $this->compositeValues($field);
       // The title field.
