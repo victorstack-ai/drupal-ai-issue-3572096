@@ -26,6 +26,22 @@ interface AiVdbProviderInterface extends PluginInspectionInterface {
   public function getConfig(): ImmutableConfig;
 
   /**
+   * Ping to check so the service/server is available.
+   *
+   * @return bool
+   *   True if the service is available.
+   */
+  public function ping(): bool;
+
+  /**
+   * Checks if the service is setup.
+   *
+   * @return bool
+   *   True if the service is setup.
+   */
+  public function isSetup(): bool;
+
+  /**
    * Get array of existing collections on a database.
    *
    * @param string $database

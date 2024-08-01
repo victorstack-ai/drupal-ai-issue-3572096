@@ -46,12 +46,19 @@ final class AiVdbProviderPluginManager extends DefaultPluginManager {
   /**
    * Gets all the available Vector DB providers.
    *
+   * @param bool $setup
+   *   If TRUE, only return the providers that are setup.
+   *
    * @return array
    *   The providers.
    */
-  public function getProviders(): array {
+  public function getProviders($setup = FALSE): array {
     $plugins = [];
     foreach ($this->getDefinitions() as $definition) {
+      $instance = $this->createInstance($definition['id']);
+      if ($setup && !$instance->isSetup()) {
+        continue;
+      }
       $plugins[$definition['id']] = $definition['label']->__toString();
     }
     return $plugins;

@@ -2,13 +2,53 @@
 
 namespace Drupal\vdb_provider_milvus\Form;
 
+use Drupal\ai\AiVdbProviderPluginManager;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\key\KeyRepositoryInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Configure  Milvus DB service.
+ * Configure Milvus DB config form.
  */
 class MilvusConfigForm extends ConfigFormBase {
+
+  /**
+   * The VDB PRovider service.
+   *
+   * @var \Drupal\ai\AiVdbProviderPluginManager
+   */
+  protected AiVdbProviderPluginManager $vdbProviderPluginManager;
+
+  /**
+   * The key repository.
+   *
+   * @var \Drupal\key\KeyRepositoryInterface
+   */
+  protected KeyRepositoryInterface $keyRepository;
+
+  /**
+   * Construcotr of the Milvus DB config form.
+   *
+   * @param \Drupal\ai\AiVdbProviderPluginManager $vdbProviderPluginManager
+   *   The VDB Provider plugin manager.
+   * @param \Drupal\key\KeyRepositoryInterface $keyRepository
+   *   The key repository.
+   */
+  public function __construct(AiVdbProviderPluginManager $vdbProviderPluginManager, KeyRepositoryInterface $keyRepository) {
+    $this->vdbProviderPluginManager = $vdbProviderPluginManager;
+    $this->keyRepository = $keyRepository;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('ai.vdb_provider'),
+      $container->get('key.repository'),
+    );
+  }
 
   /**
    * Config settings.
@@ -48,7 +88,6 @@ class MilvusConfigForm extends ConfigFormBase {
     $form['port'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Port'),
-      '#required' => TRUE,
       '#description' => $this->t('The server port to connect to. If you use Zilliz Cloud, this is 443.'),
       '#default_value' => $config->get('port'),
     ];
@@ -61,6 +100,39 @@ class MilvusConfigForm extends ConfigFormBase {
     ];
 
     return parent::buildForm($form, $form_state);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state): void {
+    $server = $form_state->getValue('server');
+    if (!filter_var($server, FILTER_VALIDATE_URL)) {
+      $form_state->setErrorByName('server', $this->t('The server must be a valid URL.'));
+    }
+
+    $port = $form_state->getValue('port');
+    if (!empty($port) && !is_numeric($port)) {
+      $form_state->setErrorByName('port', $this->t('The port must be a number.'));
+    }
+
+    // Test the connection.
+    $milvusConnector = $this->vdbProviderPluginManager->createInstance('milvus');
+    $key = $form_state->getValue('api_key');
+    if (!empty($key)) {
+      $key = $this->keyRepository->getKey($key)->getKeyValue();
+    }
+    $milvusConnector->setCustomConfig([
+      'server' => $server,
+      'port' => $port,
+      'api_key' => $key,
+    ]);
+
+    if (!$milvusConnector->ping()) {
+      $form_state->setErrorByName('server', $this->t('Could not connect to the server.'));
+    }
+
+    parent::validateForm($form, $form_state);
   }
 
   /**

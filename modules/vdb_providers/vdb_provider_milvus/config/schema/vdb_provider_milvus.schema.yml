@@ -6,9 +6,9 @@ vdb_provider_milvus.settings:
       type: string
       label: 'API Key'
       required: true
-    host_name:
+    server:
       type: string
-      label: 'Host Name'
+      label: 'Server'
       required: true
     port:
       type: integer

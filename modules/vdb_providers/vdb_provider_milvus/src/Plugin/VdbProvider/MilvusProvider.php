@@ -25,34 +25,11 @@ class MilvusProvider extends AiVdbProviderClientBase
   use StringTranslationTrait;
 
   /**
-   * The Milvus host.
-   *
-   * @var string
-   *   The Milvus host.
-   */
-  protected string $baseHost = 'milvus-standalone';
-
-  /**
-   * The Milvus port.
-   *
-   * @var string
-   *   The Milvus port.
-   */
-  protected string $port = '19530';
-
-  /**
    * The API key.
    *
    * @var string
    */
   protected string $apiKey = '';
-
-  /**
-   * The configuration.
-   *
-   * @var array
-   */
-  protected array $configuration = [];
 
   /**
    * The Milvus client
@@ -66,13 +43,6 @@ class MilvusProvider extends AiVdbProviderClientBase
    */
   public function getConfig(): ImmutableConfig {
     return $this->configFactory->get('vdb_provider_milvus.settings');
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setCustomConfig(array $config): void {
-    $this->config = $config;
   }
 
   /**
@@ -97,18 +67,11 @@ class MilvusProvider extends AiVdbProviderClientBase
    */
   public function getClient(): Milvus {
     if (empty($this->client)) {
-      $config = $this->getConfig();
-      $token = $this->configuration['api_key'] ?? $config->get('api_key');
-      if ($token) {
-        $token = $this->keyRepository->getKey($token)->getKeyValue();
-      }
-
-      $server = $this->configuration['api_key'] ?? $config->get('server');
-      $port = $this->configuration['port'] ?? $config->get('port');
+      $config = $this->getConnectionData();
       $this->client = new Milvus(
-        token: $token,
-        host: $server ?? $this->baseHost,
-        port: $port ?? $this->port,
+        token: $config['api_key'],
+        host: $config['server'],
+        port: $config['port'],
       );
     }
     return $this->client;
@@ -124,18 +87,67 @@ class MilvusProvider extends AiVdbProviderClientBase
    */
   public function getV2Client(): MilvusV2 {
     $service = \Drupal::service('milvus_v2.api');
+    $config = $this->getConnectionData();
+    $service->setBaseUrl($config['server']);
+    $service->setPort($config['port']);
+    $service->setApiKey($config['api_key']);
+    return $service;
+  }
+
+  /**
+   * Get connection data.
+   *
+   * @return array
+   *   The connection data.
+   */
+  public function getConnectionData() {
     $config = $this->getConfig();
-    $token = $this->configuration['api_key'] ?? $config->get('api_key');
+    $output['server'] = $this->configuration['server'] ?? $config->get('server');
+    // Fail if server is not set.
+    if (!$output['server']) {
+      throw new \Exception('Milvus server is not configured');
+    }
+    $token = $config->get('api_key');
+    $output['api_key'] = '';
     if ($token) {
-      $token = $this->keyRepository->getKey($token)->getKeyValue();
+      $output['api_key'] = $this->keyRepository->getKey($token)->getKeyValue();
+    }
+    if (!empty($this->configuration['api_key'])) {
+      $output['api_key'] = $this->configuration['api_key'];
     }
 
-    $server = $this->configuration['api_key'] ?? $config->get('server');
-    $port = $this->configuration['port'] ?? $config->get('port');
-    $service->setBaseUrl($server ?? $this->baseHost);
-    $service->setPort($port ?? $this->port);
-    $service->setApiKey($token);
-    return $service;
+    $output['port'] = $this->configuration['port'] ?? $config->get('port');
+    if (!$output['port']) {
+      $output['port'] = (substr($output['server'], 0, 5) === 'https') ? 443 : 80;
+    }
+    return $output;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function ping(): bool {
+    try {
+      $return = json_decode($this->getClient()->collections()->list(), TRUE);
+      // Wrong API Key.
+      if (isset($return['code']) && $return['code'] === 80001) {
+        return FALSE;
+      }
+      return TRUE;
+    }
+    catch (\Exception $e) {
+      return FALSE;
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function isSetup(): bool {
+    if ($this->getConfig()->get('server')) {
+      return TRUE;
+    }
+    return FALSE;
   }
 
   /**

@@ -150,23 +150,25 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     }
 
     // If no provider is installed we can't do anything.
+    $errors = [];
     if (!$this->aiProviderManager->hasProvidersForOperationType('embeddings')) {
-      $form['markup'] = [
-        '#markup' => '<div class="ai-error">' . $this->t('No AI providers are installed for Embeddings calls, please %install and %configure one first.', [
+      $errors[] = '<div class="ai-error">' . $this->t('No AI providers are installed for Embeddings calls, please %install and %configure one first.', [
           '%install' => Link::createFromRoute($this->t('install'), 'system.modules_list')->toString(),
           '%configure' => Link::createFromRoute($this->t('configure'), 'ai.admin_providers')->toString(),
-        ]) . '</div>',
-      ];
-      return $form;
+        ]) . '</div>';
     }
 
-    $vdb_providers = $this->vdbProviderManager->getProviders();
-    if (!$vdb_providers) {
-      $form['markup'] = [
-        '#markup' => '<div class="ai-error">' . $this->t('No Vector DB providers are installed for search in vectors, please %install and %configure one first.', [
+    $vdb_providers = $this->vdbProviderManager->getProviders(TRUE);
+    if (empty($vdb_providers)) {
+      $errors[] = '<div class="ai-error">' . $this->t('No Vector DB providers are installed or setup for search in vectors, please %install and %configure one first.', [
           '%install' => Link::createFromRoute($this->t('install'), 'system.modules_list')->toString(),
           '%configure' => Link::createFromRoute($this->t('configure'), 'ai.admin_vdb_providers')->toString(),
-        ]) . '</div>',
+        ]) . '</div>';
+    }
+
+    if (count($errors)) {
+      $form['markup'] = [
+        '#markup' => implode('', $errors),
       ];
       return $form;
     }
@@ -249,7 +251,9 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       $vdb_client = $this->vdbProviderManager->createInstance($this->configuration['database']);
       $collections = $vdb_client->getCollections();
       // Check so the collection doesn't exist already.
-      $entity = $form_state->getFormObject()->getEntity();
+      /** @var \Drupal\Core\Entity\Form $form_object */
+      $form_object = $form_state->getFormObject();
+      $entity = $form_object->getEntity();
       if ($entity->isNew() && isset($collections['data']) && in_array($form_state->getValue('collection'), $collections['data'])) {
         $form_state->setErrorByName('collection', $this->t('The collection already exists in the selected vector database.'));
       }

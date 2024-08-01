@@ -45,13 +45,6 @@ abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, Contai
   protected EventDispatcherInterface $eventDispatcher;
 
   /**
-   * Immutable configuration.
-   *
-   * @var \Drupal\Core\Config\ImmutableConfig
-   */
-  protected ImmutableConfig $config;
-
-  /**
    * The plugin definition.
    *
    * @var array
@@ -64,6 +57,13 @@ abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, Contai
    * @var string
    */
   protected string $pluginId;
+
+  /**
+   * Custom configurations.
+   *
+   * @var array
+   */
+  protected array $configuration = [];
 
   /**
    * Constructs a new AiVdbClientBase abstract class.
@@ -89,7 +89,6 @@ abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, Contai
     $this->pluginDefinition = $plugin_definition;
     $this->pluginId = $plugin_id;
     $this->configFactory = $config_factory;
-    $this->config = $this->getConfig();
     $this->keyRepository = $key_repository;
     $this->eventDispatcher = $event_dispatcher;
   }
@@ -119,6 +118,14 @@ abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, Contai
    */
   public function getPluginDefinition() {
     return $this->pluginDefinition;
+  }
+
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setCustomConfig(array $config): void {
+    $this->configuration = $config;
   }
 
 }
