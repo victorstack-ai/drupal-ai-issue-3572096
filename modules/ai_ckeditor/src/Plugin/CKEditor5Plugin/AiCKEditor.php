@@ -103,6 +103,12 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
     $form['plugins'] = [];
 
     foreach ($definitions as $plugin_id => $definition) {
+      if ($plugin_id == 'ai_ckeditor_help') {
+        $form['plugins'][$plugin_id]['enabled']['#value'] = TRUE;
+        $form['plugins'][$plugin_id]['enabled']['#type'] = 'hidden';
+        continue;
+      }
+
       $form['plugins'][$plugin_id] = [
         '#type' => 'details',
         '#tree' => TRUE,
@@ -169,10 +175,24 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
     $config = $this->getConfiguration();
 
     foreach ($config['plugins'] as $plugin_id => $plugin) {
+      $definition = $this->pluginManager->getDefinition($plugin_id);
+
       $static_plugin_config['ai_ckeditor_ai']['plugins'][$plugin_id] = [
         'enabled' => $plugin['enabled'],
         'provider' => $plugin['provider'] ?? NULL,
+        'meta' => [
+          'label' => $definition['label'],
+          'id' => $plugin_id,
+        ],
       ];
+    }
+
+    foreach ($static_plugin_config['ai_ckeditor_ai']['plugins'] as $plugin_id => $plugin) {
+      if ($plugin_id == 'ai_ckeditor_help') {
+        unset($static_plugin_config['ai_ckeditor_ai']['plugins'][$plugin_id]);
+        $static_plugin_config['ai_ckeditor_ai']['plugins'][$plugin_id] = $plugin;
+        break;
+      }
     }
 
     return $static_plugin_config;

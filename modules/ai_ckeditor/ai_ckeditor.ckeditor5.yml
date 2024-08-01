@@ -10,7 +10,7 @@ ai_ckeditor_ai:
             invoke: false
         dialogSettings:
           height: 75%
-          width: 80%
+          width: 85%
           dialogClass: ai-ckeditor-modal
           title: AI Assistant
   drupal:

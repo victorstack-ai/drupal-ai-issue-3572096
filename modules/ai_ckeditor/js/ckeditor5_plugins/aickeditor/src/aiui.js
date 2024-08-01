@@ -3,25 +3,59 @@
  */
 
 import {Plugin} from 'ckeditor5/src/core';
-import { ButtonView } from 'ckeditor5/src/ui';
+import { ButtonView, ViewModel } from 'ckeditor5/src/ui';
+import {DropdownButtonView, addListToDropdown, createDropdown} from 'ckeditor5/src/ui';
 import icon from '../../../../icons/robot.svg';
+import { Collection } from 'ckeditor5/src/utils';
+import AiDrupalDialog from "./dialog/AiDrupalDialog";
 
 export default class Aiui extends Plugin {
 
   init() {
     const editor = this.editor;
-    const options = this.editor.config.get('ai_ckeditor_ai');
+    const config = this.editor.config;
+    const options = config.get('ai_ckeditor_ai');
+
+    editor.commands.add('AiDrupalDialog', new AiDrupalDialog(editor));
+
     if (!options) {
       return;
     }
 
-    const {dialogURL, openDialog, dialogSettings = {}} = options;
-    if (!dialogURL || typeof openDialog !== 'function') {
-      return;
-    }
-
     editor.ui.componentFactory.add('aickeditor', (locale) => {
+      const items = new Collection();
       const buttonView = new ButtonView(locale);
+      const config = this.editor.config.get('ai_ckeditor_ai');
+
+      if (typeof config.plugins !== 'undefined') {
+        Object.keys(config.plugins).forEach(function (plugin_id) {
+          items.add({
+            type: 'button',
+            model: new ViewModel({
+              isEnabled: config.plugins[plugin_id].enabled,
+              label: config.plugins[plugin_id].meta.label,
+              withText: true,
+              command: 'AiDrupalDialog',
+              group: 'ai_ckeditor_ai',
+              plugin_id: plugin_id
+            })
+          });
+        });
+      }
+
+      const dropdownView = createDropdown(locale, DropdownButtonView);
+
+      // Create a dropdown with a list inside the panel.
+      addListToDropdown(dropdownView, items);
+
+      // Attach the dropdown menu to the dropdown button view.
+      dropdownView.buttonView.set({
+        label: 'AI Assistant',
+        class: 'ai-dropdown',
+        icon,
+        tooltip: true,
+        withText: true,
+      });
 
       buttonView.set({
         label: Drupal.t('AI Assistant'),
@@ -31,64 +65,11 @@ export default class Aiui extends Plugin {
         withText: true,
       });
 
-      // Bind the state of the button to the command.
-      //buttonView.bind('isOn', 'isEnabled').to(command, 'value', 'isEnabled');
-
-      this.listenTo(buttonView, 'execute', () => {
-        const selection = editor.model.document.selection;
-        const range = selection.getFirstRange();
-        let selectedText = '';
-
-        for (const item of range.getItems()) {
-          if (typeof item.data !== undefined) {
-            selectedText += item.data + ' ';
-          }
-        }
-
-        const url = new URL(dialogURL, document.baseURI);
-        if (selectedText.length > 0) {
-          url.searchParams.append('selected_text', selectedText);
-        }
-        // Since we can't attach an editor instance to the dialog, we need to
-        // pass the key for the configuration in the query.
-        url.searchParams.append('editor_key', editor.sourceElement.dataset.editorActiveTextFormat);
-        openDialog(
-          url.toString(),
-          ({attributes}) => {
-            const model = this.editor.model;
-            model.change(writer => {
-              const selection = model.document.selection;
-              const insertPosition = selection.getFirstPosition();
-
-              // If the insert position is a selection, remove the selection.
-              if (selection.hasOwnRange) {
-                const range = selection.getFirstRange();
-                writer.remove(range);
-              }
-
-              if (typeof attributes.returnsHtml != 'undefined' && attributes.returnsHtml) {
-
-                // Covert the value to html and insert it.
-                const viewFragment = this.editor.data.processor.toView(attributes.value);
-                const modelFragment = this.editor.data.toModel(viewFragment);
-                writer.insert(modelFragment, insertPosition);
-              }
-              else {
-
-                // Insert the value as plain text.
-                // const textNode = writer.createText(attributes.value);
-                // writer.insert(insertPosition, textNode);
-                editor.model.insertContent(
-                  writer.createText(attributes.value)
-                );
-              }
-            });
-          },
-          dialogSettings,
-        );
+      this.listenTo(dropdownView, 'execute', (event) => {
+        this.editor.execute(event.source.command, event.source.group, event.source.plugin_id, event.source.label);
       });
 
-      return buttonView;
+      return dropdownView;
     });
   }
 }

@@ -110,6 +110,10 @@ final class Translate extends AiCKEditorPluginBase {
       ];
     }
 
+    $form['description'] = [
+      '#markup' => '<p>' . $this->pluginDefinition['description'] . '</p>',
+    ];
+
     $form['language'] = [
       '#type' => 'entity_autocomplete',
       '#title' => $this->t('Choose language'),
@@ -187,7 +191,7 @@ final class Translate extends AiCKEditorPluginBase {
 
     $response->addCommand(new EditorDialogSave([
       'attributes' => [
-        'value' => strip_tags($values["config"]["plugin_config"]["response_text"]),
+        'value' => strip_tags($values["plugin_config"]["response_text"]),
         'returnsHtml' => FALSE,
       ],
     ]));
@@ -210,11 +214,11 @@ final class Translate extends AiCKEditorPluginBase {
     $values = $form_state->getValues();
 
     try {
-      if (is_array($values['config']['plugin_config']['language']) && reset($values['config']['plugin_config']['language']) instanceof Term) {
-        $term = reset($values['config']['plugin_config']['language']);
+      if (is_array($values['plugin_config']['language']) && reset($values['plugin_config']['language']) instanceof Term) {
+        $term = reset($values['plugin_config']['language']);
       } else {
         $term = $this->entityTypeManager->getStorage('taxonomy_term')
-          ->load($values['config']['plugin_config']['language']);
+          ->load($values['plugin_config']['language']);
       }
 
       if (empty($term)) {
@@ -226,16 +230,16 @@ final class Translate extends AiCKEditorPluginBase {
         $term->save();
       }
 
-      $prompt = 'Translate the selected text into ' . $term->label() . ':\r\n"' . $values["config"]["plugin_config"]["selected_text"];
+      $prompt = 'Translate the selected text into ' . $term->label() . ':\r\n"' . $values["plugin_config"]["selected_text"];
       $text = $this->getResponse($prompt);
       $form_state->setRebuild();
-      $form['config']['plugin_config']['response_text']['#value'] = $text;
+      $form['plugin_config']['response_text']['#value'] = $text;
     } catch (\Exception $e) {
       $this->logger->error("There was an error in the Translate AI plugin for CKEditor.");
-      $form['config']['plugin_config']['response_text']['#value'] = "There was an error in the Translate AI plugin for CKEditor.";
+      $form['plugin_config']['response_text']['#value'] = "There was an error in the Translate AI plugin for CKEditor.";
     }
 
-    return $form['config']['plugin_config']['response_text'];
+    return $form['plugin_config']['response_text'];
   }
 
 }
