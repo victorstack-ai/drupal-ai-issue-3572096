@@ -27,9 +27,10 @@ function ai_help($route_name, RouteMatchInterface $route_match) {
     }
     if ($warn) {
       // Display a warning message.
-      \Drupal::messenger()->addWarning(t('No AI provider is install or usable for the AI module. Please %install and %configure an AI provider.', [
+      \Drupal::messenger()->addWarning(t('No AI provider is installed or usable for the AI module. Please %install and %configure an AI provider. Setting up a default %chat_provider is also recommended.', [
         '%install' => Link::createFromRoute(t('install'), 'system.modules_list')->toString(),
         '%configure' => Link::createFromRoute(t('configure'), 'ai.admin_providers')->toString(),
+        '%chat_provider' => Link::createFromRoute(t('chat provider'), 'ai.settings_form')->toString(),
       ]));
     }
   }

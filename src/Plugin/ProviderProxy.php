@@ -120,6 +120,11 @@ class ProviderProxy {
       $arguments[2] = [];
     }
 
+    // The model is missing completely.
+    if (!is_string($arguments[1])) {
+      throw new AiBadRequestException('Model ID is missing in your request.');
+    }
+
     // Normalize the configuration.
     $this->plugin->configuration = $this->plugin->normalizeConfiguration($operation_type, $arguments[1]);
 
