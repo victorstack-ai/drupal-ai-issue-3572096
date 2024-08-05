@@ -192,7 +192,11 @@ The following articles were found:
       ],
     ];
 
+    print_r($entity->get('llm_provider'));
     // Set form state if empty.
+    if ($form_state->getValue('llm_provider') === NULL) {
+      $form_state->setValue('llm_ai_provider', $entity->get('llm_provider'));
+    }
     if ($form_state->getValue('llm_ai_model') === NULL) {
       $form_state->setValue('llm_ai_model', $entity->get('llm_model'));
     }

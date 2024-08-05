@@ -1,4 +1,4 @@
 services:
   ai_assistant_api.runner:
     class: Drupal\ai_assistant_api\AiAssistantApiRunner
-    arguments: ['@entity_type.manager', '@ai.provider']
+    arguments: ['@entity_type.manager', '@ai.provider', '@renderer']

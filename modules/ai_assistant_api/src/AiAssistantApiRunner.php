@@ -10,6 +10,7 @@ use Drupal\ai_assistant_api\Data\UserMessage;
 use Drupal\ai_assistant_api\Entity\AiAssistant;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Render\Renderer;
+use Drupal\Core\Render\RendererInterface;
 
 /**
  * The runner for the AI assistant.
