@@ -10,6 +10,7 @@ use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -28,10 +29,13 @@ class ChatForm extends FormBase {
    *   The entity type manager.
    * @param \Drupal\ai_assistant_api\AiAssistantApiRunner $aiAssistantClient
    *   The AI Assistant API client.
+   * @param \Drupal\Core\Routing\RouteMatchInterface $routeMatcher
+   *   The route match.
    */
   public function __construct(
     private readonly EntityTypeManagerInterface $entityTypeManager,
     private readonly AiAssistantApiRunner $aiAssistantClient,
+    private readonly RouteMatchInterface $routeMatcher,
   ) {
   }
 
@@ -42,6 +46,7 @@ class ChatForm extends FormBase {
     return new static(
       $container->get('entity_type.manager'),
       $container->get('ai_assistant_api.runner'),
+      $container->get('current_route_match'),
     );
   }
 
@@ -56,7 +61,6 @@ class ChatForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-
     $response_id = Html::getId($form_state->getBuildInfo()['block_id'] . '-response');
 
     $form['query'] = [
@@ -94,10 +98,16 @@ class ChatForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    // Get the route parameters.
+    $context = [];
+    foreach ($this->routeMatcher->getParameters()->all() as $key => $data) {
+      $context[$key] = $this->routeMatcher->getParameter($key);
+    }
     $chat_config = $this->getChatConfig($form_state);
     // Get the assistant.
     $assistant = $this->entityTypeManager->getStorage('ai_assistant')->load($chat_config['ai_assistant']);
     $this->aiAssistantClient->setAssistant($assistant);
+    $this->aiAssistantClient->setContext($context);
     // Set the user message.
     $this->aiAssistantClient->setUserMessage(new UserMessage($form_state->getValue('query')));
 

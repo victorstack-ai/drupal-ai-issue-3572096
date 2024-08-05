@@ -18,6 +18,7 @@ use Drupal\search_api\IndexInterface;
 use Drupal\search_api\Item\FieldInterface;
 use Drupal\search_api\Item\ItemInterface;
 use Drupal\search_api\Query\QueryInterface;
+use Drupal\search_api\SearchApiException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -447,8 +448,9 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     $filters = [];
     foreach ($condition_group->getConditions() as $condition) {
       $fieldData = $index->getField($condition->getField());
-      $fieldType = $fieldData->getType();
-      $isMultiple = $this->isMultiple($fieldData);
+      // Get the field type or its intrensic field, like drupal_entity_id.
+      $fieldType = $fieldData ? $fieldData->getType() : 'string';
+      $isMultiple = $fieldData ? $this->isMultiple($fieldData) : FALSE;
       $values = is_array($condition->getValue()) ? $condition->getValue() : [$condition->getValue()];
       if (in_array($fieldType, ['string', 'full_text'])) {
         $normalizedValues = '"' . implode('","', $values) . '"';
@@ -470,7 +472,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
         }
       }
       else {
-        $filters[] = '(' . $condition->getField() . $condition->getOperator() . $normalizedValues . ')';
+        $filters[] = '(' . $condition->getField() . ' ' . $condition->getOperator() . ' ' . $normalizedValues . ')';
       }
     }
     if ($filters) {

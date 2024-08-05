@@ -192,7 +192,6 @@ The following articles were found:
       ],
     ];
 
-    print_r($entity->get('llm_provider'));
     // Set form state if empty.
     if ($form_state->getValue('llm_provider') === NULL) {
       $form_state->setValue('llm_ai_provider', $entity->get('llm_provider'));
@@ -339,7 +338,7 @@ The following articles were found:
       '#description' => $this->t('The maximum results that passed the threshold, to take into account.'),
       '#default_value' => $entity->get('rag_databases')[$i]['max_results'] ?? $form_state->getValue('rag_' . $i . '_max_results'),
       '#attributes' => [
-        'placeholder' => 1,
+        'placeholder' => 20,
       ],
     ];
 
@@ -388,6 +387,36 @@ The article is:
       '#description' => $this->t('With this enabled the system will do a post query access check on every chunk to see if the user has access to that content. Note that this might lead to no results and be slower, but it makes sure that none-accessible items are not reached. This is done before the Assistant prompt, so its secure to prompt injection.'),
       '#default_value' => $entity->get('rag_databases')[$i]['access_check'] ?? $form_state->getValue('rag_' . $i . '_access_check'),
     ];
+
+
+    $form['rag']['rag_wrapper_' . $i]['rag_' . $i . '_use_context'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Use route context'),
+      '#description' => $this->t('Use the route context to only ask questions about the content on the current page.'),
+      '#default_value' => $entity->get('rag_databases')[$i]['use_context'] ?? $form_state->getValue('rag_' . $i . '_use_context'),
+      '#attributes' => [
+        'placeholder' => 1,
+      ],
+    ];
+
+    $form['rag']['rag_wrapper_' . $i]['rag_' . $i . '_context_threshold'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Context threshold'),
+      '#description' => $this->t('This is the threshold that the answer have to meet to be thought of as a valid response in context. Note that the similarity value is generally lower on a specific question in context, so lower values are needed.'),
+      '#default_value' => $entity->get('rag_databases')[$i]['context_threshold'] ?? $form_state->getValue('rag_' . $i . '_context_threshold'),
+      '#attributes' => [
+        'placeholder' => 0.1,
+      ],
+      '#min' => 0,
+      '#max' => 1,
+      '#step' => 0.01,
+      '#states' => [
+        'visible' => [
+          ':input[name="rag_' . $i . '_use_context"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+
   }
 
   /**

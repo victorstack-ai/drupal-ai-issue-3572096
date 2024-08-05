@@ -8,9 +8,11 @@ use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\ChatOutput;
 use Drupal\ai_assistant_api\Data\UserMessage;
 use Drupal\ai_assistant_api\Entity\AiAssistant;
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Render\Renderer;
 use Drupal\Core\Render\RendererInterface;
+use Drupal\search_api\Query\ConditionGroup;
 
 /**
  * The runner for the AI assistant.
@@ -23,13 +25,6 @@ class AiAssistantApiRunner {
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected EntityTypeManagerInterface $entityTypeManager;
-
-  /**
-   * The context for the assistant.
-   *
-   * @var array
-   */
-  protected array $context = [];
 
   /**
    * The assistant.
@@ -65,6 +60,20 @@ class AiAssistantApiRunner {
    * @var bool
    */
   protected bool $streaming = FALSE;
+
+  /**
+   * The context for the assistant.
+   *
+   * @var array
+   */
+  protected array $context = [];
+
+  /**
+   * Boolean to keep track if the context was used.
+   *
+   * @var bool
+   */
+  protected bool $contextUsed = FALSE;
 
   /**
    * Set token replacements.
@@ -103,6 +112,16 @@ class AiAssistantApiRunner {
     else {
       throw new \Exception('Assistant is immutable once set.');
     }
+  }
+
+  /**
+   * Set the context.
+   *
+   * @param array $context
+   *   The context to set.
+   */
+  public function setContext($context) {
+    $this->context = $context;
   }
 
   /**
@@ -201,7 +220,10 @@ class AiAssistantApiRunner {
     $response = '';
     foreach ($results as $result) {
       // Filter the results.
-      if ($rag_database['score_threshold'] > $result->getScore()) {
+      if (!$this->contextUsed && $this->$rag_database['score_threshold'] > $result->getScore()) {
+        continue;
+      }
+      if ($this->contextUsed && $this->$rag_database['context_threshold'] > $result->getScore()) {
         continue;
       }
       // Chunked mode is easy.
@@ -235,18 +257,29 @@ class AiAssistantApiRunner {
       throw new \Exception('RAG database not found.');
     }
 
+    // Check if we should use context and if there is context.
+    $context_match = FALSE;
+    if ($rag_database['use_context'] && !empty($this->context)) {
+      $context_match = $this->checkContentContextMatches($index);
+      $this->contextUsed = TRUE;
+    }
+
     // Then we try to search.
     try {
       $query = $index->query([
         'limit' => $rag_database['max_results'],
       ]);
+      // If we have context, we filter on that.
+      if ($context_match) {
+        $query->addCondition('drupal_entity_id', $context_match, '==');
+      }
       $query->setOption('search_api_bypass_access', FALSE);
       $query->setOption('search_api_ai_get_chunks_result', $rag_database['output_mode'] == 'chunks');
       $query->keys([$this->userMessage->getMessage()]);
       $results = $query->execute();
     }
     catch (\Exception $e) {
-      throw new \Exception('Failed to search.');
+      throw new \Exception('Failed to search: ' . $e->getMessage());
     }
     return $results;
   }
@@ -301,6 +334,36 @@ class AiAssistantApiRunner {
     $response = $output->getNormalized()->getText() . "\n";
     $response .= '----------------------------------------' . "\n\n";
     return $response;
+  }
+
+  /**
+   * Check for context matches.
+   *
+   * @param \Drupal\search_api\Entity\Index $index
+   *   The index to check.
+   *
+   *  @return string
+   *   If the context matches.
+   */
+  protected function checkContentContextMatches($index) {
+    // Check for context.
+    $keys = array_keys($this->context);
+    // Check if any of the keys are content entities.
+    foreach ($keys as $key) {
+      $possible_entity = $this->context[$key];
+      if (is_object($possible_entity) && $possible_entity instanceof ContentEntityInterface) {
+        // Check if the entity type is in the index.
+        if ($index->isValidDatasource('entity:' . $possible_entity->getEntityTypeId())) {
+          // Get the bundles for the indfex.
+          $bundles = $index->getDatasource('entity:' . $possible_entity->getEntityTypeId())->getBundles();
+          // Check if the bundle is in the index.
+          if (in_array($possible_entity->bundle(), array_keys($bundles))) {
+            return 'entity:' . $possible_entity->getEntityTypeId() . '/' . $possible_entity->id() . ':' . $possible_entity->language()->getId();
+          }
+        }
+      }
+    }
+    return "";
   }
 
 }
