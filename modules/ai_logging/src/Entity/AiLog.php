@@ -114,11 +114,11 @@ final class AiLog extends ContentEntityBase implements AiLogInterface {
       ->setDisplayConfigurable('view', TRUE);
 
     $fields['provider'] = BaseFieldDefinition::create('string')
-    ->setLabel(t('Provider'))
-    ->setDescription(t('The provider.'))
-    ->setSettings([
-      'default_value' => '',
-    ])
+      ->setLabel(t('Provider'))
+      ->setDescription(t('The provider.'))
+      ->setSettings([
+        'default_value' => '',
+      ])
       ->setDisplayOptions('form', [
         'type' => 'string_textfield',
         'weight' => 0,
@@ -132,11 +132,11 @@ final class AiLog extends ContentEntityBase implements AiLogInterface {
       ->setDisplayConfigurable('view', TRUE);
 
     $fields['model'] = BaseFieldDefinition::create('string')
-    ->setLabel(t('Model'))
-    ->setDescription(t('Model.'))
-    ->setSettings([
-      'default_value' => '',
-    ])
+      ->setLabel(t('Model'))
+      ->setDescription(t('Model.'))
+      ->setSettings([
+        'default_value' => '',
+      ])
       ->setDisplayOptions('form', [
         'type' => 'string_textfield',
         'weight' => 0,

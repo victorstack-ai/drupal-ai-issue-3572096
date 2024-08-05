@@ -71,6 +71,7 @@ class EmbeddingsInput implements InputInterface {
    * Set the image.
    *
    * @param \Drupal\ai\OperationType\GenericType\ImageFile $image
+   *   The image.
    */
   public function setImage(ImageFile $image) {
     $this->image = $image;

@@ -2,7 +2,6 @@
 
 namespace Drupal\ai_assistant_api;
 
-use Drupal\ai\AiProviderInterface;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
@@ -10,7 +9,11 @@ use Drupal\ai\OperationType\Chat\ChatOutput;
 use Drupal\ai_assistant_api\Data\UserMessage;
 use Drupal\ai_assistant_api\Entity\AiAssistant;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Render\Renderer;
 
+/**
+ * The runner for the AI assistant.
+ */
 class AiAssistantApiRunner {
 
   /**
@@ -49,6 +52,13 @@ class AiAssistantApiRunner {
   protected UserMessage $userMessage;
 
   /**
+   * The Drupal renderer.
+   *
+   * @var \Drupal\Core\Render\Renderer
+   */
+  protected RendererInterface $renderer;
+
+  /**
    * If it should be a streaming result.
    *
    * @var bool
@@ -69,10 +79,13 @@ class AiAssistantApiRunner {
    *   The entity type manager.
    * @param \Drupal\ai\AiProviderPluginManager $aiProvider
    *   The AI provider service.
+   * @param \Drupal\Core\Render\Renderer $renderer
+   *   The Drupal renderer.
    */
-  public function __construct(EntityTypeManagerInterface $entityTypeManager, AiProviderPluginManager $aiProvider) {
+  public function __construct(EntityTypeManagerInterface $entityTypeManager, AiProviderPluginManager $aiProvider, Renderer $renderer) {
     $this->entityTypeManager = $entityTypeManager;
     $this->aiProvider = $aiProvider;
+    $this->renderer = $renderer;
   }
 
   /**
@@ -95,6 +108,7 @@ class AiAssistantApiRunner {
    * Set streaming.
    *
    * @param bool $streaming
+   *   If the output should be streamed.
    */
   public function streamedOutput(bool $streaming) {
     $this->streaming = $streaming;
@@ -105,9 +119,6 @@ class AiAssistantApiRunner {
    *
    * @param \Drupal\ai_assistant_api\Data\UserMessage $userMessage
    *   The message to set.
-   *
-   * @return \Drupal\ai\OperationType\Chat\ChatOutput
-   *   The response from the assistant.
    */
   public function setUserMessage(UserMessage $userMessage) {
     $this->userMessage = $userMessage;
@@ -248,13 +259,14 @@ class AiAssistantApiRunner {
    *   The RAG database array data.
    *
    * @return string
+   *   The response.
    */
   protected function fullEntityCheck($result, array $rag_database) {
     $entity_string = $result->getExtraData('drupal_entity_id');
     // Load the entity from search api key.
     // @todo probably exists a function for this.
-    list($front, $entity_parts, $lang) = explode(':', $entity_string);
-    list($entity_type, $entity_id) = explode('/', $entity_parts);
+    [, $entity_parts, $lang] = explode(':', $entity_string);
+    [$entity_type, $entity_id] = explode('/', $entity_parts);
     /** @var \Drupal\Core\Entity\ContentEntityBase */
     $entity = $this->entityTypeManager->getStorage($entity_type)->load($entity_id);
     // Get translated if possible.
@@ -265,7 +277,7 @@ class AiAssistantApiRunner {
     }
     // Render the entity in default view mode.
     $pre_render_entity = $this->entityTypeManager->getViewBuilder($entity_type)->view($entity);
-    $rendered_entity = nl2br(trim(strip_tags(\Drupal::service('renderer')->render($pre_render_entity))));
+    $rendered_entity = nl2br(trim(strip_tags($this->renderer->render($pre_render_entity))));
     $message = str_replace([
       '[question]',
       '[entity]',

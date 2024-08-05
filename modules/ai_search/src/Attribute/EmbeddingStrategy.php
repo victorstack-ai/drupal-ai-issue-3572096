@@ -32,4 +32,5 @@ final class EmbeddingStrategy extends AttributeBase {
     public readonly ?string $deriver = NULL,
   ) {
   }
+
 }

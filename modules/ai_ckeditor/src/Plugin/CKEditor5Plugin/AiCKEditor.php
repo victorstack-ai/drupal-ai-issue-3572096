@@ -198,5 +198,4 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
     return $static_plugin_config;
   }
 
-
 }

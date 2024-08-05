@@ -4,7 +4,6 @@ namespace Drupal\ai_search;
 
 use Drupal\ai\AiVdbProviderInterface;
 use Drupal\Component\Plugin\PluginInspectionInterface;
-use Drupal\Core\Form\FormStateInterface;
 use Drupal\search_api\Item\ItemInterface;
 
 /**
@@ -29,13 +28,14 @@ interface EmbeddingStrategyInterface extends PluginInspectionInterface {
    *   The search API item.
    *
    * @return array
+   *   The vectors.
    */
   public function getEmbedding(
     string $embedding_engine,
     string $chat_model,
     array $configuration,
     array $fields,
-    ItemInterface $search_api_item
+    ItemInterface $search_api_item,
   ): array;
 
   /**
@@ -44,9 +44,11 @@ interface EmbeddingStrategyInterface extends PluginInspectionInterface {
    * This method returns TRUE if this strategy fits the given VDB
    * capabilities.
    *
-   * @param AiVdbProviderInterface $vdb_provider
+   * @param \Drupal\ai\AiVdbProviderInterface $vdb_provider
+   *   The VDB provider.
    *
    * @return bool
+   *   TRUE if the strategy fits the VDB, FALSE otherwise.
    */
   public function fits(AiVdbProviderInterface $vdb_provider): bool;
 

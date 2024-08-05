@@ -2,8 +2,6 @@
 
 namespace Drupal\ai_ckeditor\Plugin\AICKEditor;
 
-use Drupal\ai\OperationType\Chat\ChatInput;
-use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai_ckeditor\AiCKEditorPluginBase;
 use Drupal\ai_ckeditor\Attribute\AiCKEditor;
 use Drupal\Core\Ajax\AjaxResponse;
@@ -169,8 +167,8 @@ final class Translate extends AiCKEditorPluginBase {
       '#attributes' => [
         'class' => [
           'align-right',
-        ]
-      ]
+        ],
+      ],
     ];
 
     return $form;
@@ -209,6 +207,7 @@ final class Translate extends AiCKEditorPluginBase {
    *   The form state.
    *
    * @return mixed
+   *   The response text.
    */
   public function ajaxGenerateText(array &$form, FormStateInterface $form_state) {
     $values = $form_state->getValues();
@@ -216,7 +215,8 @@ final class Translate extends AiCKEditorPluginBase {
     try {
       if (is_array($values['plugin_config']['language']) && reset($values['plugin_config']['language']) instanceof Term) {
         $term = reset($values['plugin_config']['language']);
-      } else {
+      }
+      else {
         $term = $this->entityTypeManager->getStorage('taxonomy_term')
           ->load($values['plugin_config']['language']);
       }
@@ -225,7 +225,7 @@ final class Translate extends AiCKEditorPluginBase {
         throw new \Exception('Term could not be loaded.');
       }
 
-      // @todo: Do we need a vocab perm check on this user too?
+      // @todo Do we need a vocab perm check on this user too?
       if ($term->isNew() && $this->configuration['autocreate'] && $this->account->hasPermission('create terms in ' . $this->configuration['translate_vocabulary'])) {
         $term->save();
       }
@@ -234,7 +234,8 @@ final class Translate extends AiCKEditorPluginBase {
       $text = $this->getResponse($prompt);
       $form_state->setRebuild();
       $form['plugin_config']['response_text']['#value'] = $text;
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       $this->logger->error("There was an error in the Translate AI plugin for CKEditor.");
       $form['plugin_config']['response_text']['#value'] = "There was an error in the Translate AI plugin for CKEditor.";
     }

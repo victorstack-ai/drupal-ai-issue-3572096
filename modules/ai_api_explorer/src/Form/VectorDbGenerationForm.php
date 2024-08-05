@@ -87,7 +87,7 @@ class VectorDbGenerationForm extends FormBase {
         return $form;
       }
     }
-    catch(\Exception $e) {
+    catch (\Exception $e) {
       $form['markup'] = [
         'You need to install the AI Search module and setup a vector database provider and create an index before you can use this Explorer.',
       ];
@@ -164,7 +164,7 @@ class VectorDbGenerationForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-public function getResponse(array &$form, FormStateInterface $form_state) {
+  public function getResponse(array &$form, FormStateInterface $form_state) {
     try {
       /** @var \Drupal\search_api\Entity\Index */
       $index = $this->entityTypeManager->getStorage('search_api_index')->load($form_state->getValue('index'));
@@ -193,7 +193,6 @@ public function getResponse(array &$form, FormStateInterface $form_state) {
       $response = $this->explorerHelper->renderException($e);
     }
 
-
     $form['response']['#context'] = [
       'db' => '<h2>Found ' . $results->getResultCount() . ' results</h2>' . $response,
     ];
@@ -205,4 +204,5 @@ public function getResponse(array &$form, FormStateInterface $form_state) {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
   }
+
 }

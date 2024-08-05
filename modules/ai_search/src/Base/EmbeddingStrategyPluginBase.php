@@ -4,8 +4,8 @@ namespace Drupal\ai_search\Base;
 
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\Plugin\ProviderProxy;
-use Drupal\ai_search\EmbeddingStrategyInterface;
 use Drupal\ai\Utility\TextChunker;
+use Drupal\ai_search\EmbeddingStrategyInterface;
 use Drupal\Core\Entity\EntityTypeManager;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -16,8 +16,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Base class to provide an embedding strategy to break content into chunks.
  */
-abstract class EmbeddingStrategyPluginBase
-  implements EmbeddingStrategyInterface, ContainerFactoryPluginInterface {
+abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface, ContainerFactoryPluginInterface {
 
   use StringTranslationTrait;
 
@@ -52,7 +51,7 @@ abstract class EmbeddingStrategyPluginBase
   /**
    * The EmbeddingInterface proxied via ProviderProxy.
    *
-   * @var ProviderProxy
+   * @var \Drupal\ai\Plugin\ProviderProxy
    */
   protected ProviderProxy $embeddingLlm;
 
@@ -69,6 +68,8 @@ abstract class EmbeddingStrategyPluginBase
    *   The html to markdown converter.
    * @param \Drupal\ai\Utility\TextChunker $textChunker
    *   The text chunker.
+   * @param \Drupal\Core\Entity\EntityTypeManager $entityTypeManager
+   *   The entity type manager.
    */
   final public function __construct(
     protected string $pluginId,
@@ -79,8 +80,8 @@ abstract class EmbeddingStrategyPluginBase
     protected EntityTypeManager $entityTypeManager,
   ) {
     // Set the default converter settings.
-    $this->converter->getConfig()->setOption('strip_tags', true);
-    $this->converter->getConfig()->setOption('strip_placeholder_links', true);
+    $this->converter->getConfig()->setOption('strip_tags', TRUE);
+    $this->converter->getConfig()->setOption('strip_placeholder_links', TRUE);
     $this->converter->getEnvironment()->addConverter(new TableConverter());
   }
 
@@ -115,7 +116,7 @@ abstract class EmbeddingStrategyPluginBase
     ContainerInterface $container,
     array $configuration,
     $plugin_id,
-    $plugin_definition
+    $plugin_definition,
   ): EmbeddingStrategyPluginBase|static {
     /** @var \Drupal\ai\AiProviderPluginManager $ai_provider */
     $ai_provider = $container->get('ai.provider');
@@ -146,7 +147,7 @@ abstract class EmbeddingStrategyPluginBase
   }
 
   /**
-   * {@inheritDoc}.
+   * {@inheritDoc}
    */
   public function getConfigurationSubform(array $configuration): array {
     $form = [];

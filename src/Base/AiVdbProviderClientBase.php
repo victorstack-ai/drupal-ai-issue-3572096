@@ -4,7 +4,6 @@ namespace Drupal\ai\Base;
 
 use Drupal\ai\AiVdbProviderInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\key\KeyRepositoryInterface;
@@ -119,7 +118,6 @@ abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, Contai
   public function getPluginDefinition() {
     return $this->pluginDefinition;
   }
-
 
   /**
    * {@inheritdoc}

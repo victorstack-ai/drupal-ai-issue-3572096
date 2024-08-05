@@ -2,14 +2,14 @@
 
 namespace Drupal\ai_chatbot\Plugin\Block;
 
+use Drupal\ai_chatbot\Form\ChatForm;
 use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\ai_chatbot\Form\ChatForm;
 use Drupal\Core\Link;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -38,12 +38,20 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
   protected readonly FormBuilderInterface $formBuilder;
 
   /**
+   * Current user.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface
+   */
+  protected $currentUser;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $plugin = new static($configuration, $plugin_id, $plugin_definition);
     $plugin->entityTypeManager = $container->get('entity_type.manager');
     $plugin->formBuilder = $container->get('form_builder');
+    $plugin->currentUser = $container->get('current_user');
     return $plugin;
   }
 
@@ -182,14 +190,14 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
     $block['#attached']['drupalSettings']['ai_chatbot']['bot_image'] = $this->configuration['bot_image'];
     $block['#attached']['drupalSettings']['ai_chatbot']['default_username'] = $this->configuration['default_username'];
     $block['#attached']['drupalSettings']['ai_chatbot']['default_avatar'] = $this->configuration['default_avatar'];
-    $user = \Drupal::service('current_user');
+    $user = $this->currentUser->getAccount();
     // Override username if the user is authenticated and configured.
     if ($user->isAuthenticated() && $this->configuration['use_username']) {
       $block['#attached']['drupalSettings']['ai_chatbot']['default_username'] = $user->getDisplayName();
     }
     // Override avatar if the user is authenticated and configured and exist.
     if ($user->isAuthenticated() && $this->configuration['use_avatar']) {
-      $userEntity = \Drupal::entityTypeManager()->getStorage('user')->load($user->id());
+      $userEntity = $this->entityTypeManager->getStorage('user')->load($user->id());
       if (!empty($userEntity->user_picture->entity)) {
         $block['#attached']['drupalSettings']['ai_chatbot']['default_avatar'] = $userEntity->user_picture->entity->getFileUri();
       }

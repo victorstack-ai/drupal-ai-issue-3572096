@@ -19,7 +19,7 @@ class AssistantMessage {
   /**
    * The constructor.
    *
-   * @param string $mesmessagesages
+   * @param string $message
    *   The messages to send to the Assistant.
    */
   public function __construct(string $message) {

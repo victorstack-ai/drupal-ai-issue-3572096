@@ -2,12 +2,16 @@
 
 namespace Drupal\ai_search\Plugin\search_api\backend;
 
+use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\AiVdbProviderPluginManager;
+use Drupal\ai\Enum\VdbSimilarityMetrics;
+use Drupal\ai\Utility\TokenizerInterface;
 use Drupal\ai_search\Backend\AiSearchBackendPluginBase;
 use Drupal\ai_search\EmbeddingStrategyPluginManager;
-use Drupal\ai\Utility\TokenizerInterface;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformStateInterface;
+use Drupal\Core\Link;
 use Drupal\Core\Plugin\PluginFormInterface;
 use Drupal\Core\Url;
 use Drupal\search_api\IndexInterface;
@@ -15,10 +19,6 @@ use Drupal\search_api\Item\FieldInterface;
 use Drupal\search_api\Item\ItemInterface;
 use Drupal\search_api\Query\QueryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\ai\AiProviderPluginManager;
-use Drupal\ai\Enum\VdbSimilarityMetrics;
-use Drupal\Core\Link;
-use Drupal\Core\Entity\EntityFieldManagerInterface;
 
 /**
  * AI Search backend for search api.
@@ -153,17 +153,17 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     $errors = [];
     if (!$this->aiProviderManager->hasProvidersForOperationType('embeddings')) {
       $errors[] = '<div class="ai-error">' . $this->t('No AI providers are installed for Embeddings calls, please %install and %configure one first.', [
-          '%install' => Link::createFromRoute($this->t('install'), 'system.modules_list')->toString(),
-          '%configure' => Link::createFromRoute($this->t('configure'), 'ai.admin_providers')->toString(),
-        ]) . '</div>';
+        '%install' => Link::createFromRoute($this->t('install'), 'system.modules_list')->toString(),
+        '%configure' => Link::createFromRoute($this->t('configure'), 'ai.admin_providers')->toString(),
+      ]) . '</div>';
     }
 
     $vdb_providers = $this->vdbProviderManager->getProviders(TRUE);
     if (empty($vdb_providers)) {
       $errors[] = '<div class="ai-error">' . $this->t('No Vector DB providers are installed or setup for search in vectors, please %install and %configure one first.', [
-          '%install' => Link::createFromRoute($this->t('install'), 'system.modules_list')->toString(),
-          '%configure' => Link::createFromRoute($this->t('configure'), 'ai.admin_vdb_providers')->toString(),
-        ]) . '</div>';
+        '%install' => Link::createFromRoute($this->t('install'), 'system.modules_list')->toString(),
+        '%configure' => Link::createFromRoute($this->t('configure'), 'ai.admin_vdb_providers')->toString(),
+      ]) . '</div>';
     }
 
     if (count($errors)) {
@@ -235,7 +235,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       '#options' => $metric_distance,
       '#required' => TRUE,
       '#default_value' => $this->configuration['metric'] ?? VdbSimilarityMetrics::CosineSimilarity->value,
-      '#description' => $this->t('The metric to use for similarity calculations.')
+      '#description' => $this->t('The metric to use for similarity calculations.'),
     ];
 
     // Add Embeddings Engine or Embeddings Strategy subform.
@@ -258,8 +258,8 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
         $form_state->setErrorByName('collection', $this->t('The collection already exists in the selected vector database.'));
       }
 
-      // Ensure the vector database selected has already been configured to avoid
-      // a fatal error.
+      // Ensure the vector database selected has already been configured to
+      // avoid a fatal error.
       $config = $vdb_client->getConfig()->getRawData();
       if (isset($config['_core'])) {
         unset($config['_core']);
@@ -328,7 +328,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       'metadata' => [
         'server_id' => $this->server->id(),
         'index_id' => $index->id(),
-      ]
+      ],
     ];
 
     // Check if we need to delete some items first.
@@ -402,8 +402,11 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    * Set query results.
    *
    * @param \Drupal\search_api\Query\QueryInterface $query
+   *   The query.
    *
    * @return void|null
+   *   The results.
+   *
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
   public function search(QueryInterface $query) {
@@ -430,16 +433,16 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     // Get query.
     $results = $query->getResults();
 
-    // Prepare params
+    // Prepare params.
     $params = [
       'collection_name' => $this->configuration['collection'],
       'output_fields' => ['id', 'drupal_entity_id', 'drupal_long_id', 'content'],
       // Double the limit if we need to run over access checks.
       'limit' => (int) $query->getOption('limit', 10),
-      'offset' => (int) $query->getOption('offset', 0)
+      'offset' => (int) $query->getOption('offset', 0),
     ];
 
-    // Filters
+    // Filters.
     $condition_group = $query->getConditionGroup();
     $filters = [];
     foreach ($condition_group->getConditions() as $condition) {
@@ -497,7 +500,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     }
     $results->setExtraData('real_offset', $meta_data['real_offset']);
     $results->setExtraData('reason_for_finish', $meta_data['reason']);
-    // Get the last vector score
+    // Get the last vector score.
     $results->setExtraData('current_vector_score', $meta_data['vector_score'] ?? 0);
 
     // Sort results.
@@ -518,8 +521,6 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
 
   /**
    * Run the search until enough items are found.
-   *
-   *
    */
   protected function doSearch(QueryInterface $query, $params, $bypass_access, &$results, $start_limit, $start_offset, $iteration = 0) {
     // Conduct the search.
@@ -536,7 +537,8 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
         $params['vector_input'] = $embedding_llm->embeddings($query->getKeys()[0], $model_id)->getNormalized();
       }
       $response = $this->getClient()->vectorSearch(...$params);
-    } else {
+    }
+    else {
       $response = $this->getClient()->querySearch(...$params);
     }
 
@@ -588,8 +590,6 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    *   The result row.
    * @param \Drupal\search_api\Item\ItemInterface $item
    *   The item.
-   *
-   * @return void
    */
   public function extractMetadata(array $result_row, ItemInterface $item): void {
     foreach ($result_row as $key => $value) {

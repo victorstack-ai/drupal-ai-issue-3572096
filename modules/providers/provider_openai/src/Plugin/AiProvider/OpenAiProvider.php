@@ -634,7 +634,7 @@ class OpenAiProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function maxEmbeddingsInput($model_id = ''): int {
-    // TODO: This corresponds to OpenAI API.
+    // @todo This corresponds to OpenAI API.
     // Ideally, we should provide real number per model.
     return 8191;
   }

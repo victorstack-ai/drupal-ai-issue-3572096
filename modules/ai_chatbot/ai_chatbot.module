@@ -5,9 +5,9 @@
  * Provides hook implementations for the AI Chatbot module.
  */
 
- /**
-  * Implements hook_theme().
-  */
+/**
+ * Implements hook_theme().
+ */
 function ai_chatbot_theme() {
   return [
     'ai_chatbot' => [
@@ -15,7 +15,7 @@ function ai_chatbot_theme() {
         'header' => '',
         'rendered_form' => '',
         'messages' => [],
-      ]
+      ],
     ],
     'ai_chatbot_message' => [
       'variables' => [
@@ -26,7 +26,6 @@ function ai_chatbot_theme() {
     ],
   ];
 }
-
 
 /**
  * Implements preprocess function for ai_chatbot_message theme.

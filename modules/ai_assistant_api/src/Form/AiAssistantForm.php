@@ -7,9 +7,9 @@ namespace Drupal\ai_assistant_api\Form;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai\Utility\CastUtility;
+use Drupal\ai_assistant_api\Entity\AiAssistant;
 use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\ai_assistant_api\Entity\AiAssistant;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -108,7 +108,7 @@ final class AiAssistantForm extends EntityForm {
       '#attributes' => [
         'rows' => 2,
         'placeholder' => $this->t('You are an assistant helping people find old articles in the archive using natural language. Answer in a professional and neutral tone. Be short and concise. You may use the following HTML tags - a, em, strong, ul, ol, li, pre. Link to the article in question using its title.'),
-      ]
+      ],
     ];
 
     // Only allow RAG if AI Search is enabled.
@@ -196,6 +196,7 @@ The following articles were found:
     if ($form_state->getValue('llm_ai_model') === NULL) {
       $form_state->setValue('llm_ai_model', $entity->get('llm_model'));
     }
+    // phpcs:ignore
     \Drupal::service('ai.form_helper')->generateAiProvidersForm($form, $form_state, 'chat', 'llm', AiProviderFormHelper::FORM_CONFIGURATION_FULL);
 
     // Set default values.
@@ -213,6 +214,7 @@ The following articles were found:
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     parent::validateForm($form, $form_state);
+    // phpcs:ignore
     \Drupal::service('ai.form_helper')->validateAiProvidersConfig($form, $form_state, 'chat', 'llm');
   }
 
@@ -240,6 +242,7 @@ The following articles were found:
     $entity->set('llm_provider', $form_state->getValue('llm_ai_provider'));
     $entity->set('llm_model', $form_state->getValue('llm_ai_model'));
     $llm_config = [];
+    // phpcs:ignore
     $provider = \Drupal::service('ai.provider')->createInstance($form_state->getValue('llm_ai_provider'));
     $schema = $provider->getAvailableConfiguration('chat', $form_state->getValue('llm_ai_model'));
     foreach ($form_state->getValues() as $key => $val) {

@@ -8,7 +8,6 @@ use Drupal\ai\Attribute\AiVdbProvider;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Vector DB plugin manager.
@@ -18,9 +17,10 @@ final class AiVdbProviderPluginManager extends DefaultPluginManager {
   /**
    * Constructs the object.
    */
-  public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, ModuleHandlerInterface $module_handler, ContainerInterface $container) {
+  public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, ModuleHandlerInterface $module_handler) {
     parent::__construct('Plugin/VdbProvider', $namespaces, $module_handler, AiVdbProviderInterface::class, AiVdbProvider::class);
     $this->alterInfo('ai_vdb_provider_info');
+    $this->setCacheBackend($cache_backend, 'ai_vdb_provider_info_plugins');
   }
 
   /**
@@ -31,7 +31,7 @@ final class AiVdbProviderPluginManager extends DefaultPluginManager {
    * @param array $configuration
    *   An array of configuration relevant to the plugin instance.
    *
-   * @return AiVdbProviderInterface
+   * @return \Drupal\ai\Attribute\AiVdbProviderInterface
    *   A fully configured vector database plugin instance.
    *
    * @throws \Drupal\Component\Plugin\Exception\PluginException

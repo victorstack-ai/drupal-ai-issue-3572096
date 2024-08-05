@@ -67,4 +67,3 @@ interface AiCKEditorPluginInterface extends PluginFormInterface, ConfigurableInt
   public function submitCkEditorModalForm(array $form, FormStateInterface $form_state);
 
 }
-

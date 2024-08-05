@@ -36,11 +36,12 @@ final class EmbeddingStrategyPluginManager extends DefaultPluginManager {
   /**
    * Create an embedding strategy instance.
    *
-   * @param $plugin_id
+   * @param string $plugin_id
    *   The plugin ID.
    * @param array $configuration
    *   The configuration for the plugin.
-   * @return EmbeddingStrategyInterface
+   *
+   * @return \Drupal\ai_search\Attribute\EmbeddingStrategyInterface
    *   The embedding strategy.
    *
    * @throws \Drupal\Component\Plugin\Exception\PluginException

@@ -8,7 +8,7 @@ use Drupal\Core\Render\Renderer;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class GetSkeleton.
+ * Creates a chatbot message skeleton for twig.
  */
 class GetSkeleton extends ControllerBase {
 
@@ -27,7 +27,7 @@ class GetSkeleton extends ControllerBase {
   }
 
   /**
-   * Dependency injection
+   * Dependency injection.
    */
   public static function create(ContainerInterface $container) {
     return new static(

@@ -11,9 +11,7 @@ use Drupal\search_api\Item\ItemInterface;
 /**
  * Base class for the metadata strategies.
  */
-class MetadataEmbeddingBase
-extends EmbeddingStrategyPluginBase
-implements EmbeddingStrategyInterface {
+class MetadataEmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface {
 
   /**
    * The maximum percentage that metadata is allowed to take.
@@ -28,14 +26,14 @@ implements EmbeddingStrategyInterface {
   protected int $metaDataMaxPercentage = 30;
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   public function getEmbedding(
     string $embedding_engine,
     string $chat_model,
     array $configuration,
     array $fields,
-    ItemInterface $search_api_item
+    ItemInterface $search_api_item,
   ): array {
     $this->init($embedding_engine, $chat_model, $configuration);
     [$title, $metadata, $main_fields] = $this->groupFieldData($fields);
@@ -61,6 +59,7 @@ implements EmbeddingStrategyInterface {
    *
    * @param array $chunks
    *   The text chunks.
+   *
    * @return array
    *   The raw embeddings.
    */
@@ -152,7 +151,8 @@ implements EmbeddingStrategyInterface {
         $this->chunkSize,
         $this->chunkMinOverlap
       );
-    } else {
+    }
+    else {
       $chunks = [];
       if ((strlen($title . $metadata) / $this->chunkSize) < $max_metadata) {
         // Arbitrarily suppose that if 30% of embedding are metadata it is fine.
@@ -164,7 +164,8 @@ implements EmbeddingStrategyInterface {
         foreach ($main_chunks as $main_chunk) {
           $chunks[] = $this->prepareChunkText($title, $main_chunk, $metadata);
         }
-      } else {
+      }
+      else {
         // Both metadata and main fields need chunking.
         $available_chunk_size = $this->chunkSize - strlen($title);
         $metadata_chunk_size = intval($available_chunk_size * $max_metadata);
@@ -173,12 +174,12 @@ implements EmbeddingStrategyInterface {
           $metadata,
           $metadata_chunk_size,
           $this->chunkMinOverlap
-        );
+              );
         $main_chunks = $this->textChunker->chunkText(
-          $main_fields,
-          $main_chunk_size,
-          $this->chunkMinOverlap
-        );
+                $main_fields,
+                $main_chunk_size,
+                $this->chunkMinOverlap
+              );
         foreach ($main_chunks as $main_chunk) {
           foreach ($metadata_chunks as $metadata_chunk) {
             $chunks[] = $this->prepareChunkText($title, $main_chunk, $metadata_chunk);
@@ -216,10 +217,10 @@ implements EmbeddingStrategyInterface {
   }
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   public function fits(AiVdbProviderInterface $vdb_provider): bool {
-    // TODO: Implement fits() method.
+    // @todo Implement fits() method.
     return TRUE;
   }
 
@@ -230,6 +231,7 @@ implements EmbeddingStrategyInterface {
    *   The Search API field.
    *
    * @return string
+   *   The composite field.
    */
   private function compositeValues(FieldInterface $field): string {
     $composite_field = '';
@@ -268,7 +270,7 @@ implements EmbeddingStrategyInterface {
   }
 
   /**
-   * {@inheritDoc}.
+   * {@inheritDoc}
    */
   public function getConfigurationSubform(array $configuration): array {
     if (empty($configuration)) {

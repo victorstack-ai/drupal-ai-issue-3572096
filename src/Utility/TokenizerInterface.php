@@ -29,7 +29,7 @@ interface TokenizerInterface {
    * @param string $chunk
    *   The chunk to encode.
    *
-   * @param array
+   * @return array
    *   The tokens.
    */
   public function getTokens(string $chunk): array;

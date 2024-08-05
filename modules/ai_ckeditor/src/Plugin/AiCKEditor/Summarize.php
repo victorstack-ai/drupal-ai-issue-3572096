@@ -2,8 +2,6 @@
 
 namespace Drupal\ai_ckeditor\Plugin\AICKEditor;
 
-use Drupal\ai\OperationType\Chat\ChatInput;
-use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai_ckeditor\AiCKEditorPluginBase;
 use Drupal\ai_ckeditor\Attribute\AiCKEditor;
 use Drupal\Core\Ajax\AjaxResponse;
@@ -12,7 +10,6 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\editor\Ajax\EditorDialogSave;
-use Drupal\taxonomy\Entity\Term;
 
 /**
  * Plugin to summarize the selected text.
@@ -119,8 +116,8 @@ final class Summarize extends AiCKEditorPluginBase {
       '#attributes' => [
         'class' => [
           'align-right',
-        ]
-      ]
+        ],
+      ],
     ];
 
     return $form;
@@ -159,6 +156,7 @@ final class Summarize extends AiCKEditorPluginBase {
    *   The form state.
    *
    * @return mixed
+   *   The response text.
    */
   public function ajaxGenerateText(array &$form, FormStateInterface $form_state) {
     $values = $form_state->getValues();
@@ -168,7 +166,8 @@ final class Summarize extends AiCKEditorPluginBase {
       $text = $this->getResponse($prompt);
       $form_state->setRebuild();
       $form['plugin_config']['response_text']['#value'] = $text;
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       $this->logger->error("There was an error in the Summarize AI plugin for CKEditor.");
       $form['plugin_config']['response_text']['#value'] = "There was an error in the Summarize AI plugin for CKEditor.";
     }

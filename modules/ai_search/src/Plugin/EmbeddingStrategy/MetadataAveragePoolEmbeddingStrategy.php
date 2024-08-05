@@ -16,9 +16,7 @@ use Drupal\search_api\Item\ItemInterface;
   id: 'metadata_average_pool',
   label: new TranslatableMarkup('Metadata enriched composite embedding.'),
 )]
-class MetadataAveragePoolEmbeddingStrategy
-  extends MetadataEmbeddingBase {
-
+class MetadataAveragePoolEmbeddingStrategy extends MetadataEmbeddingBase {
 
   /**
    * {@inheritDoc}
@@ -28,7 +26,7 @@ class MetadataAveragePoolEmbeddingStrategy
     string $chat_model,
     array $configuration,
     array $fields,
-    ItemInterface $search_api_item
+    ItemInterface $search_api_item,
   ): array {
     $this->init($embedding_engine, $chat_model, $configuration);
     [$title, $metadata, $main_fields] = $this->groupFieldData($fields);
@@ -44,7 +42,8 @@ class MetadataAveragePoolEmbeddingStrategy
       'metadata' => [
         'content' => $title . $main_fields . $metadata,
       ],
-    ]];
+    ],
+    ];
   }
 
 }

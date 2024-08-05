@@ -2,8 +2,6 @@
 
 namespace Drupal\ai_ckeditor\Plugin\AICKEditor;
 
-use Drupal\ai\OperationType\Chat\ChatInput;
-use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai_ckeditor\AiCKEditorPluginBase;
 use Drupal\ai_ckeditor\Attribute\AiCKEditor;
 use Drupal\Core\Ajax\AjaxResponse;
@@ -101,8 +99,8 @@ final class Completion extends AiCKEditorPluginBase {
       '#attributes' => [
         'class' => [
           'align-right',
-        ]
-      ]
+        ],
+      ],
     ];
 
     return $form;
@@ -141,6 +139,7 @@ final class Completion extends AiCKEditorPluginBase {
    *   The form state.
    *
    * @return mixed
+   *   The response text.
    */
   public function ajaxGenerateText(array &$form, FormStateInterface $form_state) {
     $values = $form_state->getValues();
@@ -149,7 +148,8 @@ final class Completion extends AiCKEditorPluginBase {
       $text = $this->getResponse($values["plugin_config"]["text_to_submit"]);
       $form_state->setRebuild();
       $form['plugin_config']['response_text']['#value'] = $text;
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       $this->logger->error("There was an error in the Completion AI plugin for CKEditor.");
       $form['plugin_config']['response_text']['#value'] = "There was an error in the Summarize AI plugin for CKEditor.";
     }

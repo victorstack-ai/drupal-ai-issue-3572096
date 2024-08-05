@@ -108,13 +108,13 @@ class ChatForm extends FormBase {
         $this->aiAssistantClient->streamedOutput(TRUE);
         // Process.
         $response = $this->aiAssistantClient->process();
-        // If its a failure, the variable is a string, just output;
+        // If its a failure, the variable is a string, just output;.
         if ($response->getNormalized() instanceof ChatMessage) {
           $http_response = new Response($response->getNormalized()->getText());
           $form_state->setResponse($http_response);
         }
         else {
-          $http_response->setCallback(function () use ($chat_config, $response) {
+          $http_response->setCallback(function () use ($response) {
             foreach ($response->getNormalized() as $message) {
               echo $message->getText();
               ob_flush();
@@ -123,7 +123,8 @@ class ChatForm extends FormBase {
           });
           $form_state->setResponse($http_response);
         }
-      } catch (\Exception $exception) {
+      }
+      catch (\Exception $exception) {
         $this->messenger()
           ->addError("Chat exception: {$exception->getMessage()}");
         return;

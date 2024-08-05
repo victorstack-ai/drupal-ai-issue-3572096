@@ -73,11 +73,12 @@ final class AiProviderPluginManager extends DefaultPluginManager {
   /**
    * Create a provider proxy instance around an AI Provider.
    *
-   * @param $plugin_id
+   * @param string $plugin_id
    *   The plugin ID.
    * @param array $configuration
    *   The configuration for the plugin.
-   * @return ProviderProxy
+   *
+   * @return \Drupal\ai\Plugin\ProviderProxy
    *   The provider proxy.
    *
    * @throws \Drupal\Component\Plugin\Exception\PluginException

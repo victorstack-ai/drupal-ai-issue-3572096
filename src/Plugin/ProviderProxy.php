@@ -109,7 +109,7 @@ class ProviderProxy {
       return $method->invokeArgs($this->plugin, $arguments);
     }
 
-    // If input is not set, input is model ID
+    // If input is not set, input is model ID.
     if (!isset($arguments[1])) {
       $arguments[1] = $arguments[0];
       $arguments[0] = NULL;

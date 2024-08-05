@@ -15,7 +15,6 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -330,7 +329,8 @@ class ChatGenerationForm extends FormBase {
       $form['response']['#context']['texts'] = '<h4>Role: ' . $response->getRole() . "</h4><p>" . $response->getText() . '</p>' . $code;
       $form_state->setRebuild();
       return $form['response'];
-    } elseif (is_object($response) && $response instanceof StreamedChatMessageIteratorInterface) {
+    }
+    elseif (is_object($response) && $response instanceof StreamedChatMessageIteratorInterface) {
       $http_response = new StreamedResponse();
       $http_response->setCallback(function () use ($response, $code) {
         foreach ($response as $key => $chat_message) {
@@ -346,7 +346,8 @@ class ChatGenerationForm extends FormBase {
         flush();
       });
       $form_state->setResponse($http_response);
-    } else {
+    }
+    else {
       $form['response']['#context']['texts'] = $message;
       $form_state->setRebuild();
       return $form['response'];

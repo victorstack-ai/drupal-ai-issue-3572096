@@ -19,8 +19,7 @@ use HelgeSverre\Milvus\Milvus;
   id: 'milvus',
   label: new TranslatableMarkup('Milvus DB'),
 )]
-class MilvusProvider extends AiVdbProviderClientBase
-  implements ContainerFactoryPluginInterface {
+class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactoryPluginInterface {
 
   use StringTranslationTrait;
 
@@ -32,7 +31,7 @@ class MilvusProvider extends AiVdbProviderClientBase
   protected string $apiKey = '';
 
   /**
-   * The Milvus client
+   * The Milvus client.
    *
    * @var \HelgeSverre\Milvus\Milvus|null
    */
@@ -49,8 +48,7 @@ class MilvusProvider extends AiVdbProviderClientBase
    * Set key for authentication of the client.
    *
    * @param mixed $authentication
-   *
-   * @return void
+   *   The authentication.
    */
   public function setAuthentication(mixed $authentication): void {
     $this->apiKey = $authentication;
@@ -169,7 +167,7 @@ class MilvusProvider extends AiVdbProviderClientBase
     string $collection_name,
     int $dimension,
     VdbSimilarityMetrics $metric_type = VdbSimilarityMetrics::CosineSimilarity,
-    string $database = 'default'
+    string $database = 'default',
   ): void {
     $metric_name = match ($metric_type) {
       VdbSimilarityMetrics::EuclideanDistance => 'L2',
@@ -178,14 +176,6 @@ class MilvusProvider extends AiVdbProviderClientBase
     };
     $collections = $this->getCollections($database);
     if (!isset($collections['data']) || !in_array($collection_name, $collections['data'])) {
-      /*$response = json_decode($this->getClient()->collections()->create(
-        collectionName: $collection_name,
-        dimension: $dimension,
-        dbName: $database,
-        metricType: $metric_name,
-      ), TRUE);
-      print_r($response);
-      exit;*/
       $client = $this->getV2Client();
       $response = $client->createCollection(
         $collection_name,
@@ -194,8 +184,6 @@ class MilvusProvider extends AiVdbProviderClientBase
         $metric_name,
       );
       if (!isset($response['code']) || ($response['code'] !== 0 && $response['code'] !== 200)) {
-        print_r($response);
-        exit;
         throw new \Exception('Failed to create collection');
       }
     }
@@ -206,7 +194,7 @@ class MilvusProvider extends AiVdbProviderClientBase
    */
   public function dropCollection(
     string $collection_name,
-    string $database = 'default'
+    string $database = 'default',
   ): void {
     $this->getClient()->collections()->drop(
       collectionName: $collection_name,
@@ -220,7 +208,7 @@ class MilvusProvider extends AiVdbProviderClientBase
   public function insertIntoCollection(
     string $collection_name,
     array $data,
-    string $database = 'default'
+    string $database = 'default',
   ): void {
     $response = json_decode($this->getClient()->vector()->insert(
       collectionName: $collection_name,
@@ -239,7 +227,7 @@ class MilvusProvider extends AiVdbProviderClientBase
   public function deleteFromCollection(
     string $collection_name,
     array $ids,
-    string $database = 'default'
+    string $database = 'default',
   ): void {
     $this->getClient()->vector()->delete(
       id: $ids,
@@ -259,7 +247,7 @@ class MilvusProvider extends AiVdbProviderClientBase
     string $filters = 'id not in [0]',
     int $limit = 10,
     int $offset = 0,
-    string $database = 'default'
+    string $database = 'default',
   ): array {
     $params = [
       'collectionName' => $collection_name,
@@ -267,7 +255,7 @@ class MilvusProvider extends AiVdbProviderClientBase
       'outputFields' => $output_fields,
       'dbName' => $database,
       'limit' => $limit,
-      'offset' => $offset
+      'offset' => $offset,
     ];
 
     $response = $this->getClient()->vector()->query(...$params);
@@ -287,7 +275,7 @@ class MilvusProvider extends AiVdbProviderClientBase
     string $filters = '',
     int $limit = 10,
     int $offset = 0,
-    string $database = 'default'
+    string $database = 'default',
   ): array {
     $params = [
       'collectionName' => $collection_name,
@@ -295,7 +283,7 @@ class MilvusProvider extends AiVdbProviderClientBase
       'outputFields' => $output_fields,
       'dbName' => $database,
       'limit' => $limit,
-      'offset' => $offset
+      'offset' => $offset,
     ];
 
     if ($filters !== '') {
@@ -314,7 +302,7 @@ class MilvusProvider extends AiVdbProviderClientBase
    */
   public function getVdbIds(
     string $collection_name,
-    array $drupalIds
+    array $drupalIds,
   ): array {
     $data = $this->querySearch(
       collection_name: $collection_name,

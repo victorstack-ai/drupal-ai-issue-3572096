@@ -123,6 +123,7 @@ trait AiSearchBackendEmbeddingsEngineTrait {
    * Load the embeddings engine with a configuration.
    *
    * @return \Drupal\ai\AiProviderInterface
+   *   The embeddings engine.
    */
   public function loadEmbeddingsEngine(): AiProviderInterface|ProviderProxy {
     $plugin_manager = \Drupal::service('ai.provider');
