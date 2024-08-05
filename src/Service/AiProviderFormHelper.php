@@ -130,6 +130,7 @@ class AiProviderFormHelper {
         '#ajax' => [
           'callback' => '\Drupal\ai\Service\AiProviderFormHelper::loadModelsAjaxCallback',
           'wrapper' => $prefix . 'ajax_wrapper',
+          'event' => 'change',
         ],
       ];
 
@@ -157,25 +158,27 @@ class AiProviderFormHelper {
     $provider = $form_state->getValue($prefix . 'ai_provider');
     $model = $form_state->getValue($prefix . 'ai_model');
     $llmInstance = $this->aiProviderPluginManager->createInstance($provider);
-    $schema = $llmInstance->getAvailableConfiguration($operation_type, $model);
-    foreach ($form_state->getValues() as $key => $value) {
-      if (strpos($key, $prefix) === 0) {
-        $real_key = trim(str_replace($prefix . 'ajax_prefix_configuration_', '', $key));
-        if (!empty($schema[$real_key]['constraints'])) {
-          if (!empty($schema[$real_key]['constraints']['min'])) {
-            if ($value < $schema[$real_key]['constraints']['min']) {
-              $form_state->setErrorByName($key, $this->t('The value for @key must be at least @min.', [
-                '@key' => $schema[$real_key]['label'],
-                '@min' => $schema[$real_key]['constraints']['min'],
-              ]));
+    if ($model) {
+      $schema = $llmInstance->getAvailableConfiguration($operation_type, $model);
+      foreach ($form_state->getValues() as $key => $value) {
+        if (strpos($key, $prefix) === 0) {
+          $real_key = trim(str_replace($prefix . 'ajax_prefix_configuration_', '', $key));
+          if (!empty($schema[$real_key]['constraints'])) {
+            if (!empty($schema[$real_key]['constraints']['min'])) {
+              if ($value < $schema[$real_key]['constraints']['min']) {
+                $form_state->setErrorByName($key, $this->t('The value for @key must be at least @min.', [
+                  '@key' => $schema[$real_key]['label'],
+                  '@min' => $schema[$real_key]['constraints']['min'],
+                ]));
+              }
             }
-          }
-          if (!empty($schema[$real_key]['constraints']['max'])) {
-            if ($value > $schema[$real_key]['constraints']['max']) {
-              $form_state->setErrorByName($key, $this->t('The value for @key must be at most @max.', [
-                '@key' => $schema[$real_key]['label'],
-                '@max' => $schema[$real_key]['constraints']['max'],
-              ]));
+            if (!empty($schema[$real_key]['constraints']['max'])) {
+              if ($value > $schema[$real_key]['constraints']['max']) {
+                $form_state->setErrorByName($key, $this->t('The value for @key must be at most @max.', [
+                  '@key' => $schema[$real_key]['label'],
+                  '@max' => $schema[$real_key]['constraints']['max'],
+                ]));
+              }
             }
           }
         }
