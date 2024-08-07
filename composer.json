@@ -8,7 +8,6 @@
     "drupal/key": "^1.18",
     "league/html-to-markdown": "^5.1",
     "yethee/tiktoken": "^0.5.1",
-    "helgesverre/milvus": "^0.1.0",
     "hkulekci/qdrant": "^0.5.5"
   }
 }
