@@ -95,12 +95,173 @@ class MilvusV2 {
     $options['collectionName'] = $collection_name;
     $options['dimension'] = $dimension;
     $options['metricType'] = $metric_type;
-    $options['databaseName'] = $database_name;
+    if (!$this->isZilliz()) {
+      $options['databaseName'] = $database_name;
+    }
     $options['autoID'] = $options['autoID'] ?? TRUE;
     $options['schema']['autoID'] = TRUE;
     $options['schema']['enableDynamicField'] = FALSE;
 
     return json_decode($this->makeRequest('vectordb/collections/create', [], 'POST', $options), TRUE);
+  }
+
+  /**
+   * Drop collection.
+   *
+   * @param string $collection_name
+   *   The collection.
+   * @param string $database_name
+   *   The database.
+   *
+   * @return array
+   *   The response.
+   */
+  public function dropCollection(string $collection_name, string $database_name = ''): array {
+    $params = [
+      'collectionName' => $collection_name,
+    ];
+    if ($database_name && !$this->isZilliz()) {
+      $params['databaseName'] = $database_name;
+    }
+    return json_decode($this->makeRequest('vectordb/collections/drop', [], 'POST', $params), TRUE);
+  }
+
+  /**
+   * List collections.
+   *
+   * @param string $database_name
+   *   The database.
+   *
+   * @return array
+   *   The collections.
+   */
+  public function listCollections(string $database_name = ''): array {
+    // Has to be an object, when empty ¯\_(ツ)_/¯.
+    $data = $database_name && !$this->isZilliz() ? ['databaseName' => $database_name] : new \stdClass();
+    return json_decode($this->makeRequest('vectordb/collections/list', [], 'POST', $data), TRUE);
+  }
+
+  /**
+   * Insert into the collection.
+   *
+   * @param string $collection_name
+   *   The collection.
+   * @param array $data
+   *   The data.
+   * @param string $database_name
+   *   The database.
+   *
+   * @return array
+   *   The response.
+   */
+  public function insertIntoCollection(string $collection_name, array $data, string $database_name = ''): array {
+    $params = [
+      'collectionName' => $collection_name,
+      'data' => [$data],
+    ];
+    if ($database_name && !$this->isZilliz()) {
+      $params['databaseName'] = $database_name;
+    }
+    return json_decode($this->makeRequest('vectordb/entities/insert', [], 'POST', $params), TRUE);
+  }
+
+  /**
+   * Delete from the collection.
+   *
+   * @param string $collection_name
+   *   The collection.
+   * @param array $ids
+   *   The ids.
+   * @param string $database_name
+   *   The database name.
+   *
+   * @return array
+   *   The response.
+   */
+  public function deleteFromCollection(string $collection_name, array $ids, string $database_name = 'default'): array {
+    $params = [
+      'collectionName' => $collection_name,
+      'filter' => 'id in [' . implode(',', $ids) . ']',
+    ];
+    if ($database_name && !$this->isZilliz()) {
+      $params['databaseName'] = $database_name;
+    }
+    return json_decode($this->makeRequest('vectordb/entities/delete', [], 'POST', $params), TRUE);
+  }
+
+  /**
+   * Query collection.
+   *
+   * @param string $collection_name
+   *   The collection.
+   * @param array $output_fields
+   *   The output fields.
+   * @param string $filters
+   *   The filters.
+   * @param int $limit
+   *   The limit.
+   * @param int $offset
+   *   The offset.
+   * @param string $database_name
+   *   The database.
+   *
+   * @return array
+   *   The response.
+   */
+  public function query(string $collection_name, array $output_fields, string $filters = 'id not in [0]', int $limit = 10, int $offset = 0, string $database_name = ''): array {
+    $params = [
+      'collectionName' => $collection_name,
+      'filter' => $filters,
+      'outputFields' => $output_fields,
+      'limit' => $limit,
+      'offset' => $offset,
+    ];
+    if ($database_name) {
+      $params['databaseName'] = $database_name;
+    }
+
+    $response = $this->makeRequest('vectordb/entities/query', [], 'POST', $params);
+    return json_decode($response, TRUE);
+  }
+
+  /**
+   * Search.
+   *
+   * @param string $collection_name
+   *   The collection.
+   * @param array $vector_input
+   *   The vector input.
+   * @param array $output_fields
+   *   The output fields.
+   * @param string $filters
+   *   The filters.
+   * @param int $limit
+   *   The limit.
+   * @param int $offset
+   *   The offset.
+   * @param string $database_name
+   *   The database.
+   */
+  public function search(string $collection_name, array $vector_input, array $output_fields, string $filters = '', int $limit = 10, int $offset = 0, string $database_name = '') {
+    $params = [
+      'collectionName' => $collection_name,
+      'data' => [$vector_input],
+      'annsField' => 'vector',
+      'outputFields' => $output_fields,
+      'limit' => $limit,
+      'offset' => $offset,
+    ];
+
+    if ($database_name && !$this->isZilliz()) {
+      $params['dbName'] = $database_name;
+    }
+
+    if ($filters !== '') {
+      $params['filter'] = $filters;
+    }
+
+    $response = $this->makeRequest('vectordb/entities/search', [], 'POST', $params);
+    return json_decode($response, TRUE);
   }
 
   /**
@@ -132,6 +293,7 @@ class MilvusV2 {
     // JSON unless its multipart.
     if (empty($options['multipart'])) {
       $options['headers']['Content-Type'] = 'application/json';
+      $options['headers']['accept'] = 'application/json';
     }
 
     // Credentials.
@@ -151,6 +313,16 @@ class MilvusV2 {
     $res = $this->client->request($method, $new_url, $options);
 
     return $res->getBody();
+  }
+
+  /**
+   * Check if we are running on zilliz.
+   *
+   * @return bool
+   *   If we are running on zilliz.
+   */
+  public function isZilliz(): bool {
+    return strpos($this->baseUrl, 'zillizcloud.com') !== FALSE;
   }
 
 }

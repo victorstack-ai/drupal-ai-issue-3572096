@@ -10,7 +10,6 @@ use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\vdb_provider_milvus\MilvusV2;
-use HelgeSverre\Milvus\Milvus;
 
 /**
  * Plugin implementation of the 'Milvus DB' provider.
@@ -33,9 +32,9 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
   /**
    * The Milvus client.
    *
-   * @var \HelgeSverre\Milvus\Milvus|null
+   * @var \Drupal\vdb_provider_milvus\MilvusV2|null
    */
-  protected ?Milvus $client;
+  protected MilvusV2 $client;
 
   /**
    * {@inheritdoc}
@@ -56,26 +55,6 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
   }
 
   /**
-   * Gets the raw client.
-   *
-   * This is the client for inference.
-   *
-   * @return \HelgeSverre\Milvus\Milvus
-   *   The Milvus client.
-   */
-  public function getClient(): Milvus {
-    if (empty($this->client)) {
-      $config = $this->getConnectionData();
-      $this->client = new Milvus(
-        token: $config['api_key'],
-        host: $config['server'],
-        port: $config['port'],
-      );
-    }
-    return $this->client;
-  }
-
-  /**
    * Get v2 client.
    *
    * This is needed for creating collections.
@@ -83,7 +62,7 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
    * @return \Drupal\vdb_provider_milvus\MilvusV2
    *   The Milvus v2 client.
    */
-  public function getV2Client(): MilvusV2 {
+  public function getClient(): MilvusV2 {
     $service = \Drupal::service('milvus_v2.api');
     $config = $this->getConnectionData();
     $service->setBaseUrl($config['server']);
@@ -126,7 +105,7 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
    */
   public function ping(): bool {
     try {
-      $return = json_decode($this->getClient()->collections()->list(), TRUE);
+      $return = $this->getClient()->listCollections();
       // Wrong API Key.
       if (isset($return['code']) && $return['code'] === 80001) {
         return FALSE;
@@ -152,12 +131,7 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
    * {@inheritdoc}
    */
   public function getCollections(string $database = 'default'): array {
-    return json_decode(
-      $this->getClient()->collections()->list(
-        dbName: $database,
-      ),
-      TRUE
-    );
+    return $this->getClient()->listCollections($database);
   }
 
   /**
@@ -176,7 +150,7 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
     };
     $collections = $this->getCollections($database);
     if (!isset($collections['data']) || !in_array($collection_name, $collections['data'])) {
-      $client = $this->getV2Client();
+      $client = $this->getClient();
       $response = $client->createCollection(
         $collection_name,
         $database,
@@ -184,7 +158,7 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
         $metric_name,
       );
       if (!isset($response['code']) || ($response['code'] !== 0 && $response['code'] !== 200)) {
-        throw new \Exception('Failed to create collection');
+        throw new \Exception('Failed to create collection: ' . $response['message']);
       }
     }
   }
@@ -196,10 +170,7 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
     string $collection_name,
     string $database = 'default',
   ): void {
-    $this->getClient()->collections()->drop(
-      collectionName: $collection_name,
-      dbName: $database,
-    );
+    $this->getClient()->dropCollection($collection_name);
   }
 
   /**
@@ -210,14 +181,10 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
     array $data,
     string $database = 'default',
   ): void {
-    $response = json_decode($this->getClient()->vector()->insert(
-      collectionName: $collection_name,
-      data: $data,
-      dbName: $database,
-    ), TRUE);
+    $response = $this->getClient()->insertIntoCollection($collection_name, $data, $database);
 
     if (!isset($response['code']) || ($response['code'] !== 0 && $response['code'] !== 200)) {
-      throw new \Exception("Failed to create collection: ");
+      throw new \Exception("Failed to insert into collection: " . $response['message']);
     }
   }
 
@@ -229,11 +196,7 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
     array $ids,
     string $database = 'default',
   ): void {
-    $this->getClient()->vector()->delete(
-      id: $ids,
-      collectionName: $collection_name,
-      dbName: $database
-    );
+    $this->getClient()->deleteFromCollection($collection_name, $ids, $database);
   }
 
   /**
@@ -249,17 +212,14 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
     int $offset = 0,
     string $database = 'default',
   ): array {
-    $params = [
-      'collectionName' => $collection_name,
-      'filter' => $filters,
-      'outputFields' => $output_fields,
-      'dbName' => $database,
-      'limit' => $limit,
-      'offset' => $offset,
-    ];
-
-    $response = $this->getClient()->vector()->query(...$params);
-    $data = json_decode($response, TRUE, flags: \JSON_THROW_ON_ERROR);
+    $data = $this->getClient()->query(
+      $collection_name,
+      $output_fields,
+      $filters,
+      $limit,
+      $offset,
+      $database
+    );
     return $data['data'] ?? [];
   }
 
@@ -290,8 +250,15 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
       $params['filter'] = $filters;
     }
 
-    $response = $this->getClient()->vector()->search(...$params);
-    $data = json_decode($response, TRUE, flags: \JSON_THROW_ON_ERROR);
+    $data = $this->getClient()->search(
+      $collection_name,
+      $vector_input,
+      $output_fields,
+      $filters,
+      $limit,
+      $offset,
+      $database
+    );
     return $data['data'] ?? [];
   }
 
@@ -305,9 +272,9 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
     array $drupalIds,
   ): array {
     $data = $this->querySearch(
-      collection_name: $collection_name,
-      output_fields: ['id'],
-      filters: "drupal_entity_id in [\"" . implode('","', $drupalIds) . "\"]"
+      $collection_name,
+      ['id'],
+      "drupal_entity_id in [\"" . implode('","', $drupalIds) . "\"]",
     );
     $ids = [];
     if (!empty($data)) {

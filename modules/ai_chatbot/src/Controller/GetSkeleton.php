@@ -2,10 +2,10 @@
 
 namespace Drupal\ai_chatbot\Controller;
 
-use Drupal\Core\Cache\CacheableJsonResponse;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Render\Renderer;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
  * Creates a chatbot message skeleton for twig.
@@ -53,7 +53,7 @@ class GetSkeleton extends ControllerBase {
       '#theme' => 'ai_chatbot_message',
       '#timestamp' => date('H:i:s'),
     ];
-    return new CacheableJsonResponse([
+    return new JsonResponse([
       'skeleton' => $this->renderer->render($theme),
     ]);
   }

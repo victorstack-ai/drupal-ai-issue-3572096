@@ -388,7 +388,6 @@ The article is:
       '#default_value' => $entity->get('rag_databases')[$i]['access_check'] ?? $form_state->getValue('rag_' . $i . '_access_check'),
     ];
 
-
     $form['rag']['rag_wrapper_' . $i]['rag_' . $i . '_use_context'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Use route context'),

@@ -2,7 +2,7 @@ name: LM Studio Provider
 description: This enables the use of LM Studio for the AI module.
 package: AI Providers
 type: module
-core_version_requirement: ^10.3 || ^11
+core_version_requirement: ^10.2 || ^11
 configure: provider_lmstudio.settings_form
 
 dependencies:

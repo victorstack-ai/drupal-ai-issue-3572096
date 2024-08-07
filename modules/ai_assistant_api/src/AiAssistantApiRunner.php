@@ -12,7 +12,6 @@ use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Render\Renderer;
 use Drupal\Core\Render\RendererInterface;
-use Drupal\search_api\Query\ConditionGroup;
 
 /**
  * The runner for the AI assistant.
@@ -342,7 +341,7 @@ class AiAssistantApiRunner {
    * @param \Drupal\search_api\Entity\Index $index
    *   The index to check.
    *
-   *  @return string
+   * @return string
    *   If the context matches.
    */
   protected function checkContentContextMatches($index) {
