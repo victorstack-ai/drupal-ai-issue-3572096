@@ -103,7 +103,6 @@ trait AiSearchBackendEmbeddingsEngineTrait {
       '#description' => $this->t('The number of dimensions for the embeddings.'),
       '#default_value' => $this->engineConfiguration['embeddings_engine_configuration']['dimensions'] ?? '',
       '#required' => TRUE,
-      '#disabled' => TRUE,
     ];
 
     // If the embeddings engine is set, add the configuration form.
