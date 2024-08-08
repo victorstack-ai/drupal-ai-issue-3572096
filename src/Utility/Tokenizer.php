@@ -41,7 +41,12 @@ class Tokenizer implements TokenizerInterface {
    * {@inheritdoc}
    */
   public function setModel(string $model): void {
-    $this->encoder = $this->encoderProvider->getForModel($model);
+    try {
+      $this->encoder = $this->encoderProvider->getForModel($model);
+    }
+    catch(\Exception $e) {
+      $this->encoder = $this->encoderProvider->getForModel('gpt-3.5-turbo');
+    }
   }
 
   /**
