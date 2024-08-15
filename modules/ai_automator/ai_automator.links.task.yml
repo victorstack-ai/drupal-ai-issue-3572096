@@ -1,0 +1,3 @@
+entity.automator_deriver.edit_form:
+  deriver: 'Drupal\ai_automator\Plugin\Derivative\ChainLocalTasks'
+  weight: 100

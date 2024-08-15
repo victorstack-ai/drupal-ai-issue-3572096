@@ -29,3 +29,6 @@ entity.ai_automator.delete_form:
     _title: 'Delete an ai automator'
   requirements:
     _permission: 'administer ai_automator'
+
+route_callbacks:
+  - '\Drupal\ai_automator\Routing\AutomatorRouteSubscriber::routes'
