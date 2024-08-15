@@ -5,6 +5,7 @@
  * Install, update and uninstall functions for the ai_translate module.
  */
 
+use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Url;
 
 /**
@@ -31,4 +32,22 @@ function ai_translate_requirements($phase) {
     }
   }
   return $requirements;
+}
+
+/**
+ * Install default prompt for existing installations.
+ */
+function ai_translate_update_10001(&$sandbox) {
+  /** @var \Drupal\Core\Config\ConfigFactory $configFactory */
+  $configFactory = \Drupal::service('config.factory');
+  if ($configFactory->get('ai_translate.settings')->get('prompt')) {
+    // Prompt already exists, do nothing.
+    return;
+  }
+  $configPath = \Drupal::service('extension.path.resolver')
+    ->getPath('module', 'ai_translate') . '/config/install';
+  $source = new FileStorage($configPath);
+  $configFactory->getEditable('ai_translate.settings')
+    ->setData($source->read('ai_translate.settings'))
+    ->save();
 }

@@ -44,7 +44,7 @@ class Tokenizer implements TokenizerInterface {
     try {
       $this->encoder = $this->encoderProvider->getForModel($model);
     }
-    catch(\Exception $e) {
+    catch (\Exception $e) {
       $this->encoder = $this->encoderProvider->getForModel('gpt-3.5-turbo');
     }
   }
