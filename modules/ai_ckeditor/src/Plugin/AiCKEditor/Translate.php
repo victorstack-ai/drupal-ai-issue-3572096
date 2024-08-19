@@ -4,16 +4,15 @@ namespace Drupal\ai_ckeditor\Plugin\AICKEditor;
 
 use Drupal\ai_ckeditor\AiCKEditorPluginBase;
 use Drupal\ai_ckeditor\Attribute\AiCKEditor;
+use Drupal\ai_ckeditor\Command\AiRequestCommand;
 use Drupal\Core\Ajax\AjaxResponse;
-use Drupal\Core\Ajax\CloseModalDialogCommand;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\editor\Ajax\EditorDialogSave;
 use Drupal\taxonomy\Entity\Term;
 
 /**
- * Plugin to translate the lanuguage of selected text.
+ * Plugin to translate the language of selected text.
  */
 #[AiCKEditor(
   id: 'ai_ckeditor_translate',
@@ -83,13 +82,6 @@ final class Translate extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
-
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     $this->configuration['provider'] = $form_state->getValue('provider');
     $this->configuration['autocreate'] = (bool) $form_state->getValue('autocreate');
@@ -101,6 +93,7 @@ final class Translate extends AiCKEditorPluginBase {
    */
   public function buildCkEditorModalForm(array $form, FormStateInterface $form_state) {
     $storage = $form_state->getStorage();
+    $editor_id = $this->requestStack->getParentRequest()->get('editor_id');
 
     if (empty($storage['selected_text'])) {
       return [
@@ -108,14 +101,13 @@ final class Translate extends AiCKEditorPluginBase {
       ];
     }
 
-    $form['description'] = [
-      '#markup' => '<p>' . $this->pluginDefinition['description'] . '</p>',
-    ];
+    $form = parent::buildCkEditorModalForm($form, $form_state);
 
     $form['language'] = [
       '#type' => 'entity_autocomplete',
       '#title' => $this->t('Choose language'),
       '#tags' => FALSE,
+      '#required' => TRUE,
       '#description' => $this->t('Selecting one of the options will translate the selected text.'),
       '#target_type' => 'taxonomy_term',
       '#selection_settings' => [
@@ -137,65 +129,19 @@ final class Translate extends AiCKEditorPluginBase {
     ];
 
     $form['response_text'] = [
-      '#type' => 'textarea',
+      '#type' => 'text_format',
       '#title' => $this->t('Suggested translation'),
-      '#description' => $this->t('The response from AI will appear in the box above. You can edit and tweak the response before saving it back to the editor.'),
-      '#prefix' => '<div id="ai-ckeditor-translate-response">',
+      '#description' => $this->t('The response from AI will appear in the box above. You can edit and tweak the response before saving it back to the main editor.'),
+      '#prefix' => '<div id="ai-ckeditor-response">',
       '#suffix' => '</div>',
       '#default_value' => '',
+      '#allowed_formats' => [$editor_id],
+      '#format' => $editor_id,
     ];
 
-    $form['actions'] = [
-      '#type' => 'actions',
-    ];
-
-    $form['actions']['generate'] = [
-      '#type' => 'button',
-      '#value' => $this->t('Translate'),
-      '#ajax' => [
-        'callback' => [$this, 'ajaxGenerateText'],
-        'wrapper' => 'ai-ckeditor-translate-response',
-      ],
-    ];
-
-    $form['actions']['submit'] = [
-      '#type' => 'button',
-      '#value' => $this->t('Save changes to editor'),
-      '#ajax' => [
-        'callback' => [$this, 'submitCkEditorModalForm'],
-      ],
-      '#attributes' => [
-        'class' => [
-          'align-right',
-        ],
-      ],
-    ];
+    $form['actions']['generate']['#value'] = $this->t('Translate');
 
     return $form;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function validateCkEditorModalForm(array $form, FormStateInterface $form_state) {
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function submitCkEditorModalForm(array $form, FormStateInterface $form_state) {
-    $response = new AjaxResponse();
-    $values = $form_state->getValues();
-
-    $response->addCommand(new EditorDialogSave([
-      'attributes' => [
-        'value' => strip_tags($values["plugin_config"]["response_text"]),
-        'returnsHtml' => FALSE,
-      ],
-    ]));
-
-    $response->addCommand(new CloseModalDialogCommand());
-    return $response;
   }
 
   /**
@@ -207,9 +153,9 @@ final class Translate extends AiCKEditorPluginBase {
    *   The form state.
    *
    * @return mixed
-   *   The response text.
+   *   The result of the AJAX operation.
    */
-  public function ajaxGenerateText(array &$form, FormStateInterface $form_state) {
+  public function ajaxGenerate(array &$form, FormStateInterface $form_state) {
     $values = $form_state->getValues();
 
     try {
@@ -225,15 +171,15 @@ final class Translate extends AiCKEditorPluginBase {
         throw new \Exception('Term could not be loaded.');
       }
 
-      // @todo Do we need a vocab perm check on this user too?
       if ($term->isNew() && $this->configuration['autocreate'] && $this->account->hasPermission('create terms in ' . $this->configuration['translate_vocabulary'])) {
         $term->save();
       }
 
       $prompt = 'Translate the selected text into ' . $term->label() . ':\r\n"' . $values["plugin_config"]["selected_text"];
-      $text = $this->getResponse($prompt);
-      $form_state->setRebuild();
-      $form['plugin_config']['response_text']['#value'] = $text;
+      $response = new AjaxResponse();
+      $values = $form_state->getValues();
+      $response->addCommand(new AiRequestCommand($prompt, $values["editor_id"], $this->pluginDefinition['id'], 'ai-ckeditor-response'));
+      return $response;
     }
     catch (\Exception $e) {
       $this->logger->error("There was an error in the Translate AI plugin for CKEditor.");

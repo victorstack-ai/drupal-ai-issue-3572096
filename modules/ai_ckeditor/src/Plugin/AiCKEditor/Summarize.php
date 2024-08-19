@@ -4,12 +4,11 @@ namespace Drupal\ai_ckeditor\Plugin\AICKEditor;
 
 use Drupal\ai_ckeditor\AiCKEditorPluginBase;
 use Drupal\ai_ckeditor\Attribute\AiCKEditor;
+use Drupal\ai_ckeditor\Command\AiRequestCommand;
 use Drupal\Core\Ajax\AjaxResponse;
-use Drupal\Core\Ajax\CloseModalDialogCommand;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\editor\Ajax\EditorDialogSave;
 
 /**
  * Plugin to summarize the selected text.
@@ -67,6 +66,7 @@ final class Summarize extends AiCKEditorPluginBase {
    */
   public function buildCkEditorModalForm(array $form, FormStateInterface $form_state) {
     $storage = $form_state->getStorage();
+    $editor_id = $this->requestStack->getParentRequest()->get('editor_id');
 
     if (empty($storage['selected_text'])) {
       return [
@@ -74,9 +74,7 @@ final class Summarize extends AiCKEditorPluginBase {
       ];
     }
 
-    $form['description'] = [
-      '#markup' => '<p>' . $this->pluginDefinition['description'] . '</p>',
-    ];
+    $form = parent::buildCkEditorModalForm($form, $form_state);
 
     $form['selected_text'] = [
       '#type' => 'textarea',
@@ -86,65 +84,19 @@ final class Summarize extends AiCKEditorPluginBase {
     ];
 
     $form['response_text'] = [
-      '#type' => 'textarea',
+      '#type' => 'text_format',
       '#title' => $this->t('Suggested summary'),
-      '#description' => $this->t('The response from AI will appear in the box above. You can edit and tweak the response before saving it back to the editor.'),
-      '#prefix' => '<div id="ai-ckeditor-summary-response">',
+      '#description' => $this->t('The response from AI will appear in the box above. You can edit and tweak the response before saving it back to the main editor.'),
+      '#prefix' => '<div id="ai-ckeditor-response">',
       '#suffix' => '</div>',
       '#default_value' => '',
+      '#allowed_formats' => [$editor_id],
+      '#format' => $editor_id,
     ];
 
-    $form['actions'] = [
-      '#type' => 'actions',
-    ];
-
-    $form['actions']['generate'] = [
-      '#type' => 'button',
-      '#value' => $this->t('Summarize'),
-      '#ajax' => [
-        'callback' => [$this, 'ajaxGenerateText'],
-        'wrapper' => 'ai-ckeditor-summary-response',
-      ],
-    ];
-
-    $form['actions']['submit'] = [
-      '#type' => 'button',
-      '#value' => $this->t('Save changes to editor'),
-      '#ajax' => [
-        'callback' => [$this, 'submitCkEditorModalForm'],
-      ],
-      '#attributes' => [
-        'class' => [
-          'align-right',
-        ],
-      ],
-    ];
+    $form['actions']['generate']['#value'] = $this->t('Summarize');
 
     return $form;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function validateCkEditorModalForm(array $form, FormStateInterface $form_state) {
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function submitCkEditorModalForm(array $form, FormStateInterface $form_state) {
-    $response = new AjaxResponse();
-    $values = $form_state->getValues();
-
-    $response->addCommand(new EditorDialogSave([
-      'attributes' => [
-        'value' => strip_tags($values["plugin_config"]["response_text"]),
-        'returnsHtml' => FALSE,
-      ],
-    ]));
-
-    $response->addCommand(new CloseModalDialogCommand());
-    return $response;
   }
 
   /**
@@ -156,23 +108,22 @@ final class Summarize extends AiCKEditorPluginBase {
    *   The form state.
    *
    * @return mixed
-   *   The response text.
+   *   The result of the AJAX operation.
    */
-  public function ajaxGenerateText(array &$form, FormStateInterface $form_state) {
+  public function ajaxGenerate(array &$form, FormStateInterface $form_state) {
     $values = $form_state->getValues();
 
     try {
       $prompt = 'Summarize the following text using the same language as the following text:\r\n"' . $values["plugin_config"]["selected_text"];
-      $text = $this->getResponse($prompt);
-      $form_state->setRebuild();
-      $form['plugin_config']['response_text']['#value'] = $text;
+      $response = new AjaxResponse();
+      $values = $form_state->getValues();
+      $response->addCommand(new AiRequestCommand($prompt, $values["editor_id"], $this->pluginDefinition['id'], 'ai-ckeditor-response'));
+      return $response;
     }
     catch (\Exception $e) {
       $this->logger->error("There was an error in the Summarize AI plugin for CKEditor.");
-      $form['plugin_config']['response_text']['#value'] = "There was an error in the Summarize AI plugin for CKEditor.";
+      return $form['plugin_config']['response_text']['#value'] = "There was an error in the Summarize AI plugin for CKEditor.";
     }
-
-    return $form['plugin_config']['response_text'];
   }
 
 }

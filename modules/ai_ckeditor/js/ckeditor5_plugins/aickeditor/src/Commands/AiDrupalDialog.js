@@ -33,7 +33,7 @@ export default class AiDrupalDialog extends Command {
     }
     // Since we can't attach an editor instance to the dialog, we need to
     // pass the key for the configuration in the query.
-    url.searchParams.append('editor_key', this.editor.sourceElement.dataset.editorActiveTextFormat);
+    url.searchParams.append('editor_id', this.editor.sourceElement.dataset.editorActiveTextFormat);
     url.searchParams.append('plugin_id', plugin_id);
 
     openDialog(
@@ -55,7 +55,8 @@ export default class AiDrupalDialog extends Command {
             // Covert the value to html and insert it.
             const viewFragment = this.editor.data.processor.toView(attributes.value);
             const modelFragment = this.editor.data.toModel(viewFragment);
-            writer.insert(modelFragment, insertPosition);
+            this.editor.model.insertContent(modelFragment);
+            //writer.insert(modelFragment, insertPosition);
           }
           else {
 
@@ -70,6 +71,16 @@ export default class AiDrupalDialog extends Command {
       },
       dialogSettings,
     );
+  }
+
+  /**
+   * If the dialog is active, disable the AI plugin.
+   */
+  refresh() {
+    const el = document.getElementsByClassName('ckeditor5-ai-ckeditor-dialog-form');
+    this.isEnabled = (el.length === 0);
+    this.isOn = this.isEnabled;
+    this.isReadOnly = this.isEnabled;
   }
 
 }
