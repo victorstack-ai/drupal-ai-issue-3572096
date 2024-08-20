@@ -180,9 +180,17 @@ final class AiProviderPluginManager extends DefaultPluginManager {
     }
     foreach ($providers as $id => $definition) {
       $provider = $this->createInstance($id);
-      $models = $provider->getConfiguredModels($operation_type);
-      foreach ($models as $model_id => $model_name) {
-        $options[$id . '__' . $model_id] = $definition['label'] . ' - ' . $model_name;
+      try {
+        $models = $provider->getConfiguredModels($operation_type);
+        foreach ($models as $model_id => $model_name) {
+          $options[$id . '__' . $model_id] = $definition['label'] . ' - ' . $model_name;
+        }
+      }
+      catch (\Exception $e) {
+        $this->loggerFactory->get('ai')->error('Error getting models for provider %provider: %error', [
+          '%provider' => $id,
+          '%error' => $e->getMessage(),
+        ]);
       }
     }
     return $options;
