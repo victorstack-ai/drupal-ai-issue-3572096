@@ -149,7 +149,7 @@ class AnthropicProvider extends AiProviderClientBase implements
       $payload['system'] = $system_prompt;
     }
     // Unset Max Tokens.
-    $max_tokens = $payload['max_tokens'];
+    $max_tokens = $payload['max_tokens'] ?? 1024;
     unset($payload['max_tokens']);
     try {
       $response = $this->client->messages()->maxTokens($max_tokens)->create($payload)->content;
