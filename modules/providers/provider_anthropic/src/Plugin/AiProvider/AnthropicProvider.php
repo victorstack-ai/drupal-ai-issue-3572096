@@ -135,9 +135,25 @@ class AnthropicProvider extends AiProviderClientBase implements
           $system_prompt = $message->getText();
           continue;
         }
+        if (count($message->getImages())) {
+          foreach ($message->getImages() as $image) {
+            $content[] = [
+              'type' => 'image',
+              'source' => [
+                'type' => 'base64',
+                'media_type' => $image->getMimeType(),
+                'data' => $image->getAsBase64EncodedString(''),
+              ],
+            ];
+          }
+        }
+        $content[] = [
+          'type' => 'text',
+          'text' => $message->getText(),
+        ];
         $chat_input[] = [
           'role' => $message->getRole(),
-          'content' => $message->getText(),
+          'content' => $content,
         ];
       }
     }
