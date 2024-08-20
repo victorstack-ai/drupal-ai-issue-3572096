@@ -1,5 +1,5 @@
 /**
- * @file registers the Ai Completion button and binds functionality to it.
+ * @file registers the AI Assistant button and binds functionality to it.
  */
 
 import {Plugin} from 'ckeditor5/src/core';
@@ -7,7 +7,8 @@ import { ButtonView, ViewModel } from 'ckeditor5/src/ui';
 import {DropdownButtonView, addListToDropdown, createDropdown} from 'ckeditor5/src/ui';
 import icon from '../../../../icons/robot.svg';
 import { Collection } from 'ckeditor5/src/utils';
-import AiDrupalDialog from "./dialog/AiDrupalDialog";
+import AiDrupalDialog from "./Commands/AiDrupalDialog";
+import AiWriter from "./Commands/AiWriter";
 
 export default class Aiui extends Plugin {
 
@@ -16,11 +17,12 @@ export default class Aiui extends Plugin {
     const config = this.editor.config;
     const options = config.get('ai_ckeditor_ai');
 
-    editor.commands.add('AiDrupalDialog', new AiDrupalDialog(editor));
-
     if (!options) {
       return;
     }
+
+    editor.commands.add('AiDrupalDialog', new AiDrupalDialog(editor));
+    editor.commands.add('AiWriter', new AiWriter(editor));
 
     editor.ui.componentFactory.add('aickeditor', (locale) => {
       const items = new Collection();
@@ -64,6 +66,9 @@ export default class Aiui extends Plugin {
         class: 'ai-dropdown',
         withText: true,
       });
+
+      dropdownView.bind('isOn', 'isEnabled').to(editor.commands.get('AiDrupalDialog'), 'value', 'isEnabled');
+      buttonView.bind('isOn', 'isEnabled').to(editor.commands.get('AiDrupalDialog'), 'value', 'isEnabled');
 
       this.listenTo(dropdownView, 'execute', (event) => {
         this.editor.execute(event.source.command, event.source.group, event.source.plugin_id, event.source.label);

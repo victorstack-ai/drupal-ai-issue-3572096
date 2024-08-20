@@ -74,12 +74,12 @@ class AiCKEditorDialogForm extends FormBase {
     // Since we can't load the editor instance, we can't load the config in the
     // way the CKEditor5PluginManager does. We have to rely on the query string
     // and load the config from the configuration.
-    if (!isset($query_parameters['editor_key'])) {
+    if (!isset($query_parameters['editor_id'])) {
       throw new \InvalidArgumentException('We cannot determine that this is a CKEditor field.');
     }
 
-    // Check so the settings exists.
-    $editor_config = $this->configFactory()->get('editor.editor.' . $query_parameters['editor_key']);
+    // Check that the settings exists.
+    $editor_config = $this->configFactory()->get('editor.editor.' . $query_parameters['editor_id']);
     if (empty($editor_config->get('settings'))) {
       throw new \InvalidArgumentException('The editor configuration is empty.');
     }
@@ -118,6 +118,10 @@ class AiCKEditorDialogForm extends FormBase {
 
         $form['plugin_config'] = $instance->buildCkEditorModalForm([], $subform_state);
         $form['plugin_config']['#tree'] = TRUE;
+        $form['editor_id'] = [
+          '#type' => 'hidden',
+          '#value' => $query_parameters['editor_id'],
+        ];
       }
       catch (\Exception $exception) {
         $form['message'] = [

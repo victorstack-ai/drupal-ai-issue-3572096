@@ -30,6 +30,12 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
    * @var string[][]
    */
   const DEFAULT_CONFIGURATION = [
+    'dialog' => [
+      'autoresize' => 'min-width: 600px',
+      'height' => '750',
+      'width' => '900',
+      'dialog_class' => 'ai-ckeditor-modal',
+    ],
     'plugins' => [],
   ];
 
@@ -100,6 +106,41 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
       return $form;
     }
 
+    $form['dialog'] = [
+      '#type' => 'details',
+      '#tree' => TRUE,
+      '#open' => TRUE,
+      '#title' => $this->t('Modal dialog options'),
+    ];
+
+    $form['dialog']['autoresize'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Auto-resize dialog'),
+      '#description' => $this->t('Auto-resize the dialog when a modal is loaded, based on a CSS value. Leave blank to disable auto-resize. An example value for CSS could be: "min-width: 600px"'),
+      '#default_value' => $this->configuration['dialog']['autoresize'] ?? FALSE,
+    ];
+
+    $form['dialog']['height'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Height'),
+      '#description' => $this->t('A pixel or percent value of what the height of the modal should be. For pixel value, do not include "px".'),
+      '#default_value' => $this->configuration['dialog']['height'] ?? 750,
+    ];
+
+    $form['dialog']['width'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Width'),
+      '#description' => $this->t('A pixel or percent value of what the width of the modal should be. For pixel value, do not include "px".'),
+      '#default_value' => $this->configuration['dialog']['width'] ?? 900,
+    ];
+
+    $form['dialog']['dialog_class'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Dialog CSS class'),
+      '#description' => $this->t('A CSS class or classes to apply to the modal dialog.'),
+      '#default_value' => $this->configuration['dialog']['dialog_class'] ?? 'ai-ckeditor-modal',
+    ];
+
     $form['plugins'] = [];
 
     foreach ($definitions as $plugin_id => $definition) {
@@ -112,7 +153,7 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
       $form['plugins'][$plugin_id] = [
         '#type' => 'details',
         '#tree' => TRUE,
-        '#open' => TRUE,
+        '#open' => FALSE,
         '#title' => $definition['label'],
       ];
 
@@ -149,6 +190,13 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     $values = $form_state->getValues();
 
+    if (!empty($values['dialog'])) {
+      $this->configuration['dialog']['autoresize'] = (is_string($values["dialog"]["autoresize"]) && !empty($values["dialog"]["autoresize"])) ? $values["dialog"]["autoresize"] : FALSE;
+      $this->configuration['dialog']['height'] = is_string($values["dialog"]["height"]) ? $values["dialog"]["height"] : $this->defaultConfiguration()['height'];
+      $this->configuration['dialog']['width'] = is_string($values["dialog"]["width"]) ? $values["dialog"]["width"] : $this->defaultConfiguration()['width'];
+      $this->configuration['dialog']['dialog_class'] = is_string($values["dialog"]["dialog_class"]) ? $values["dialog"]["dialog_class"] : $this->defaultConfiguration()['dialog_class'];
+    }
+
     if (!empty($values['plugins'])) {
       foreach ($values['plugins'] as $plugin_id => $plugin) {
         $subform = $form['plugins'][$plugin_id] ?? [];
@@ -173,6 +221,13 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
     $static_plugin_config['ai_ckeditor_ai']['dialogURL'] = $ai_ckeditor_dialog_url;
 
     $config = $this->getConfiguration();
+
+    if (!empty($config["dialog"])) {
+      $static_plugin_config['ai_ckeditor_ai']['dialogSettings']['autoResize'] = (is_string($config["dialog"]["autoresize"]) && !empty($config["dialog"]["autoresize"])) ? $config["dialog"]["autoresize"] : FALSE;
+      $static_plugin_config['ai_ckeditor_ai']['dialogSettings']['height'] = is_string($config["dialog"]["height"]) ? $config["dialog"]["height"] : $this->defaultConfiguration()['height'];
+      $static_plugin_config['ai_ckeditor_ai']['dialogSettings']['width'] = is_string($config["dialog"]["width"]) ? $config["dialog"]["width"] : $this->defaultConfiguration()['width'];
+      $static_plugin_config['ai_ckeditor_ai']['dialogSettings']['dialogClass'] = is_string($config["dialog"]["dialog_class"]) ? $config["dialog"]["dialog_class"] : $this->defaultConfiguration()['dialog_class'];
+    }
 
     foreach ($config['plugins'] as $plugin_id => $plugin) {
       $definition = $this->pluginManager->getDefinition($plugin_id);

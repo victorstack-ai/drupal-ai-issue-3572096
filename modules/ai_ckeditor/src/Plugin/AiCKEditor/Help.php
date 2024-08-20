@@ -34,12 +34,6 @@ final class Help extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function validateCkEditorModalForm(array $form, FormStateInterface $form_state) {
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function submitCkEditorModalForm(array $form, FormStateInterface $form_state) {
     $response = new AjaxResponse();
     $response->addCommand(new CloseModalDialogCommand());
