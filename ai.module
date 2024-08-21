@@ -5,36 +5,7 @@
  * AI module file.
  */
 
-use Drupal\Core\Link;
 use Drupal\Core\Routing\RouteMatchInterface;
-
-/**
- * Implements hook_help().
- */
-function ai_help($route_name, RouteMatchInterface $route_match) {
-  // Get logged in user.
-  $user = \Drupal::currentUser();
-  // Only do check on any admin pages.
-  if ($user->hasPermission('administer ai') && ai_is_admin_route($route_match)) {
-    // Check so a provider is installed an usable.
-    $ai_provider = \Drupal::service('ai.provider');
-    $warn = TRUE;
-    foreach ($ai_provider->getDefinitions() as $provider_id => $provider) {
-      if ($ai_provider->createInstance($provider_id)->isUsable()) {
-        $warn = FALSE;
-        break;
-      }
-    }
-    if ($warn) {
-      // Display a warning message.
-      \Drupal::messenger()->addWarning(t('No AI provider is installed or usable for the AI module. Please %install and %configure an AI provider. Setting up a default %chat_provider is also recommended.', [
-        '%install' => Link::createFromRoute(t('install'), 'system.modules_list')->toString(),
-        '%configure' => Link::createFromRoute(t('configure'), 'ai.admin_providers')->toString(),
-        '%chat_provider' => Link::createFromRoute(t('chat provider'), 'ai.settings_form')->toString(),
-      ]));
-    }
-  }
-}
 
 /**
  * Implements hook_modules_installed().
