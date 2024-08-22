@@ -226,6 +226,19 @@ class ProviderProxy {
   }
 
   /**
+   * Gets the providers module name.
+   *
+   * @return string
+   *   The module name.
+   */
+  public function getModuleName(): string {
+    if (preg_match('/^Drupal\\\\([a-zA-Z_]+)\\\\/', $this->plugin::class, $matches)) {
+      return $matches[1];
+    }
+    return '';
+  }
+
+  /**
    * We have to figure out the operation type trigger methods.
    *
    * @param string $className
