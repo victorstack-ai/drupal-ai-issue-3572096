@@ -51,13 +51,12 @@ class AnthropicProvider extends AiProviderClientBase implements
    */
   public function getConfiguredModels(string $operation_type = NULL): array {
     // Anthropic hard codes :/.
-    $version = $this->getConfig()->get('version');
     if ($operation_type == 'chat') {
       return [
-        'claude-3-5-sonnet-' . $version => 'Claude 3.5 Sonnet',
-        'claude-3-opus-' . $version => 'Claude 3 Opus',
-        'claude-3-sonnet-' . $version => 'Claude 3 Sonnet',
-        'claude-3-haiku-' . $version => 'Claude 3 Haiku',
+        'claude-3-5-sonnet-20240620' => 'Claude 3.5 Sonnet',
+        'claude-3-opus-20240229' => 'Claude 3 Opus',
+        'claude-3-sonnet-20240229' => 'Claude 3 Sonnet',
+        'claude-3-haiku-20240307' => 'Claude 3 Haiku',
       ];
     }
     return [];
