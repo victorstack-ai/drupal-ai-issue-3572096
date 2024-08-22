@@ -231,7 +231,7 @@ class ProviderProxy {
    * @return string
    *   The module name.
    */
-  public function getModuleName(): string {
+  public function getModuleDataName(): string {
     if (preg_match('/^Drupal\\\\([a-zA-Z_]+)\\\\/', $this->plugin::class, $matches)) {
       return $matches[1];
     }
