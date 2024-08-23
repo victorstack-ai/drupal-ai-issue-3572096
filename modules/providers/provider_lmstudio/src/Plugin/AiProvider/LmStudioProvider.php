@@ -58,7 +58,7 @@ class LmStudioProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function getConfiguredModels(string $operation_type = NULL): array {
+  public function getConfiguredModels(string $operation_type = NULL, array $capabilities = []): array {
     $this->loadClient();
     $response = $this->controlApi->getModels();
     $models = [];
@@ -73,7 +73,7 @@ class LmStudioProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function isUsable(string $operation_type = NULL): bool {
+  public function isUsable(string $operation_type = NULL, array $capabilities = []): bool {
     if (!$this->getBaseHost()) {
       return FALSE;
     }

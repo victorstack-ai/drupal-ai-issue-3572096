@@ -4,6 +4,7 @@ namespace Drupal\provider_mistral\Plugin\AiProvider;
 
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
+use Drupal\ai\Enum\AiModelCapability;
 use Drupal\ai\Exception\AiResponseErrorException;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
@@ -47,7 +48,11 @@ class MistralProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function getConfiguredModels(string $operation_type = NULL): array {
+  public function getConfiguredModels(string $operation_type = NULL, array $capabilities = []): array {
+    // No vision support.
+    if (in_array(AiModelCapability::ChatWithImageVision, $capabilities)) {
+      return [];
+    }
     set_error_handler([$this, 'errorCatcher'], E_ALL);
     $response = $this->getClient()->models()->list()->toArray();
     restore_error_handler();
@@ -68,7 +73,11 @@ class MistralProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function isUsable(string $operation_type = NULL): bool {
+  public function isUsable(string $operation_type = NULL, array $capabilities = []): bool {
+    // No vision support.
+    if (in_array(AiModelCapability::ChatWithImageVision, $capabilities)) {
+      return FALSE;
+    }
     // If its not configured, it is not usable.
     if (!$this->getConfig()->get('api_key')) {
       return FALSE;

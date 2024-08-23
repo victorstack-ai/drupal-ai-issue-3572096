@@ -126,17 +126,19 @@ final class AiProviderPluginManager extends DefaultPluginManager {
    *   The operation type.
    * @param bool $setup
    *   If the provider should be required to be setup.
+   * @param array $capabilities
+   *   The capabilities the provider should have.
    *
    * @return array
    *   The providers.
    */
-  public function getProvidersForOperationType(string $operation_type, bool $setup = TRUE): array {
+  public function getProvidersForOperationType(string $operation_type, bool $setup = TRUE, array $capabilities = []): array {
     $providers = [];
     $definitions = $this->getDefinitions();
     foreach ($definitions as $id => $definition) {
       $provider_entity = $this->createInstance($id);
       if (in_array($operation_type, $provider_entity->getSupportedOperationTypes())) {
-        if (!$setup || $provider_entity->isUsable($operation_type)) {
+        if (!$setup || $provider_entity->isUsable($operation_type, $capabilities)) {
           $providers[$id] = $definition;
         }
       }
@@ -149,12 +151,14 @@ final class AiProviderPluginManager extends DefaultPluginManager {
    *
    * @param string $operation_type
    *   The operation type.
+   * @param array $capabilities
+   *   The capabilities the provider should have.
    *
    * @return string
    *   The simple default provider option.
    */
-  public function getSimpleDefaultProviderOptions(string $operation_type): string {
-    $default_provider = $this->getDefaultProviderForOperationType($operation_type);
+  public function getSimpleDefaultProviderOptions(string $operation_type, array $capabilities = []): string {
+    $default_provider = $this->getDefaultProviderForOperationType($operation_type, $capabilities);
     return !empty($default_provider['provider_id']) && !empty($default_provider['model_id']) ?
       $default_provider['provider_id'] . '__' . $default_provider['model_id'] : '';
   }
@@ -168,12 +172,14 @@ final class AiProviderPluginManager extends DefaultPluginManager {
    *   If empty choices should be included.
    * @param bool $setup
    *   If the provider should be required to be setup.
+   * @param array $capabilities
+   *   The capabilities the provider should have.
    *
    * @return array
    *   Key that is __ separated for provider and model.
    */
-  public function getSimpleProviderModelOptions(string $operation_type, bool $empty = TRUE, bool $setup = TRUE): array {
-    $providers = $this->getProvidersForOperationType($operation_type, $setup);
+  public function getSimpleProviderModelOptions(string $operation_type, bool $empty = TRUE, bool $setup = TRUE, array $capabilities = []): array {
+    $providers = $this->getProvidersForOperationType($operation_type, $setup, $capabilities);
     $options = [];
     if ($empty) {
       $options[''] = $this->t('- None -');
@@ -181,7 +187,7 @@ final class AiProviderPluginManager extends DefaultPluginManager {
     foreach ($providers as $id => $definition) {
       $provider = $this->createInstance($id);
       try {
-        $models = $provider->getConfiguredModels($operation_type);
+        $models = $provider->getConfiguredModels($operation_type, $capabilities);
         foreach ($models as $model_id => $model_name) {
           $options[$id . '__' . $model_id] = $definition['label'] . ' - ' . $model_name;
         }

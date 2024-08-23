@@ -4,6 +4,7 @@ namespace Drupal\provider_groq\Plugin\AiProvider;
 
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
+use Drupal\ai\Enum\AiModelCapability;
 use Drupal\ai\Exception\AiRateLimitException;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
@@ -43,7 +44,12 @@ class GroqProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function getConfiguredModels(string $operation_type = NULL): array {
+  public function getConfiguredModels(string $operation_type = NULL, array $capabilities = []): array {
+    // No vision support.
+    if (in_array(AiModelCapability::ChatWithImageVision, $capabilities)) {
+      return [];
+    }
+
     $response = $this->getClient()->models()->list()->toArray();
     $models = [];
     if (isset($response['data'])) {
@@ -57,7 +63,11 @@ class GroqProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function isUsable(string $operation_type = NULL): bool {
+  public function isUsable(string $operation_type = NULL, array $capabilities = []): bool {
+    // No vision support.
+    if (in_array(AiModelCapability::ChatWithImageVision, $capabilities)) {
+      return FALSE;
+    }
     // If its not configured, it is not usable.
     if (!$this->getConfig()->get('api_key')) {
       return FALSE;

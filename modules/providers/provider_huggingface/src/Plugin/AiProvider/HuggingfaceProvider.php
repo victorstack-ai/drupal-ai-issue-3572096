@@ -58,7 +58,7 @@ class HuggingfaceProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function getConfiguredModels(string $operation_type = NULL): array {
+  public function getConfiguredModels(string $operation_type = NULL, array $capabilities = []): array {
     $models_config = $this->getConfig()->get('models') ?: [];
     $models = [];
     if (!empty($models_config[$operation_type])) {
@@ -72,7 +72,7 @@ class HuggingfaceProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function isUsable(string $operation_type = NULL): bool {
+  public function isUsable(string $operation_type = NULL, array $capabilities = []): bool {
     // If its not configured, it is not usable.
     if (!$this->getConfig()->get('api_key')) {
       return FALSE;

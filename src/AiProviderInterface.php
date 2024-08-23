@@ -15,23 +15,27 @@ interface AiProviderInterface extends PluginInspectionInterface {
    * Keyed with human-readable names and optionally filtered by typ.
    *
    * @param string|null $operation_type
-   *   The oepration type.
+   *   The operation type.
+   * @param array $capabilities
+   *   The capabilities to filter by.
    *
    * @return array
    *   The list of models.
    */
-  public function getConfiguredModels(string $operation_type = NULL): array;
+  public function getConfiguredModels(string $operation_type = NULL, array $capabilities = []): array;
 
   /**
    * Returns if the provider is setup and ready to use for the type.
    *
    * @param string|null $operation_type
    *   Operation type string.
+   * @param array $capabilities
+   *   The capabilities to filter by.
    *
    * @return bool
    *   Returns TRUE if the provider is setup and ready to use.
    */
-  public function isUsable(string $operation_type): bool;
+  public function isUsable(string $operation_type = NULL, array $capabilities = []): bool;
 
   /**
    * Returns the supported operation types for this provider.
@@ -40,6 +44,14 @@ interface AiProviderInterface extends PluginInspectionInterface {
    *   List of supported operation types.
    */
   public function getSupportedOperationTypes(): array;
+
+  /**
+   * Returns the supported capabilities for this provider.
+   *
+   * @return array
+   *   List of supported capabilities.
+   */
+  public function getSupportedCapabilities(): array;
 
   /**
    * Returns array of available configuration parameters for given type.

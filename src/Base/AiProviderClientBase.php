@@ -240,6 +240,26 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   /**
    * {@inheritdoc}
    */
+  public function getSupportedCapabilities(): array {
+    return [];
+  }
+
+  /**
+   * Does this provider support this capability.
+   *
+   * @param enum $capability
+   *   The capability to check.
+   *
+   * @return bool
+   *   TRUE if the capability is supported.
+   */
+  public function supportsCapability(string $capability): bool {
+    return in_array($capability, $this->getSupportedCapabilities());
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function setConfiguration(array $configuration): void {
     $this->configuration = $configuration;
   }

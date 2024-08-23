@@ -59,7 +59,7 @@ class OllamaProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function getConfiguredModels(string $operation_type = NULL): array {
+  public function getConfiguredModels(string $operation_type = NULL, array $capabilities = []): array {
     $response = $this->controlApi->getModels();
     $models = [];
     if (isset($response['models'])) {
@@ -73,7 +73,7 @@ class OllamaProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function isUsable(string $operation_type = NULL): bool {
+  public function isUsable(string $operation_type = NULL, array $capabilities = []): bool {
     // If its one of the bundles that Ollama supports its usable.
     if (!$this->getBaseHost()) {
       return FALSE;

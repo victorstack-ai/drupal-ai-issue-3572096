@@ -3,6 +3,7 @@
 namespace Drupal\ai\Form;
 
 use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\Enum\AiModelCapability;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -23,6 +24,20 @@ class AiSettingsForm extends ConfigFormBase {
    * @var \Drupal\ai\AiProviderPluginManager
    */
   protected $providerManager;
+
+  /**
+   * The hard coded selections to add for filtering purposes.
+   *
+   * @var array
+   */
+  protected $hardcodedSelections = [
+    [
+      'id' => 'chat_with_image_vision',
+      'actual_type' => 'chat',
+      'label' => 'Chat with Image Vision',
+      'filter' => [AiModelCapability::ChatWithImageVision],
+    ],
+  ];
 
   /**
    * Constructor.
@@ -79,13 +94,17 @@ class AiSettingsForm extends ConfigFormBase {
     foreach ($this->providerManager->getDefinitions() as $id => $definition) {
       $providers[$id] = $this->providerManager->createInstance($id);
     }
+
+    // Add the hardcoded selections of filtered types.
+    $operation_types = array_merge($operation_types, $this->hardcodedSelections);
     foreach ($operation_types as $operation_type) {
       // Get all providers that allows for a specific operation type.
       $options = [
         '' => 'No default',
       ];
+      $filters = $operation_type['filter'] ?? [];
       foreach ($providers as $provider) {
-        if ($provider->isUsable($operation_type['id'])) {
+        if ($provider->isUsable($operation_type['actual_type'] ?? $operation_type['id'], $filters)) {
           $options[$provider->getPluginId()] = $provider->getPluginDefinition()['label'];
         }
       }
@@ -117,7 +136,7 @@ class AiSettingsForm extends ConfigFormBase {
 
       // Add the model id field if the provider is set.
       if ($default_provider && !empty($providers[$default_provider])) {
-        $models = $providers[$default_provider]->getConfiguredModels($operation_type['id']);
+        $models = $providers[$default_provider]->getConfiguredModels($operation_type['actual_type'] ?? $operation_type['id'], $filters);
         $form['default_providers'][$operation_type['id']]['model']['model__' . $operation_type['id']] = [
           '#type' => 'select',
           '#title' => $this->t('Default Model'),

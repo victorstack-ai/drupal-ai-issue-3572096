@@ -4,6 +4,8 @@ namespace Drupal\provider_openai\Plugin\AiProvider;
 
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
+use Drupal\ai\Enum\AiModelCapability;
+use Drupal\ai\Enum\AiProviderCapability;
 use Drupal\ai\Exception\AiQuotaException;
 use Drupal\ai\Exception\AiRateLimitException;
 use Drupal\ai\Exception\AiResponseErrorException;
@@ -30,6 +32,8 @@ use Drupal\ai\OperationType\TextToImage\TextToImageOutput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInterface;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechOutput;
+use Drupal\Component\Serialization\Json;
+use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\File\FileExists;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
@@ -78,17 +82,17 @@ class OpenAiProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function getConfiguredModels(string $operation_type = NULL): array {
+  public function getConfiguredModels(string $operation_type = NULL, array $capabilities = []): array {
     // Load all models, and since OpenAI does not provide information about
     // which models does what, we need to hard code it in a helper function.
     $this->loadClient();
-    return $this->getModels($operation_type);
+    return $this->getModels($operation_type, $capabilities);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function isUsable(string $operation_type = NULL): bool {
+  public function isUsable(string $operation_type = NULL, array $capabilities = []): bool {
     // If its not configured, it is not usable.
     if (!$this->getConfig()->get('api_key')) {
       return FALSE;
@@ -111,6 +115,15 @@ class OpenAiProvider extends AiProviderClientBase implements
       'text_to_image',
       'text_to_speech',
       'speech_to_text',
+    ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getSupportedCapabilities(): array {
+    return [
+      AiProviderCapability::StreamChatOutput,
     ];
   }
 
@@ -541,10 +554,10 @@ class OpenAiProvider extends AiProviderClientBase implements
    * @return array
    *   A filtered list of public models.
    */
-  public function getModels(string $operation_type): array {
+  public function getModels(string $operation_type, $capabilities): array {
     $models = [];
 
-    $cache_data = $this->cacheBackend->get('openai_models_' . $operation_type, $models);
+    $cache_data = $this->cacheBackend->get('openai_models_' . $operation_type . '_' . Crypt::hashBase64(Json::encode($capabilities)), $models);
 
     if (!empty($cache_data)) {
       return $cache_data->data;
@@ -615,7 +628,15 @@ class OpenAiProvider extends AiProviderClientBase implements
           break;
       }
 
-      $models[$model['id']] = $model['id'];
+      // Filter models.
+      if (in_array(AiModelCapability::ChatWithImageVision, $capabilities)) {
+        if (preg_match('/^(gpt-4o|gpt-4-turbo|vision)/i', $model['id'])) {
+          $models[$model['id']] = $model['id'];
+        }
+      }
+      else {
+        $models[$model['id']] = $model['id'];
+      }
     }
 
     if ($operation_type == 'moderation') {
