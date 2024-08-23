@@ -8,3 +8,6 @@ provider_openai.settings:
     moderation:
       type: boolean
       label: 'Enable moderation requests before each request.'
+    host:
+      type: string
+      label: 'The host to use for the API requests.'

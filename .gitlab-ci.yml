@@ -17,3 +17,7 @@ variables:
   OPT_IN_TEST_MAX_PHP: 1
   _PHPUNIT_CONCURRENT: 1
   SKIP_ESLINT: 1
+
+before_script:
+  - npm install -g @mockoon/cli
+  - export MOCKOON_BASEHOST=http://localhost:3010 && mockoon-cli start --data tests/assets/mockoon/openai.json --port 3010 & > /dev/null 2>&1

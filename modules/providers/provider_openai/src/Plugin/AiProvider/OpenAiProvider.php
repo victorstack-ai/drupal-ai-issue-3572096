@@ -243,10 +243,16 @@ class OpenAiProvider extends AiProviderClientBase implements
       if (!$this->apiKey) {
         $this->setAuthentication($this->loadApiKey());
       }
-      $this->client = \OpenAI::factory()
+      $client = \OpenAI::factory()
         ->withApiKey($this->apiKey)
-        ->withHttpClient($this->httpClient)
-        ->make();
+        ->withHttpClient($this->httpClient);
+
+      // If the configuration has a custom endpoint, we set it.
+      if (!empty($this->getConfig()->get('host'))) {
+        $client->withBaseUri($this->getConfig()->get('host'));
+      }
+
+      $this->client = $client->make();
     }
   }
 
@@ -384,7 +390,7 @@ class OpenAiProvider extends AiProviderClientBase implements
       throw new AiResponseErrorException('No image data found in the response.');
     }
     foreach ($response['data'] as $data) {
-      if ($this->configuration['response_format'] === 'url') {
+      if (isset($this->configuration['response_format']) && $this->configuration['response_format'] === 'url') {
         $images[] = new ImageFile(file_get_contents($data['url']), 'image/png', 'dalle.png');
       }
       else {

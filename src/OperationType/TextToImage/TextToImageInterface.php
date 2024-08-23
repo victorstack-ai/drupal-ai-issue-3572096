@@ -16,7 +16,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 interface TextToImageInterface extends OperationTypeInterface {
 
   /**
-   * Generate audio from text.
+   * Generate image from text.
    *
    * @param string|\Drupal\ai\Operation\TextToImage\TextToImageInput $input
    *   The text to generate images from or a Output.
