@@ -263,7 +263,12 @@ class OpenAiProvider extends AiProviderClientBase implements
    *   The API key.
    */
   protected function loadApiKey(): string {
-    return $this->keyRepository->getKey($this->getConfig()->get('api_key'))->getKeyValue();
+    $key = $this->keyRepository->getKey($this->getConfig()->get('api_key'))->getKeyValue();
+    // If it came here, but the key is missing, something is wrong with env.
+    if (!$key) {
+      throw new \Exception('We could not load your OpenAI Key at all, please check your environment settings or your setup key.');
+    }
+    return $key;
   }
 
   /**
