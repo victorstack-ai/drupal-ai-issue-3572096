@@ -65,15 +65,18 @@ class AiProviderFormHelper {
    *   The weight of the form element.
    * @param string $provider_id
    *   If you already have the provider id and only want to show the models.
+   * @param string $title
+   *   The title of the form element.
+   * @param string $description
+   *   The description of the form element.
    */
-  public function generateAiProvidersForm(array &$form, FormStateInterface $form_state, string $operation_type, string $prefix = '', int $config_level = AiProviderFormHelper::FORM_CONFIGURATION_NONE, $weight = 0, string $provider_id = '') {
+  public function generateAiProvidersForm(array &$form, FormStateInterface $form_state, string $operation_type, string $prefix = '', int $config_level = AiProviderFormHelper::FORM_CONFIGURATION_NONE, $weight = 0, string $provider_id = '', $title = '', $description = '') {
     $providers = $this->getAiProvidersOptions($operation_type);
 
     // Make sure the prefix is properly formatted.
     $prefix = $prefix ? rtrim($prefix, '_') . '_' : '';
-    $form_state->set('llm_prefix', $prefix);
-    $defaults = $this->aiProviderPluginManager->getDefaultProviderForOperationType($operation_type);
 
+    $defaults = $this->aiProviderPluginManager->getDefaultProviderForOperationType($operation_type);
     // Don't load the provider selection if a provider is already selected.
     $provider = $provider_id;
     if (!$provider_id) {
@@ -81,15 +84,18 @@ class AiProviderFormHelper {
       if (!$provider && !empty($defaults['provider_id'])) {
         $provider = $defaults['provider_id'];
       }
+
       $form[$prefix . 'ai_provider'] = [
         '#type' => 'select',
-        '#title' => $this->t('LLM Provider'),
+        '#title' => $title ? $title : $this->t('LLM Provider'),
         '#options' => $providers,
         '#default_value' => $provider,
+        '#description' => $description ?? '',
         '#required' => TRUE,
         '#ajax' => [
           'callback' => '\Drupal\ai\Service\AiProviderFormHelper::loadModelsAjaxCallback',
           'wrapper' => $prefix . 'ajax_wrapper',
+          'data-prefix' => $prefix,
         ],
       ];
       if ($weight) {
@@ -130,6 +136,7 @@ class AiProviderFormHelper {
         '#ajax' => [
           'callback' => '\Drupal\ai\Service\AiProviderFormHelper::loadModelsAjaxCallback',
           'wrapper' => $prefix . 'ajax_wrapper',
+          'data-prefix' => $prefix,
           'event' => 'change',
         ],
       ];
@@ -157,27 +164,29 @@ class AiProviderFormHelper {
     $prefix = $prefix ? rtrim($prefix, '_') . '_' : '';
     $provider = $form_state->getValue($prefix . 'ai_provider');
     $model = $form_state->getValue($prefix . 'ai_model');
-    $llmInstance = $this->aiProviderPluginManager->createInstance($provider);
-    if ($model) {
-      $schema = $llmInstance->getAvailableConfiguration($operation_type, $model);
-      foreach ($form_state->getValues() as $key => $value) {
-        if (strpos($key, $prefix) === 0) {
-          $real_key = trim(str_replace($prefix . 'ajax_prefix_configuration_', '', $key));
-          if (!empty($schema[$real_key]['constraints'])) {
-            if (!empty($schema[$real_key]['constraints']['min'])) {
-              if ($value < $schema[$real_key]['constraints']['min']) {
-                $form_state->setErrorByName($key, $this->t('The value for @key must be at least @min.', [
-                  '@key' => $schema[$real_key]['label'],
-                  '@min' => $schema[$real_key]['constraints']['min'],
-                ]));
+    if ($provider) {
+      $llmInstance = $this->aiProviderPluginManager->createInstance($provider);
+      if ($model) {
+        $schema = $llmInstance->getAvailableConfiguration($operation_type, $model);
+        foreach ($form_state->getValues() as $key => $value) {
+          if (strpos($key, $prefix) === 0) {
+            $real_key = trim(str_replace($prefix . 'ajax_prefix_configuration_', '', $key));
+            if (!empty($schema[$real_key]['constraints'])) {
+              if (!empty($schema[$real_key]['constraints']['min'])) {
+                if ($value < $schema[$real_key]['constraints']['min']) {
+                  $form_state->setErrorByName($key, $this->t('The value for @key must be at least @min.', [
+                    '@key' => $schema[$real_key]['label'],
+                    '@min' => $schema[$real_key]['constraints']['min'],
+                  ]));
+                }
               }
-            }
-            if (!empty($schema[$real_key]['constraints']['max'])) {
-              if ($value > $schema[$real_key]['constraints']['max']) {
-                $form_state->setErrorByName($key, $this->t('The value for @key must be at most @max.', [
-                  '@key' => $schema[$real_key]['label'],
-                  '@max' => $schema[$real_key]['constraints']['max'],
-                ]));
+              if (!empty($schema[$real_key]['constraints']['max'])) {
+                if ($value > $schema[$real_key]['constraints']['max']) {
+                  $form_state->setErrorByName($key, $this->t('The value for @key must be at most @max.', [
+                    '@key' => $schema[$real_key]['label'],
+                    '@max' => $schema[$real_key]['constraints']['max'],
+                  ]));
+                }
               }
             }
           }
@@ -262,7 +271,8 @@ class AiProviderFormHelper {
    *   The form array.
    */
   public static function loadModelsAjaxCallback(array &$form, FormStateInterface $form_state) {
-    $prefix = $form_state->get('llm_prefix');
+    $prefix = $form_state->getTriggeringElement()['#ajax']['data-prefix'];
+    $form_state->setRebuild();
     return $form[$prefix . 'ajax_prefix'];
   }
 
