@@ -105,7 +105,7 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
     $this->chunkSize = $configuration['chunk_size'] ?? $this->embeddingLlm->maxEmbeddingsInput($this->modelId);
 
     if (!empty($configuration['chunk_min_overlap'])) {
-      $this->chunkMinOverlap = $configuration['chunk_min_overlap'];
+      $this->chunkMinOverlap = (int) $configuration['chunk_min_overlap'];
     }
   }
 
