@@ -7,7 +7,6 @@ use Drupal\ai_ckeditor\Attribute\AiCKEditor;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\CloseModalDialogCommand;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
@@ -19,8 +18,6 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
   description: new TranslatableMarkup('Information on where to get AI help and support.'),
 )]
 final class Help extends AiCKEditorPluginBase {
-
-  use StringTranslationTrait;
 
   /**
    * {@inheritdoc}

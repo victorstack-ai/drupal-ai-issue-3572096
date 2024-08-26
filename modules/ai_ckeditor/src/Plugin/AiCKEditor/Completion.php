@@ -7,7 +7,6 @@ use Drupal\ai_ckeditor\Attribute\AiCKEditor;
 use Drupal\ai_ckeditor\Command\AiRequestCommand;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
@@ -19,8 +18,6 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
   description: new TranslatableMarkup('Get ideas and text completion assistance from AI.'),
 )]
 final class Completion extends AiCKEditorPluginBase {
-
-  use StringTranslationTrait;
 
   /**
    * {@inheritdoc}
