@@ -100,6 +100,9 @@ class ProviderProxy {
    *   The result of the method call.
    */
   protected function wrapperCall(\ReflectionMethod $method, $arguments) {
+    // Check if the method outputs an instance of OutputInterface.
+    $returnType = $method->getReturnType();
+
     // Get the operation type trigger methods.
     $proxiedMethods = $this->getOperationTypeTriggerMethods(get_class($this->plugin));
     // Set the operation type from the method name.
@@ -262,7 +265,9 @@ class ProviderProxy {
         if ($interface->hasMethod($methodName)) {
           // Get the parent interface.
           foreach ($interface->getInterfaces() as $parentInterface) {
-            if (isset($parentInterface->name) && OperationTypeInterface::class === $parentInterface->name) {
+            // Only run if its the actual trigger method name of the interface.
+            if (isset($parentInterface->name) && OperationTypeInterface::class === $parentInterface->name &&
+              str_replace('interface', '', strtolower($interface->getShortName())) == strtolower($methodName)) {
               $methodInterfaces[] = $methodName;
             }
           }
