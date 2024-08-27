@@ -13,6 +13,7 @@ use Drupal\ai\OperationType\Embeddings\EmbeddingsInterface;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsOutput;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\provider_ollama\OllamaControlApi;
 use GuzzleHttp\Client as GuzzleClient;
@@ -32,6 +33,8 @@ class OllamaProvider extends AiProviderClientBase implements
   ChatInterface,
   EmbeddingsInterface {
 
+  use StringTranslationTrait;
+
   /**
    * The OpenAI Client for API calls.
    *
@@ -47,12 +50,28 @@ class OllamaProvider extends AiProviderClientBase implements
   protected $controlApi;
 
   /**
+   * The current user.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface
+   */
+  protected $currentUser;
+
+  /**
+   * The messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
+
+  /**
    * Dependency Injection for the Ollama Control API.
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->controlApi = $container->get('provider_ollama.control_api');
     $instance->controlApi->setConnectData($instance->getBaseHost());
+    $instance->currentUser = $container->get('current_user');
+    $instance->messenger = $container->get('messenger');
     return $instance;
   }
 
@@ -60,7 +79,17 @@ class OllamaProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function getConfiguredModels(string $operation_type = NULL, array $capabilities = []): array {
-    $response = $this->controlApi->getModels();
+    // Graceful failure.
+    try {
+      $response = $this->controlApi->getModels();
+    }
+    catch (\Exception $e) {
+      if ($this->currentUser->hasPermission('administer ai providers')) {
+        $this->messenger->addError($this->t('Failed to get models from Ollama: @error', ['@error' => $e->getMessage()]));
+      }
+      $this->loggerFactory->get('provider_ollama')->error('Failed to get models from Ollama: @error', ['@error' => $e->getMessage()]);
+      return [];
+    }
     $models = [];
     if (isset($response['models'])) {
       foreach ($response['models'] as $model) {

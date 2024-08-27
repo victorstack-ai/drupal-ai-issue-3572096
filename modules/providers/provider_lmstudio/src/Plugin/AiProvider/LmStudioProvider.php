@@ -13,6 +13,7 @@ use Drupal\ai\OperationType\Embeddings\EmbeddingsInterface;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsOutput;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\provider_lmstudio\LmStudioControlApi;
 use OpenAI\Client;
@@ -31,6 +32,8 @@ class LmStudioProvider extends AiProviderClientBase implements
   ChatInterface,
   EmbeddingsInterface {
 
+  use StringTranslationTrait;
+
   /**
    * The OpenAI Client for API calls.
    *
@@ -46,12 +49,28 @@ class LmStudioProvider extends AiProviderClientBase implements
   protected $controlApi;
 
   /**
+   * Get the current user.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface
+   */
+  protected $currentUser;
+
+  /**
+   * The messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
+
+  /**
    * Dependency Injection for the LM Studio Control API.
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->controlApi = $container->get('provider_lmstudio.control_api');
     $instance->controlApi->setConnectData($instance->getBaseHost());
+    $instance->currentUser = $container->get('current_user');
+    $instance->messenger = $container->get('messenger');
     return $instance;
   }
 
@@ -60,7 +79,15 @@ class LmStudioProvider extends AiProviderClientBase implements
    */
   public function getConfiguredModels(string $operation_type = NULL, array $capabilities = []): array {
     $this->loadClient();
-    $response = $this->controlApi->getModels();
+    try {
+      $response = $this->controlApi->getModels();
+    } catch (\Exception $e) {
+      if ($this->currentUser->hasPermission('administer ai providers')) {
+        $this->messenger->addError($this->t('Failed to get models from LM Studio: @error', ['@error' => $e->getMessage()]));
+      }
+      $this->loggerFactory->get('provider_lmstudio')->error('Failed to get models from LM Studio: @error', ['@error' => $e->getMessage()]);
+      return [];
+    }
     $models = [];
     if (isset($response['data'])) {
       foreach ($response['data'] as $model) {
