@@ -281,6 +281,13 @@ class OpenAiProvider extends AiProviderClientBase implements
     $chat_input = $input;
     if ($input instanceof ChatInput) {
       $chat_input = [];
+      // Add a system role if wanted.
+      if ($this->chatSystemRole) {
+        $chat_input[] = [
+          'role' => 'system',
+          'content' => $this->chatSystemRole,
+        ];
+      }
       /** @var \Drupal\ai\OperationType\Chat\ChatMessage $message */
       foreach ($input->getMessages() as $message) {
         $content = [
@@ -562,6 +569,8 @@ class OpenAiProvider extends AiProviderClientBase implements
    *
    * @param string $operation_type
    *   The bundle to filter models by.
+   * @param array $capabilities
+   *   The capabilities to filter models by.
    *
    * @return array
    *   A filtered list of public models.

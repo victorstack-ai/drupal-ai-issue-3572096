@@ -4,6 +4,7 @@ namespace Drupal\provider_huggingface\Plugin\AiProvider;
 
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
+use Drupal\ai\Enum\AiModelCapability;
 use Drupal\ai\Exception\AiMissingFeatureException;
 use Drupal\ai\Exception\AiRateLimitException;
 use Drupal\ai\OperationType\Chat\ChatInput;
@@ -59,6 +60,10 @@ class HuggingfaceProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function getConfiguredModels(string $operation_type = NULL, array $capabilities = []): array {
+    // No models allows system prompts in chat, so we don't allow it.
+    if ($operation_type == 'chat' && in_array(AiModelCapability::ChatSystemRole, $capabilities)) {
+      return [];
+    }
     $models_config = $this->getConfig()->get('models') ?: [];
     $models = [];
     if (!empty($models_config[$operation_type])) {
@@ -158,6 +163,10 @@ class HuggingfaceProvider extends AiProviderClientBase implements
     $chat_input = $input;
     if ($input instanceof ChatInput) {
       $chat_input = "";
+      // Add a warning log if they set an system role.
+      if ($this->chatSystemRole) {
+        $this->loggerFactory->get('ai')->warning('A chat message with system role was sent with Huggingface provider. Huggingface does not support system roles and this was removed.');
+      }
       foreach ($input->getMessages() as $message) {
         $chat_input .= $message->getRole() . ': ' . $message->getText() . "\n";
         if (count($message->getImages())) {

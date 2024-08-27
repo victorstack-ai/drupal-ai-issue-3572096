@@ -206,6 +206,13 @@ class OllamaProvider extends AiProviderClientBase implements
     $chat_input = $input;
     if ($input instanceof ChatInput) {
       $chat_input = [];
+      // Add a system role if wanted.
+      if ($this->chatSystemRole) {
+        $chat_input[] = [
+          'role' => 'system',
+          'content' => $this->chatSystemRole,
+        ];
+      }
       foreach ($input->getMessages() as $message) {
         $chat_input[] = [
           'role' => $message->getRole(),

@@ -103,23 +103,16 @@ class ChatGenerationForm extends FormBase {
       '#open' => FALSE,
     ];
 
-    $form['prompts']['system_prompt']['role_1'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Role'),
-      '#attributes' => [
-        'placeholder' => $this->t('user, system, assistant, etc.'),
-      ],
-      '#default_value' => 'system',
-      '#required' => FALSE,
-    ];
-    $form['prompts']['system_prompt']['message_1'] = [
+    $form['prompts']['system_prompt']['system_message'] = [
       '#type' => 'textarea',
-      '#title' => $this->t('Message'),
-      '#default_value' => "You are an helpful assistant.",
+      '#title' => $this->t('System Message'),
+      '#attributes' => [
+        'placeholder' => $this->t("You are an helpful assistant."),
+      ],
       '#required' => FALSE,
     ];
 
-    $form['prompts']['role_2'] = [
+    $form['prompts']['role_1'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Role'),
       '#attributes' => [
@@ -128,7 +121,7 @@ class ChatGenerationForm extends FormBase {
       '#default_value' => 'user',
       '#required' => TRUE,
     ];
-    $form['prompts']['message_2'] = [
+    $form['prompts']['message_1'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Message'),
       '#attributes' => [
@@ -137,7 +130,7 @@ class ChatGenerationForm extends FormBase {
       '#required' => TRUE,
       '#default_value' => '',
     ];
-    $form['prompts']['image_2'] = [
+    $form['prompts']['image_1'] = [
       '#type' => 'file',
       // Only jpg, png files are allowed, since that covers most models.
       '#accept' => '.jpg, .png, .jpeg',
@@ -227,6 +220,11 @@ class ChatGenerationForm extends FormBase {
 
     $input = new ChatInput($messages);
 
+    // Check for system message.
+    if ($form_state->getValue('system_message')) {
+      $provider->setChatSystemRole($form_state->getValue('system_message'));
+    }
+
     $message = NULL;
     $response = NULL;
     try {
@@ -307,6 +305,9 @@ class ChatGenerationForm extends FormBase {
 
     $input = new ChatInput($messages);
 
+    if ($form_state->getValue('system_message')) {
+      $provider->setChatSystemRole($form_state->getValue('system_message'));
+    }
     $message = NULL;
     $response = NULL;
 
@@ -402,6 +403,9 @@ class ChatGenerationForm extends FormBase {
     if ($show_config) {
       $code .= "\$ai_provider->setConfiguration(\$config);<br>";
     }
+    if ($form_state->getValue('system_message')) {
+      $code .= '$ai_provider->setChatSystemRole("' . $form_state->getValue('system_message') . '");<br>';
+    }
     if ($form_state->getValue('streamed')) {
       $code .= "// If you want to stream the response normalized you have to make sure<br>";
       $code .= "\$ai_provider->streamedOutput();<br>";
@@ -458,9 +462,12 @@ class ChatGenerationForm extends FormBase {
     }
     $code .= '];<br><br>';
     $code .= "\$ai_provider = \Drupal::service('ai.provider')->createInstance('" . $form_state->getValue('chat_ai_provider') . '\');<br>';
+    if ($form_state->getValue('system_message')) {
+      $code .= '$ai_provider->setChatSystemRole("' . $form_state->getValue('system_message') . '");<br>';
+    }
     $code .= "\$ai_provider->setConfiguration(\$config);<br>";
     $code .= "// Normalized \$response will be what ever the provider gives back.<br>";
-    $code .= "\$response = \$ai_provider->chat(\$expectedInputFromProviderClient, '" . $form_state->getValue('chat_ai_model') . '\', ["your_module_name"])->getRaw();';
+    $code .= "\$response = \$ai_provider->chat(\$expectedInputFromProviderClient, '" . $form_state->getValue('chat_ai_model') . '\', ["your_module_name"])->getRawOutput();';
     $code .= "</code></details>";
     return $code;
   }

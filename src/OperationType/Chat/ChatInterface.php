@@ -30,4 +30,12 @@ interface ChatInterface extends OperationTypeInterface {
    */
   public function chat(array|string|ChatInput $input, string $model_id, array $tags = []): ChatOutput;
 
+  /**
+   * Sets a normalized way of doing system roles.
+   *
+   * @param string|null $message
+   *   The message to add.
+   */
+  public function setChatSystemRole(string|NULL $message): void;
+
 }

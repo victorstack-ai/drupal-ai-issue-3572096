@@ -166,8 +166,14 @@ class AnthropicProvider extends AiProviderClientBase implements
     // Unset Max Tokens.
     $max_tokens = $payload['max_tokens'] ?? 1024;
     unset($payload['max_tokens']);
+    $headers = [];
+    if ($this->chatSystemRole) {
+      $payload['system'] = $this->chatSystemRole;
+    }
     try {
-      $response = $this->client->messages()->maxTokens($max_tokens)->create($payload)->content;
+      /** @var \WpAi\Anthropic\Responses\Response */
+      $response_object = $this->client->messages()->maxTokens($max_tokens)->create($payload, $headers);
+      $response = $response_object->content;
     }
     catch (\Exception $e) {
       // Try to figure out credit issues.

@@ -113,6 +113,13 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   protected bool $streamed = FALSE;
 
   /**
+   * Sets a chat system role.
+   *
+   * @var string|null
+   */
+  protected string|NULL $chatSystemRole = '';
+
+  /**
    * The plugin definition.
    *
    * @var \Drupal\Core\Plugin\PluginDefinitionInterface|array
@@ -258,6 +265,24 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   }
 
   /**
+   * Does this model support these capabilities.
+   *
+   * @param string $operation_type
+   *   The operation type to check for.
+   * @param string $model_id
+   *   The model ID.
+   * @param \Drupal\ai\Enum\AiModelCapability[] $capabilities
+   *   The capabilities to check.
+   *
+   * @return bool
+   *   TRUE if the capability is supported.
+   */
+  public function modelSupportsCapabilities(string $operation_type, string $model_id, array $capabilities): bool {
+    $list = $this->getConfiguredModels($operation_type, $capabilities);
+    return isset($list[$model_id]);
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function setConfiguration(array $configuration): void {
@@ -269,6 +294,13 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    */
   public function getConfiguration(): array {
     return $this->configuration;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setChatSystemRole(string|NULL $message): void {
+    $this->chatSystemRole = $message;
   }
 
   /**
