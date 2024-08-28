@@ -259,12 +259,10 @@ class AiAssistantApiRunner {
    *   The thread id.
    */
   public function getThreadsKey() {
-    if ($this->assistant->get('allow_history') != 'session') {
-      return '';
-    }
     if (!$this->thread_id) {
       $this->thread_id = $this->generateUniqueKey();
     }
+    file_put_contents('/tmp/thread_id', $this->thread_id, FILE_APPEND);
     return $this->thread_id;
   }
 
@@ -436,7 +434,6 @@ class AiAssistantApiRunner {
       $messages[] = new ChatMessage($message['role'], $message['message']);
     }
     $input = new ChatInput($messages);
-
     $response = $provider->chat($input, $this->assistant->get('llm_model'));
     $values = $response->getNormalized();
     $full = '';
