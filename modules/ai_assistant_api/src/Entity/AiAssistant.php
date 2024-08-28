@@ -45,9 +45,11 @@ use Drupal\Core\Config\Entity\ConfigEntityBase;
  *     "id",
  *     "label",
  *     "description",
+ *     "allow_history",
+ *     "pre_action_prompt",
+ *     "preprompt_instructions",
  *     "system_role",
- *     "rag_enabled",
- *     "rag_databases",
+ *     "actions_enabled",
  *     "assistant_message",
  *     "no_results_message",
  *     "error_message",
@@ -75,19 +77,29 @@ final class AiAssistant extends ConfigEntityBase implements AiAssistantInterface
   protected string $description;
 
   /**
+   * Allow history.
+   */
+  protected string $allow_history;
+
+  /**
    * The system role.
    */
   protected string $system_role;
 
   /**
-   * The RAG enabled.
+   * The pre action prompt.
    */
-  protected bool $rag_enabled;
+  protected string $pre_action_prompt;
 
   /**
-   * The RAG databases.
+   * The instructions for the pre action prompt.
    */
-  protected array $rag_databases = [];
+  protected string $preprompt_instructions;
+
+  /**
+   * The actions enabled and their config.
+   */
+  protected array $actions_enabled = [];
 
   /**
    * The assistant message.

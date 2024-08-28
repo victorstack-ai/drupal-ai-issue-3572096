@@ -61,6 +61,23 @@ class ChatForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    // Set the assistant if its not set.
+    $context = [];
+    foreach ($this->routeMatcher->getParameters()->all() as $key => $data) {
+      $context[$key] = $this->routeMatcher->getParameter($key);
+    }
+    // Get the config.
+    $chat_config = $this->getChatConfig($form_state);
+    // Setup the assistant.
+    $assistant = $this->entityTypeManager->getStorage('ai_assistant')->load($chat_config['ai_assistant']);
+    $this->aiAssistantClient->setAssistant($assistant);
+    $this->aiAssistantClient->setContext($context);
+
+    if (!$this->getRequest()->isXmlHttpRequest()) {
+      // Set the assistant id if its the page load.
+      $form['#attached']['drupalSettings']['ai_chatbot']['assistant_id'] = $this->aiAssistantClient->getThreadsKey();
+    }
+
     $response_id = Html::getId($form_state->getBuildInfo()['block_id'] . '-response');
 
     $form['query'] = [
@@ -73,6 +90,14 @@ class ChatForm extends FormBase {
       ],
       '#required' => TRUE,
       '#rows' => 1,
+    ];
+
+    $form['assistant_id'] = [
+      '#type' => 'hidden',
+      '#default_value' => '',
+      '#attributes' => [
+        'class' => ['chat-form-assistant-id'],
+      ],
     ];
 
     $form['actions'] = [
@@ -98,16 +123,8 @@ class ChatForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    // Get the route parameters.
-    $context = [];
-    foreach ($this->routeMatcher->getParameters()->all() as $key => $data) {
-      $context[$key] = $this->routeMatcher->getParameter($key);
-    }
-    $chat_config = $this->getChatConfig($form_state);
-    // Get the assistant.
-    $assistant = $this->entityTypeManager->getStorage('ai_assistant')->load($chat_config['ai_assistant']);
-    $this->aiAssistantClient->setAssistant($assistant);
-    $this->aiAssistantClient->setContext($context);
+    // Set the assistant id.
+    $this->aiAssistantClient->setThreadsKey($form_state->getValue('assistant_id'));
     // Set the user message.
     $this->aiAssistantClient->setUserMessage(new UserMessage($form_state->getValue('query')));
 
@@ -121,15 +138,20 @@ class ChatForm extends FormBase {
         // If its a failure, the variable is a string, just output;.
         if ($response->getNormalized() instanceof ChatMessage) {
           $http_response = new Response($response->getNormalized()->getText());
+          $this->aiAssistantClient->setAssistantMessage($response->getNormalized()->getText());
           $form_state->setResponse($http_response);
         }
         else {
           $http_response->setCallback(function () use ($response) {
+            $full_response = "";
             foreach ($response->getNormalized() as $message) {
               echo $message->getText();
+              $full_response .= $message->getText();
               ob_flush();
               flush();
             }
+
+            $this->aiAssistantClient->setAssistantMessage($full_response);
           });
           $form_state->setResponse($http_response);
         }
@@ -144,6 +166,7 @@ class ChatForm extends FormBase {
       $response = $this->aiAssistantClient->process();
       $form_state->setRebuild();
       $form_state->set('response', $response->getNormalized()->getText());
+      $this->aiAssistantClient->setAssistantMessage($response->getNormalized()->getText());
     }
   }
 

@@ -186,7 +186,10 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
       $llmInstance = $this->aiPluginManager->createInstance($provider);
       $model = $formState->getValue('automator_ai_model');
       if (!$model) {
-        $model = $defaultValues['automator_ai_model'] ?? $defaults['model_id'];
+        $model = $defaultValues['automator_ai_model'];
+        if (isset($defaults['model_id'])) {
+          $model = $defaults['model_id'];
+        }
       }
 
       $form['ajax_prefix']['automator_ai_model'] = [

@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Drupal\ai_assistant_api\Form;
 
-use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai\Utility\CastUtility;
+use Drupal\ai_assistant_api\AiAssistantActionPluginManager;
 use Drupal\ai_assistant_api\Entity\AiAssistant;
 use Drupal\Core\Entity\EntityForm;
+use Drupal\Core\Extension\ExtensionPathResolver;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Form\SubformState;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -18,30 +20,32 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 final class AiAssistantForm extends EntityForm {
 
   /**
-   * The AI Form helper.
+   * The AI Actions plugin manager.
    *
-   * @var \Drupal\ai\Service\AiProviderFormHelper
+   * @var \Drupal\ai_assistant_api\AiAssistantActionPluginManager
    */
-  private AiProviderFormHelper $formHelper;
+  private AiAssistantActionPluginManager $actions;
 
   /**
-   * The AI provider.
+   * Extension path resolver.
    *
-   * @var \Drupal\ai\AiProviderPluginManager
+   * @var \Drupal\Core\Extension\ExtensionPathResolver
    */
-  private AiProviderPluginManager $aiProvider;
+  private ExtensionPathResolver $extensionPathResolver;
 
   /**
    * Constructor.
    *
-   * @param \Drupal\ai\Service\AiProviderFormHelper $formHelper
-   *   The AI Form helper.
-   * @param \Drupal\ai\AiProviderPluginManager $aiProvider
-   *   The AI provider.
+   * @param \Drupal\ai_assistant_api\AiAssistantActionPluginManager $actions
+   *   The AI Actions plugin manager.
+   * @param \Drupal\Core\Extension\ExtensionPathResolver $extensionPathResolver
+   *   Extension path resolver.
    */
-  public function __construct(AiProviderFormHelper $formHelper, AiProviderPluginManager $aiProvider) {
-    $this->formHelper = $formHelper;
-    $this->aiProvider = $aiProvider;
+  public function __construct(
+    AiAssistantActionPluginManager $actions,
+    ExtensionPathResolver $extensionPathResolver) {
+    $this->actions = $actions;
+    $this->extensionPathResolver = $extensionPathResolver;
   }
 
   /**
@@ -49,8 +53,8 @@ final class AiAssistantForm extends EntityForm {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('ai.form_helper'),
-      $container->get('ai.provider'),
+      $container->get('ai_assistant_api.action_plugin.manager'),
+      $container->get('extension.path.resolver')
     );
   }
 
@@ -99,6 +103,17 @@ final class AiAssistantForm extends EntityForm {
       ],
     ];
 
+    $form['allow_history'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Allow History'),
+      '#default_value' => $entity->get('allow_history'),
+      '#description' => $this->t('If enabled, the AI Assistant will try store the questions and answers in history during a session. This makes it possible to ask follow-up questions to the Assistant. Note that this raises the price and size of AI calls, and might not be needed for all assistants. Sessions means that it will be stored in the session until the page is reloaded. (coming) Database means that it will be stored in the database with an ID and can be continued later in multiple threads.'),
+      '#options' => [
+        'none' => $this->t('None'),
+        'session' => $this->t('Session'),
+      ],
+    ];
+
     $form['system_role'] = [
       '#type' => 'textarea',
       '#title' => $this->t('System role'),
@@ -111,37 +126,61 @@ final class AiAssistantForm extends EntityForm {
       ],
     ];
 
-    // Only allow RAG if AI Search is enabled.
-    if ($this->moduleHandler->moduleExists('ai_search')) {
-      $form['rag'] = [
+    $form['preprompt_instructions'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Pre-prompt Instructions'),
+      '#default_value' => $entity->get('preprompt_instructions'),
+      '#description' => $this->t('Extra instruction that should be run before each message from the user. This can be used to control the content of the prompt.'),
+      '#required' => FALSE,
+      '#attributes' => [
+        'rows' => 2,
+        'placeholder' => $this->t('If the user asks questions about unpublished articles, make sure to add status unpulished somewhere in the lookup.'),
+      ],
+    ];
+
+    foreach ($this->actions->getDefinitions() as $definition) {
+      $form['action_plugin_' . $definition['id']] = [
         '#type' => 'details',
-        '#title' => $this->t('RAG settings'),
+        '#title' => $definition['label'],
         '#open' => TRUE,
-        '#description' => $this->t('Configure the RAG (Retrieval-Augmented Generation) settings for this AI assistant. You may use multiple databases, but if so you have to define a search strategy.'),
+        '#description' => $this->t('Configure the ' . $definition['label'] . ' settings for this AI assistant.'),
       ];
 
-      $form['rag']['rag_enabled'] = [
+      $form['action_plugin_' . $definition['id']]['enabled'] = [
         '#type' => 'checkbox',
-        '#title' => $this->t('Enable RAG'),
-        '#default_value' => $entity->get('rag_enabled'),
+        '#title' => $this->t('Enable %label', ['%label' => $definition['label']]),
+        '#default_value' => isset($entity->get('actions_enabled')[$definition['id']]),
       ];
 
-      // We only allow one for now.
-      $i = 0;
-      foreach ($entity->get('rag_databases') as $value) {
-        $this->ragSegment($form, $form_state, $i);
-        $i++;
-      }
-      if ($i == 0) {
-        $this->ragSegment($form, $form_state, $i);
+      $form['action_plugin_' . $definition['id']]['plugin_id'] = [
+        '#type' => 'hidden',
+        '#value' => $definition['id'],
+      ];
+
+      $form['action_plugin_' . $definition['id']]['configuration'] = [
+        '#type' => 'details',
+        '#title' => $this->t('%label settings', [
+          '%label' => $definition['label'],
+        ]),
+        '#open' => TRUE,
+        'states' => [
+          'visible' => [
+            ':input[name="' . $definition['id'] . '_enabled"]' => ['checked' => TRUE],
+          ],
+        ],
+        '#description' => $this->t('Configure the ' . $definition['label'] . ' settings for this AI assistant.'),
+      ];
+
+      $instance = $this->actions->createInstance($definition['id'], $entity->get('actions_enabled')[$definition['id']] ?? []);
+      $subform = $form['action_plugin_' . $definition['id']]['configuration'] ?? [];
+      $subform_state = SubformState::createForSubform($subform, $form, $form_state);
+
+      if (isset($query_parameters['selected_text'])) {
+        $subform_state->setStorage(['selected_text' => $query_parameters['selected_text']]);
       }
 
-    }
-    else {
-      $form['no_ai_search'] = [
-        '#type' => 'markup',
-        '#markup' => $this->t('AI Search module is not enabled. RAG settings will not be available.'),
-      ];
+      $form['action_plugin_' . $definition['id']]['configuration'] = $instance->buildConfigurationForm([], $subform_state);
+      $form['action_plugin_' . $definition['id']]['#tree'] = TRUE;
     }
 
     $form['rag']['no_results_message'] = [
@@ -162,7 +201,7 @@ final class AiAssistantForm extends EntityForm {
 
     $form['assistant_message'] = [
       '#type' => 'textarea',
-      '#title' => $this->t('RAG Assistant message'),
+      '#title' => $this->t('Assistant message'),
       '#description' => $this->t('Use the token [rag_context] for providing the snippets or full rendered entities. Use the token [question] for providing the question from the end-user.<br />The assistant message is for responses created by the LLM.'),
       '#default_value' => $entity->get('assistant_message'),
       '#attributes' => [
@@ -200,7 +239,8 @@ The following articles were found:
       $form_state->setValue('llm_ai_model', $entity->get('llm_model'));
     }
     // phpcs:ignore
-    \Drupal::service('ai.form_helper')->generateAiProvidersForm($form, $form_state, 'chat', 'llm', AiProviderFormHelper::FORM_CONFIGURATION_FULL);
+    $form_helper = \Drupal::service('ai.form_helper');
+    $form_helper->generateAiProvidersForm($form, $form_state, 'chat', 'llm', AiProviderFormHelper::FORM_CONFIGURATION_FULL, 0, '', $this->t('Advanced LLM'), $this->t('The AI Provider to use for the advanced interactions.'));
 
     // Set default values.
     $llm_configs = $entity->get('llm_configuration');
@@ -209,6 +249,28 @@ The following articles were found:
         $form['llm_ajax_prefix']['llm_ajax_prefix_configuration_' . $key]['#default_value'] = $value;
       }
     }
+
+
+    $pre_action_prompt = file_get_contents($this->extensionPathResolver->getPath('module', 'ai_assistant_api') . '/resources/pre_action_prompt.txt');
+
+    $form['advanced'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Advanced settings'),
+      '#open' => FALSE,
+    ];
+
+    $form['advanced']['pre_action_prompt'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Pre Action Prompt'),
+      '#default_value' => $entity->get('pre_action_prompt') ?? $pre_action_prompt,
+      '#description' => $this->t('The pre prompts gets a list of actions that it can take, including RAG databases and either gives back actions that the Assistant can take or an outputted answer. You may use [list_of_actions] to list the actions that the Assistant can take. You can only change this via manual config change. DO NOT CHANGE THIS UNLESS YOU KNOW WHAT YOU ARE DOING.'),
+      '#required' => TRUE,
+      '#disabled' => TRUE,
+      '#attributes' => [
+        'rows' => 75,
+      ],
+    ];
+
     return $form;
   }
 
@@ -230,17 +292,15 @@ The following articles were found:
     $entity = $this->entity;
 
     // RAG settings.
-    $rag_databases = [];
+    $action_plugins = [];
     foreach ($form_state->getValues() as $key => $val) {
-      if (strpos($key, 'rag_') === 0 && $key !== 'rag_enabled') {
-        $parts = explode('_', $key);
-        $sub_key = implode('_', array_slice($parts, 2));
-        if (!empty($form_state->getValue('rag_' . $parts[1] . '_database'))) {
-          $rag_databases[$parts[1]][$sub_key] = $val;
+      if (strpos($key, 'action_plugin_') === 0) {
+        if ($val['enabled']) {
+          $action_plugins[$val['plugin_id']] = $val['configuration'] ?? [];
         }
       }
     }
-    $entity->set('rag_databases', $rag_databases);
+    $entity->set('actions_enabled', $action_plugins);
     // LLM provider.
     $entity->set('llm_provider', $form_state->getValue('llm_ai_provider'));
     $entity->set('llm_model', $form_state->getValue('llm_ai_model'));
@@ -273,161 +333,6 @@ The following articles were found:
     );
     $form_state->setRedirectUrl($this->entity->toUrl('collection'));
     return $result;
-  }
-
-  /**
-   * Create a RAG segment.
-   */
-  protected function ragSegment(&$form, FormStateInterface $form_state, $i = 0) {
-    /** @var \Drupal\ai_assistant_api\Entity\AiAssistant $entity */
-    $entity = $this->entity;
-    $form['rag']['rag_wrapper_' . $i] = [
-      '#type' => 'fieldset',
-      '#title' => $this->t('RAG database @i', ['@i' => $i + 1]),
-      '#states' => [
-        'visible' => [
-          ':input[name="rag_enabled"]' => ['checked' => TRUE],
-        ],
-      ],
-    ];
-
-    $form['rag']['rag_wrapper_' . $i]['rag_' . $i . '_database'] = [
-      '#type' => 'select',
-      '#title' => $this->t('RAG database'),
-      '#options' => $this->getSearchDatabases(),
-      '#default_value' => $entity->get('rag_databases')[$i]['database'] ?? $form_state->getValue('rag_' . $i . '_database'),
-    ];
-
-    $form['rag']['rag_wrapper_' . $i]['rag_' . $i . '_description'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('RAG description'),
-      '#description' => $this->t('A description of what is possible to find in this database. Be verbose, an advanced AI Assistant might use it for chosing where to search.'),
-      '#default_value' => $entity->get('rag_databases')[$i]['description'] ?? $form_state->getValue('rag_' . $i . '_description'),
-      '#attributes' => [
-        'rows' => 2,
-        'placeholder' => $this->t('This database will return article segments, together with their Titles, node ids and links.'),
-      ],
-    ];
-
-    $form['rag']['rag_wrapper_' . $i]['rag_' . $i . '_score_threshold'] = [
-      '#type' => 'number',
-      '#title' => $this->t('RAG threshold'),
-      '#description' => $this->t('This is the threshold that the answer have to meet to be thought of as a valid response. Note that the number may shift depending on the similary metric you are using.'),
-      '#default_value' => $entity->get('rag_databases')[$i]['score_threshold'] ?? $form_state->getValue('rag_' . $i . '_score_threshold'),
-      '#attributes' => [
-        'placeholder' => 0.6,
-      ],
-      '#min' => 0,
-      '#max' => 1,
-      '#step' => 0.01,
-    ];
-
-    $form['rag']['rag_wrapper_' . $i]['rag_' . $i . '_min_results'] = [
-      '#type' => 'number',
-      '#title' => $this->t('RAG minimum results'),
-      '#description' => $this->t('The minimum chunks needed to pass the threshold, before leaving a response based on RAG.'),
-      '#default_value' => $entity->get('rag_databases')[$i]['min_results'] ?? $form_state->getValue('rag_' . $i . '_min_results'),
-      '#attributes' => [
-        'placeholder' => 1,
-      ],
-    ];
-
-    $form['rag']['rag_wrapper_' . $i]['rag_' . $i . '_max_results'] = [
-      '#type' => 'number',
-      '#title' => $this->t('RAG max results'),
-      '#description' => $this->t('The maximum results that passed the threshold, to take into account.'),
-      '#default_value' => $entity->get('rag_databases')[$i]['max_results'] ?? $form_state->getValue('rag_' . $i . '_max_results'),
-      '#attributes' => [
-        'placeholder' => 20,
-      ],
-    ];
-
-    $form['rag']['rag_wrapper_' . $i]['rag_' . $i . '_output_mode'] = [
-      '#type' => 'select',
-      '#title' => $this->t('RAG context mode'),
-      '#description' => $this->t('The context mode for the list given to the Assistant. <br>The <strong>chunk mode</strong> will return the chunk as they are and the LLM will act on this - if chunked correctly this produces very quick answer for chatbots that needs to answer quickly.<br>If you return <strong>aggregated and rendered entities</strong>, there will be an LLM agent first checking each of the answers over the whole entity, and then return an aggregated answer to the Assistant. This is slower, but more accurate.'),
-      '#default_value' => $entity->get('rag_databases')[$i]['output_mode'] ?? $form_state->getValue('rag_' . $i . '_output_mode'),
-      '#options' => [
-        'chunks' => $this->t('Chunks'),
-        'rendered' => $this->t('Aggregated and Rendered entities'),
-      ],
-    ];
-
-    $form['rag']['rag_wrapper_' . $i]['rag_' . $i . '_aggregated_llm'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('RAG LLM Agent'),
-      '#description' => $this->t('With Aggregated and Rendered entities, this agent will take each of the entities returned and create one summarized answer to feed to the assistant. This can take the tokens [question] and [entity] or even specific tokens from the entity below.'),
-      '#default_value' => $entity->get('rag_databases')[$i]['aggregated_llm'] ?? $form_state->getValue('rag_' . $i . '_aggregated_llm'),
-      '#attributes' => [
-        'rows' => 10,
-        'placeholder' => $this->t('Can you summarize if the following article is relevant to the question?
-If it is not, please just answer "no answer".
-If it is, answer with the details that are needed to answer this from a larger perspective.
-
-The question is:
------------------------
-[question]
------------------------
-
-The article is:
------------------------
-[entity]
------------------------'),
-      ],
-      '#states' => [
-        'visible' => [
-          ':input[name="rag_' . $i . '_output_mode"]' => ['value' => 'rendered'],
-        ],
-      ],
-    ];
-
-    $form['rag']['rag_wrapper_' . $i]['rag_' . $i . '_access_check'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('RAG access check'),
-      '#description' => $this->t('With this enabled the system will do a post query access check on every chunk to see if the user has access to that content. Note that this might lead to no results and be slower, but it makes sure that none-accessible items are not reached. This is done before the Assistant prompt, so its secure to prompt injection.'),
-      '#default_value' => $entity->get('rag_databases')[$i]['access_check'] ?? $form_state->getValue('rag_' . $i . '_access_check'),
-    ];
-
-    $form['rag']['rag_wrapper_' . $i]['rag_' . $i . '_use_context'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Use route context'),
-      '#description' => $this->t('Use the route context to only ask questions about the content on the current page.'),
-      '#default_value' => $entity->get('rag_databases')[$i]['use_context'] ?? $form_state->getValue('rag_' . $i . '_use_context'),
-      '#attributes' => [
-        'placeholder' => 1,
-      ],
-    ];
-
-    $form['rag']['rag_wrapper_' . $i]['rag_' . $i . '_context_threshold'] = [
-      '#type' => 'number',
-      '#title' => $this->t('Context threshold'),
-      '#description' => $this->t('This is the threshold that the answer have to meet to be thought of as a valid response in context. Note that the similarity value is generally lower on a specific question in context, so lower values are needed.'),
-      '#default_value' => $entity->get('rag_databases')[$i]['context_threshold'] ?? $form_state->getValue('rag_' . $i . '_context_threshold'),
-      '#attributes' => [
-        'placeholder' => 0.1,
-      ],
-      '#min' => 0,
-      '#max' => 1,
-      '#step' => 0.01,
-      '#states' => [
-        'visible' => [
-          ':input[name="rag_' . $i . '_use_context"]' => ['checked' => TRUE],
-        ],
-      ],
-    ];
-
-  }
-
-  /**
-   * Get all search databases.
-   */
-  private function getSearchDatabases(): array {
-    $databases = [];
-    $databases[''] = $this->t('-- Select --');
-    foreach ($this->entityTypeManager->getStorage('search_api_index')->loadMultiple() as $index) {
-      $databases[$index->id()] = $index->label() . ' (' . $index->id() . ')';
-    };
-    return $databases;
   }
 
 }

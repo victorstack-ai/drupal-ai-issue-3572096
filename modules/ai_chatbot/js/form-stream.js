@@ -3,6 +3,8 @@
 
   Drupal.behaviors.searchApiAiStream = {
     attach: (context) => {
+      // Set the assistant id.
+      $('.chat-form-assistant-id').val(drupalSettings.ai_chatbot.assistant_id);
       let streamElements = $('[data-ai-ajax]', context);
       // @todo: Move away from once() since its not in core?
       once('data-streamed', streamElements).forEach((item) => {
@@ -66,21 +68,20 @@
       $('.chat-history .chat-message:last h5').html(drupalSettings.ai_chatbot.bot_name);
       let responseField = $('.chat-history .chat-message:last .chat-message-message');
       let postData = form.serializeArray();
-
-        $.ajax({
-          url: form.attr('action'),
-          method: 'POST',
-          data: postData,
-          xhrFields: {
-            onprogress: function (event) {
-              responseField.html(event.currentTarget.response);
-              $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
-            },
-            onended: function (event) {
-              console.log('test');
-            }
+      $.ajax({
+        url: form.attr('action'),
+        method: 'POST',
+        data: postData,
+        xhrFields: {
+          onprogress: function (event) {
+            responseField.html(event.currentTarget.response);
+            $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
+          },
+          onended: function (event) {
+            console.log('test');
           }
-        });
+        }
+      });
     });
   }
 

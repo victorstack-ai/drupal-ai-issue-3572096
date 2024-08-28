@@ -6,12 +6,15 @@ use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\ChatOutput;
+use Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface;
+use Drupal\ai_assistant_api\Data\AssistantStreamIterator;
 use Drupal\ai_assistant_api\Data\UserMessage;
 use Drupal\ai_assistant_api\Entity\AiAssistant;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Render\Renderer;
 use Drupal\Core\Render\RendererInterface;
+use Drupal\Core\TempStore\PrivateTempStoreFactory;
 
 /**
  * The runner for the AI assistant.
@@ -28,9 +31,9 @@ class AiAssistantApiRunner {
   /**
    * The assistant.
    *
-   * @var \Drupal\ai_assistant_api\Entity\AiAssistant
+   * @var \Drupal\ai_assistant_api\Entity\AiAssistant|null
    */
-  protected AiAssistant $assistant;
+  protected AiAssistant|NULL $assistant = NULL;
 
   /**
    * The AI provider service.
@@ -42,9 +45,9 @@ class AiAssistantApiRunner {
   /**
    * The message to send to the assistant.
    *
-   * @var \Drupal\ai_assistant_api\Data\UserMessage
+   * @var \Drupal\ai_assistant_api\Data\UserMessage|null
    */
-  protected UserMessage $userMessage;
+  protected UserMessage|NULL $userMessage;
 
   /**
    * The Drupal renderer.
@@ -52,6 +55,20 @@ class AiAssistantApiRunner {
    * @var \Drupal\Core\Render\Renderer
    */
   protected RendererInterface $renderer;
+
+  /**
+   * The private temp store.
+   *
+   * @var \Drupal\user\PrivateTempStoreFactory
+   */
+  protected PrivateTempStoreFactory $tempStore;
+
+  /**
+   * The AI Assistant Action Plugin Manager.
+   *
+   * @var \Drupal\ai_assistant_api\AiAssistantActionPluginManager
+   */
+  protected AiAssistantActionPluginManager $actions;
 
   /**
    * If it should be a streaming result.
@@ -68,6 +85,13 @@ class AiAssistantApiRunner {
   protected array $context = [];
 
   /**
+   * The history storage for the assistant.
+   *
+   * @var array
+   */
+  protected array $history = [];
+
+  /**
    * Boolean to keep track if the context was used.
    *
    * @var bool
@@ -82,6 +106,20 @@ class AiAssistantApiRunner {
   protected array $tokens = [];
 
   /**
+   * The thread id to use for history.
+   *
+   * @var string
+   */
+  protected string $thread_id = '';
+
+  /**
+   * Let the system know if an action is being used.
+   *
+   * @var bool
+   */
+  protected bool $using_action = FALSE;
+
+  /**
    * Constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
@@ -90,11 +128,32 @@ class AiAssistantApiRunner {
    *   The AI provider service.
    * @param \Drupal\Core\Render\Renderer $renderer
    *   The Drupal renderer.
+   * @param \Drupal\Core\TempStore\PrivateTempStoreFactory $tempStore
+   *   The private temp store.
+   * @param \Drupal\ai_assistant_api\AiAssistantActionPluginManager $actions
+   *   The AI Assistant Action Plugin Manager.
    */
-  public function __construct(EntityTypeManagerInterface $entityTypeManager, AiProviderPluginManager $aiProvider, Renderer $renderer) {
+  public function __construct(
+    EntityTypeManagerInterface $entityTypeManager,
+    AiProviderPluginManager $aiProvider,
+    Renderer $renderer,
+    PrivateTempStoreFactory $tempStore,
+    AiAssistantActionPluginManager $actions
+    ) {
     $this->entityTypeManager = $entityTypeManager;
     $this->aiProvider = $aiProvider;
     $this->renderer = $renderer;
+    $this->tempStore = $tempStore;
+    $this->actions = $actions;
+  }
+
+  /**
+   * Gets the assistant.
+   *
+   * @return \Drupal\ai_assistant_api\Entity\AiAssistant
+   */
+  public function getAssistant() {
+    return $this->assistant;
   }
 
   /**
@@ -110,6 +169,10 @@ class AiAssistantApiRunner {
     }
     else {
       throw new \Exception('Assistant is immutable once set.');
+    }
+    // Set the thread id.
+    if ($this->assistant->get('allow_history') == 'session' && !$this->thread_id) {
+      $this->thread_id = $this->generateUniqueKey();
     }
   }
 
@@ -142,6 +205,77 @@ class AiAssistantApiRunner {
   public function setUserMessage(UserMessage $userMessage) {
     $this->userMessage = $userMessage;
     $this->tokens['question'] = $userMessage->getMessage();
+    // If session is set, we store the user message.
+    if ($this->assistant->get('allow_history') == 'session') {
+      $this->addMessageToSession('user', $this->userMessage->getMessage());
+    }
+  }
+
+  /**
+   * Sets an assistant message. Because of streaming this is post render.
+   *
+   * @param string $message
+   *   The message to set.
+   */
+  public function setAssistantMessage($message) {
+    // If session is set, we store the assistant message.
+    if ($this->assistant->get('allow_history') == 'session') {
+      $this->addMessageToSession('assistant', $message);
+    }
+  }
+
+  /**
+   * Gets a unique storage key for the assistant.
+   *
+   * @return string
+   */
+  public function generateUniqueKey($type = 'session') {
+    // Iterate over the keys until a new one is found.
+    $i = 0;
+    while (TRUE) {
+      $key = 'assistant_thread_' . $i;
+      $thread = $this->getTempStore()->get($key);
+      // If its old, we reuse it.
+      if (isset($thread['created']) && (time() - $thread['created']) > 86400) {
+        return $key;
+      }
+      // If its over 10, we start removing them from 0.
+      if ($i > 10) {
+        $this->getTempStore()->delete('assistant_thread_' . ($i - 5));
+      }
+      // If its not set, we use it.
+      if (!$thread) {
+        return $key;
+      }
+      $i++;
+    }
+
+  }
+
+  /**
+   * Gets the thread id.
+   *
+   * @return string
+   *   The thread id.
+   */
+  public function getThreadsKey() {
+    if ($this->assistant->get('allow_history') != 'session') {
+      return '';
+    }
+    if (!$this->thread_id) {
+      $this->thread_id = $this->generateUniqueKey();
+    }
+    return $this->thread_id;
+  }
+
+  /**
+   * Sets the thread key.
+   *
+   * @param string $key
+   *   The key to set.
+   */
+  public function setThreadsKey($key) {
+    $this->thread_id = $key;
   }
 
   /**
@@ -155,25 +289,27 @@ class AiAssistantApiRunner {
       throw new \Exception('Message is required to process.');
     }
 
-    // Process rag if its installed.
-    if ($this->assistant->get('rag_enabled')) {
-      $rag_databases = $this->assistant->get('rag_databases');
-      foreach ($rag_databases as $rag_database) {
-        $results = $this->getRagResults($rag_database);
-        // If we don't have any results, we send the error message if wanted.
-        if ((empty($results) || $results->getResultCount() === 0) &&
-          $this->assistant->get('no_results_message')
-        ) {
-          return new ChatOutput(
-            new ChatMessage('assistant', $this->assistant->get('no_results_message')),
-            [$this->assistant->get('no_results_message')],
-            [],
-          );
-        }
-        // Get the results we are interested in as a string.
-        $this->tokens['rag_context'] = $this->renderRagResponseAsString($results, $rag_database);
+    $pre_prompt = $this->assistant->get('pre_action_prompt');
+    if ($pre_prompt) {
+      $return = $this->prePrompt();
+      // If its a normal response, we just return it.
+      if ($return instanceof ChatOutput || $return instanceof StreamedChatMessageIteratorInterface) {
+        return $return;
+      }
+
+      // Reset RAG Context.
+      $this->tokens['rag_context'] = [];
+      // Currently for debugging.
+      foreach ($return['actions'] as $action) {
+        $this->using_action = TRUE;
+        $instance = $this->actions->createInstance($action['plugin'], $this->assistant->get('actions_enabled')[$action['plugin']] ?? []);
+        $instance->setAssistant($this->assistant);
+        $instance->setThreadId($this->thread_id);
+        $instance->setAiProvider($this->aiProvider->createInstance($this->assistant->get('llm_provider')));
+        $instance->triggerAction($action['action'], $action);
       }
     }
+
     // Run the response to the final assistants message.
     return $this->assistantMessage();
   }
@@ -186,10 +322,30 @@ class AiAssistantApiRunner {
    */
   protected function assistantMessage() {
     $provider = $this->aiProvider->createInstance($this->assistant->get('llm_provider'));
-    $message = $this->assistant->get('assistant_message');
-    foreach ($this->tokens as $key => $value) {
-      $message = str_replace('[' . $key . ']', $value, $message);
+    // Set the provider role.
+    $assistant_message = $this->assistant->get('assistant_message');
+    if ($this->using_action) {
+      // Add the information that search is done.
+      $assistant_message .= "\n\n Start the message with the following information: \nThank you for your question. I am looking up the answer.<br><br>";
     }
+    $provider->setChatSystemRole($assistant_message);
+    // Set the RAG context if we have it.
+    $messages = [];
+
+    if ($this->assistant->get('allow_history') == 'session') {
+      if (!empty($this->getOutputHistory())) {
+        $message = '';
+        foreach ($this->getOutputHistory() as $key => $data) {
+          $message .= "The following are the results the different actions from the $key action: \n";
+          foreach ($data as $item) {
+            $message .= $item . "\n";
+          }
+          $message .= "\n";
+        }
+        $messages[] = new ChatMessage('assistant', $message);
+      }
+    }
+
     $config = [];
     foreach ($this->assistant->get('llm_configuration') as $key => $val) {
       $config[$key] = $val;
@@ -198,141 +354,131 @@ class AiAssistantApiRunner {
     if ($this->streaming) {
       $provider->streamedOutput(TRUE);
     }
-    $input = new ChatInput([
-      new ChatMessage('user', $message),
-    ]);
-    return $provider->chat($input, $this->assistant->get('llm_model'));
-  }
+    // Get the history.
 
-  /**
-   * Render the RAG response as string.
-   *
-   * @param \Drupal\search_api\Query\ResultSet $results
-   *   The RAG results.
-   * @param array $rag_database
-   *   The RAG database array data.
-   *
-   * @return string
-   *   The RAG response.
-   */
-  protected function renderRagResponseAsString($results, array $rag_database) {
-    $response = '';
-    foreach ($results as $result) {
-      // Filter the results.
-      if (!$this->contextUsed && $this->$rag_database['score_threshold'] > $result->getScore()) {
-        continue;
-      }
-      if ($this->contextUsed && $this->$rag_database['context_threshold'] > $result->getScore()) {
-        continue;
-      }
-      // Chunked mode is easy.
-      if ($rag_database['output_mode'] == 'chunks') {
-        $response .= $result->getExtraData('content') . "\n\n";
-        $response .= '----------------------------------------' . "\n\n";
-      }
-      else {
-        // LLM checking results.
-        $response .= $this->fullEntityCheck($result, $rag_database);
-      }
+    $history = $this->getMessageHistory();
+    foreach ($history as $message) {
+      $messages[] = new ChatMessage($message['role'], $message['message']);
     }
+    $input = new ChatInput($messages);
+
+    $response = $provider->chat($input, $this->assistant->get('llm_model'));
+
     return $response;
   }
 
   /**
-   * Process RAG.
+   * Gets the output history.
    *
-   * @param array $rag_database
-   *   The RAG database array data.
-   *
-   * @return \Drupal\search_api\Query\ResultSet
-   *   The RAG response.
+   * @return array
+   *   The output history.
    */
-  protected function getRagResults(array $rag_database) {
-    /** @var \Drupal\search_api\Entity\Index */
-    $rag_storage = $this->entityTypeManager->getStorage('search_api_index');
-    // Get the index.
-    $index = $rag_storage->load($rag_database['database']);
-    if (!$index) {
-      throw new \Exception('RAG database not found.');
-    }
-
-    // Check if we should use context and if there is context.
-    $context_match = FALSE;
-    if ($rag_database['use_context'] && !empty($this->context)) {
-      $context_match = $this->checkContentContextMatches($index);
-      $this->contextUsed = TRUE;
-    }
-
-    // Then we try to search.
-    try {
-      $query = $index->query([
-        'limit' => $rag_database['max_results'],
-      ]);
-      // If we have context, we filter on that.
-      if ($context_match) {
-        $query->addCondition('drupal_entity_id', $context_match, '==');
-      }
-      $query->setOption('search_api_bypass_access', FALSE);
-      $query->setOption('search_api_ai_get_chunks_result', $rag_database['output_mode'] == 'chunks');
-      $query->keys([$this->userMessage->getMessage()]);
-      $results = $query->execute();
-    }
-    catch (\Exception $e) {
-      throw new \Exception('Failed to search: ' . $e->getMessage());
-    }
-    return $results;
+  public function getOutputHistory() {
+    return $this->getTempStore()->get($this->thread_id)['output_contexts'] ?? [];
   }
 
   /**
-   * Full entity check with a LLM checking the rendered entity.
+   * Gets the message history.
    *
-   * @param \Drupal\search_api\Query\Result $result
-   *   The result to check.
-   * @param array $rag_database
-   *   The RAG database array data.
-   *
-   * @return string
-   *   The response.
+   * @return array
+   *   The message history.
    */
-  protected function fullEntityCheck($result, array $rag_database) {
-    $entity_string = $result->getExtraData('drupal_entity_id');
-    // Load the entity from search api key.
-    // @todo probably exists a function for this.
-    [, $entity_parts, $lang] = explode(':', $entity_string);
-    [$entity_type, $entity_id] = explode('/', $entity_parts);
-    /** @var \Drupal\Core\Entity\ContentEntityBase */
-    $entity = $this->entityTypeManager->getStorage($entity_type)->load($entity_id);
-    // Get translated if possible.
-    if (method_exists($entity, 'hasTranslation')) {
-      if ($entity->hasTranslation($lang)) {
-        $entity = $entity->getTranslation($lang);
-      }
+  public function getMessageHistory() {
+    if ($this->assistant->get('allow_history') == 'session') {
+      return $this->getTempStore()->get($this->thread_id)['messages'] ?? [];
     }
-    // Render the entity in default view mode.
-    $pre_render_entity = $this->entityTypeManager->getViewBuilder($entity_type)->view($entity);
-    $rendered_entity = nl2br(trim(strip_tags($this->renderer->render($pre_render_entity))));
-    $message = str_replace([
-      '[question]',
-      '[entity]',
+    // Otherwise just return the last message.
+    return [
+      ['role' => 'user', 'message' => $this->userMessage->getMessage()],
+    ];
+  }
+
+  /**
+   * Helper function to add a message to the session.
+   *
+   * @param string $role
+   *   The role of the message.
+   * @param string $message
+   *   The message to add.
+   */
+  protected function addMessageToSession($role, $message) {
+    $session = $this->getTempStore()->get($this->thread_id);
+    $session['messages'][] = [
+      'role' => $role,
+      'message' => $message,
+    ];
+    $this->getTempStore()->set($this->thread_id, $session);
+  }
+
+  /**
+   * Runs the pre prompt to figure out what to do.
+   */
+  protected function prePrompt() {
+    $pre_prompt = $this->assistant->get('pre_action_prompt');
+    $actions = $this->getPreparedActions();
+    $pre_prompt = str_replace([
+      '[list_of_actions]',
+      '[pre_prompt]',
+      '[system_role]',
     ], [
-      $this->userMessage->getMessage(),
-      $rendered_entity,
-    ], nl2br($rag_database['aggregated_llm']));
+      $actions,
+      $this->assistant->get('preprompt_instructions'),
+      $this->assistant->get('system_role'),
+    ], $pre_prompt);
 
-    // Now we have the entity, we can check it with the LLM.
     $provider = $this->aiProvider->createInstance($this->assistant->get('llm_provider'));
-    $config = [];
-    foreach ($rag_database['llm_configuration'] as $key => $val) {
-      $config[$key] = $val;
+
+    $provider->setChatSystemRole($pre_prompt);
+    $provider->streamedOutput(TRUE);
+    $messages = [];
+    $history = $this->getMessageHistory();
+    foreach ($history as $message) {
+      $messages[] = new ChatMessage($message['role'], $message['message']);
     }
-    $provider->setConfiguration($config);
-    $input = new ChatInput([
-      new ChatMessage('user', $message),
-    ]);
-    $output = $provider->chat($input, $this->assistant->get('llm_model'));
-    $response = $output->getNormalized()->getText() . "\n";
-    $response .= '----------------------------------------' . "\n\n";
-    return $response;
+    $input = new ChatInput($messages);
+
+    $response = $provider->chat($input, $this->assistant->get('llm_model'));
+    $values = $response->getNormalized();
+    $full = '';
+    $i = 0;
+    $text = FALSE;
+    foreach ($values as $value) {
+      if ($value->getText()) {
+        $full .= $value->getText();
+        if (!$i && (substr($full, 0, 3) != '```' && substr($full, 0, 1) != '{')) {
+          $text = TRUE;
+          // Stop because its an actual text.
+          break;
+        }
+        $i++;
+      }
+    }
+
+    if (!$text) {
+      return json_decode(str_replace(['```json', '```'], '', $full), TRUE);
+    }
+
+    if ($this->streaming) {
+      $stream = new AssistantStreamIterator($values);
+      $stream->setFirstMessage($full);
+      return new ChatOutput($stream, [$full], []);
+    }
+    else {
+      return new ChatOutput(
+        new ChatMessage('assistant', $full),
+        [$full],
+        [],
+      );
+    }
+  }
+
+  /**
+   * Get the private tempstore for AI Assistant.
+   *
+   * @return \Drupal\Core\TempStore\PrivateTempStore
+   */
+  public function getTempStore() {
+    return $this->tempStore->get('ai_assistant_api');
   }
 
   /**
@@ -363,6 +509,35 @@ class AiAssistantApiRunner {
       }
     }
     return "";
+  }
+
+  /**
+   * Get a list of prepared actions.
+   *
+   * @return string
+   *   A string representation of the actions for AI prompts.
+   */
+  public function getPreparedActions() {
+    $actions = $this->actions->listAllActions($this->assistant->get('actions_enabled'));
+    $enabled = array_keys($this->assistant->get('actions_enabled'));
+    $prepared = '';
+    foreach ($actions as $action) {
+      if (!in_array($action['plugin'], $enabled)) {
+        continue;
+      }
+      $prepared .= "* action: " . $action['id'] . ", label: " . $action['label'] . ", description: " . $action['description'] . ", plugin: " . $action['plugin'] . "\n";
+    }
+
+    $contexts = $this->actions->listAllContexts($this->assistant, $this->thread_id, $this->assistant->get('actions_enabled'));
+    if (count($contexts)) {
+      $prepared .= "\n";
+      $prepared .= "The following are contexts for the actions:\n\n";
+      foreach ($contexts as $context) {
+        $prepared .= $context['title'] . "\n";
+        $prepared .= '* ' . implode("\n* ", $context['description']) . "\n\n";
+      }
+    }
+    return $prepared;
   }
 
 }
