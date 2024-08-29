@@ -304,6 +304,7 @@ class AiAssistantApiRunner {
         $instance->setAssistant($this->assistant);
         $instance->setThreadId($this->thread_id);
         $instance->setAiProvider($this->aiProvider->createInstance($this->assistant->get('llm_provider')));
+        $instance->setMessages($this->getMessageHistory());
         $instance->triggerAction($action['action'], $action);
       }
     }

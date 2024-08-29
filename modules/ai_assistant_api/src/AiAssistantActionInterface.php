@@ -33,6 +33,14 @@ interface AiAssistantActionInterface extends PluginFormInterface, ConfigurableIn
   public function setThreadId(string $thread_id): void;
 
   /**
+   * Sets the messages.
+   *
+   * @param array $messages
+   *   The messages.
+   */
+  public function setMessages(array $messages): void;
+
+  /**
    * Returns the list of actions.
    *
    * @return array

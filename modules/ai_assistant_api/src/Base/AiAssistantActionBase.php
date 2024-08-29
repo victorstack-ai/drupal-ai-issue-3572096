@@ -52,6 +52,13 @@ abstract class AiAssistantActionBase implements AiAssistantActionInterface, Cont
   protected string $thread_id;
 
   /**
+   * The messages thread.
+   *
+   * @var array
+   */
+  protected array $messages = [];
+
+  /**
    * Constructor.
    */
   public function __construct(array $configuration, PrivateTempStoreFactory $tempStoreFactory) {
@@ -81,6 +88,13 @@ abstract class AiAssistantActionBase implements AiAssistantActionInterface, Cont
    */
   public function setConfiguration($configuration) {
     $this->configuration = $configuration;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setMessages(array $messages): void {
+    $this->messages = $messages;
   }
 
   /**

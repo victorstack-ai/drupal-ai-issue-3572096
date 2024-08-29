@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\ai_assistant_api\Plugin\AiAssistantAction;
+namespace Drupal\ai_search\Plugin\AiAssistantAction;
 
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
