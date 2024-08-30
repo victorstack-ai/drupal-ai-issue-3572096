@@ -1,8 +1,8 @@
-ai_logging.list_page:
+ai_api_explorer.list_page:
   path: '/admin/config/ai/explorers'
   defaults:
     _controller: '\Drupal\ai\Controller\ProviderSetupList::list'
-    _title: 'AI Loggin'
+    _title: 'AI API Explorers'
   requirements:
     _permission: 'administer ai'
 ai_api_explorer.chat_generation_form:

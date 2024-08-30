@@ -2,7 +2,7 @@ ai_api_explorer.main:
   title: AI API Explorer
   description: Development mode to test out different API's.
   parent: ai.admin_settings
-  route_name: ai_logging.list_page
+  route_name: ai_api_explorer.list_page
 ai_api_explorer.image_generation_form:
   title: Text-To-Image Generation Explorer
   description: Contains a form where you can experiment and test the AI image generator with prompts.
