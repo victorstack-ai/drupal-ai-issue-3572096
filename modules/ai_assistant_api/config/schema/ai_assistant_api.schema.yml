@@ -48,16 +48,7 @@ ai_assistant_api.ai_assistant.*:
       type: string
       label: LLM Model
       required: true
-    llm_configuration:
-      type: mapping
-      label: LLM Configuration in JSON
-      required: false
-      '*':
-        type: undefined
-    actions_enabled:
-      type: mapping
-      label: Actions Enabled
-      required: false
-      '*':
-        type: undefined
-
+    llm_configuration.*:
+      type: undefined
+    actions_enabled.*:
+      type: undefined
