@@ -48,7 +48,16 @@ ai_assistant_api.ai_assistant.*:
       type: string
       label: LLM Model
       required: true
-    llm_configuration.*:
-      type: ignore
-    actions_enabled.*:
-      type: ignore
+    llm_configuration:
+      type: sequence
+      label: LLM Configuration in JSON
+      required: false
+      sequence:
+        type: ignore
+    actions_enabled:
+      type: sequence
+      label: Actions Enabled
+      required: false
+      sequence:
+        type: ignore
+
