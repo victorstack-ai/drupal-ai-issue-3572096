@@ -19,6 +19,12 @@ ai_assistant_api.ai_assistant.*:
     instructions:
       type: string
       label: Pre-prompt Instructions
+    allow_history:
+      type: boolean
+      label: Allow History
+    preprompt_instructions:
+      type: string
+      label: Pre-prompt Instructions
     system_role:
       type: string
       label: System Role
@@ -46,5 +52,12 @@ ai_assistant_api.ai_assistant.*:
       type: sequence
       label: LLM Configuration in JSON
       required: false
+      '*':
+        type: sequence
     actions_enabled:
-      type: sequence
+      type: mapping
+      label: Actions Enabled
+      required: false
+      '*':
+        type: sequence
+
