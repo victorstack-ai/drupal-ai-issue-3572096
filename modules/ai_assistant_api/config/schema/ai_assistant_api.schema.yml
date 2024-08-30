@@ -49,6 +49,6 @@ ai_assistant_api.ai_assistant.*:
       label: LLM Model
       required: true
     llm_configuration.*:
-      type: undefined
+      type: ignore
     actions_enabled.*:
-      type: undefined
+      type: ignore
