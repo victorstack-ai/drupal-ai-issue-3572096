@@ -20,7 +20,7 @@ ai_assistant_api.ai_assistant.*:
       type: string
       label: Pre-prompt Instructions
     allow_history:
-      type: boolean
+      type: string
       label: Allow History
     preprompt_instructions:
       type: string
@@ -49,15 +49,15 @@ ai_assistant_api.ai_assistant.*:
       label: LLM Model
       required: true
     llm_configuration:
-      type: sequence
+      type: mapping
       label: LLM Configuration in JSON
       required: false
       '*':
-        type: sequence
+        type: undefined
     actions_enabled:
       type: mapping
       label: Actions Enabled
       required: false
       '*':
-        type: sequence
+        type: undefined
 
