@@ -4,6 +4,8 @@ namespace Drupal\ai_search\Trait;
 
 use Drupal\ai\AiProviderInterface;
 use Drupal\ai\Plugin\ProviderProxy;
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\InvokeCommand;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformStateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -33,7 +35,21 @@ trait AiSearchBackendEmbeddingsEngineTrait {
    *   The configuration.
    */
   public function setEngineConfiguration(array $configuration): void {
-    $this->engineConfiguration = $configuration;
+    // Load data.
+    if (isset($configuration['embeddings_engine'])) {
+      $plugin_manager = \Drupal::service('ai.provider');
+      $parts = explode('__', $configuration['embeddings_engine']);
+      $rule = $plugin_manager->createInstance($parts[0])->getAvailableConfiguration('embeddings', $parts[1]);
+      $this->engineConfiguration = $configuration;
+      foreach ($rule as $key => $value) {
+        if ($key == 'dimensions') {
+          $this->engineConfiguration['embeddings_engine_configuration'][$key] = $value['default'];
+        }
+      }
+    }
+    else {
+      $this->engineConfiguration = $configuration;
+    }
   }
 
   /**
@@ -69,6 +85,7 @@ trait AiSearchBackendEmbeddingsEngineTrait {
     if ($form_state instanceof SubformStateInterface) {
       $form_state = $form_state->getCompleteFormState();
     }
+
     if (empty($this->engineConfiguration)) {
       $this->engineConfiguration = $this->defaultEngineConfiguration();
     }
@@ -81,6 +98,8 @@ trait AiSearchBackendEmbeddingsEngineTrait {
       '#default_value' => $this->getConfiguration()['embeddings_engine'] ?? $this->defaultEngineConfiguration()['embeddings_engine'],
       '#description' => $this->t('The service to use for embeddings. If you change this, everything will be needed to be reindexed.'),
       '#weight' => 20,
+      // If its update, we don't allow to change the embeddings engine.
+      '#disabled' => !empty($this->engineConfiguration['embeddings_engine']),
       '#ajax' => [
         'callback' => [$this, 'updateEmbeddingEngineConfigurationForm'],
         'wrapper' => 'embedding-engine-configuration-wrapper',
@@ -103,17 +122,13 @@ trait AiSearchBackendEmbeddingsEngineTrait {
       '#description' => $this->t('The number of dimensions for the embeddings.'),
       '#default_value' => $this->engineConfiguration['embeddings_engine_configuration']['dimensions'] ?? '',
       '#required' => TRUE,
+      // If its update, we don't allow to change the dimensions.
+      '#disabled' => !empty($this->engineConfiguration['embeddings_engine']),
+      // Load via ajax calls.
+      '#attributes' => [
+        'class' => ['embeddings-engine-configuration-dimensions'],
+      ],
     ];
-
-    // If the embeddings engine is set, add the configuration form.
-    if (!empty($this->engineConfiguration['embeddings_engine']) || $form_state->getValue('embeddings_engine')) {
-      $plugin_manager = \Drupal::service('ai.provider');
-      $parts = explode('__', $this->engineConfiguration['embeddings_engine'] ?? $form_state->get('embeddings_engine'));
-      $rule = $plugin_manager->createInstance($parts[0])->getAvailableConfiguration('embeddings', $parts[1]);
-      foreach ($rule as $key => $value) {
-        $form['embeddings_engine_configuration'][$key]['#default_value'] = $value['default'];
-      }
-    }
 
     return $form;
   }
@@ -170,11 +185,27 @@ trait AiSearchBackendEmbeddingsEngineTrait {
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
    *
-   * @return array
+   * @return array|AjaxResponse
    *   The updated form.
    */
-  public function updateEmbeddingEngineConfigurationForm(array $form, FormStateInterface $form_state): array {
-    return $form['backend_config']['embeddings_engine_configuration'];
+  public function updateEmbeddingEngineConfigurationForm(array $form, FormStateInterface $form_state): array|AjaxResponse {
+    $plugin_manager = \Drupal::service('ai.provider');
+    $parts = explode('__', $form_state->getValue('backend_config')['embeddings_engine']);
+    if (count($parts) !== 2) {
+      return $form['backend_config']['embeddings_engine_configuration'];
+    }
+    // The subform reload doesn't work, so AjaxResponse is needed.
+    $dimensions = $this->engineConfiguration['embeddings_engine_configuration']['dimensions'] ?? 768;
+    $rule = $plugin_manager->createInstance($parts[0])->getAvailableConfiguration('embeddings', $parts[1]);
+    foreach ($rule as $key => $value) {
+      if ($key == 'dimensions') {
+        $dimensions = $value['default'];
+      }
+    }
+    $response = new AjaxResponse();
+    $add_value = new InvokeCommand('.embeddings-engine-configuration-dimensions', 'val', [$dimensions]);
+    $response->addCommand($add_value);
+    return $response;
   }
 
 }
