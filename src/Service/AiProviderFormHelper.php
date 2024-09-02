@@ -69,14 +69,30 @@ class AiProviderFormHelper {
    *   The title of the form element.
    * @param string $description
    *   The description of the form element.
+   * @param bool $default
+   *   If a default provider should be selectable.
    */
-  public function generateAiProvidersForm(array &$form, FormStateInterface $form_state, string $operation_type, string $prefix = '', int $config_level = AiProviderFormHelper::FORM_CONFIGURATION_NONE, $weight = 0, string $provider_id = '', $title = '', $description = '') {
+  public function generateAiProvidersForm(
+    array &$form,
+    FormStateInterface $form_state,
+    string $operation_type,
+    string $prefix = '',
+    int $config_level = AiProviderFormHelper::FORM_CONFIGURATION_NONE,
+    $weight = 0,
+    string $provider_id = '',
+    $title = '',
+    $description = '',
+    $default_provider = FALSE) {
     $providers = $this->getAiProvidersOptions($operation_type);
 
     // Make sure the prefix is properly formatted.
     $prefix = $prefix ? rtrim($prefix, '_') . '_' : '';
 
     $defaults = $this->aiProviderPluginManager->getDefaultProviderForOperationType($operation_type);
+    // If default provider exists and is allowed.
+    if (!empty($defaults['provider_id']) && !empty($defaults['model_id']) && $default_provider) {
+      $providers = ['__default__' => 'Default'] + $providers;
+    }
     // Don't load the provider selection if a provider is already selected.
     $provider = $provider_id;
     if (!$provider_id) {
@@ -92,6 +108,7 @@ class AiProviderFormHelper {
         '#default_value' => $provider,
         '#description' => $description ?? '',
         '#required' => TRUE,
+        '#empty_option' => $this->t('Select a provider'),
         '#ajax' => [
           'callback' => '\Drupal\ai\Service\AiProviderFormHelper::loadModelsAjaxCallback',
           'wrapper' => $prefix . 'ajax_wrapper',
@@ -105,7 +122,7 @@ class AiProviderFormHelper {
 
     $form[$prefix . 'ajax_prefix'] = [
       '#type' => 'details',
-      '#open' => TRUE,
+      '#open' => $provider != '__default__',
       '#title' => $this->t('Provider Configuration'),
       '#attributes' => [
         'id' => $prefix . 'ajax_wrapper',
@@ -120,7 +137,7 @@ class AiProviderFormHelper {
       $form[$prefix . 'ajax_prefix']['#weight'] = $weight;
     }
 
-    if ($provider) {
+    if ($provider && $provider != '__default__') {
       $llmInstance = $this->aiProviderPluginManager->createInstance($provider);
       $model = $form_state->getValue($prefix . 'ai_model');
       if (!$model && !empty($defaults['model_id'])) {
@@ -146,6 +163,7 @@ class AiProviderFormHelper {
         $this->generateFormElements($prefix . 'ajax_prefix', $form, $config_level, $configuration);
       }
     }
+    return $form;
   }
 
   /**
@@ -164,7 +182,8 @@ class AiProviderFormHelper {
     $prefix = $prefix ? rtrim($prefix, '_') . '_' : '';
     $provider = $form_state->getValue($prefix . 'ai_provider');
     $model = $form_state->getValue($prefix . 'ai_model');
-    if ($provider) {
+    // Check the provider, unless it's the default.
+    if ($provider && $provider != '__default__') {
       $llmInstance = $this->aiProviderPluginManager->createInstance($provider);
       if ($model) {
         $schema = $llmInstance->getAvailableConfiguration($operation_type, $model);
@@ -238,6 +257,10 @@ class AiProviderFormHelper {
     // Make sure the prefix is properly formatted.
     $prefix = $prefix ? rtrim($prefix, '_') . '_' : '';
     $provider = $form_state->getValue($prefix . 'ai_provider');
+    // If its the default provider, we don't need to do anything.
+    if ($provider == '__default__') {
+      return [];
+    }
     $model = $form_state->getValue($prefix . 'ai_model');
     $llmInstance = $this->aiProviderPluginManager->createInstance($provider);
     $schema = $llmInstance->getAvailableConfiguration($operation_type, $model);
@@ -287,9 +310,6 @@ class AiProviderFormHelper {
    */
   public function getAiProvidersOptions(string $operation_type) {
     $providers = $this->aiProviderPluginManager->getDefinitions();
-    $options = [
-      '' => $this->t('Select a provider'),
-    ];
     foreach ($providers as $id => $provider) {
       // Check so its setup.
       $providerInstance = $this->aiProviderPluginManager->createInstance($id);

@@ -320,7 +320,8 @@ class AiAssistantApiRunner {
    *   The response from the assistant.
    */
   protected function assistantMessage() {
-    $provider = $this->aiProvider->createInstance($this->assistant->get('llm_provider'));
+    $connect = $this->getProviderAndModel();
+    $provider = $this->aiProvider->createInstance($connect['provider_id']);
     // Set the provider role.
     $assistant_message = $this->assistant->get('assistant_message');
     if ($this->using_action) {
@@ -346,8 +347,10 @@ class AiAssistantApiRunner {
     }
 
     $config = [];
-    foreach ($this->assistant->get('llm_configuration') as $key => $val) {
-      $config[$key] = $val;
+    if ($this->assistant->get('llm_configuration')) {
+      foreach ($this->assistant->get('llm_configuration') as $key => $val) {
+        $config[$key] = $val;
+      }
     }
     $provider->setConfiguration($config);
     if ($this->streaming) {
@@ -361,7 +364,7 @@ class AiAssistantApiRunner {
     }
     $input = new ChatInput($messages);
 
-    $response = $provider->chat($input, $this->assistant->get('llm_model'));
+    $response = $provider->chat($input, $connect['model_id']);
 
     return $response;
   }
@@ -425,7 +428,8 @@ class AiAssistantApiRunner {
       $this->assistant->get('system_role'),
     ], $pre_prompt);
 
-    $provider = $this->aiProvider->createInstance($this->assistant->get('llm_provider'));
+    $connect = $this->getProviderAndModel();
+    $provider = $this->aiProvider->createInstance($connect['provider_id']);
 
     $provider->setChatSystemRole($pre_prompt);
     $provider->streamedOutput(TRUE);
@@ -435,7 +439,7 @@ class AiAssistantApiRunner {
       $messages[] = new ChatMessage($message['role'], $message['message']);
     }
     $input = new ChatInput($messages);
-    $response = $provider->chat($input, $this->assistant->get('llm_model'));
+    $response = $provider->chat($input, $connect['model_id']);
     $values = $response->getNormalized();
     $full = '';
     $i = 0;
@@ -480,6 +484,16 @@ class AiAssistantApiRunner {
   }
 
   /**
+   * Is setup.
+   *
+   * @return bool
+   */
+  public function isSetup() {
+    $connect = $this->getProviderAndModel();
+    return !empty($connect);
+  }
+
+  /**
    * Check for context matches.
    *
    * @param \Drupal\search_api\Entity\Index $index
@@ -507,6 +521,30 @@ class AiAssistantApiRunner {
       }
     }
     return "";
+  }
+
+  /**
+   * Get the provider and model for the assistant.
+   *
+   * @return array
+   *   The provider and model.
+   */
+  public function getProviderAndModel() {
+    $provider_id = $this->assistant->get('llm_provider');
+    $model_id = $this->assistant->get('llm_model');
+    // If the provider is default, we load the default model.
+    if ($provider_id == '__default__') {
+      $defaults = $this->aiProvider->getDefaultProviderForOperationType('chat');
+      if (empty($defaults['provider_id']) || empty($defaults['model_id'])) {
+        return [];
+      }
+      $provider_id = $defaults['provider_id'];
+      $model_id = $defaults['model_id'];
+    }
+    return [
+      'provider_id' => $provider_id,
+      'model_id' => $model_id,
+    ];
   }
 
   /**

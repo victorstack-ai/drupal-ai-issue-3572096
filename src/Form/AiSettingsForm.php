@@ -37,6 +37,12 @@ class AiSettingsForm extends ConfigFormBase {
       'label' => 'Chat with Image Vision',
       'filter' => [AiModelCapability::ChatWithImageVision],
     ],
+    [
+      'id' => 'chat_with_complex_json',
+      'actual_type' => 'chat',
+      'label' => 'Chat with Complex JSON',
+      'filter' => [AiModelCapability::ChatJsonOutput],
+    ]
   ];
 
   /**
@@ -158,6 +164,9 @@ class AiSettingsForm extends ConfigFormBase {
     foreach ($form_state->getValues() as $key => $value) {
       if (strpos($key, 'operation__') === 0) {
         $operation_type = substr($key, 11);
+        if (empty($value)) {
+          continue;
+        }
         $default_providers[$operation_type] = [
           'provider_id' => $value,
           'model_id' => $form_state->getValue('model__' . $operation_type),

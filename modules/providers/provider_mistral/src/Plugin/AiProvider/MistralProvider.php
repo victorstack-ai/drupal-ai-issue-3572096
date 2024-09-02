@@ -53,6 +53,10 @@ class MistralProvider extends AiProviderClientBase implements
     if (in_array(AiModelCapability::ChatWithImageVision, $capabilities)) {
       return [];
     }
+    // No complex JSON support.
+    if (in_array(AiModelCapability::ChatJsonOutput, $capabilities)) {
+      return [];
+    }
     set_error_handler([$this, 'errorCatcher'], E_ALL);
     $response = $this->getClient()->models()->list()->toArray();
     restore_error_handler();

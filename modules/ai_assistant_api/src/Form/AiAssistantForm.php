@@ -6,57 +6,15 @@ namespace Drupal\ai_assistant_api\Form;
 
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai\Utility\CastUtility;
-use Drupal\ai_assistant_api\AiAssistantActionPluginManager;
 use Drupal\ai_assistant_api\Entity\AiAssistant;
 use Drupal\Core\Entity\EntityForm;
-use Drupal\Core\Extension\ExtensionPathResolver;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformState;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * AI Assistant form.
  */
 final class AiAssistantForm extends EntityForm {
-
-  /**
-   * The AI Actions plugin manager.
-   *
-   * @var \Drupal\ai_assistant_api\AiAssistantActionPluginManager
-   */
-  private AiAssistantActionPluginManager $actions;
-
-  /**
-   * Extension path resolver.
-   *
-   * @var \Drupal\Core\Extension\ExtensionPathResolver
-   */
-  private ExtensionPathResolver $extensionPathResolver;
-
-  /**
-   * Constructor.
-   *
-   * @param \Drupal\ai_assistant_api\AiAssistantActionPluginManager $actions
-   *   The AI Actions plugin manager.
-   * @param \Drupal\Core\Extension\ExtensionPathResolver $extensionPathResolver
-   *   Extension path resolver.
-   */
-  public function __construct(
-    AiAssistantActionPluginManager $actions,
-    ExtensionPathResolver $extensionPathResolver) {
-    $this->actions = $actions;
-    $this->extensionPathResolver = $extensionPathResolver;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container) {
-    return new static(
-      $container->get('ai_assistant_api.action_plugin.manager'),
-      $container->get('extension.path.resolver')
-    );
-  }
 
   /**
    * {@inheritdoc}
@@ -138,7 +96,9 @@ final class AiAssistantForm extends EntityForm {
       ],
     ];
 
-    foreach ($this->actions->getDefinitions() as $definition) {
+    // phpcs:ignore
+    $actions = \Drupal::service('ai_assistant_api.action_plugin.manager');
+    foreach ($actions->getDefinitions() as $definition) {
       $form['action_plugin_' . $definition['id']] = [
         '#type' => 'details',
         '#title' => $definition['label'],
@@ -171,7 +131,7 @@ final class AiAssistantForm extends EntityForm {
         '#description' => $this->t('Configure the ' . $definition['label'] . ' settings for this AI assistant.'),
       ];
 
-      $instance = $this->actions->createInstance($definition['id'], $entity->get('actions_enabled')[$definition['id']] ?? []);
+      $instance = $actions->createInstance($definition['id'], $entity->get('actions_enabled')[$definition['id']] ?? []);
       $subform = $form['action_plugin_' . $definition['id']]['configuration'] ?? [];
       $subform_state = SubformState::createForSubform($subform, $form, $form_state);
 
@@ -240,7 +200,7 @@ The following articles were found:
     }
     // phpcs:ignore
     $form_helper = \Drupal::service('ai.form_helper');
-    $form_helper->generateAiProvidersForm($form, $form_state, 'chat', 'llm', AiProviderFormHelper::FORM_CONFIGURATION_FULL, 0, '', $this->t('Advanced LLM'), $this->t('The AI Provider to use for the advanced interactions.'));
+    $form_helper->generateAiProvidersForm($form, $form_state, 'chat', 'llm', AiProviderFormHelper::FORM_CONFIGURATION_FULL, 0, '', $this->t('Advanced LLM'), $this->t('The AI Provider to use for the advanced interactions.'), TRUE);
 
     // Set default values.
     $llm_configs = $entity->get('llm_configuration');
@@ -249,9 +209,8 @@ The following articles were found:
         $form['llm_ajax_prefix']['llm_ajax_prefix_configuration_' . $key]['#default_value'] = $value;
       }
     }
-
-
-    $pre_action_prompt = file_get_contents($this->extensionPathResolver->getPath('module', 'ai_assistant_api') . '/resources/pre_action_prompt.txt');
+    // phpcs:ignore
+    $pre_action_prompt = file_get_contents(\Drupal::service('extension.path.resolver')->getPath('module', 'ai_assistant_api') . '/resources/pre_action_prompt.txt');
 
     $form['advanced'] = [
       '#type' => 'details',
@@ -303,20 +262,27 @@ The following articles were found:
     $entity->set('actions_enabled', $action_plugins);
     // LLM provider.
     $entity->set('llm_provider', $form_state->getValue('llm_ai_provider'));
-    $entity->set('llm_model', $form_state->getValue('llm_ai_model'));
-    $llm_config = [];
-    // phpcs:ignore
-    $provider = \Drupal::service('ai.provider')->createInstance($form_state->getValue('llm_ai_provider'));
-    $schema = $provider->getAvailableConfiguration('chat', $form_state->getValue('llm_ai_model'));
-    foreach ($form_state->getValues() as $key => $val) {
-      if (strpos($key, 'llm_') === 0 && $key !== 'llm_ai_provider' && $key !== 'llm_ai_model') {
+    // If its default, we don't set the last.
+    if ($form_state->getValue('llm_ai_provider') !== '__default__') {
+      $entity->set('llm_model', $form_state->getValue('llm_ai_model'));
+      $llm_config = [];
+      // phpcs:ignore
+      $provider = \Drupal::service('ai.provider')->createInstance($form_state->getValue('llm_ai_provider'));
+      $schema = $provider->getAvailableConfiguration('chat', $form_state->getValue('llm_ai_model'));
+      foreach ($form_state->getValues() as $key => $val) {
+        if (strpos($key, 'llm_') === 0 && $key !== 'llm_ai_provider' && $key !== 'llm_ai_model') {
 
-        $real_key = str_replace('llm_ajax_prefix_configuration_', '', $key);
-        $type = $schema[$real_key]['type'] ?? 'string';
-        $llm_config[$real_key] = CastUtility::typeCast($type, $val);
+          $real_key = str_replace('llm_ajax_prefix_configuration_', '', $key);
+          $type = $schema[$real_key]['type'] ?? 'string';
+          $llm_config[$real_key] = CastUtility::typeCast($type, $val);
+        }
       }
+      $entity->set('llm_configuration', $llm_config);
     }
-    $entity->set('llm_configuration', $llm_config);
+    else {
+      $entity->set('llm_configuration', []);
+      $entity->set('llm_model', '');
+    }
   }
 
   /**

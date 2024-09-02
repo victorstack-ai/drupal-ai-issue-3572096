@@ -12,5 +12,7 @@ enum AiModelCapability: string {
   case ChatWithImageVision = 'chat_with_image_vision';
   // Allows the chat model to include a system role.
   case ChatSystemRole = 'chat_system_role';
+  // Allow the chat model that can do flawless complex JSON output.
+  case ChatJsonOutput = 'chat_json_output';
 
 }

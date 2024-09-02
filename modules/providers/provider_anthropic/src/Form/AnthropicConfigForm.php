@@ -154,6 +154,11 @@ class AnthropicConfigForm extends ConfigFormBase {
       }
     }
 
+    // Set some defaults.
+    $this->aiProviderManager->defaultIfNone('chat', 'anthropic', 'claude-3-sonnet-20240229');
+    $this->aiProviderManager->defaultIfNone('chat_with_image_json', 'anthropic', 'claude-3-sonnet-20240229');
+    $this->aiProviderManager->defaultIfNone('chat_with_complex_json', 'anthropic', 'claude-3-5-sonnet-20240620');
+
     parent::submitForm($form, $form_state);
   }
 

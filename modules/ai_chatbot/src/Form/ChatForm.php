@@ -66,11 +66,7 @@ class ChatForm extends FormBase {
     foreach ($this->routeMatcher->getParameters()->all() as $key => $data) {
       $context[$key] = $this->routeMatcher->getParameter($key);
     }
-    // Get the config.
-    $chat_config = $this->getChatConfig($form_state);
     // Setup the assistant.
-    $assistant = $this->entityTypeManager->getStorage('ai_assistant')->load($chat_config['ai_assistant']);
-    $this->aiAssistantClient->setAssistant($assistant);
     $this->aiAssistantClient->setContext($context);
 
     if (!$this->getRequest()->isXmlHttpRequest()) {

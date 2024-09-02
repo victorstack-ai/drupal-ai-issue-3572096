@@ -10,6 +10,7 @@ use Drupal\ai\OperationType\OperationTypeInterface;
 use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -57,9 +58,21 @@ final class AiProviderPluginManager extends DefaultPluginManager {
   protected $configFactory;
 
   /**
+   * The message handler.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
+
+  /**
    * Constructs the object.
    */
-  public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, ModuleHandlerInterface $module_handler, ContainerInterface $container) {
+  public function __construct(
+    \Traversable $namespaces,
+    CacheBackendInterface $cache_backend,
+    ModuleHandlerInterface $module_handler,
+    ContainerInterface $container,
+    MessengerInterface $messenger) {
     parent::__construct('Plugin/AiProvider', $namespaces, $module_handler, AiProviderInterface::class, AiProvider::class);
     $this->alterInfo('ai_provider_info');
     $this->setCacheBackend($cache_backend, 'ai_provider_plugins');
@@ -68,6 +81,7 @@ final class AiProviderPluginManager extends DefaultPluginManager {
     $this->cacheBackend = $cache_backend;
     $this->moduleHandler = $module_handler;
     $this->configFactory = $container->get('config.factory');
+    $this->messenger = $messenger;
   }
 
   /**
@@ -275,6 +289,40 @@ final class AiProviderPluginManager extends DefaultPluginManager {
     $this->cacheBackend->set('ai_operation_types', $operation_types);
 
     return $operation_types;
+  }
+
+  /**
+   * A helper setting for provider to allow them to be default on setup.
+   *
+   * @param string $operation_type
+   *   The operation type.
+   * @param string $provider_id
+   *   The provider ID.
+   * @param string $model_id
+   *   The model ID.
+   *
+   * @return bool
+   *   If the default was set.
+   */
+  public function defaultIfNone(string $operation_type, string $provider_id, string $model_id): bool {
+    $config = $this->configFactory->getEditable('ai.settings');
+    $default_providers = $config->get('default_providers') ?? [];
+    // If its set, we just return false.
+    if (!empty($default_providers[$operation_type])) {
+      return FALSE;
+    }
+    $default_providers[$operation_type] = [
+      'provider_id' => $provider_id,
+      'model_id' => $model_id,
+    ];
+    // Set a message to the user.
+    $this->messenger->addMessage($this->t('Default provider %provider_id with model %model set for operation type %operation_type.', [
+      '%operation_type' => $operation_type,
+      '%provider_id' => $provider_id,
+      '%model' => $model_id,
+    ]));
+    $config->set('default_providers', $default_providers)->save();
+    return TRUE;
   }
 
   /**

@@ -45,6 +45,13 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
   protected $currentUser;
 
   /**
+   * The AI Assistant API runner.
+   *
+   * @var \Drupal\ai_chatbot\AiAssistantRunner
+   */
+  protected $aiAssistantRunner;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
@@ -52,6 +59,7 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
     $plugin->entityTypeManager = $container->get('entity_type.manager');
     $plugin->formBuilder = $container->get('form_builder');
     $plugin->currentUser = $container->get('current_user');
+    $plugin->aiAssistantRunner = $container->get('ai_assistant_api.runner');
     return $plugin;
   }
 
@@ -165,6 +173,10 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
    * {@inheritdoc}
    */
   public function build() {
+    $this->aiAssistantRunner->setAssistant($this->entityTypeManager->getStorage('ai_assistant')->load($this->configuration['ai_assistant']));
+    if (!$this->aiAssistantRunner->isSetup()) {
+      return [];
+    }
     $block = [];
     $form_state = new FormState();
     $form_state

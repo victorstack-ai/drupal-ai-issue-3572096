@@ -4,6 +4,7 @@ namespace Drupal\provider_anthropic\Plugin\AiProvider;
 
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
+use Drupal\ai\Enum\AiModelCapability;
 use Drupal\ai\Exception\AiQuotaException;
 use Drupal\ai\Exception\AiResponseErrorException;
 use Drupal\ai\OperationType\Chat\ChatInput;
@@ -50,6 +51,12 @@ class AnthropicProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function getConfiguredModels(string $operation_type = NULL, array $capabilities = []): array {
+    // No complex JSON support.
+    if (in_array(AiModelCapability::ChatJsonOutput, $capabilities)) {
+      return [
+        'claude-3-5-sonnet-20240620' => 'Claude 3.5 Sonnet',
+      ];
+    }
     // Anthropic hard codes :/.
     if ($operation_type == 'chat') {
       return [

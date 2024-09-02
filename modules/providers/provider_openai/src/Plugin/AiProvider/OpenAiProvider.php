@@ -650,14 +650,14 @@ class OpenAiProvider extends AiProviderClientBase implements
       }
 
       // Filter models.
-      if (in_array(AiModelCapability::ChatWithImageVision, $capabilities)) {
-        if (preg_match('/^(gpt-4o|gpt-4-turbo|vision)/i', $model['id'])) {
-          $models[$model['id']] = $model['id'];
-        }
+      if (in_array(AiModelCapability::ChatWithImageVision, $capabilities) && !preg_match('/^(gpt-4o|gpt-4-turbo|vision)/i', $model['id'])) {
+        continue;
       }
-      else {
-        $models[$model['id']] = $model['id'];
+      // Allow gpt-4o and gpt-4-turbo, but not gpt-4o-mini.
+      if (in_array(AiModelCapability::ChatJsonOutput, $capabilities) && (!preg_match('/^(gpt-4o|gpt-4-turbo)/i', $model['id']) || preg_match('/(mini)/i', $model['id']))) {
+        continue;
       }
+      $models[$model['id']] = $model['id'];
     }
 
     if ($operation_type == 'moderation') {

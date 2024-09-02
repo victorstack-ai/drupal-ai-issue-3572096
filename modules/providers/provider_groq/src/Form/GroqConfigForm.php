@@ -2,8 +2,10 @@
 
 namespace Drupal\provider_groq\Form;
 
+use Drupal\ai\AiProviderPluginManager;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Configure Groq API access.
@@ -14,6 +16,29 @@ class GroqConfigForm extends ConfigFormBase {
    * Config settings.
    */
   const CONFIG_NAME = 'provider_groq.settings';
+
+  /**
+   * The AI Provider service.
+   *
+   * @var \Drupal\ai\AiProviderPluginManager
+   */
+  protected $aiProviderManager;
+
+  /**
+   * Constructs a new GroqConfigForm object.
+   */
+  final public function __construct(AiProviderPluginManager $ai_provider_manager) {
+    $this->aiProviderManager = $ai_provider_manager;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  final public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('ai.provider'),
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -55,6 +80,8 @@ class GroqConfigForm extends ConfigFormBase {
     $this->config(static::CONFIG_NAME)
       ->set('api_key', $form_state->getValue('api_key'))
       ->save();
+
+    $this->aiProviderManager->defaultIfNone('chat', 'anthropic', 'llama-3.1-8b-instant');
 
     parent::submitForm($form, $form_state);
   }
