@@ -162,20 +162,17 @@ final class AiAssistantForm extends EntityForm {
     $form['assistant_message'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Assistant message'),
-      '#description' => $this->t('Use the token [rag_context] for providing the snippets or full rendered entities. Use the token [question] for providing the question from the end-user.<br />The assistant message is for responses created by the LLM.'),
+      '#description' => $this->t('The assistant message is for responses created by the LLM, they will get contexts from the different action providers like RAG and the chat history if session is enabled. You may use the token [question] for the users last question, though that will be provided in the messages sent.'),
       '#default_value' => $entity->get('assistant_message'),
       '#attributes' => [
-        'placeholder' => $this->t("Based on the following results that were fetched from an article database and the following question, check if you can answer the question truthfully. If you can not answer the question, please respond that you do not have enough information to do so. Do NOT make up information. Answer in a professional and concise manner. If a link is provided with the article, use HTML to link to the article using the articles title.
+        'placeholder' => $this->t("Based on the users question, you will first be given a result that were fetched from a database and the chat thread, check if you can answer the question truthfully. If you can not answer the question, please respond that you do not have enough information to do so. If there is an error from the agent, please just forward it. Do NOT make up information, but you may answer fairly freely based on the database lookup. You may reframe words that appear there and concise them or express them, but not make up stuff. Answer in a laidback and informal manner. If a link is provided with the article, use HTML to link to the article using the articles title. Please also answer with the author name at the end if its known. Use american english.
 
-The question is:
------------------------
-[question]
------------------------
+When you get assistant messages of results from RAG use them when you answer.
 
-The following articles were found:
------------------------
-[rag_context]
------------------------"),
+Please answer using HTML with the link as this <a href=\"{uri}\">{title}</a>. You may use tags like a, em, strong, ul, ol, li, p, br, hr. Do not answer in markdown, just answer with HTML.
+
+Always use HTML when outputting your message, never markdown. You can use the following HTML tags - a, em, strong, ul, ol, li, pre.  Please use paragraphs and lists when possible to make it more readable.
+"),
         'rows' => 15,
       ],
     ];

@@ -205,6 +205,7 @@ class AiAssistantApiRunner {
   public function setUserMessage(UserMessage $userMessage) {
     $this->userMessage = $userMessage;
     $this->tokens['question'] = $userMessage->getMessage();
+
     // If session is set, we store the user message.
     if ($this->assistant->get('allow_history') == 'session') {
       $this->addMessageToSession('user', $this->userMessage->getMessage());
@@ -295,15 +296,14 @@ class AiAssistantApiRunner {
         return $return;
       }
 
-      // Reset RAG Context.
-      $this->tokens['rag_context'] = [];
       // Currently for debugging.
+      $defaults = $this->getProviderAndModel();
       foreach ($return['actions'] as $action) {
         $this->using_action = TRUE;
         $instance = $this->actions->createInstance($action['plugin'], $this->assistant->get('actions_enabled')[$action['plugin']] ?? []);
         $instance->setAssistant($this->assistant);
         $instance->setThreadId($this->thread_id);
-        $instance->setAiProvider($this->aiProvider->createInstance($this->assistant->get('llm_provider')));
+        $instance->setAiProvider($this->aiProvider->createInstance($defaults['provider_id']));
         $instance->setMessages($this->getMessageHistory());
         $instance->triggerAction($action['action'], $action);
       }
@@ -324,6 +324,10 @@ class AiAssistantApiRunner {
     $provider = $this->aiProvider->createInstance($connect['provider_id']);
     // Set the provider role.
     $assistant_message = $this->assistant->get('assistant_message');
+    // Replace the tokens.
+    foreach ($this->tokens as $key => $value) {
+      $assistant_message = str_replace('[' . $key . ']', $value, $assistant_message);
+    }
     if ($this->using_action) {
       // Add the information that search is done.
       $assistant_message .= "\n\n Start the message with the following information: \nThank you for your question. I am looking up the answer.<br><br>";
@@ -331,20 +335,6 @@ class AiAssistantApiRunner {
     $provider->setChatSystemRole($assistant_message);
     // Set the RAG context if we have it.
     $messages = [];
-
-    if ($this->assistant->get('allow_history') == 'session') {
-      if (!empty($this->getOutputHistory())) {
-        $message = '';
-        foreach ($this->getOutputHistory() as $key => $data) {
-          $message .= "The following are the results the different actions from the $key action: \n";
-          foreach ($data as $item) {
-            $message .= $item . "\n";
-          }
-          $message .= "\n";
-        }
-        $messages[] = new ChatMessage('assistant', $message);
-      }
-    }
 
     $config = [];
     if ($this->assistant->get('llm_configuration')) {
@@ -357,10 +347,23 @@ class AiAssistantApiRunner {
       $provider->streamedOutput(TRUE);
     }
     // Get the history.
-
     $history = $this->getMessageHistory();
-    foreach ($history as $message) {
+    foreach ($history as $key => $message) {
       $messages[] = new ChatMessage($message['role'], $message['message']);
+    }
+    // Set context messages.
+    if ($this->assistant->get('allow_history') == 'session') {
+      if (!empty($this->getOutputHistory())) {
+        $message = '';
+        foreach ($this->getOutputHistory() as $key => $data) {
+          $message .= "The following are the results the different actions from the $key action: \n";
+          foreach ($data as $item) {
+            $message .= $item . "\n";
+          }
+          $message .= "\n";
+        }
+        $messages[] = new ChatMessage('assistant', $message);
+      }
     }
     $input = new ChatInput($messages);
 

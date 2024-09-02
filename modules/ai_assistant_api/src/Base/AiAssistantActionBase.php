@@ -172,6 +172,7 @@ abstract class AiAssistantActionBase implements AiAssistantActionInterface, Cont
       $session['output_contexts'][$key] = [];
     }
     $session['output_contexts'][$key][] = $context;
+
     $this->getTempStore()->set($this->thread_id, $session);
   }
 
