@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\ai_automator\Plugin\Action;
+namespace Drupal\ai_eca\Plugin\Action;
 
 use Drupal\ai_automator\AiAutomatorRuleRunner;
 use Drupal\ai_automator\PluginManager\AiAutomatorTypeManager;
