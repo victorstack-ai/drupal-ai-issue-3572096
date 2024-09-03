@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\ai_automator\Plugin\AiAutomatorProcess;
+namespace Drupal\ai_eca\Plugin\AiAutomatorProcess;
 
 use Drupal\ai_automator\AiAutomatorRuleRunner;
 use Drupal\ai_automator\Attribute\AiAutomatorProcessRule;
