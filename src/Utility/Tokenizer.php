@@ -45,7 +45,10 @@ class Tokenizer implements TokenizerInterface {
       $this->encoder = $this->encoderProvider->getForModel($model);
     }
     catch (\Exception $e) {
-      $this->encoder = $this->encoderProvider->getForModel('gpt-3.5-turbo');
+      // Fallback to the same encoding used by gpt3.5-turbo as a sensible
+      // default when the model is not yet supported by TikToken PHP.
+      // @see https://github.com/yethee/tiktoken-php/blob/master/src/EncoderProvider.php
+      $this->encoder = $this->encoderProvider->get('cl100k_base');
     }
   }
 
