@@ -510,7 +510,7 @@ class HuggingfaceApi {
    */
   protected function finalEndpoint($endpoint) {
     // If it has a protocol, it's a dedicated url.
-    if (strpos($endpoint, 'https://') === 0) {
+    if (strpos($endpoint, 'https://') === 0 || strpos($endpoint, 'http://') === 0) {
       return $endpoint;
     }
     // Otherwise, it's a serverless endpoint.

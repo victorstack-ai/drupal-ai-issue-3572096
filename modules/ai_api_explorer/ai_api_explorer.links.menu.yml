@@ -57,6 +57,12 @@ ai_api_explorer.image_and_audio_to_video_form:
   parent: ai_api_explorer.main
   route_name: ai_api_explorer.image_and_audio_to_video_form
   weight: 8
+ai_api_explorer.image_classification:
+  title: Image Classification Explorer
+  description: Contains a form where you can experiment and test the AI image classification.
+  parent: ai_api_explorer.main
+  route_name: ai_api_explorer.image_classification
+  weight: 9
 ai_api_explorer.vector_db_form:
   title: Vector DB Explorer
   description: Contains a form where you can try out the results you get back from the vector databases.

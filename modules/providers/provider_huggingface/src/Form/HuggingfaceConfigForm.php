@@ -31,6 +31,10 @@ class HuggingfaceConfigForm extends ConfigFormBase {
       'label' => 'Embeddings',
       'filter' => 'feature-extraction',
     ],
+    'image_classification' => [
+      'label' => 'Image Classification',
+      'filter' => 'image-classification',
+    ],
   ];
 
   /**

@@ -1136,6 +1136,102 @@
         }
       ],
       "responseMode": null
+    },
+    {
+      "uuid": "ec650ff7-9eb2-4fa2-b5d0-17916b1f06d5",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "huggingface/Falconsai/nsfw_image_detection",
+      "responses": [
+        {
+          "uuid": "16239c8c-1985-4975-9024-dcef7b7aee58",
+          "body": "{\n    \"error\": \"Rate limit reached. Please log in or use a HF access token\"\n}",
+          "latency": 0,
+          "statusCode": 429,
+          "label": "Access Denied",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Authorization",
+              "value": "Bearer abc123",
+              "invert": true,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "a09e8618-0af2-4350-a779-2a8a9cb2d2cb",
+          "body": "{\n    \"error\": [\n        \"Error in `parameters`: field required\",\n        \"Error in `inputs`: field required\"\n    ]\n}",
+          "latency": 0,
+          "statusCode": 400,
+          "label": "Missing Body",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "",
+              "value": "",
+              "invert": false,
+              "operator": "null"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "84710cce-6783-4ab7-8e67-2850bebc809a",
+          "body": "[\n  {\n    \"label\": \"normal\",\n    \"score\": 0.99988055229187\n  },\n  {\n    \"label\": \"nsfw\",\n    \"score\": 0.00011939688556595\n  }\n]",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Successful sending of an image classification",
+          "headers": [
+            {
+              "key": "",
+              "value": ""
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "",
+              "value": "",
+              "invert": true,
+              "operator": "null"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null
     }
   ],
   "rootChildren": [
@@ -1170,6 +1266,10 @@
     {
       "type": "route",
       "uuid": "3faf623f-2e9a-45d1-b92e-ea1fa9294767"
+    },
+    {
+      "type": "route",
+      "uuid": "ec650ff7-9eb2-4fa2-b5d0-17916b1f06d5"
     },
     {
       "type": "route",

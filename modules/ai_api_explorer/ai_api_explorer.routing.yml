@@ -68,6 +68,13 @@ ai_api_explorer.image_and_audio_to_video_form:
     _form: 'Drupal\ai_api_explorer\Form\ImageAndAudioToVideoGenerationForm'
   requirements:
     _permission: 'access ai prompt'
+ai_api_explorer.image_classification:
+  path: '/admin/config/ai/explorers/ai-image-classification'
+  defaults:
+    _title: 'AI Image Classification Explorer'
+    _form: 'Drupal\ai_api_explorer\Form\ImageClassificationGenerationForm'
+  requirements:
+    _permission: 'access ai prompt'
 ai_api_explorer.vector_db_query:
   path: '/admin/config/ai/explorers/vector-db-search'
   defaults:

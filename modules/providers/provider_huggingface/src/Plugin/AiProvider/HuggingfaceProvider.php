@@ -7,6 +7,7 @@ use Drupal\ai\Base\AiProviderClientBase;
 use Drupal\ai\Enum\AiModelCapability;
 use Drupal\ai\Exception\AiMissingFeatureException;
 use Drupal\ai\Exception\AiRateLimitException;
+use Drupal\ai\Exception\AiResponseErrorException;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
 use Drupal\ai\OperationType\Chat\ChatMessage;
@@ -14,6 +15,10 @@ use Drupal\ai\OperationType\Chat\ChatOutput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInterface;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsOutput;
+use Drupal\ai\OperationType\ImageClassification\ImageClassificationInput;
+use Drupal\ai\OperationType\ImageClassification\ImageClassificationInterface;
+use Drupal\ai\OperationType\ImageClassification\ImageClassificationItem;
+use Drupal\ai\OperationType\ImageClassification\ImageClassificationOutput;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -31,7 +36,8 @@ use Symfony\Component\Yaml\Yaml;
 class HuggingfaceProvider extends AiProviderClientBase implements
   ContainerFactoryPluginInterface,
   ChatInterface,
-  EmbeddingsInterface {
+  EmbeddingsInterface,
+  ImageClassificationInterface {
 
   /**
    * The Huggingface Client.
@@ -96,6 +102,7 @@ class HuggingfaceProvider extends AiProviderClientBase implements
     return [
       'chat',
       'embeddings',
+      'image_classification',
     ];
   }
 
@@ -202,6 +209,35 @@ class HuggingfaceProvider extends AiProviderClientBase implements
     $response = json_decode($this->client->featureExtraction($model_id, $input), TRUE);
 
     return new EmbeddingsOutput($response, $response, []);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function imageClassification(string|array|ImageClassificationInput $input, string $model_id, array $tags = []): ImageClassificationOutput {
+    $this->loadClient();
+    // Normalize the input if needed.
+    if ($input instanceof ImageClassificationInput) {
+      $input = $input->getImageFile()->getBinary();
+    }
+    // Store temporary file.
+    $temp_file = tempnam(sys_get_temp_dir(), 'ai_image_classification');
+    file_put_contents($temp_file, $input);
+    // Send the request.
+    $response = json_decode($this->client->imageClassification($model_id, $temp_file), TRUE);
+    // Remove the temporary file.
+    unlink($temp_file);
+    $classifications = [];
+    if (is_array($response)) {
+      foreach ($response as $row) {
+        $classifications[] = new ImageClassificationItem($row['label'], $row['score']);
+      }
+    }
+    else {
+      throw new AiResponseErrorException('Invalid response from Huggingface.');
+    }
+
+    return new ImageClassificationOutput($classifications, $response, []);
   }
 
   /**

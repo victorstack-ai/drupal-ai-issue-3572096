@@ -23,3 +23,10 @@ embeddings:
       type: 'integer'
       default: 1024
       required: false
+image_classification:
+  input:
+    description: 'Binary of image to classify.'
+    type: 'string'
+    default: ''
+    required: true
+
