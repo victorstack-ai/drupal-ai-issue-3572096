@@ -1,13 +1,16 @@
 {
-  "name": "drupal/ai",
-  "description": "AI module for Drupal",
-  "type": "drupal-module",
-  "require": {
-    "openai-php/client": ">=v0.10.1",
-    "wpai-inc/anthropic-sdk-php": ">=0.1.0",
-    "drupal/key": "^1.18",
-    "league/html-to-markdown": "^5.1",
-    "yethee/tiktoken": "^0.5.1",
-    "hkulekci/qdrant": "^0.5.5"
-  }
+    "name": "drupal/ai",
+    "description": "AI module for Drupal",
+    "type": "drupal-module",
+    "require": {
+        "openai-php/client": ">=v0.10.1",
+        "wpai-inc/anthropic-sdk-php": ">=0.1.0",
+        "drupal/key": "^1.18",
+        "league/html-to-markdown": "^5.1",
+        "yethee/tiktoken": "^0.5.1",
+        "hkulekci/qdrant": "^0.5.5"
+    },
+    "require-dev": {
+        "drupal/eca": "^2.0"
+    }
 }

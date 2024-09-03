@@ -63,4 +63,14 @@ class SpeechToTextInput implements InputInterface {
     return 'binary';
   }
 
+  /**
+   * Return the input as string.
+   *
+   * @return string
+   *    The input as string.
+   */
+  public function __toString(): string {
+    return $this->toString();
+  }
+
 }

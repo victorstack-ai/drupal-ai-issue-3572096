@@ -1,0 +1,5 @@
+name: AI Test integration
+type: module
+description: Adds integrations for testing.
+package: Testing
+core_version_requirement: ^10.3 || ^11

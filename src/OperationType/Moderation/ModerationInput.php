@@ -53,4 +53,14 @@ class ModerationInput implements InputInterface {
     return $this->prompt;
   }
 
+  /**
+   * Return the input as string.
+   *
+   * @return string
+   *    The input as string.
+   */
+  public function __toString(): string {
+    return $this->toString();
+  }
+
 }

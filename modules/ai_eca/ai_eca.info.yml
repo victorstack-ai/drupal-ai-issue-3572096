@@ -1,0 +1,9 @@
+name: AI ECA integration
+type: module
+description: Adds integration with the ECA module.
+package: AI
+core_version_requirement: ^10 || ^11
+dependencies:
+  - ai:ai
+  - drupal:file
+  - eca:eca

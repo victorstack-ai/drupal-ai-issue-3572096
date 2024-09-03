@@ -22,3 +22,6 @@ ai.settings:
             model_id:
               type: string
               label: 'Model ID'
+    _core:
+      type: _core_config_info
+      label: 'Core config info'

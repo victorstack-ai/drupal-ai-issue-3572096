@@ -52,4 +52,14 @@ class TextToSpeechInput implements InputInterface {
     return $this->text;
   }
 
+  /**
+   * Return the input as string.
+   *
+   * @return string
+   *    The input as string.
+   */
+  public function __toString(): string {
+    return $this->toString();
+  }
+
 }

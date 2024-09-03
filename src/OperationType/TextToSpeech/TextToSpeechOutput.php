@@ -12,7 +12,7 @@ class TextToSpeechOutput implements OutputInterface {
   /**
    * The normalized audio type.
    *
-   * @var \Drupal\ai\OperationType\GenericType\AudioType[]
+   * @var \Drupal\ai\OperationType\GenericType\AudioFile[]
    */
   private array $normalized;
 
@@ -33,7 +33,7 @@ class TextToSpeechOutput implements OutputInterface {
   /**
    * The constructor.
    *
-   * @param \Drupal\ai\OperationType\GenericType\AudioType[] $normalized
+   * @param \Drupal\ai\OperationType\GenericType\AudioFile[] $normalized
    *   The audio object.
    * @param mixed $rawOutput
    *   The raw output from the AI provider.
@@ -49,7 +49,7 @@ class TextToSpeechOutput implements OutputInterface {
   /**
    * Returns an array of audio objects.
    *
-   * @return \Drupal\ai\OperationType\GenericType\AudioType[]
+   * @return \Drupal\ai\OperationType\GenericType\AudioFile[]
    *   The audio objects.
    */
   public function getNormalized(): array {
