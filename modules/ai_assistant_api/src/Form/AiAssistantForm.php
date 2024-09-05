@@ -221,7 +221,7 @@ Always use HTML when outputting your message, never markdown. You can use the fo
       '#default_value' => $entity->get('pre_action_prompt') ?? $pre_action_prompt,
       '#description' => $this->t('The pre prompts gets a list of actions that it can take, including RAG databases and either gives back actions that the Assistant can take or an outputted answer. You may use [list_of_actions] to list the actions that the Assistant can take. You can only change this via manual config change. DO NOT CHANGE THIS UNLESS YOU KNOW WHAT YOU ARE DOING.'),
       '#required' => TRUE,
-      '#disabled' => TRUE,
+      '#disabled' => FALSE,
       '#attributes' => [
         'rows' => 75,
       ],

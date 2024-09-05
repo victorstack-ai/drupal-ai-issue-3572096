@@ -137,9 +137,20 @@ abstract class AiAssistantActionBase implements AiAssistantActionInterface, Cont
    *   The data.
    */
   public function getActionContext(string $key): array {
+    $session = $this->getAllActionContexts();
+    return $session[$key] ?? [];
+  }
+
+  /**
+   * Get all the context from history.
+   *
+   * @return array
+   *   The data.
+   */
+  public function getAllActionContexts(): array {
     if ($this->assistant->get('allow_history') == 'session') {
       $session = $this->getTempStore()->get($this->thread_id);
-      return $session['contexts'][$key] ?? [];
+      return $session['contexts'] ?? [];
     }
     return [];
   }
@@ -149,10 +160,10 @@ abstract class AiAssistantActionBase implements AiAssistantActionInterface, Cont
    *
    * @param string $key
    *   The key to set the context to.
-   * @param array $data
+   * @param mixed $data
    *   The data.
    */
-  public function storeActionContext(string $key, array $data) {
+  public function storeActionContext(string $key, mixed $data) {
     $session = $this->getTempStore()->get($this->thread_id);
     $session['contexts'][$key][] = $data;
     $this->getTempStore()->set($this->thread_id, $session);
@@ -172,6 +183,49 @@ abstract class AiAssistantActionBase implements AiAssistantActionInterface, Cont
       $session['output_contexts'][$key] = [];
     }
     $session['output_contexts'][$key][] = $context;
+
+    $this->getTempStore()->set($this->thread_id, $session);
+  }
+
+  /**
+   * Get output token.
+   *
+   * @param string $key
+   *   The key to get the context from.
+   *
+   * @return string
+   *   The data.
+   */
+  public function getOutputToken(string $key): string {
+    $session = $this->getTempStore()->get($this->thread_id);
+    return $session['output_tokens'][$key] ?? '';
+  }
+
+  /**
+   * Get all the output tokens.
+   *
+   * @return array
+   *   The data.
+   */
+  public function getAllOutputTokens(): array {
+    $session = $this->getTempStore()->get($this->thread_id);
+    return $session['output_tokens'] ?? [];
+  }
+
+  /**
+   * Set output tokens.
+   *
+   * @param string $key
+   *   The key to set the context to.
+   * @param string $context
+   *   The context.
+   */
+  public function setOutputTokens(string $key, string $context) {
+    $session = $this->getTempStore()->get($this->thread_id);
+    if (!isset($session['output_tokens'][$key]) || !is_array($session['output_tokens'][$key])) {
+      $session['output_tokens'][$key] = [];
+    }
+    $session['output_tokens'][$key][] = $context;
 
     $this->getTempStore()->set($this->thread_id, $session);
   }

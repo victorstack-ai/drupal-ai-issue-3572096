@@ -84,7 +84,6 @@ class ChatForm extends FormBase {
         'placeholder' => $this->t('Ask me a question'),
         'class' => ['chat-form-query'],
       ],
-      '#required' => TRUE,
       '#rows' => 1,
     ];
 
@@ -100,15 +99,14 @@ class ChatForm extends FormBase {
       '#type' => 'actions',
     ];
 
+    $form['#attached']['library'][] = 'ai_chatbot/form-stream';
+
     $form['actions']['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Send'),
       '#attributes' => [
         'data-ai-ajax' => $response_id,
         'class' => ['chat-form-send'],
-      ],
-      '#attached' => [
-        'library' => ['ai_chatbot/form-stream'],
       ],
     ];
 

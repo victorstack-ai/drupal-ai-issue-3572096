@@ -333,7 +333,7 @@ class AiAssistantApiRunner {
       $assistant_message .= "\n\n Start the message with the following information: \nThank you for your question. I am looking up the answer.<br><br>";
     }
     $provider->setChatSystemRole($assistant_message);
-    // Set the RAG context if we have it.
+
     $messages = [];
 
     $config = [];
