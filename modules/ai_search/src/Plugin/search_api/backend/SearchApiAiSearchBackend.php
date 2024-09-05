@@ -527,12 +527,21 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       $params['limit'] = $start_limit * 2;
       $params['offset'] = $start_offset + ($iteration * $start_limit * 2);
     }
-    if (!empty($query->getKeys()) && !empty($query->getKeys()[0])) {
+    $search_words = $query->getKeys();
+    if (!empty($search_words)) {
       [$provider_id, $model_id] = explode('__', $this->configuration['embeddings_engine']);
       $embedding_llm = $this->aiProviderManager->createInstance($provider_id);
       // We don't have to redo this.
       if (!isset($params['vector_input'])) {
-        $params['vector_input'] = $embedding_llm->embeddings($query->getKeys()[0], $model_id)->getNormalized();
+        // Handlex complex search queries, but we just normalize to string.
+        // It makes no sense to do Boolean or other complex searches on vectors.
+        if (is_array($search_words)) {
+          if (isset($search_words['#conjunction'])) {
+            unset($search_words['#conjunction']);
+          }
+          $search_words = implode(' ', $search_words);
+        }
+        $params['vector_input'] = $embedding_llm->embeddings($search_words, $model_id)->getNormalized();
       }
       $response = $this->getClient()->vectorSearch(...$params);
     }
