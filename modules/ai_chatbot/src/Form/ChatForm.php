@@ -95,13 +95,9 @@ class ChatForm extends FormBase {
       ],
     ];
 
-    $form['actions'] = [
-      '#type' => 'actions',
-    ];
-
     $form['#attached']['library'][] = 'ai_chatbot/form-stream';
 
-    $form['actions']['submit'] = [
+    $form['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Send'),
       '#attributes' => [
