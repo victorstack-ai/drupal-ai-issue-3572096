@@ -1,14 +1,14 @@
 <?php
 
-namespace Drupal\Tests\ai\Kernel\Service\AiProviderValidator;
+namespace Drupal\Tests\ai_eca\Kernel\Service;
 
 use Drupal\ai\AiProviderPluginManager;
-use Drupal\ai\Service\AiProviderValidator\AiProviderValidatorInterface;
+use Drupal\ai_eca\Service\AiProviderValidatorInterface;
 use Drupal\KernelTests\KernelTestBase;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * Kernel tests for the "ai_provider_validator"-service.
+ * Kernel tests for the "ai_eca_provider_validator"-service.
  *
  * @group ai
  */
@@ -20,6 +20,7 @@ class AiProviderValidatorTest extends KernelTestBase {
   protected static $modules = [
     'ai',
     'ai_test',
+    'ai_eca',
     'key',
     'system',
     'user',
@@ -49,7 +50,7 @@ class AiProviderValidatorTest extends KernelTestBase {
     $this->installConfig(static::$modules);
 
     $this->aiProvider = \Drupal::service('ai.provider');
-    $this->validator = \Drupal::service('ai.provider_validator');
+    $this->validator = \Drupal::service('ai_eca.provider_validator');
   }
 
   /**

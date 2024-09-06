@@ -37,7 +37,7 @@ abstract class AiConfigActionBase extends AiActionBase {
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): static {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->yamlParser = $container->get('eca.service.yaml_parser');
-    $instance->validator = $container->get('ai.provider_validator');
+    $instance->validator = $container->get('ai_eca.provider_validator');
 
     return $instance;
   }
