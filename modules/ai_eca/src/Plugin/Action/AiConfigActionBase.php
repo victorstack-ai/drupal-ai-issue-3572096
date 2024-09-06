@@ -2,7 +2,7 @@
 
 namespace Drupal\ai_eca\Plugin\Action;
 
-use Drupal\ai\Service\AiProviderValidator\AiProviderValidatorInterface;
+use Drupal\ai_eca\Service\AiProviderValidatorInterface;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -27,7 +27,7 @@ abstract class AiConfigActionBase extends AiActionBase {
   /**
    * The AI Provider validator.
    *
-   * @var \Drupal\ai\Service\AiProviderValidator\AiProviderValidatorInterface
+   * @var \Drupal\ai_eca\Service\AiProviderValidatorInterface
    */
   protected AiProviderValidatorInterface $validator;
 
