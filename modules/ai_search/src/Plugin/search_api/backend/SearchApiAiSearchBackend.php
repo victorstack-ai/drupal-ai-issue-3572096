@@ -306,14 +306,11 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state): void {
     $vdb_client = $this->vdbProviderManager->createInstance($this->configuration['database']);
-    $collections = $vdb_client->getCollections();
-    if (!isset($collections['data']) ||!in_array($this->configuration['collection'], $collections['data'])) {
-      $vdb_client->createCollection(
-        collection_name: $form_state->getValue('collection'),
-        dimension: $form_state->getValue('embeddings_engine_configuration')['dimensions'],
-        metric_type: VdbSimilarityMetrics::from($form_state->getValue('metric')),
-      );
-    }
+    $vdb_client->createCollection(
+      collection_name: $form_state->getValue('collection'),
+      dimension: $form_state->getValue('embeddings_engine_configuration')['dimensions'],
+      metric_type: VdbSimilarityMetrics::from($form_state->getValue('metric')),
+    );
   }
 
   /**

@@ -47,7 +47,7 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
   /**
    * The AI Assistant API runner.
    *
-   * @var \Drupal\ai_chatbot\AiAssistantRunner
+   * @var \Drupal\ai_assistant_api\AiAssistantApiRunner
    */
   protected $aiAssistantRunner;
 

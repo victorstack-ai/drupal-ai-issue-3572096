@@ -148,19 +148,13 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
       VdbSimilarityMetrics::CosineSimilarity => 'COSINE',
       VdbSimilarityMetrics::InnerProduct => 'IP',
     };
-    $collections = $this->getCollections($database);
-    if (!isset($collections['data']) || !in_array($collection_name, $collections['data'])) {
-      $client = $this->getClient();
-      $response = $client->createCollection(
-        $collection_name,
-        $database,
-        $dimension,
-        $metric_name,
-      );
-      if (!isset($response['code']) || ($response['code'] !== 0 && $response['code'] !== 200)) {
-        throw new \Exception('Failed to create collection: ' . $response['message']);
-      }
-    }
+    $client = $this->getClient();
+    $client->createCollection(
+      $collection_name,
+      $database,
+      $dimension,
+      $metric_name,
+    );
   }
 
   /**
