@@ -219,7 +219,22 @@ Always use HTML when outputting your message, never markdown. You can use the fo
       '#type' => 'textarea',
       '#title' => $this->t('Pre Action Prompt'),
       '#default_value' => $entity->get('pre_action_prompt') ?? $pre_action_prompt,
-      '#description' => $this->t('The pre prompts gets a list of actions that it can take, including RAG databases and either gives back actions that the Assistant can take or an outputted answer. You may use [list_of_actions] to list the actions that the Assistant can take. You can only change this via manual config change. DO NOT CHANGE THIS UNLESS YOU KNOW WHAT YOU ARE DOING.'),
+      '#description' => $this->t("The pre prompts gets a list of actions that it can take, including RAG databases and either gives back actions that the Assistant can take or an outputted answer. You may use [list_of_actions] to list the actions that the Assistant can take. You can only change this via manual config change. DO NOT CHANGE THIS UNLESS YOU KNOW WHAT YOU ARE DOING. <br><br><strong>The following placesholders can be used:</strong><br>
+      <em>[list_of_actions]</em> - The list of actions that the Assistant can take.<br>
+      <em>[pre_prompt]</em> - The setup pre_prompt.<br>
+      <em>[system_role]</em> - The system role of the Assistant.<br>
+      <em>[is_logged_in]</em> - A message if the person is logged in or not.<br>
+      <em>[user_name]</em> - The username of the user.<br>
+      <em>[user_roles]</em> - The roles of the user.<br>
+      <em>[user_email]</em> - The email of the user.<br>
+      <em>[user_id]</em> - The user id of the user.<br>
+      <em>[user_language]</em> - The language of the user.<br>
+      <em>[user_timezone]</em> - The timezone of the user.<br>
+      <em>[page_title]</em> - The title of the page.<br>
+      <em>[page_path]</em> - The path of the page.<br>
+      <em>[page_language]</em> - The language of the page.<br>
+      <em>[site_name]</em> - The name of the site.<br>
+      "),
       '#required' => TRUE,
       '#disabled' => FALSE,
       '#attributes' => [

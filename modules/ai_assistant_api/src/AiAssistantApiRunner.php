@@ -263,7 +263,6 @@ class AiAssistantApiRunner {
     if (!$this->thread_id) {
       $this->thread_id = $this->generateUniqueKey();
     }
-    file_put_contents('/tmp/thread_id', $this->thread_id, FILE_APPEND);
     return $this->thread_id;
   }
 
@@ -431,6 +430,10 @@ class AiAssistantApiRunner {
       $this->assistant->get('system_role'),
     ], $pre_prompt);
 
+    foreach ($this->getPrePromptDrupalContext() as $key => $replace) {
+      $pre_prompt = str_replace('[' . $key . ']', $replace, $pre_prompt);
+    }
+
     $connect = $this->getProviderAndModel();
     $provider = $this->aiProvider->createInstance($connect['provider_id']);
 
@@ -577,6 +580,33 @@ class AiAssistantApiRunner {
       }
     }
     return $prepared;
+  }
+
+  /**
+   * Get preprompt Drupal context.
+   *
+   * @return string[]
+   *   This is the Drupal context that you can add to the pre prompt.
+   */
+  public function getPrePromptDrupalContext() {
+    $context = [];
+    $current_user = \Drupal::currentUser();
+    $request = \Drupal::request();
+    $current_request = \Drupal::requestStack()->getCurrentRequest();
+    $title_resolver = \Drupal::service('title_resolver');
+    $context['is_logged_in'] = $current_user->isAuthenticated() ? 'is logged in' : 'is not logged in';
+    $context['user_name'] = $current_user->getAccountName();
+    $context['user_roles'] = implode(', ', $current_user->getRoles());
+    $context['user_email'] = $current_user->getEmail();
+    $context['user_id'] = $current_user->id();
+    $context['user_language'] = $current_user->getPreferredLangcode();
+    $context['user_timezone'] = $current_user->getTimeZone();
+    $context['page_title'] = (string) $title_resolver->getTitle($current_request, $current_request->attributes->get('_route_object'));
+    $context['page_path'] = $request->getRequestUri();
+    $context['page_language'] = \Drupal::languageManager()->getCurrentLanguage()->getId();
+    $context['site_name'] = \Drupal::config('system.site')->get('name');
+
+    return $context;
   }
 
 }
