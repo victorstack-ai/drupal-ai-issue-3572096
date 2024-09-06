@@ -15,6 +15,3 @@ services:
   ai.text_chunker:
     class: Drupal\ai\Utility\TextChunker
     arguments: ['@ai.tokenizer']
-  ai.provider_validator:
-    class: Drupal\ai\Service\AiProviderValidator\AiProviderValidator
-    arguments: ['@validation.basic_recursive_validator_factory']
