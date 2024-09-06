@@ -37,6 +37,7 @@
   };
 
   function renderUserChatMessage(message) {
+    let converter = new showdown.Converter();
     return new Promise((resolve, reject) => {
       $.ajax({
         url: drupalSettings.path.baseUrl + 'ajax/chatbot/message-skeleton'
@@ -47,7 +48,7 @@
         $('.chat-history .chat-message:last h5').html(drupalSettings.ai_chatbot.default_username);
         $('.chat-history .chat-message:last img').attr('src', drupalSettings.ai_chatbot.default_avatar);
         let responseField = $('.chat-history .chat-message:last');
-        responseField.find('.chat-message-message').html(message);
+        responseField.find('.chat-message-message').html(converter.makeHtml(message));
         $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
         return resolve();
       })
@@ -58,6 +59,7 @@
   }
 
   function renderBotChatMessage(form) {
+    let converter = new showdown.Converter();
     $.ajax({
       url: drupalSettings.path.baseUrl + 'ajax/chatbot/message-skeleton'
     })
@@ -68,17 +70,24 @@
       $('.chat-history .chat-message:last h5').html(drupalSettings.ai_chatbot.bot_name);
       let responseField = $('.chat-history .chat-message:last .chat-message-message');
       let postData = form.serializeArray();
+      // Check while creating if its HTML or not.
+      let isHtml = false;
+      $('.chat-form-query').val('');
       $.ajax({
         url: form.attr('action'),
         method: 'POST',
         data: postData,
         xhrFields: {
           onprogress: function (event) {
-            responseField.html(event.currentTarget.response);
+            // Actual HTML test.
+            if (!isHtml && /<\/?[a-z][\s\S]*>/i.test(event.currentTarget.response)) {
+              isHtml = true;
+            }
+            responseField.html(isHtml ? event.currentTarget.response : converter.makeHtml(event.currentTarget.response));
             $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
           },
           onended: function (event) {
-            console.log('test');
+            responseField.html(isHtml ? event.currentTarget.response : converter.makeHtml(event.currentTarget.response));
           }
         }
       });

@@ -30,7 +30,7 @@ or one more example:
 
 Always have the query key with the message from the user or an improved message with context.
 
-If you decide to answer directly, just answer in normal text with HTML lists, paragraphs, strong and em if needed. Not as JSON, not as Markdown, like these examples:
+If you decide to answer directly, just answer in normal text with markdown lists, paragraphs, strong and em if needed. Not as JSON, not as Markdown, like these examples:
 * I'm sorry, I can not find a database to look this up in.
 * I can only answer questions from my databases, I will not be able to answer your request.
 
