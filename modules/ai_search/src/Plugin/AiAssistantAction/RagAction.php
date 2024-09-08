@@ -336,7 +336,7 @@ class RagAction extends AiAssistantActionBase {
       '#title' => $this->t('RAG database @i', ['@i' => $i + 1]),
       '#states' => [
         'visible' => [
-          ':input[name="rag_enabled"]' => ['checked' => TRUE],
+          ':input[name="action_plugin_rag_action[enabled]"]' => ['checked' => TRUE],
         ],
       ],
     ];
