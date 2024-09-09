@@ -233,10 +233,12 @@ class AiAutomatorFieldConfig {
     }
 
     if ($this->moduleHandler->moduleExists('token')) {
+      $description = $rule->advancedMode() ? $this->t('The Advanced Mode (Token) is available for this Automator Type to use multiple fields as input, you may also choose Base Mode to choose one base field.') :
+        $this->t('For this Automator Type, only the Base Mode is available. It uses the base field to generate the content.');
       $form['automator_container']['automator_mode'] = [
         '#type' => 'select',
         '#title' => $this->t('Automator Input Mode'),
-        '#description' => $this->t('If you have token installed you can use it in advanced mode, otherwise it uses base mode.'),
+        '#description' => $description,
         '#options' => $modeOptions,
         '#default_value' => !is_null($aiConfig) ? $aiConfig->get('input_mode') : 'base',
         '#weight' => 5,
@@ -471,6 +473,10 @@ class AiAutomatorFieldConfig {
    *   The form state interface.
    */
   public function addConfigValues($entity_type, FieldConfig|BaseFieldOverride $fieldConfig, &$form, FormStateInterface $formState) {
+    // If its ajax do nothing.
+    if ($formState->isRebuilding()) {
+      return TRUE;
+    }
     // Get the default config if it exists.
     $id = $form['#entity']->getEntityTypeId() . '.' . $form['#entity']->bundle() . '.' . $fieldConfig->getName() . '.default';
     /** @var \Drupal\ai_automator\Entity\AiAutomator $aiConfig */
@@ -490,7 +496,7 @@ class AiAutomatorFieldConfig {
       }
       $aiConfig->set('label', $formState->getValue('automator_label') ?? $fieldConfig->getLabel() . ' Default');
       $aiConfig->set('rule', $formState->getValue('automator_rule'));
-      $aiConfig->set('input_mode', $formState->getValue('automator_mode'));
+      $aiConfig->set('input_mode', $formState->getValue('automator_mode') ?? 'base');
       $aiConfig->set('weight', $formState->getValue('automator_weight'));
       $aiConfig->set('worker_type', $formState->getValue('automator_worker_type'));
       $aiConfig->set('edit_mode', $formState->getValue('automator_edit_mode'));
