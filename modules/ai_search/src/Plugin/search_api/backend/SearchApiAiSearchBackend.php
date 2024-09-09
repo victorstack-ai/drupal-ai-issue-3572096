@@ -335,8 +335,6 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
 
     /** @var \Drupal\search_api\Item\ItemInterface $item */
     foreach ($items as $item) {
-      $itemBase['metadata'] = $item->getId();
-
       $embeddings = $embedding_strategy->getEmbedding(
         $this->configuration['embeddings_engine'],
         $this->configuration['chat_model'],
