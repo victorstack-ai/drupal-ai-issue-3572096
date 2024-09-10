@@ -322,7 +322,8 @@ class MilvusV2 {
    *   If we are running on zilliz.
    */
   public function isZilliz(): bool {
-    return strpos($this->baseUrl, 'zillizcloud.com') !== FALSE;
+    // The base url could either contain zillizcloud.com or cloud.zilliz.com.
+    return preg_match('(zillizcloud.com|cloud.zilliz.com)', $this->baseUrl) !== FALSE;
   }
 
 }
