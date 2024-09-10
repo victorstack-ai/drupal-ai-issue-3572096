@@ -125,7 +125,7 @@ class AiAutomatorEntityModifier {
       if (method_exists($processor, 'isImport') && $isInsert) {
         $this->markFieldForProcessing($entity, $config['fieldDefinition'], $config['automatorConfig'], $processor);
       }
-      if (!method_exists($processor, 'isImport') && !$isInsert) {
+      if (!method_exists($processor, 'isImport') && !$isInsert && $config['fieldDefinition']) {
         $this->markFieldForProcessing($entity, $config['fieldDefinition'], $config['automatorConfig'], $processor);
       }
     }

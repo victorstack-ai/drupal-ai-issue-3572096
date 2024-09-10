@@ -163,13 +163,8 @@ class AiAssistantApiRunner {
    *   The assistant.
    */
   public function setAssistant(AiAssistant $assistant) {
-    // This is immutable once set.
-    if (!isset($this->assistant)) {
-      $this->assistant = $assistant;
-    }
-    else {
-      throw new \Exception('Assistant is immutable once set.');
-    }
+    $this->assistant = $assistant;
+
     // Set the thread id.
     if ($this->assistant->get('allow_history') == 'session' && !$this->thread_id) {
       $this->thread_id = $this->generateUniqueKey();

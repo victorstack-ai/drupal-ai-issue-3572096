@@ -473,10 +473,6 @@ class AiAutomatorFieldConfig {
    *   The form state interface.
    */
   public function addConfigValues($entity_type, FieldConfig|BaseFieldOverride $fieldConfig, &$form, FormStateInterface $formState) {
-    // If its ajax do nothing.
-    if ($formState->isRebuilding()) {
-      return TRUE;
-    }
     // Get the default config if it exists.
     $id = $form['#entity']->getEntityTypeId() . '.' . $form['#entity']->bundle() . '.' . $fieldConfig->getName() . '.default';
     /** @var \Drupal\ai_automator\Entity\AiAutomator $aiConfig */
