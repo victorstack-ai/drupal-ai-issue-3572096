@@ -10,6 +10,7 @@ use Drupal\Core\Form\FormState;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -52,6 +53,13 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
   protected $aiAssistantRunner;
 
   /**
+   * The file url generator.
+   *
+   * @var \Drupal\Core\File\FileUrlGenerator
+   */
+  protected $fileUrlGenerator;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
@@ -60,6 +68,7 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
     $plugin->formBuilder = $container->get('form_builder');
     $plugin->currentUser = $container->get('current_user');
     $plugin->aiAssistantRunner = $container->get('ai_assistant_api.runner');
+    $plugin->fileUrlGenerator = $container->get('file_url_generator');
     return $plugin;
   }
 
@@ -211,7 +220,7 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
     if ($user->isAuthenticated() && $this->configuration['use_avatar']) {
       $userEntity = $this->entityTypeManager->getStorage('user')->load($user->id());
       if (!empty($userEntity->user_picture->entity)) {
-        $block['#attached']['drupalSettings']['ai_chatbot']['default_avatar'] = $userEntity->user_picture->entity->getFileUri();
+        $block['#attached']['drupalSettings']['ai_chatbot']['default_avatar'] = $this->fileUrlGenerator->generateAbsoluteString($userEntity->user_picture->entity->getFileUri());
       }
     }
 
