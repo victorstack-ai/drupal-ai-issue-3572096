@@ -68,6 +68,7 @@
       let skeleton = data.skeleton;
       $('.chat-history').append(skeleton);
       $('.chat-history .chat-message:last h5').html(drupalSettings.ai_chatbot.bot_name);
+      $('.chat-history .chat-message:last img').attr('src', drupalSettings.ai_chatbot.bot_image);
       let responseField = $('.chat-history .chat-message:last .chat-message-message');
       let postData = form.serializeArray();
       // Check while creating if its HTML or not.

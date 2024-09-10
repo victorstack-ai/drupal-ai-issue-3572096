@@ -22,6 +22,7 @@ function ai_chatbot_theme() {
         'message' => [],
         'username' => 'Chatbot',
         'timestamp' => '',
+        'bot_image' => '',
       ],
     ],
   ];
