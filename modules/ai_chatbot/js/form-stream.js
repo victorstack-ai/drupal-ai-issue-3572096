@@ -64,12 +64,12 @@
       url: drupalSettings.path.baseUrl + 'ajax/chatbot/message-skeleton'
     })
     .done((data) => {
-      console.log(data);
       let skeleton = data.skeleton;
       $('.chat-history').append(skeleton);
       $('.chat-history .chat-message:last h5').html(drupalSettings.ai_chatbot.bot_name);
       $('.chat-history .chat-message:last img').attr('src', drupalSettings.ai_chatbot.bot_image);
       let responseField = $('.chat-history .chat-message:last .chat-message-message');
+      $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
       let postData = form.serializeArray();
       // Check while creating if its HTML or not.
       let isHtml = false;
@@ -88,7 +88,12 @@
             $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
           },
           onended: function (event) {
+            // Also add on the last event.
+            if (!isHtml && /<\/?[a-z][\s\S]*>/i.test(event.currentTarget.response)) {
+              isHtml = true;
+            }
             responseField.html(isHtml ? event.currentTarget.response : converter.makeHtml(event.currentTarget.response));
+            $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
           }
         }
       });

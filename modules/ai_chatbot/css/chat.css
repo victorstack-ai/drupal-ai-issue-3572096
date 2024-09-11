@@ -137,6 +137,8 @@
   padding: 8px;
   outline: none;
   width: 100%;
+  min-height: 65px;
+  max-height: 130px;
 }
 
 .chat-message-counter {
