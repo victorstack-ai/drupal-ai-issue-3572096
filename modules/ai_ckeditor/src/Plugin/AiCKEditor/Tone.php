@@ -28,6 +28,7 @@ final class Tone extends AiCKEditorPluginBase {
       'autocreate' => FALSE,
       'provider' => NULL,
       'tone_vocabulary' => NULL,
+      'use_description' => FALSE,
     ];
   }
 
@@ -60,8 +61,15 @@ final class Tone extends AiCKEditorPluginBase {
     $form['autocreate'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Allow autocreate'),
-      '#description' => $this->t('If enabled, users with access to this format are able to autocreate new terms in the chosen vocabulary.'),
+      '#description' => $this->t('If enabled, users with access to this format are able to autocreate new terms in the chosen vocabulary, instead of a select list.'),
       '#default_value' => $this->configuration['autocreate'] ?? FALSE,
+    ];
+
+    $form['use_description'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Use term description for tone description'),
+      '#description' => $this->t('If enabled and a description field is filled out, the tone will use this description to explain how the AI should rewrite in that tone of voice.'),
+      '#default_value' => $this->configuration['use_description'] ?? FALSE,
     ];
 
     $form['provider'] = [
@@ -90,6 +98,7 @@ final class Tone extends AiCKEditorPluginBase {
     $this->configuration['provider'] = $form_state->getValue('provider');
     $this->configuration['autocreate'] = (bool) $form_state->getValue('autocreate');
     $this->configuration['tone_vocabulary'] = $form_state->getValue('tone_vocabulary');
+    $this->configuration['use_description'] = $form_state->getValue('use_description');
   }
 
   /**
@@ -108,16 +117,22 @@ final class Tone extends AiCKEditorPluginBase {
     $form = parent::buildCkEditorModalForm($form, $form_state);
 
     $form['tone'] = [
-      '#type' => 'entity_autocomplete',
+      '#type' => $this->configuration['autocreate'] ? 'entity_autocomplete' : 'select',
       '#title' => $this->t('Choose tone'),
       '#tags' => FALSE,
       '#required' => TRUE,
       '#description' => $this->t('Selecting one of the options will adjust/reword the body content to be appropriate for the target audience.'),
-      '#target_type' => 'taxonomy_term',
-      '#selection_settings' => [
-        'target_bundles' => [$this->configuration['tone_vocabulary']],
-      ],
     ];
+
+    if ($this->configuration['autocreate']) {
+      $form['tone']['#target_type'] = 'taxonomy_term';
+      $form['tone']['#selection_settings'] = [
+        'target_bundles' => [$this->configuration['tone_vocabulary']],
+      ];
+    }
+    else {
+      $form['tone']['#options'] = $this->getTermOptions($this->configuration['tone_vocabulary']);
+    }
 
     if ($this->configuration['autocreate'] && $this->account->hasPermission('create terms in ' . $this->configuration['tone_vocabulary'])) {
       $form['tone']['#autocreate'] = [
@@ -179,7 +194,11 @@ final class Tone extends AiCKEditorPluginBase {
         $term->save();
       }
 
-      $prompt = 'Change the tone of the following text to be ' . $term->label() . ' using the same language as the following text:\r\n"' . $values["plugin_config"]["selected_text"];
+      $prompt = 'Change the tone of the following text to be ' . $term->label() . ' using the same language as the following text.';
+      if ($this->configuration['use_description'] && !empty($term->description->value)) {
+        $prompt .= 'That tone can described as: ' . strip_tags($term->description->value);
+      }
+      $prompt .= "\n\nThe text that we want to change is the following:\n" . $values["plugin_config"]["selected_text"];
       $response = new AjaxResponse();
       $values = $form_state->getValues();
       $response->addCommand(new AiRequestCommand($prompt, $values["editor_id"], $this->pluginDefinition['id'], 'ai-ckeditor-response'));
@@ -189,6 +208,26 @@ final class Tone extends AiCKEditorPluginBase {
       $this->logger->error("There was an error in the Tone AI plugin for CKEditor.");
       return $form['plugin_config']['response_text']['#value'] = "There was an error in the Tone AI plugin for CKEditor.";
     }
+  }
+
+  /**
+   * Helper function to get all terms as an options array.
+   *
+   * @param string $vid
+   *   The vocabulary ID.
+   *
+   * @return array
+   *   The options array.
+   */
+  protected function getTermOptions(string $vid): array {
+    $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadTree($vid);
+    $options = [];
+
+    foreach ($terms as $term) {
+      $options[$term->tid] = $term->name;
+    }
+
+    return $options;
   }
 
 }

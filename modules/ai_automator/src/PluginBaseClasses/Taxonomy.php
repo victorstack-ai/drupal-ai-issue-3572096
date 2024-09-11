@@ -87,6 +87,7 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
     $tokens = parent::tokens();
     $tokens['value_options_comma'] = 'A comma separated list of all value options.';
     $tokens['value_options_nl'] = 'A new line separated list of all value options.';
+    $tokens['value_options_nl_description'] = 'A new line separated list of all value options, with term descriptions.';
     return $tokens;
   }
 
@@ -100,6 +101,7 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
 
     $tokens['value_options_comma'] = implode(', ', $values);
     $tokens['value_options_nl'] = implode("\n", $values);
+    $tokens['value_options_nl_description'] = implode("\n", $this->getTaxonomyList($entity, $fieldDefinition, TRUE));
     return $tokens;
   }
 
@@ -298,7 +300,7 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
    * @return array
    *   Array of tid as key and name as value.
    */
-  protected function getTaxonomyList(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition) {
+  protected function getTaxonomyList(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, $withDescriptions = FALSE) {
     $config = $fieldDefinition->getConfig($entity->bundle())->getSettings();
     /** @var \Drupal\taxonomy\TermStorage */
     $storage = $this->entityTypeManager->getStorage('taxonomy_term');
@@ -307,7 +309,7 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
     foreach ($config['handler_settings']['target_bundles'] as $vid) {
       $terms = $storage->loadTree($vid);
       foreach ($terms as $term) {
-        $returnTerms[$term->tid] = $term->name;
+        $returnTerms[$term->tid] = $withDescriptions ? $term->name . ' - ' . $term->description->value : $term->name;
       }
     }
     return $returnTerms;

@@ -144,12 +144,6 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
     $form['plugins'] = [];
 
     foreach ($definitions as $plugin_id => $definition) {
-      if ($plugin_id == 'ai_ckeditor_help') {
-        $form['plugins'][$plugin_id]['enabled']['#value'] = TRUE;
-        $form['plugins'][$plugin_id]['enabled']['#type'] = 'hidden';
-        continue;
-      }
-
       $form['plugins'][$plugin_id] = [
         '#type' => 'details',
         '#tree' => TRUE,
@@ -229,8 +223,12 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
       $static_plugin_config['ai_ckeditor_ai']['dialogSettings']['dialogClass'] = is_string($config["dialog"]["dialog_class"]) ? $config["dialog"]["dialog_class"] : $this->defaultConfiguration()['dialog_class'];
     }
 
+    $all_disabled = TRUE;
     foreach ($config['plugins'] as $plugin_id => $plugin) {
       $definition = $this->pluginManager->getDefinition($plugin_id);
+      if ($all_disabled && $plugin['enabled']) {
+        $all_disabled = FALSE;
+      }
 
       $static_plugin_config['ai_ckeditor_ai']['plugins'][$plugin_id] = [
         'enabled' => $plugin['enabled'],
@@ -250,7 +248,8 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
       }
     }
 
-    return $static_plugin_config;
+    // Hide if nothing is enabled.
+    return $all_disabled ? [] : $static_plugin_config;
   }
 
 }

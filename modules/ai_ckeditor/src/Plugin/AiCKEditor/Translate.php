@@ -28,6 +28,7 @@ final class Translate extends AiCKEditorPluginBase {
       'autocreate' => FALSE,
       'provider' => NULL,
       'translate_vocabulary' => NULL,
+      'use_description' => FALSE,
     ];
   }
 
@@ -60,8 +61,15 @@ final class Translate extends AiCKEditorPluginBase {
     $form['autocreate'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Allow autocreate'),
-      '#description' => $this->t('If enabled, users with access to this format are able to autocreate new terms in the chosen vocabulary.'),
+      '#description' => $this->t('If enabled, users with access to this format are able to autocreate new terms in the chosen vocabulary, instead of a select list..'),
       '#default_value' => $this->configuration['autocreate'] ?? FALSE,
+    ];
+
+    $form['use_description'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Use term description for translation context'),
+      '#description' => $this->t('If enabled and a description field is filled out, the translation will use this description to explain things the AI should think about when translating.'),
+      '#default_value' => $this->configuration['use_description'] ?? FALSE,
     ];
 
     $form['provider'] = [
@@ -83,6 +91,7 @@ final class Translate extends AiCKEditorPluginBase {
     $this->configuration['provider'] = $form_state->getValue('provider');
     $this->configuration['autocreate'] = (bool) $form_state->getValue('autocreate');
     $this->configuration['translate_vocabulary'] = $form_state->getValue('translate_vocabulary');
+    $this->configuration['use_description'] = (bool) $form_state->getValue('use_description');
   }
 
   /**
@@ -101,16 +110,22 @@ final class Translate extends AiCKEditorPluginBase {
     $form = parent::buildCkEditorModalForm($form, $form_state);
 
     $form['language'] = [
-      '#type' => 'entity_autocomplete',
+      '#type' => $this->configuration['autocreate'] ? 'entity_autocomplete' : 'select',
       '#title' => $this->t('Choose language'),
       '#tags' => FALSE,
       '#required' => TRUE,
       '#description' => $this->t('Selecting one of the options will translate the selected text.'),
-      '#target_type' => 'taxonomy_term',
-      '#selection_settings' => [
-        'target_bundles' => [$this->configuration['translate_vocabulary']],
-      ],
     ];
+
+    if ($this->configuration['autocreate']) {
+      $form['language']['#target_type'] = 'taxonomy_term';
+      $form['language']['#selection_settings'] = [
+        'target_bundles' => [$this->configuration['translate_vocabulary']],
+      ];
+    }
+    else {
+      $form['language']['#options'] = $this->getTermOptions($this->configuration['translate_vocabulary']);
+    }
 
     if ($this->configuration['autocreate'] && $this->account->hasPermission('create terms in ' . $this->configuration['translate_vocabulary'])) {
       $form['language']['#autocreate'] = [
@@ -172,7 +187,11 @@ final class Translate extends AiCKEditorPluginBase {
         $term->save();
       }
 
-      $prompt = 'Translate the selected text into ' . $term->label() . ':\r\n"' . $values["plugin_config"]["selected_text"];
+      $prompt = 'Translate the selected text into ' . $term->label() . '."';
+      if ($this->configuration['use_description'] && !empty($term->description->value)) {
+        $prompt .= 'Think about the following when translating it into ' . $term->label() . ': ' . strip_tags($term->description->value);
+      }
+      $prompt .= "\n\nThe text that we want to translate is the following:\n" . $values["plugin_config"]["selected_text"];
       $response = new AjaxResponse();
       $values = $form_state->getValues();
       $response->addCommand(new AiRequestCommand($prompt, $values["editor_id"], $this->pluginDefinition['id'], 'ai-ckeditor-response'));
@@ -184,6 +203,26 @@ final class Translate extends AiCKEditorPluginBase {
     }
 
     return $form['plugin_config']['response_text'];
+  }
+
+  /**
+   * Helper function to get all terms as an options array.
+   *
+   * @param string $vid
+   *   The vocabulary ID.
+   *
+   * @return array
+   *   The options array.
+   */
+  protected function getTermOptions(string $vid): array {
+    $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadTree($vid);
+    $options = [];
+
+    foreach ($terms as $term) {
+      $options[$term->tid] = $term->name;
+    }
+
+    return $options;
   }
 
 }

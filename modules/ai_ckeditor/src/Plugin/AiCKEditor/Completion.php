@@ -14,7 +14,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  */
 #[AiCKEditor(
   id: 'ai_ckeditor_completion',
-  label: new TranslatableMarkup('Completion'),
+  label: new TranslatableMarkup('Generate with AI'),
   description: new TranslatableMarkup('Get ideas and text completion assistance from AI.'),
 )]
 final class Completion extends AiCKEditorPluginBase {
