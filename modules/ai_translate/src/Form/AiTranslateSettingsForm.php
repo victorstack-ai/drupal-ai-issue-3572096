@@ -2,6 +2,8 @@
 
 namespace Drupal\ai_translate\Form;
 
+use Drupal\Core\Entity\ContentEntityTypeInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -25,6 +27,13 @@ class AiTranslateSettingsForm extends ConfigFormBase {
   const CONFIG_NAME = 'ai_translate.settings';
 
   /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected EntityTypeManagerInterface $entityTypeManager;
+
+  /**
    * Twig engine.
    *
    * @var \Drupal\Core\Template\TwigEnvironment
@@ -43,6 +52,7 @@ class AiTranslateSettingsForm extends ConfigFormBase {
    */
   public static function create(ContainerInterface $container) {
     $instance = parent::create($container);
+    $instance->entityTypeManager = $container->get('entity_type.manager');
     $instance->twig = $container->get('twig');
     $instance->moduleHandler = $container->get('module_handler');
     return $instance;
@@ -93,6 +103,29 @@ class AiTranslateSettingsForm extends ConfigFormBase {
         $helpText,
       ],
     ];
+    $form['reference_defaults'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Entity reference translation'),
+      '#description' => $this->moduleHandler->moduleExists('help')
+        ? Link::createFromRoute($this->t('Read more'), 'help.help_topic',
+          ['id' => 'ai_translate.references'])
+        : $this->t('Enable <em>@module</em> module to read more', ['@module' => 'help']),
+    ];
+    $options = [];
+    foreach ($this->entityTypeManager->getDefinitions() as $entityTypeId => $entityType) {
+      if (!($entityType instanceof ContentEntityTypeInterface)) {
+        continue;
+      }
+      $options[$entityTypeId] = $entityType->getLabel();
+    }
+    $form['reference_defaults']['reference_defaults'] = [
+      '#type' => 'checkboxes',
+      '#title' => $this->t('These entity types will be translated by default when referencing entity is translated'),
+      '#options' => $options,
+      '#description' => $this->t('This setting can be overriden in entity reference field settings.'),
+      '#default_value' => $config->get('reference_defaults'),
+    ];
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -122,6 +155,7 @@ class AiTranslateSettingsForm extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $this->config(static::CONFIG_NAME)
       ->set('prompt', $form_state->getValue('prompt'))
+      ->set('reference_defaults', array_keys(array_filter($form_state->getValue('reference_defaults'))))
       ->save();
     parent::submitForm($form, $form_state);
   }

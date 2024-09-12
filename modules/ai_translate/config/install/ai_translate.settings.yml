@@ -14,5 +14,9 @@ prompt: >1
   7. You may change HTML if it makes sense when moving from a LTR (left-to-right) language such as German to a RTL (right-to-left) language like Persian.
   8. Only respond with the actual translation and nothing else. No greeting or any other pleasantries.
   The context text ``` {{ input_text }} ```
-
-
+reference_defaults:
+  block_content: true
+  node: false
+  paragraph: true
+  taxonomy_term: true
+  _fallback: true

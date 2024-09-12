@@ -5,14 +5,15 @@ namespace Drupal\ai_translate\Controller;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai_translate\TextExtractorInterface;
 use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Component\Plugin\Exception\PluginException;
+use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\ContentEntityInterface;
-use Drupal\Core\Entity\EntityFieldManagerInterface;
-use Drupal\Core\Entity\EntityStorageException;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Template\TwigEnvironment;
 use Drupal\Core\Url;
 use GuzzleHttp\Exception\GuzzleException;
@@ -24,12 +25,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
  */
 class AiTranslateController extends ControllerBase {
 
-  /**
-   * The entity field manager.
-   *
-   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
-   */
-  protected EntityFieldManagerInterface $entityFieldManager;
+  use DependencySerializationTrait;
 
   /**
    * AI module configuration.
@@ -53,33 +49,23 @@ class AiTranslateController extends ControllerBase {
   protected TwigEnvironment $twig;
 
   /**
-   * Creates an ContentTranslationPreviewController object.
+   * Text extractor service.
    *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
-   * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager
-   *   The entity field manager.
+   * @var \Drupal\ai_translate\TextExtractorInterface
    */
-  final public function __construct(
-    EntityTypeManagerInterface $entity_type_manager,
-    EntityFieldManagerInterface $entity_field_manager,
-  ) {
-    $this->entityTypeManager = $entity_type_manager;
-    $this->entityFieldManager = $entity_field_manager;
-  }
+  protected TextExtractorInterface $textExtractor;
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    $instance = new static(
-      $container->get('entity_type.manager'),
-      $container->get('entity_field.manager')
-    );
+    $instance = new static();
+    $instance->entityTypeManager = $container->get('entity_type.manager');
     $instance->languageManager = $container->get('language_manager');
     $instance->aiConfig = $container->get('config.factory')->get('ai.settings');
     $instance->aiProviderManager = $container->get('ai.provider');
     $instance->twig = $container->get('twig');
+    $instance->textExtractor = $container->get('ai_translate.text_extractor');
     return $instance;
   }
 
@@ -107,62 +93,44 @@ class AiTranslateController extends ControllerBase {
     $langFromName = $langNames[$lang_from]->getName();
     $langToName = $langNames[$lang_to]->getName();
     $entity = $this->entityTypeManager->getStorage($entity_type)->load($entity_id);
+
     // From UI, translation is always request from default entity language,
     // but nothing stops users from using different $lang_from.
     if ($entity->language()->getId() !== $lang_from
       && $entity->hasTranslation($lang_from)) {
       $entity = $entity->getTranslation($lang_from);
     }
-    // @todo Check if content type has bundles.
-    $bundle = $entity->bundle();
-    $labelField = $entity->getEntityType()->getKey('label');
-    $bundleFields[$labelField]['label'] = 'Title';
 
-    $allowed_values = [
-      'text',
-      'text_with_summary',
-      'text_long',
-      'string',
-      'string_long',
-    ];
-    foreach ($this->entityFieldManager->getFieldDefinitions(
-      $entity_type, $bundle) as $field_name => $field_definition) {
-      if (!empty($field_definition->getTargetBundle()) && in_array($field_definition->getType(), $allowed_values)) {
-        $bundleFields[$field_name]['label'] = $field_definition->getLabel();
-      }
-    }
-
-    foreach ($bundleFields as $field_name => $label) {
-      $field = $entity->get($field_name);
-      if ($field->isEmpty()) {
-        continue;
-      }
-
-      // Fields may have multiple values.
-      foreach ($field as $delta => $singleValue) {
-        $content = $singleValue->getValue();
-        if (empty($content['value'])) {
-          continue;
-        }
-        $content['value'] = $this->translateContent($content['value'], $langNames[$lang_from], $langNames[$lang_to]);
-        $bundleFields[$field_name][$delta] = $content;
-      }
-    }
-    $insertTranslation = $this->insertTranslation($entity, $lang_to, $bundleFields);
-
-    $response = new RedirectResponse(Url::fromRoute("entity.$entity_type.content_translation_overview",
-      ['entity_type_id' => $entity_type, $entity_type => $entity_id])
+    $redirectUrl = Url::fromRoute("entity.$entity_type.content_translation_overview",
+      ['entity_type_id' => $entity_type, $entity_type => $entity_id]);
+    $response = new RedirectResponse($redirectUrl
       ->setAbsolute(TRUE)->toString());
-    $response->send();
-    $messenger = $this->messenger();
 
-    if ($insertTranslation) {
-      $messenger->addStatus($this->t('Content translated successfully.'));
+    // @todo support updating existing translations.
+    if ($entity->hasTranslation($lang_to)) {
+      $this->messenger()->addMessage('Translation already exists.');
+      $response->send();
+      return $response;
     }
-    else {
-      $messenger->addError($this->t('There was some issue with content translation.'));
+
+    $textMetadata = $this->textExtractor->extractTextMetadata($entity);
+
+    // Creates a batch builder to translate text metadata.
+    $batchBuilder = (new BatchBuilder())
+      ->setTitle($this->t('Translating entity content with AI'))
+      ->setInitMessage($this->t('Batch is starting'))
+      ->setErrorMessage($this->t('Batch has encountered an error'));
+
+    foreach ($textMetadata as $singleMeta) {
+      $batchBuilder->addOperation([$this, 'translateSingleText'], [
+        $singleMeta,
+        $langNames[$lang_from],
+        $langNames[$lang_to],
+      ]);
     }
-    return $response;
+    $batchBuilder->addOperation([$this, 'insertTranslation'], [$entity, $lang_to]);
+    batch_set($batchBuilder->toArray());
+    return batch_process($redirectUrl);
   }
 
   /**
@@ -178,7 +146,11 @@ class AiTranslateController extends ControllerBase {
    * @return string
    *   Translated content.
    */
-  public function translateContent(string $input_text, $langFrom, $langTo) {
+  public function translateContent(
+    string $input_text,
+    LanguageInterface $langFrom,
+    LanguageInterface $langTo,
+  ) {
     static $provider;
     static $modelId;
     if (empty($provider)) {
@@ -217,38 +189,64 @@ class AiTranslateController extends ControllerBase {
   }
 
   /**
-   * Adding the translation in database and linking it to the original entity.
+   * Finished operation.
+   */
+  public static function finish($success, $results, $operations, $duration) {
+    $messenger = \Drupal::messenger();
+    if ($success) {
+      $messenger->addMessage(t('All terms have been processed.'));
+    }
+  }
+
+  /**
+   * Batch callback - translate a single text.
+   *
+   * @param array $singleText
+   *   Chunk of text metadata to translate.
+   * @param \Drupal\Core\Language\LanguageInterface $langFrom
+   *   The source language.
+   * @param \Drupal\Core\Language\LanguageInterface $langTo
+   *   The target language.
+   * @param array $context
+   *   The batch context.
+   */
+  public function translateSingleText(
+    array $singleText,
+    LanguageInterface $langFrom,
+    LanguageInterface $langTo,
+    array &$context,
+  ) {
+    $singleText['translated'] = $this->translateContent(
+      $singleText['value'], $langFrom, $langTo);
+    $context['results']['processedTranslations'][] = $singleText;
+  }
+
+  /**
+   * Batch callback - insert processed texts back into the entity.
    *
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
-   *   The entity object.
-   * @param string $target_language
-   *   The target language.
-   * @param array $bundleFields
-   *   An array of field name and their translation.
+   *   Entity to translate.
+   * @param string $lang_to
+   *   Language code of translation.
+   * @param array $context
+   *   Text metadata containing both source values and translation.
    */
   public function insertTranslation(
     ContentEntityInterface $entity,
-    string $target_language,
-    array $bundleFields,
+    string $lang_to,
+    array &$context,
   ) {
-    if ($entity->hasTranslation($target_language)) {
-      return;
-    }
-    $translation = $entity->addTranslation($target_language, $bundleFields);
-    $status = TRUE;
-
-    foreach ($bundleFields as $field_name => $newValue) {
-      unset($newValue['label']);
-      $translation->set($field_name, $newValue);
-    }
-
+    $translation = $entity->addTranslation($lang_to);
+    $this->textExtractor->insertTextMetadata($translation,
+      $context['results']['processedTranslations']);
     try {
       $translation->save();
+      $this->messenger()->addStatus($this->t('Content translated successfully.'));
     }
-    catch (EntityStorageException) {
-      $status = FALSE;
+    catch (\Throwable $exception) {
+      $this->getLogger('ai_translate')->warning($exception->getMessage());
+      $this->messenger()->addError($this->t('There was some issue with content translation.'));
     }
-    return $status;
   }
 
 }
