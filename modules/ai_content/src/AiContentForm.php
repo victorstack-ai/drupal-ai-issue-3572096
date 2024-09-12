@@ -11,6 +11,8 @@ use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Session\AccountProxyInterface;
@@ -68,13 +70,43 @@ class AiContentForm {
   protected $options;
 
   /**
+   * The entity type ID.
+   *
+   * @var string
+   */
+  private $entityTypeId;
+
+  /**
+   * The bundle.
+   *
+   * @var string
+   */
+  private $bundle;
+
+  /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  private $entityTypeManager;
+
+  /**
+   * The entity field manager.
+   *
+   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
+   */
+  private $entityFieldManager;
+
+  /**
    * Constructor.
    */
-  public function __construct(AccountProxyInterface $account, ConfigFactoryInterface $configFactory, AiProviderPluginManager $aiProvider, RendererInterface $renderer) {
+  public function __construct(AccountProxyInterface $account, ConfigFactoryInterface $configFactory, AiProviderPluginManager $aiProvider, RendererInterface $renderer, EntityTypeManagerInterface $entityTypeManager, EntityFieldManagerInterface $entityFieldManager) {
     $this->account = $account;
     $this->configFactory = $configFactory;
     $this->aiProvider = $aiProvider;
     $this->renderer = $renderer;
+    $this->entityTypeManager = $entityTypeManager;
+    $this->entityFieldManager = $entityFieldManager;
   }
 
   /**
@@ -101,6 +133,9 @@ class AiContentForm {
   public function applyContentForm(&$form, FormStateInterface $form_state) {
     /** @var \Drupal\Core\Entity\ContentEntityFormInterface */
     $form_object = $form_state->getFormObject();
+    $entity = $form_object->getEntity();
+    $this->entityTypeId = $entity->getEntityTypeId();
+    $this->bundle = $entity->bundle();
 
     if ($this->account->hasPermission('access ai content tools')) {
       /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
@@ -322,6 +357,36 @@ class AiContentForm {
         '#title' => $this->t('Choose field'),
         '#description' => $this->t('Select what field you would like to suggest taxonomy terms for.'),
         '#options' => $this->options,
+      ];
+
+      // Create a checkbox, to select if a source vocabulary must be used.
+      $form['ai_suggest']['use_source_vocabulary'] = [
+        '#type' => 'checkbox',
+        '#title' => $this->t('Use source vocabulary'),
+        '#description' => $this->t('Check this box if you want to use a source vocabulary to suggest terms.'),
+      ];
+
+      $vocabularies_options = $this->getRelevantVocabularies();
+      $form['ai_suggest']['source_vocabulary'] = [
+        '#type' => 'select',
+        '#title' => $this->t('Choose vocabulary'),
+        '#description' => $this->t('Optionally, select which vocabulary do you want to find the terms in.'),
+        '#options' => $vocabularies_options,
+        '#states' => [
+          'visible' => [
+            ':input[name="ai_suggest[use_source_vocabulary]"]' => ['checked' => TRUE],
+          ],
+        ],
+      ];
+      $form['ai_suggest']['use_source_vocabulary_hierarchy'] = [
+        '#type' => 'checkbox',
+        '#title' => $this->t('Use source vocabulary\'s full hierarchy'),
+        '#description' => $this->t('Check this box if you want to take into account the selected vocabulary\'s hierarchy, if such exists.'),
+        '#states' => [
+          'visible' => [
+            ':input[name="ai_suggest[use_source_vocabulary]"]' => ['checked' => TRUE],
+          ],
+        ],
       ];
 
       $form['ai_suggest']['response'] = [
@@ -564,16 +629,34 @@ class AiContentForm {
    */
   public function suggestTaxonomy(array &$form, FormStateInterface $form_state) {
     $ai_suggest = $form_state->getValue('ai_suggest');
+    $use_source_vocabulary = $ai_suggest['use_source_vocabulary'];
+    if ($use_source_vocabulary) {
+      $source_vocabulary = $ai_suggest['source_vocabulary'];
+      $use_source_vocabulary_hierarchy = $ai_suggest['use_source_vocabulary_hierarchy'];
+      $terms_json = $this->getTermsJson($source_vocabulary, $use_source_vocabulary_hierarchy);
+    }
     $target_field = $ai_suggest['target_field'];
     $target_field_value = $form_state->getValue($target_field)[0]['value'];
     $text = $this->t('The @field field has no text. Please supply content to the @field field.', ['@field' => $target_field]);
     if (!empty($target_field_value)) {
-      $ai_settings = explode('__', $this->getConfig()->get('summarise_enabled'));
+      $ai_settings = explode('__', $this->getConfig()->get('suggest_tax_enabled'));
       if (count($ai_settings) !== 2) {
         throw new \Exception('No AI provider or model is configured for this operation.');
       }
       $ai_provider = $this->aiProvider->createInstance($ai_settings[0]);
-      $prompt = 'Suggest five words to classify the following text using the same language as the input text. The words must be nouns or adjectives in a comma delimited list:\r\n"' . $target_field_value . '"';
+
+      if ($use_source_vocabulary) {
+        $prompt = 'Choose five words to classify the following text using the same language as the input text:\r\n"""' . $target_field_value . '"""\r\n\r\n';
+        if ($use_source_vocabulary_hierarchy) {
+          $prompt .= 'The words must be selected from the leaf nodes of this json tree, they must take into account the full hierarchy. They must be returned in a multilevel html list, containing the whole chain of names, without the IDs:\r\n ' . $terms_json;
+        }
+        else {
+          $prompt .= 'The words must be selected from this json list, and must return in a comma delimited list:\r\n ' . $terms_json;
+        }
+      }
+      else {
+        $prompt = 'Suggest five words to classify the following text using the same language as the input text. The words must be nouns or adjectives in a comma delimited list:\r\n"""' . $target_field_value . '"""';
+      }
       $messages = new ChatInput([
         new chatMessage('system', 'You are helpful assistant.'),
         new chatMessage('user', $prompt),
@@ -585,6 +668,82 @@ class AiContentForm {
     $response = new AjaxResponse();
     $response->addCommand(new HtmlCommand('#ai-suggest-response', $text));
     return $response;
+  }
+
+  /**
+   * @return array
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   */
+  public function getRelevantVocabularies(): array {
+    $fields = $this->entityFieldManager->getFieldDefinitions($this->entityTypeId, $this->bundle);
+    $term_reference_fields = array_filter($fields, function ($field) {
+      return $field->getType() === 'entity_reference' && $field->getSetting('target_type') === 'taxonomy_term';
+    });
+    // Iterate through the term reference fields and get the target vocabularies.
+    $relevant_vocabularies = [];
+    foreach ($term_reference_fields as $field) {
+      $target_bundles = $field->getSetting('handler_settings')['target_bundles'];
+      $relevant_vocabularies = array_merge($relevant_vocabularies, $target_bundles);
+    }
+    // Get all the vocabularies.
+    $all_vocabularies = \Drupal::entityTypeManager()
+      ->getStorage('taxonomy_vocabulary')
+      ->loadMultiple();
+    $vocabularies_options = [];
+    foreach ($relevant_vocabularies as $vocabulary_id) {
+      $vocabularies_options[$vocabulary_id] = $all_vocabularies[$vocabulary_id]->label();
+    }
+    return $vocabularies_options;
+  }
+
+  /**
+   * @param mixed $source_vocabulary
+   *
+   * @return string
+   */
+  public function getTermsJson($source_vocabulary, $use_source_vocabulary_hierarchy = FALSE) {
+    // Use the loadTree to avoid loading all the terms.
+    $terms_tree = $this->entityTypeManager
+      ->getStorage('taxonomy_term')
+      ->loadTree($source_vocabulary);
+    // Now run an extra entity query, to ensure access check.
+    $query = $this->entityTypeManager
+      ->getStorage('taxonomy_term')
+      ->getQuery();
+    $query->condition('vid', $source_vocabulary);
+    $query->accessCheck(TRUE);
+    $accessible_terms = $query->execute();
+
+    $terms = [];
+    if ($use_source_vocabulary_hierarchy) {
+      foreach ($terms_tree as $term) {
+        $tid = $term->tid;
+        if (!in_array($tid, $accessible_terms)) {
+          continue;
+        }
+        $term_object = [];
+        $term_object['name'] = $term->name;
+        if (count($term->parents) > 1 || $term->parents[0] != 0) {
+          $term_object['parents'] = $term->parents;
+        }
+        else {
+          $term_object['parents'] = [];
+        }
+        $terms[$tid] = $term_object;
+      }
+    }
+    else {
+      foreach ($terms_tree as $term) {
+        $tid = $term->tid;
+        if (!in_array($tid, $accessible_terms)) {
+          continue;
+        }
+        $terms[] = $term->name;
+      }
+    }
+    $terms_json = json_encode($terms, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    return $terms_json;
   }
 
 }
