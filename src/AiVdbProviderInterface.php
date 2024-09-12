@@ -184,6 +184,8 @@ interface AiVdbProviderInterface extends PluginInspectionInterface {
    *   The name of the collection.
    * @param array $drupalIds
    *   The Drupal IDs.
+   * @param string $database
+   *   The database name.
    *
    * @return array
    *   The VDB IDs.
@@ -191,6 +193,7 @@ interface AiVdbProviderInterface extends PluginInspectionInterface {
   public function getVdbIds(
     string $collection_name,
     array $drupalIds,
+    string $database = 'default',
   ): array;
 
 }

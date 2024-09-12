@@ -264,11 +264,13 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
   public function getVdbIds(
     string $collection_name,
     array $drupalIds,
+    string $database = 'default',
   ): array {
     $data = $this->querySearch(
-      $collection_name,
-      ['id'],
-      "drupal_entity_id in [\"" . implode('","', $drupalIds) . "\"]",
+      collection_name: $collection_name,
+      output_fields: ['id'],
+      filters: "drupal_entity_id in [\"" . implode('","', $drupalIds) . "\"]",
+      database: $database
     );
     $ids = [];
     if (!empty($data)) {

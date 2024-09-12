@@ -96,7 +96,7 @@ class MilvusV2 {
     $options['dimension'] = $dimension;
     $options['metricType'] = $metric_type;
     if (!$this->isZilliz()) {
-      $options['databaseName'] = $database_name;
+      $options['dbName'] = $database_name;
     }
     $options['autoID'] = $options['autoID'] ?? TRUE;
     $options['schema']['autoID'] = TRUE;

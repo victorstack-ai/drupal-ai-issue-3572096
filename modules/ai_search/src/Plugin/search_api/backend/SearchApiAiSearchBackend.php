@@ -249,7 +249,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
   public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
     if (!empty($this->configuration['database'])) {
       $vdb_client = $this->vdbProviderManager->createInstance($this->configuration['database']);
-      $collections = $vdb_client->getCollections();
+      $collections = $vdb_client->getCollections($form_state->getValue('database_name'));
       // Check so the collection doesn't exist already.
       /** @var \Drupal\Core\Entity\Form $form_object */
       $form_object = $form_state->getFormObject();
@@ -310,6 +310,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       collection_name: $form_state->getValue('collection'),
       dimension: $form_state->getValue('embeddings_engine_configuration')['dimensions'],
       metric_type: VdbSimilarityMetrics::from($form_state->getValue('metric')),
+      database: $form_state->getValue('database_name'),
     );
   }
 
@@ -352,7 +353,8 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
         }
         $this->getClient()->insertIntoCollection(
           collection_name: $this->configuration['collection'],
-          data: $data
+          data: $data,
+          database: $this->configuration['database_name'],
         );
       }
 
@@ -370,11 +372,13 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
   public function deleteItems(IndexInterface $index, array $item_ids): void {
     $vdbIds = $this->getClient()->getVdbIds(
       collection_name: $this->configuration['collection'],
-      drupalIds: $item_ids
+      drupalIds: $item_ids,
+      database: $this->configuration['database_name'],
     );
     $this->getClient()->deleteFromCollection(
       collection_name: $this->configuration['collection'],
-      ids: $vdbIds
+      ids: $vdbIds,
+      database: $this->configuration['database_name'],
     );
   }
 
@@ -385,11 +389,13 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    */
   public function deleteAllIndexItems(IndexInterface $index, $datasource_id = NULL): void {
     $this->getClient()->dropCollection(
-      collection_name: $this->configuration['collection']
+      collection_name: $this->configuration['collection'],
+      database: $this->configuration['database_name'],
     );
     $this->getClient()->createCollection(
       collection_name: $this->configuration['collection'],
-      dimension: $this->configuration['embeddings_engine_configuration']['dimensions']
+      dimension: $this->configuration['embeddings_engine_configuration']['dimensions'],
+      database: $this->configuration['database_name'],
     );
   }
 
