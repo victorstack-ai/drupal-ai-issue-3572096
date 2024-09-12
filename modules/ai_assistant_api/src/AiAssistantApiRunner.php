@@ -10,11 +10,14 @@ use Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface;
 use Drupal\ai_assistant_api\Data\AssistantStreamIterator;
 use Drupal\ai_assistant_api\Data\UserMessage;
 use Drupal\ai_assistant_api\Entity\AiAssistant;
+use Drupal\ai_assistant_api\Event\AiAssistantSystemRoleEvent;
+use Drupal\ai_assistant_api\Event\PrepromptSystemRoleEvent;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Render\Renderer;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\TempStore\PrivateTempStoreFactory;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * The runner for the AI assistant.
@@ -69,6 +72,13 @@ class AiAssistantApiRunner {
    * @var \Drupal\ai_assistant_api\AiAssistantActionPluginManager
    */
   protected AiAssistantActionPluginManager $actions;
+
+  /**
+   * The event dispatcher.
+   *
+   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+   */
+  protected EventDispatcherInterface $eventDispatcher;
 
   /**
    * If it should be a streaming result.
@@ -132,19 +142,23 @@ class AiAssistantApiRunner {
    *   The private temp store.
    * @param \Drupal\ai_assistant_api\AiAssistantActionPluginManager $actions
    *   The AI Assistant Action Plugin Manager.
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
+   *   The event dispatcher.
    */
   public function __construct(
     EntityTypeManagerInterface $entityTypeManager,
     AiProviderPluginManager $aiProvider,
     Renderer $renderer,
     PrivateTempStoreFactory $tempStore,
-    AiAssistantActionPluginManager $actions
+    AiAssistantActionPluginManager $actions,
+    EventDispatcherInterface $eventDispatcher
     ) {
     $this->entityTypeManager = $entityTypeManager;
     $this->aiProvider = $aiProvider;
     $this->renderer = $renderer;
     $this->tempStore = $tempStore;
     $this->actions = $actions;
+    $this->eventDispatcher = $eventDispatcher;
   }
 
   /**
@@ -326,6 +340,10 @@ class AiAssistantApiRunner {
       // Add the information that search is done.
       $assistant_message .= "\n\n Start the message with the following information: \nThank you for your question. I am looking up the answer.<br><br>";
     }
+    // Let other modules change the system role.
+    $event = new AiAssistantSystemRoleEvent($assistant_message);
+    $this->eventDispatcher->dispatch($event, AiAssistantSystemRoleEvent::EVENT_NAME);
+    $assistant_message = $event->getSystemPrompt();
     $provider->setChatSystemRole($assistant_message);
 
     $messages = [];
@@ -361,7 +379,11 @@ class AiAssistantApiRunner {
     }
     $input = new ChatInput($messages);
 
-    $response = $provider->chat($input, $connect['model_id']);
+    $response = $provider->chat($input, $connect['model_id'], [
+      'ai_assistant_api',
+      'ai_assistant_api_assistant_message',
+      'ai_assistant_api_assistant_message_' . $this->assistant->id(),
+    ]);
 
     return $response;
   }
@@ -429,6 +451,10 @@ class AiAssistantApiRunner {
       $pre_prompt = str_replace('[' . $key . ']', $replace, $pre_prompt);
     }
 
+    $event = new PrepromptSystemRoleEvent($pre_prompt);
+    $this->eventDispatcher->dispatch($event, PrepromptSystemRoleEvent::EVENT_NAME);
+    $pre_prompt = $event->getSystemPrompt();
+
     $connect = $this->getProviderAndModel();
     $provider = $this->aiProvider->createInstance($connect['provider_id']);
 
@@ -440,7 +466,11 @@ class AiAssistantApiRunner {
       $messages[] = new ChatMessage($message['role'], $message['message']);
     }
     $input = new ChatInput($messages);
-    $response = $provider->chat($input, $connect['model_id']);
+    $response = $provider->chat($input, $connect['model_id'], [
+      'ai_assistant_api',
+      'ai_assistant_api_preprompt',
+      'ai_assistant_api_preprompt_' . $this->assistant->id(),
+    ]);
     $values = $response->getNormalized();
     $full = '';
     $i = 0;
