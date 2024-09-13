@@ -132,7 +132,7 @@ class FileHelper {
    */
   public function generateFileFromBinary(string $binary, string $dest) {
     $path = substr($dest, 0, -(strlen($dest) + 1));
-    // Create directory if not existsing.
+    // Create directory if not existing.
     $this->fileSystem->prepareDirectory($path, FileSystemInterface::CREATE_DIRECTORY);
     $file = $this->fileRepo->writeData($binary, $dest, FileExists::Rename);
     if ($file->save()) {

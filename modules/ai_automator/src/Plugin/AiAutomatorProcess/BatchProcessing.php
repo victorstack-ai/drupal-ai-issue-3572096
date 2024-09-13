@@ -19,7 +19,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 #[AiAutomatorProcessRule(
   id: 'batch',
   title: new TranslatableMarkup('Batch'),
-  description: new TranslatableMarkup('Uses JavaScript batch queue (not recommended), will not work on programatical saving.'),
+  description: new TranslatableMarkup('Uses JavaScript batch queue (not recommended), will not work on programmatical saving.'),
 )]
 class BatchProcessing implements AiAutomatorFieldProcessInterface, ContainerFactoryPluginInterface {
 

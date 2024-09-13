@@ -10,7 +10,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Provides funcationality for AI Image Classification.
+ * Provides functionality for AI Image Classification.
  *
  * @FieldValidationRule(
  *   id = "ai_image_classification constraint_rule",

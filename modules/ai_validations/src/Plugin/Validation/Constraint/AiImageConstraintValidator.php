@@ -32,7 +32,7 @@ final class AiImageConstraintValidator extends ConstraintValidator implements Co
   protected $entityTypeManager;
 
   /**
-   * Creates a new Aiprovider instance.
+   * Creates a new AiProvider instance.
    *
    * @param \Drupal\ai\AiProviderPluginManager $aiPluginManager
    *   The ai provider.

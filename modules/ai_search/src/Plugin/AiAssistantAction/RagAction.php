@@ -351,7 +351,7 @@ class RagAction extends AiAssistantActionBase {
     $form['rag_' . $i]['description'] = [
       '#type' => 'textarea',
       '#title' => $this->t('RAG description'),
-      '#description' => $this->t('A description of what is possible to find in this database. Be verbose, an advanced AI Assistant might use it for chosing where to search.'),
+      '#description' => $this->t('A description of what is possible to find in this database. Be verbose, an advanced AI Assistant might use it for choosing where to search.'),
       '#default_value' => $this->configuration['rag_' . $i]['description'] ?? $form_state->getValue('description'),
       '#attributes' => [
         'rows' => 2,
@@ -362,7 +362,7 @@ class RagAction extends AiAssistantActionBase {
     $form['rag_' . $i]['score_threshold'] = [
       '#type' => 'number',
       '#title' => $this->t('RAG threshold'),
-      '#description' => $this->t('This is the threshold that the answer have to meet to be thought of as a valid response. Note that the number may shift depending on the similary metric you are using.'),
+      '#description' => $this->t('This is the threshold that the answer have to meet to be thought of as a valid response. Note that the number may shift depending on the similar metric you are using.'),
       '#default_value' => $this->configuration['rag_' . $i]['score_threshold'] ?? $form_state->getValue('score_threshold'),
       '#attributes' => [
         'placeholder' => 0.6,

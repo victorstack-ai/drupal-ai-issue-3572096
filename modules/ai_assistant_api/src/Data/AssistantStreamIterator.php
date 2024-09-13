@@ -6,7 +6,7 @@ use Drupal\ai\OperationType\Chat\StreamedChatMessage;
 use Drupal\ai\OperationType\Chat\StreamedChatMessageIterator;
 
 /**
- * Aisstant Replay Stream message iterator.
+ * Assistant Replay Stream message iterator.
  */
 class AssistantStreamIterator extends StreamedChatMessageIterator {
 

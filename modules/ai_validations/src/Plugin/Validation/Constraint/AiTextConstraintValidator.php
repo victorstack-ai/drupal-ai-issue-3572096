@@ -23,7 +23,7 @@ final class AiTextConstraintValidator extends ConstraintValidator implements Con
   protected $aiPluginManager;
 
   /**
-   * Creates a new Aiprovider instance.
+   * Creates a new AiProvider instance.
    *
    * @param \Drupal\ai\AiProviderPluginManager $aiPluginManager
    *   The ai provider.

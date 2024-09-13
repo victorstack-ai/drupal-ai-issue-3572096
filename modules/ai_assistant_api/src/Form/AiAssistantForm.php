@@ -92,7 +92,7 @@ final class AiAssistantForm extends EntityForm {
       '#required' => FALSE,
       '#attributes' => [
         'rows' => 2,
-        'placeholder' => $this->t('If the user asks questions about unpublished articles, make sure to add status unpulished somewhere in the lookup.'),
+        'placeholder' => $this->t('If the user asks questions about unpublished articles, make sure to add status unpublished somewhere in the lookup.'),
       ],
     ];
 

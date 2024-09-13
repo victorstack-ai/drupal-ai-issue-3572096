@@ -130,7 +130,7 @@ class ChatInterfaceTest extends KernelTestBase {
     $input = new ChatInput([
       new ChatMessage('', ''),
     ]);
-    // This should throw an error because laccking input.
+    // This should throw an error because lacking input.
     $this->expectException(AiRequestErrorException::class);
     $provider->chat($input, 'gpt-4o');
 

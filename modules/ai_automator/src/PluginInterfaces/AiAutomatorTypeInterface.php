@@ -7,7 +7,7 @@ use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
- * Interface for automatot type modifiers.
+ * Interface for automator type modifiers.
  */
 interface AiAutomatorTypeInterface {
 
@@ -44,7 +44,7 @@ interface AiAutomatorTypeInterface {
   public function allowedInputs();
 
   /**
-   * Returns the text that will be placed as placeholder in the textare.
+   * Returns the text that will be placed as placeholder in the textarea.
    *
    * @return string
    *   The text.
@@ -107,7 +107,7 @@ interface AiAutomatorTypeInterface {
    * Checks if the value is empty on complex field types.
    *
    * @param array $value
-   *   The value reponse.
+   *   The value response.
    *
    * @return mixed
    *   Return empty array if empty.

@@ -14,14 +14,14 @@ class Email extends RuleBase {
    * {@inheritDoc}
    */
   public function helpText() {
-    return "This can help find e-mails in text.";
+    return "This can help find emails in text.";
   }
 
   /**
    * {@inheritDoc}
    */
   public function placeholderText() {
-    return "Based on the context text return all e-mails listed.\n\nContext:\n{{ context }}";
+    return "Based on the context text return all emails listed.\n\nContext:\n{{ context }}";
   }
 
   /**
@@ -33,7 +33,7 @@ class Email extends RuleBase {
 
     // Add JSON output.
     foreach ($prompts as $key => $prompt) {
-      $prompt .= "\n\n\n\nDo not include any explanations, only provide a RFC8259 compliant JSON response following this format without deviation.\n[{\"value\": \"plain e-mail address\"}]";
+      $prompt .= "\n\n\n\nDo not include any explanations, only provide a RFC8259 compliant JSON response following this format without deviation.\n[{\"value\": \"plain email address\"}]";
       $prompts[$key] = $prompt;
     }
     $total = [];
@@ -52,7 +52,7 @@ class Email extends RuleBase {
    * {@inheritDoc}
    */
   public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
-    // Has to be valid e-mail.
+    // Has to be valid email.
     if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
       return TRUE;
     }

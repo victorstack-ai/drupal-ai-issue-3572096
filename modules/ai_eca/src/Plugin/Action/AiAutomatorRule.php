@@ -149,7 +149,7 @@ class AiAutomatorRule extends ActionBase implements ConfigurableInterface, Plugi
     $form['overwrite'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Overwrite existing content.'),
-      '#description' => $this->t('If checked, the existing content will be overwritten each save. This is useful when you want your ECA process to be in full controll when the content is updated. If unchecked, the ECA process will only run when the field is empty.'),
+      '#description' => $this->t('If checked, the existing content will be overwritten each save. This is useful when you want your ECA process to be in full control when the content is updated. If unchecked, the ECA process will only run when the field is empty.'),
       '#default_value' => $this->configuration['overwrite'],
       '#weight' => -20,
     ];

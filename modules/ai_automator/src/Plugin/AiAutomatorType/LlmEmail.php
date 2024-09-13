@@ -8,7 +8,7 @@ use Drupal\ai_automator\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
- * The rules for an e-mail field.
+ * The rules for an email field.
  */
 #[AiAutomatorType(
   id: 'llm_email',

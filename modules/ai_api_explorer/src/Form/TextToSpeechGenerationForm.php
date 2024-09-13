@@ -249,7 +249,7 @@ class TextToSpeechGenerationForm extends FormBase {
     $code .= '];<br><br>';
     $code .= "\$ai_provider = \Drupal::service('ai.provider')->createInstance('" . $form_state->getValue('tts_ai_provider') . '\');<br>';
     $code .= "\$ai_provider->setConfiguration(\$config);<br><br>";
-    $code .= "// Trigger a reponse.<br>";
+    $code .= "// Trigger a response.<br>";
     $code .= "\$response = \$ai_provider->textToSpeech(\$prompt, '" . $form_state->getValue('tts_ai_model') . '\', ["your_module_name"]);<br><br>';
     $code .= "// This gets an array of \Drupal\ai\OperationType\GenericType\AudioFile.<br>";
     $code .= "\$normalized = \$response->getNormalized();<br><br>";

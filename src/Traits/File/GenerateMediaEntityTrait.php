@@ -74,7 +74,7 @@ trait GenerateMediaEntityTrait {
   }
 
   /**
-   * Gets the path from the field defintion.
+   * Gets the path from the field definition.
    *
    * @param \Drupal\field\Entity\FieldConfig $field_definition
    *   The field definition.

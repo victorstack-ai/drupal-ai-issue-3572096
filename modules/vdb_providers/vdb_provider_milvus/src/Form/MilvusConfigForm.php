@@ -28,7 +28,7 @@ class MilvusConfigForm extends ConfigFormBase {
   protected KeyRepositoryInterface $keyRepository;
 
   /**
-   * Construcotr of the Milvus DB config form.
+   * Constructor of the Milvus DB config form.
    *
    * @param \Drupal\ai\AiVdbProviderPluginManager $vdbProviderPluginManager
    *   The VDB Provider plugin manager.

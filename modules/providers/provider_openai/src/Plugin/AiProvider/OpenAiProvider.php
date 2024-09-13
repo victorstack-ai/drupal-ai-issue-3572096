@@ -424,7 +424,7 @@ class OpenAiProvider extends AiProviderClientBase implements
     }
     // Moderation.
     $this->moderationEndpoints($input);
-    // Send the resuest.
+    // Send the request.
     $payload = [
       'model' => $model_id,
       'input' => $input,

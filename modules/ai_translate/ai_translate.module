@@ -87,7 +87,7 @@ function ai_translate_plugin_help($route_name, RouteMatchInterface $route_match)
     case 'help.page.ai':
       $output = '';
       $output .= '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t('This module will integrate AI with our Drupal system. It will add a Translate link to translate an entire piece of content into anothe language in one click.');
+      $output .= '<p>' . t('This module will integrate AI with our Drupal system. It will add a Translate link to translate an entire piece of content into another language in one click.');
       $output .= ' ' . t('For more information, see the <a href=":drupal-org-help">online documentation for the ai_translate module</a>.', [':drupal-org-help' => 'https://www.drupal.org/project/ai']);
       $output .= '</p>';
       return $output;

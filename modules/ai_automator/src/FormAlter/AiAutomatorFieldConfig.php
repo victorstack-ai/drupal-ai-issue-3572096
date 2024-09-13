@@ -48,7 +48,7 @@ class AiAutomatorFieldConfig {
   protected AiAutomatorFieldProcessManager $processes;
 
   /**
-   * The entity type maanger.
+   * The entity type manager.
    */
   protected EntityTypeManagerInterface $entityTypeManager;
 

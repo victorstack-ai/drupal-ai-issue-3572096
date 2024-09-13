@@ -422,7 +422,7 @@ class GeneralHelper {
       '#title' => $this->t(':word Token', [
         ':word' => $title,
       ]),
-      '#description' => $this->t('If you want to set this value based on a token, this will overwriten the set value if it exists.'),
+      '#description' => $this->t('If you want to set this value based on a token, this will overwritten the set value if it exists.'),
       '#default_value' => $fieldDefinition->getConfig($entity->bundle())->getThirdPartySetting('ai_automator', "{$id}_token", ''),
     ];
 

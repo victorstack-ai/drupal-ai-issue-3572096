@@ -192,7 +192,7 @@ class ImageClassificationGenerationForm extends FormBase {
     }
 
     $code = "";
-    // Save the binary dimage_class to a file.
+    // Save the binary image class to a file.
     if ($classification) {
       foreach ($classification as $row) {
         $response .= '<strong>' . $row->getLabel() . '</strong>: <em>' . $row->getConfidenceScore() . '</em><br>';

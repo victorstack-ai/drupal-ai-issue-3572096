@@ -4,5 +4,5 @@ administer ai:
   restrict access: true
 administer ai providers:
   title: 'Administer LLM Providers'
-  description: 'Administer the indivual AI providers'
+  description: 'Administer the individual AI providers'
   restrict access: true

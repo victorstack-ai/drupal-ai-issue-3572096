@@ -10,6 +10,6 @@ ai_logging.list_page:
   path: '/admin/config/ai/logging'
   defaults:
     _controller: '\Drupal\ai\Controller\ProviderSetupList::list'
-    _title: 'AI Loggin'
+    _title: 'AI Logging'
   requirements:
     _permission: 'administer ai'

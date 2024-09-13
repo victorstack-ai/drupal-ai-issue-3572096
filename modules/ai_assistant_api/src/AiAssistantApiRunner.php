@@ -286,7 +286,7 @@ class AiAssistantApiRunner {
   }
 
   /**
-   * Start processing the assistant synchrounously.
+   * Start processing the assistant synchronously.
    */
   public function process() {
     if (!$this->assistant) {
@@ -542,7 +542,7 @@ class AiAssistantApiRunner {
       if (is_object($possible_entity) && $possible_entity instanceof ContentEntityInterface) {
         // Check if the entity type is in the index.
         if ($index->isValidDatasource('entity:' . $possible_entity->getEntityTypeId())) {
-          // Get the bundles for the indfex.
+          // Get the bundles for the index.
           $bundles = $index->getDatasource('entity:' . $possible_entity->getEntityTypeId())->getBundles();
           // Check if the bundle is in the index.
           if (in_array($possible_entity->bundle(), array_keys($bundles))) {
