@@ -578,7 +578,8 @@ class OpenAiProvider extends AiProviderClientBase implements
   public function getModels(string $operation_type, $capabilities): array {
     $models = [];
 
-    $cache_data = $this->cacheBackend->get('openai_models_' . $operation_type . '_' . Crypt::hashBase64(Json::encode($capabilities)), $models);
+    $cache_key = 'openai_models_' . $operation_type . '_' . Crypt::hashBase64(Json::encode($capabilities));
+    $cache_data = $this->cacheBackend->get($cache_key);
 
     if (!empty($cache_data)) {
       return $cache_data->data;
@@ -591,7 +592,7 @@ class OpenAiProvider extends AiProviderClientBase implements
         continue;
       }
 
-      if (!preg_match('/^(gpt|text|embed|tts|whisper|dall-e)/i', $model['id'])) {
+      if (!preg_match('/^(gpt|text|o1|embed|tts|whisper|dall-e)/i', $model['id'])) {
         continue;
       }
 
@@ -607,7 +608,7 @@ class OpenAiProvider extends AiProviderClientBase implements
       // Bundle specific logic.
       switch ($operation_type) {
         case 'chat':
-          if (!preg_match('/^(gpt|text)/i', $model['id'])) {
+          if (!preg_match('/^(gpt|text|o1)/i', $model['id'])) {
             continue 2;
           }
           break;
@@ -654,7 +655,7 @@ class OpenAiProvider extends AiProviderClientBase implements
         continue;
       }
       // Allow gpt-4o and gpt-4-turbo, but not gpt-4o-mini.
-      if (in_array(AiModelCapability::ChatJsonOutput, $capabilities) && (!preg_match('/^(gpt-4o|gpt-4-turbo)/i', $model['id']) || preg_match('/(mini)/i', $model['id']))) {
+      if (in_array(AiModelCapability::ChatJsonOutput, $capabilities) && (!preg_match('/^(gpt-4o|o1|gpt-4-turbo)/i', $model['id']) || preg_match('/(mini)/i', $model['id']))) {
         continue;
       }
       $models[$model['id']] = $model['id'];
@@ -666,7 +667,7 @@ class OpenAiProvider extends AiProviderClientBase implements
 
     if (!empty($models)) {
       asort($models);
-      $this->cacheBackend->set('openai_models_' . $operation_type, $models);
+      $this->cacheBackend->set($cache_key, $models);
     }
 
     return $models;
