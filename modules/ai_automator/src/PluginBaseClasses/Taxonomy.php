@@ -296,6 +296,8 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
    *   The entity being worked on.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The field definition interface.
+   * @param bool $withDescriptions
+   *   If we should include descriptions.
    *
    * @return array
    *   Array of tid as key and name as value.

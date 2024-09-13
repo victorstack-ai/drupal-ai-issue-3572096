@@ -390,8 +390,8 @@ class AiContentForm {
       ];
       $form['ai_suggest']['use_source_vocabulary_hierarchy'] = [
         '#type' => 'checkbox',
-        '#title' => $this->t('Use source vocabulary\'s full hierarchy'),
-        '#description' => $this->t('Check this box if you want to take into account the selected vocabulary\'s hierarchy, if such exists.'),
+        '#title' => $this->t("Use source vocabulary's full hierarchy"),
+        '#description' => $this->t("Check this box if you want to take into account the selected vocabulary's hierarchy, if such exists."),
         '#states' => [
           'visible' => [
             ':input[name="ai_suggest[use_source_vocabulary]"]' => ['checked' => TRUE],
@@ -456,28 +456,34 @@ class AiContentForm {
 
   /**
    * Get the preferred provider if configured, else take the default one.
-   * @param $preferred_model
+   *
+   * @param string $preferred_model
+   *   The preferred model.
+   * @param string $operation_type
+   *   The operation type.
    *
    * @return array|null
+   *   The provider and model.
+   *
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
-  public function getSetProvider($preferred_model, $operationType) {
+  public function getSetProvider($preferred_model, $operation_type) {
     // Check if there is a preferred model.
     $provider = NULL;
     $model = NULL;
     if ($preferred_model) {
       $provider = $this->aiProvider->loadProviderFromSimpleOption($preferred_model);
       $model = $this->aiProvider->getModelNameFromSimpleOption($preferred_model);
-    } else {
+    }
+    else {
       // Get the default provider.
-      $default_provider = $this->aiProvider->getDefaultProviderForOperationType($operationType);
+      $default_provider = $this->aiProvider->getDefaultProviderForOperationType($operation_type);
       if (empty($default_provider['provider_id'])) {
-        $this->messenger->addError(t('No AI provider is set for chat. Please configure one in the %ai_content_settings_link or setup a default Chat model in the %ai_settings_link.', [
-          '%ai_content_settings_link' => Link::createFromRoute(t('AI Content settings'), 'ai_content.settings_form')->toString(),
-          '%ai_settings_link' => Link::createFromRoute(t('AI settings'), 'ai.settings_form')->toString(),
+        $this->messenger->addError($this->t('No AI provider is set for chat. Please configure one in the %ai_content_settings_link or setup a default Chat model in the %ai_settings_link.', [
+          '%ai_content_settings_link' => Link::createFromRoute($this->t('AI Content settings'), 'ai_content.settings_form')->toString(),
+          '%ai_settings_link' => Link::createFromRoute($this->t('AI settings'), 'ai.settings_form')->toString(),
         ]));
         throw new \exception('No AI provider is set for chat. Please configure one in the AI default settings or in the ai_content settings form.');
-        return NULL;
       }
       $provider = $this->aiProvider->createInstance($default_provider['provider_id']);
       $model = $default_provider['model_id'];
@@ -563,12 +569,11 @@ class AiContentForm {
     if (!empty($target_field_value)) {
       $provider_config = $this->getSetProvider($this->getConfig()->get('tone_adjust_model'), 'chat');
       if (empty($provider_config['provider_id'])) {
-        \Drupal::messenger()->addError(t('No AI provider is set for chat. Please configure one in the %ai_content_settings_link or setup a default Chat model in the %ai_settings_link.', [
-          '%ai_content_settings_link' => Link::createFromRoute(t('AI Content settings'), 'ai_content.settings_form')->toString(),
-          '%ai_settings_link' => Link::createFromRoute(t('AI settings'), 'ai.settings_form')->toString(),
+        $this->messenger->addError($this->t('No AI provider is set for chat. Please configure one in the %ai_content_settings_link or setup a default Chat model in the %ai_settings_link.', [
+          '%ai_content_settings_link' => Link::createFromRoute($this->t('AI Content settings'), 'ai_content.settings_form')->toString(),
+          '%ai_settings_link' => Link::createFromRoute($this->t('AI settings'), 'ai.settings_form')->toString(),
         ]));
         throw new \exception('No AI provider is set for chat. Please configure one in the AI default settings or in the ai_content settings form.');
-        return NULL;
       }
       $ai_provider = $provider_config['provider_id'];
       $truncated_value = $target_field_value;
@@ -604,12 +609,11 @@ class AiContentForm {
     if (!empty($target_field_value)) {
       $provider_config = $this->getSetProvider($this->getConfig()->get('summarise_model'), 'chat');
       if (empty($provider_config['provider_id'])) {
-        \Drupal::messenger()->addError(t('No AI provider is set for chat. Please configure one in the %ai_content_settings_link or setup a default Chat model in the %ai_settings_link.', [
-          '%ai_content_settings_link' => Link::createFromRoute(t('AI Content settings'), 'ai_content.settings_form')->toString(),
-          '%ai_settings_link' => Link::createFromRoute(t('AI settings'), 'ai.settings_form')->toString(),
+        $this->messenger->addError($this->t('No AI provider is set for chat. Please configure one in the %ai_content_settings_link or setup a default Chat model in the %ai_settings_link.', [
+          '%ai_content_settings_link' => Link::createFromRoute($this->t('AI Content settings'), 'ai_content.settings_form')->toString(),
+          '%ai_settings_link' => Link::createFromRoute($this->t('AI settings'), 'ai.settings_form')->toString(),
         ]));
         throw new \exception('No AI provider is set for chat. Please configure one in the AI default settings or in the ai_content settings form.');
-        return NULL;
       }
       $ai_provider = $provider_config['provider_id'];
       $prompt = 'Create a detailed summary of the following text in less than 130 words using the same language as the following text:\r\n"' . $target_field_value . '"';
@@ -645,12 +649,11 @@ class AiContentForm {
     if (!empty($target_field_value)) {
       $provider_config = $this->getSetProvider($this->getConfig()->get('suggest_title_model'), 'chat');
       if (empty($provider_config['provider_id'])) {
-        \Drupal::messenger()->addError(t('No AI provider is set for chat. Please configure one in the %ai_content_settings_link or setup a default Chat model in the %ai_settings_link.', [
-          '%ai_content_settings_link' => Link::createFromRoute(t('AI Content settings'), 'ai_content.settings_form')->toString(),
-          '%ai_settings_link' => Link::createFromRoute(t('AI settings'), 'ai.settings_form')->toString(),
+        $this->messenger->addError($this->t('No AI provider is set for chat. Please configure one in the %ai_content_settings_link or setup a default Chat model in the %ai_settings_link.', [
+          '%ai_content_settings_link' => Link::createFromRoute($this->t('AI Content settings'), 'ai_content.settings_form')->toString(),
+          '%ai_settings_link' => Link::createFromRoute($this->t('AI settings'), 'ai.settings_form')->toString(),
         ]));
         throw new \exception('No AI provider is set for chat. Please configure one in the AI default settings or in the ai_content settings form.');
-        return NULL;
       }
       $ai_provider = $provider_config['provider_id'];
       $prompt = 'Suggest an SEO friendly title for this page based off of the following content in 10 words or less, in the same language as the input:\r\n"' . $target_field_value . '"';
@@ -692,12 +695,11 @@ class AiContentForm {
     if (!empty($target_field_value)) {
       $provider_config = $this->getSetProvider($this->getConfig()->get('suggest_tax_model'), 'chat');
       if (empty($provider_config['provider_id'])) {
-        \Drupal::messenger()->addError(t('No AI provider is set for chat. Please configure one in the %ai_content_settings_link or setup a default Chat model in the %ai_settings_link.', [
-          '%ai_content_settings_link' => Link::createFromRoute(t('AI Content settings'), 'ai_content.settings_form')->toString(),
-          '%ai_settings_link' => Link::createFromRoute(t('AI settings'), 'ai.settings_form')->toString(),
+        $this->messenger->addError($this->t('No AI provider is set for chat. Please configure one in the %ai_content_settings_link or setup a default Chat model in the %ai_settings_link.', [
+          '%ai_content_settings_link' => Link::createFromRoute($this->t('AI Content settings'), 'ai_content.settings_form')->toString(),
+          '%ai_settings_link' => Link::createFromRoute($this->t('AI settings'), 'ai.settings_form')->toString(),
         ]));
         throw new \exception('No AI provider is set for chat. Please configure one in the AI default settings or in the ai_content settings form.');
-        return NULL;
       }
       $ai_provider = $provider_config['provider_id'];
       if ($use_source_vocabulary) {
@@ -726,7 +728,11 @@ class AiContentForm {
   }
 
   /**
+   * Get the relevant vocabularies.
+   *
    * @return array
+   *   The relevant vocabularies.
+   *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
@@ -735,14 +741,14 @@ class AiContentForm {
     $term_reference_fields = array_filter($fields, function ($field) {
       return $field->getType() === 'entity_reference' && $field->getSetting('target_type') === 'taxonomy_term';
     });
-    // Iterate through the term reference fields and get the target vocabularies.
+    // Iterate through the term reference fields and get the vocabularies.
     $relevant_vocabularies = [];
     foreach ($term_reference_fields as $field) {
       $target_bundles = $field->getSetting('handler_settings')['target_bundles'];
       $relevant_vocabularies = array_merge($relevant_vocabularies, $target_bundles);
     }
     // Get all the vocabularies.
-    $all_vocabularies = \Drupal::entityTypeManager()
+    $all_vocabularies = $this->entityTypeManager
       ->getStorage('taxonomy_vocabulary')
       ->loadMultiple();
     $vocabularies_options = [];
@@ -753,15 +759,23 @@ class AiContentForm {
   }
 
   /**
+   * Get the terms in a JSON format.
+   *
    * @param mixed $source_vocabulary
+   *   The source vocabulary.
+   * @param bool $use_source_vocabulary_hierarchy
+   *   Whether to use the source vocabulary hierarchy.
    *
    * @return string
+   *   The JSON representation of the terms.
    */
   public function getTermsJson($source_vocabulary, $use_source_vocabulary_hierarchy = FALSE) {
     // Use the loadTree to avoid loading all the terms.
-    $terms_tree = $this->entityTypeManager
-      ->getStorage('taxonomy_term')
-      ->loadTree($source_vocabulary);
+    /** @var \Drupal\taxonomy\TermStorage $terms_storage */
+    $terms_storage = $this->entityTypeManager
+      ->getStorage('taxonomy_term');
+
+    $terms_tree = $terms_storage->loadTree($source_vocabulary);
     // Now run an extra entity query, to ensure access check.
     $query = $this->entityTypeManager
       ->getStorage('taxonomy_term')

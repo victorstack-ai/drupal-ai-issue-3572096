@@ -3,8 +3,8 @@
 namespace Drupal\Tests\ai\Unit\Traits\File;
 
 use Drupal\ai\Traits\File\FileMimeTypeTrait;
-use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use PHPUnit\Framework\TestCase;
 
 /**

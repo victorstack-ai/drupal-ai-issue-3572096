@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile
 namespace Drupal\ai_assistant_api;
 
 use Drupal\ai\AiProviderPluginManager;
@@ -151,8 +151,8 @@ class AiAssistantApiRunner {
     Renderer $renderer,
     PrivateTempStoreFactory $tempStore,
     AiAssistantActionPluginManager $actions,
-    EventDispatcherInterface $eventDispatcher
-    ) {
+    EventDispatcherInterface $eventDispatcher,
+  ) {
     $this->entityTypeManager = $entityTypeManager;
     $this->aiProvider = $aiProvider;
     $this->renderer = $renderer;

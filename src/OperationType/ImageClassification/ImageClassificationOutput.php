@@ -86,4 +86,5 @@ class ImageClassificationOutput implements OutputInterface {
       'metadata' => $this->metadata,
     ];
   }
+
 }

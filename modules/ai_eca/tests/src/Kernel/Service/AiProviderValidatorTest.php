@@ -5,7 +5,8 @@ namespace Drupal\Tests\ai_eca\Kernel\Service;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai_eca\Service\AiProviderValidatorInterface;
 use Drupal\KernelTests\KernelTestBase;
-use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Constraints\Required;
+use Symfony\Component\Validator\Constraints\Type;
 
 /**
  * Kernel tests for the "ai_eca_provider_validator"-service.
@@ -126,8 +127,8 @@ class AiProviderValidatorTest extends KernelTestBase {
         '[system_name]' => 'This field is missing.',
       ],
       [
-        'system_name' => new Assert\Required([
-          'constraints' => [new Assert\Type('string')],
+        'system_name' => new Required([
+          'constraints' => [new Type('string')],
         ]),
       ],
     ];
@@ -141,8 +142,8 @@ class AiProviderValidatorTest extends KernelTestBase {
         '[system_name]' => 'This value should be of type string.',
       ],
       [
-        'system_name' => new Assert\Required([
-          'constraints' => [new Assert\Type('string')],
+        'system_name' => new Required([
+          'constraints' => [new Type('string')],
         ]),
       ],
     ];

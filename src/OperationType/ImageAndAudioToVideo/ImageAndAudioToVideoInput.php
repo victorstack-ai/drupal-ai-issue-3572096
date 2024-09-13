@@ -89,7 +89,7 @@ class ImageAndAudioToVideoInput implements InputInterface {
    * Return the input as string.
    *
    * @return string
-   *    The input as string.
+   *   The input as string.
    */
   public function __toString(): string {
     return $this->toString();

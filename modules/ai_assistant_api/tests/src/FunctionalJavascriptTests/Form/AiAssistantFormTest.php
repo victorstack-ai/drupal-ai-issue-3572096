@@ -31,6 +31,8 @@ class AiAssistantFormTest extends WebDriverTestBase {
 
   /**
    * Themes to enable.
+   *
+   * @var string
    */
   protected $defaultTheme = 'claro';
 

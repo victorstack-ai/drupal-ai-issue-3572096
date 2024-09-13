@@ -42,7 +42,7 @@ class AiSettingsForm extends ConfigFormBase {
       'actual_type' => 'chat',
       'label' => 'Chat with Complex JSON',
       'filter' => [AiModelCapability::ChatJsonOutput],
-    ]
+    ],
   ];
 
   /**

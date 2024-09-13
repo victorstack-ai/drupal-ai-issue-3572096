@@ -84,7 +84,6 @@ class MistralConfigForm extends ConfigFormBase {
     $this->aiProviderManager->defaultIfNone('chat', 'anthropic', 'mistral-large-latest');
     $this->aiProviderManager->defaultIfNone('embeddings', 'anthropic', 'mistral-embed');
 
-
     parent::submitForm($form, $form_state);
   }
 

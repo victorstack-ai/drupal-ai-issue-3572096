@@ -19,15 +19,14 @@ class ImageClassificationItem {
    *
    * @var float|null
    */
-  private float|NULL $confidence_score;
+  private float|NULL $confidenceScore;
 
   /**
    * The constructor.
-   *
    */
   public function __construct(string $label, float|NULL $confidence_score = NULL) {
     $this->label = $label;
-    $this->confidence_score = $confidence_score;
+    $this->confidenceScore = $confidence_score;
   }
 
   /**
@@ -57,7 +56,7 @@ class ImageClassificationItem {
    *   The confidence score.
    */
   public function getConfidenceScore(): float|NULL {
-    return $this->confidence_score;
+    return $this->confidenceScore;
   }
 
   /**
@@ -67,7 +66,7 @@ class ImageClassificationItem {
    *   The confidence score.
    */
   public function setConfidenceScore(float|NULL $confidence_score): void {
-    $this->confidence_score = $confidence_score;
+    $this->confidenceScore = $confidence_score;
   }
 
   /**
@@ -77,7 +76,7 @@ class ImageClassificationItem {
    *   The confidence score as a percentage.
    */
   public function getConfidenceScorePercentage(): string {
-    return $this->confidence_score ? round($this->confidence_score * 100, 2) : '0';
+    return $this->confidenceScore ? round($this->confidenceScore * 100, 2) : '0';
   }
 
 }

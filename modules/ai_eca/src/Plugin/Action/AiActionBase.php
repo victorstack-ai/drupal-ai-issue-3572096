@@ -144,11 +144,9 @@ abstract class AiActionBase extends ConfigurableActionBase {
   protected function getModelData(?string $source = NULL): array {
     $data = explode('__', $source ?? $this->configuration['model']);
     if (count($data) !== 2) {
-      throw new \InvalidArgumentException($this->t('Given source "@source" is not valid. Could not determine provider and model.', [
-        '@source' => $source ?? $this->configuration['model'],
-      ]));
+      $source = $source ?? $this->configuration['model'];
+      throw new \InvalidArgumentException('Given source "' . $source . '" is not valid. Could not determine provider and model.');
     }
-
     return array_combine(
       ['provider_id', 'model_id'],
       $data

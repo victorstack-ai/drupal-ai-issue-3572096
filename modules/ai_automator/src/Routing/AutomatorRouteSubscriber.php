@@ -3,7 +3,6 @@
 namespace Drupal\ai_automator\Routing;
 
 use Symfony\Component\Routing\Route;
-use Symfony\Component\Routing\RouteCollection;
 
 /**
  * Defines dynamic routes.
@@ -23,7 +22,7 @@ class AutomatorRouteSubscriber {
         continue;
       }
       $route = new Route(
-        '/admin/structure/types/manage/automator_chain/' . $entity_type->getBundleOf(). '/{' . $entity_type_id . '}',
+        '/admin/structure/types/manage/automator_chain/' . $entity_type->getBundleOf() . '/{' . $entity_type_id . '}',
         [
           '_form' => '\Drupal\ai_automator\Form\AiChainForm',
           '_title' => 'AI Automator Chain Configuration',

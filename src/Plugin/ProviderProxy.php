@@ -100,9 +100,6 @@ class ProviderProxy {
    *   The result of the method call.
    */
   protected function wrapperCall(\ReflectionMethod $method, $arguments) {
-    // Check if the method outputs an instance of OutputInterface.
-    $returnType = $method->getReturnType();
-
     // Get the operation type trigger methods.
     $proxiedMethods = $this->getOperationTypeTriggerMethods(get_class($this->plugin));
     // Set the operation type from the method name.

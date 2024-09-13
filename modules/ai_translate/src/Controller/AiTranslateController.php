@@ -90,8 +90,6 @@ class AiTranslateController extends ControllerBase {
     if (empty($langNames)) {
       $langNames = $this->languageManager->getNativeLanguages();
     }
-    $langFromName = $langNames[$lang_from]->getName();
-    $langToName = $langNames[$lang_to]->getName();
     $entity = $this->entityTypeManager->getStorage($entity_type)->load($entity_id);
 
     // From UI, translation is always request from default entity language,

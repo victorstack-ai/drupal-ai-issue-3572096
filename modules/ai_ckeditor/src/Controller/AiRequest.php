@@ -9,9 +9,9 @@ use Drupal\ai_ckeditor\PluginInterfaces\AiCKEditorPluginInterface;
 use Drupal\ai_ckeditor\PluginManager\AiCKEditorPluginManager;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Link;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
-use Drupal\Core\Link;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -110,16 +110,16 @@ class AiRequest implements ContainerInjectionInterface {
       if ($preferred_model) {
         $ai_provider = $this->aiProviderManager->loadProviderFromSimpleOption($preferred_model);
         $ai_model = $this->aiProviderManager->getModelNameFromSimpleOption($preferred_model);
-      } else {
+      }
+      else {
         // Get the default provider.
         $default_provider = $this->aiProviderManager->getDefaultProviderForOperationType('chat');
         if (empty($default_provider['provider_id'])) {
           // If we got nothing return NULL.
-          $this->messenger->addError(t('No AI provider is set for chat. Please configure one in the "Text format and editors settings" or setup a default Chat model in the %ai_settings_link.', [
-            '%ai_settings_link' => Link::createFromRoute(t('AI settings'), 'ai.settings_form')->toString(),
+          $this->messenger->addError($this->t('No AI provider is set for chat. Please configure one in the "Text format and editors settings" or setup a default Chat model in the %ai_settings_link.', [
+            '%ai_settings_link' => Link::createFromRoute($this->t('AI settings'), 'ai.settings_form')->toString(),
           ]));
           throw new \exception('No AI provider is set for chat. Please configure one in the AI default settings or in the ai_content settings form.');
-          return NULL;
         }
         $ai_provider = $this->aiProviderManager->createInstance($default_provider['provider_id']);
         $ai_model = $default_provider['model_id'];

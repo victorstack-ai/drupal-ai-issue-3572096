@@ -33,7 +33,7 @@ class AiImageClassificationConstraint extends Constraint {
    *
    * @var string
    */
-  public $classification_tag = '';
+  public $classificationTag = '';
 
   /**
    * The type of finder.
@@ -42,18 +42,18 @@ class AiImageClassificationConstraint extends Constraint {
    */
   public $finder = '';
 
- /**
-  * The minimum confidence to pass.
-  *
-  * @var float
-  */
-  public $min_confidence = 0.0;
+  /**
+   * The minimum confidence to pass.
+   *
+   * @var float
+   */
+  public $minConfidence = 0.0;
 
   /**
    * The model is not available.
    *
    * @var string
    */
-  public $model_not_available;
+  public $modelNotAvailable;
 
 }

@@ -48,7 +48,7 @@ class ChainLocalTasks extends DeriverBase implements ContainerDeriverInterface {
 
     $entity_definitions = $this->entityTypeManager->getDefinitions();
     foreach ($entity_definitions as $entity_type_id => $entity_type) {
-      if (!$entity_type->entityClassImplements('Drupal\Core\Config\Entity\ConfigEntityInterface') ) {
+      if (!$entity_type->entityClassImplements('Drupal\Core\Config\Entity\ConfigEntityInterface')) {
         continue;
       }
       if (!$entity_type->getBundleOf()) {
@@ -62,4 +62,5 @@ class ChainLocalTasks extends DeriverBase implements ContainerDeriverInterface {
     }
     return $this->derivatives;
   }
+
 }

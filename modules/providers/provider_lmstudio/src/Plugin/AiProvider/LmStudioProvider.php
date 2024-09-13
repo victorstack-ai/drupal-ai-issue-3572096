@@ -81,7 +81,8 @@ class LmStudioProvider extends AiProviderClientBase implements
     $this->loadClient();
     try {
       $response = $this->controlApi->getModels();
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       if ($this->currentUser->hasPermission('administer ai providers')) {
         $this->messenger->addError($this->t('Failed to get models from LM Studio: @error', ['@error' => $e->getMessage()]));
       }

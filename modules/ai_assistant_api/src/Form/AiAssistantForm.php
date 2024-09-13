@@ -103,7 +103,9 @@ final class AiAssistantForm extends EntityForm {
         '#type' => 'details',
         '#title' => $definition['label'],
         '#open' => TRUE,
-        '#description' => $this->t('Configure the ' . $definition['label'] . ' settings for this AI assistant.'),
+        '#description' => $this->t('Configure the %label settings for this AI assistant.', [
+          '%label' => $definition['label'],
+        ]),
       ];
 
       $form['action_plugin_' . $definition['id']]['enabled'] = [
@@ -128,7 +130,9 @@ final class AiAssistantForm extends EntityForm {
             ':input[name="' . $definition['id'] . '_enabled"]' => ['checked' => TRUE],
           ],
         ],
-        '#description' => $this->t('Configure the ' . $definition['label'] . ' settings for this AI assistant.'),
+        '#description' => $this->t('Configure the %label settings for this AI assistant.', [
+          '%label' => $definition['label'],
+        ]),
       ];
 
       $instance = $actions->createInstance($definition['id'], $entity->get('actions_enabled')[$definition['id']] ?? []);

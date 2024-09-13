@@ -68,13 +68,14 @@ class AiContentSettingsForm extends ConfigFormBase {
     $moderation_models = $this->providerManager->getSimpleProviderModelOptions('moderation');
     $default_moderation_model = $this->providerManager->getDefaultProviderForOperationType('moderation');
     $chat_models = $this->providerManager->getSimpleProviderModelOptions('chat');
-    //$default_chat_model = $this->providerManager->getSimpleDefaultProviderOptions('chat');
-    $form['policy'] = array(
+    $form['policy'] = [
       '#type' => 'fieldset',
-      '#title' => t('Policy'),
-      '#collapsible' => TRUE, // Added
-      '#collapsed' => FALSE,  // Added
-    );
+      '#title' => $this->t('Policy'),
+    // Added.
+      '#collapsible' => TRUE,
+    // Added.
+      '#collapsed' => FALSE,
+    ];
     $form['policy']['analyse_policies_enabled'] = [
       '#type' => 'checkbox',
       '#default_value' => $config->get('analyse_policies_enabled'),
@@ -85,16 +86,18 @@ class AiContentSettingsForm extends ConfigFormBase {
       '#options' => $moderation_models,
       '#disabled' => count($moderation_models) == 0,
       '#default_value' => $config->get('analyse_policies_enabled') ?? $default_moderation_model,
-      '#description' => $this->t('<em>AI can analyze content and tell you what content policies it may violate. This is beneficial if your audience are certain demographics and sensitive to certain categories. Note that this is only a useful guide.'),
+      '#description' => $this->t('<em>AI can analyze content and tell you what content policies it may violate. This is beneficial if your audience are certain demographics and sensitive to certain categories. Note that this is only a useful guide.</em>'),
       '#title' => $this->t('Content analysis model'),
       "#empty_option" => $this->t('-- Default from AI module (chat) --'),
     ];
-    $form['tone'] = array(
+    $form['tone'] = [
       '#type' => 'fieldset',
-      '#title' => t('Tone of voice'),
-      '#collapsible' => TRUE, // Added
-      '#collapsed' => FALSE,  // Added
-    );
+      '#title' => $this->t('Tone of voice'),
+    // Added.
+      '#collapsible' => TRUE,
+    // Added.
+      '#collapsed' => FALSE,
+    ];
     $form['tone']['tone_adjust_enabled'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Enable Tone adjust feature'),
@@ -109,12 +112,14 @@ class AiContentSettingsForm extends ConfigFormBase {
       '#title' => $this->t('content tone model'),
       "#empty_option" => $this->t('-- Default from AI module (chat) --'),
     ];
-    $form['summary'] = array(
+    $form['summary'] = [
       '#type' => 'fieldset',
-      '#title' => t('Summarise'),
-      '#collapsible' => TRUE, // Added
-      '#collapsed' => FALSE,  // Added
-    );
+      '#title' => $this->t('Summarise'),
+    // Added.
+      '#collapsible' => TRUE,
+    // Added.
+      '#collapsed' => FALSE,
+    ];
     $form['summary']['summarise_enabled'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Enable summary suggestion feature'),
@@ -129,12 +134,14 @@ class AiContentSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Summarisation model'),
       "#empty_option" => $this->t('-- Default from AI module (chat) --'),
     ];
-    $form['title'] = array(
+    $form['title'] = [
       '#type' => 'fieldset',
-      '#title' => t('Suggest title'),
-      '#collapsible' => TRUE, // Added
-      '#collapsed' => FALSE,  // Added
-    );
+      '#title' => $this->t('Suggest title'),
+    // Added.
+      '#collapsible' => TRUE,
+    // Added.
+      '#collapsed' => FALSE,
+    ];
     $form['title']['suggest_title_enabled'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Enable summary suggestion feature'),
@@ -149,12 +156,14 @@ class AiContentSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Title suggestion model'),
       "#empty_option" => $this->t('-- Default from AI module (chat) --'),
     ];
-    $form['taxonomy'] = array(
+    $form['taxonomy'] = [
       '#type' => 'fieldset',
-      '#title' => t('Suggest taxonomy'),
-      '#collapsible' => TRUE, // Added
-      '#collapsed' => FALSE,  // Added
-    );
+      '#title' => $this->t('Suggest taxonomy'),
+    // Added.
+      '#collapsible' => TRUE,
+    // Added.
+      '#collapsed' => FALSE,
+    ];
     $form['taxonomy']['suggest_tax_enabled'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Enable taxonomy suggestion feature'),

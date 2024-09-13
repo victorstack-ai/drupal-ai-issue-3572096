@@ -1,0 +1,7 @@
+grumphp:
+    tasks:
+        phpcs:
+            standard: Drupal,DrupalPractice
+    ascii:
+        succeeded: tests/assets/grumphp/success.txt
+        failed: tests/assets/grumphp/fail.txt

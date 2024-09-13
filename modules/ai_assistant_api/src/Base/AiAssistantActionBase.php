@@ -49,7 +49,7 @@ abstract class AiAssistantActionBase implements AiAssistantActionInterface, Cont
    *
    * @var string
    */
-  protected string $thread_id;
+  protected string $threadId;
 
   /**
    * The messages thread.
@@ -115,13 +115,14 @@ abstract class AiAssistantActionBase implements AiAssistantActionInterface, Cont
    * {@inheritdoc}
    */
   public function setThreadId(string $thread_id): void {
-    $this->thread_id = $thread_id;
+    $this->threadId = $thread_id;
   }
 
   /**
    * Get the private tempstore for AI Assistant.
    *
    * @return \Drupal\Core\TempStore\PrivateTempStore
+   *   The tempstore.
    */
   public function getTempStore() {
     return $this->tempStoreFactory->get('ai_assistant_api');
@@ -149,7 +150,7 @@ abstract class AiAssistantActionBase implements AiAssistantActionInterface, Cont
    */
   public function getAllActionContexts(): array {
     if ($this->assistant->get('allow_history') == 'session') {
-      $session = $this->getTempStore()->get($this->thread_id);
+      $session = $this->getTempStore()->get($this->threadId);
       return $session['contexts'] ?? [];
     }
     return [];
@@ -164,9 +165,9 @@ abstract class AiAssistantActionBase implements AiAssistantActionInterface, Cont
    *   The data.
    */
   public function storeActionContext(string $key, mixed $data) {
-    $session = $this->getTempStore()->get($this->thread_id);
+    $session = $this->getTempStore()->get($this->threadId);
     $session['contexts'][$key][] = $data;
-    $this->getTempStore()->set($this->thread_id, $session);
+    $this->getTempStore()->set($this->threadId, $session);
   }
 
   /**
@@ -178,13 +179,13 @@ abstract class AiAssistantActionBase implements AiAssistantActionInterface, Cont
    *   The context.
    */
   public function setOutputContext(string $key, string $context) {
-    $session = $this->getTempStore()->get($this->thread_id);
+    $session = $this->getTempStore()->get($this->threadId);
     if (!isset($session['output_contexts'][$key]) || !is_array($session['output_contexts'][$key])) {
       $session['output_contexts'][$key] = [];
     }
     $session['output_contexts'][$key][] = $context;
 
-    $this->getTempStore()->set($this->thread_id, $session);
+    $this->getTempStore()->set($this->threadId, $session);
   }
 
   /**
@@ -197,7 +198,7 @@ abstract class AiAssistantActionBase implements AiAssistantActionInterface, Cont
    *   The data.
    */
   public function getOutputToken(string $key): string {
-    $session = $this->getTempStore()->get($this->thread_id);
+    $session = $this->getTempStore()->get($this->threadId);
     return $session['output_tokens'][$key] ?? '';
   }
 
@@ -208,7 +209,7 @@ abstract class AiAssistantActionBase implements AiAssistantActionInterface, Cont
    *   The data.
    */
   public function getAllOutputTokens(): array {
-    $session = $this->getTempStore()->get($this->thread_id);
+    $session = $this->getTempStore()->get($this->threadId);
     return $session['output_tokens'] ?? [];
   }
 
@@ -221,13 +222,13 @@ abstract class AiAssistantActionBase implements AiAssistantActionInterface, Cont
    *   The context.
    */
   public function setOutputTokens(string $key, string $context) {
-    $session = $this->getTempStore()->get($this->thread_id);
+    $session = $this->getTempStore()->get($this->threadId);
     if (!isset($session['output_tokens'][$key]) || !is_array($session['output_tokens'][$key])) {
       $session['output_tokens'][$key] = [];
     }
     $session['output_tokens'][$key][] = $context;
 
-    $this->getTempStore()->set($this->thread_id, $session);
+    $this->getTempStore()->set($this->threadId, $session);
   }
 
 }

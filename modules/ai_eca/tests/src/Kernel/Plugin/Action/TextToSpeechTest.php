@@ -14,8 +14,6 @@ class TextToSpeechTest extends AiActionTestBase {
   /**
    * Text the ai_eca_execute_tts-plugin.
    *
-   * @return void
-   *
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
   public function testAction(): void {

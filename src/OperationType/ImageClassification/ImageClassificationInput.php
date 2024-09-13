@@ -51,6 +51,7 @@ class ImageClassificationInput implements InputInterface {
    * Get the labels to filter the classification.
    *
    * @return string[]
+   *   The labels to filter the classification.
    */
   public function getLabels(): array {
     return $this->labels;

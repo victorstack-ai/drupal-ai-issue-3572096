@@ -66,10 +66,15 @@ final class AiAssistantActionPluginManager extends DefaultPluginManager {
   /**
    * List all contexts.
    *
+   * @param \Drupal\ai_assistant_api\AiAssistantInterface $assistant
+   *   The assistant.
+   * @param string $thread_id
+   *   The thread ID.
    * @param array $configs
    *   The configurations.
    *
    * @return array
+   *   An array of all contexts.
    */
   public function listAllContexts(AiAssistantInterface $assistant, string $thread_id, $configs = []): array {
     $contexts = [];

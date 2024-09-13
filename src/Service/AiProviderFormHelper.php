@@ -69,7 +69,7 @@ class AiProviderFormHelper {
    *   The title of the form element.
    * @param string $description
    *   The description of the form element.
-   * @param bool $default
+   * @param bool $default_provider
    *   If a default provider should be selectable.
    */
   public function generateAiProvidersForm(
@@ -82,7 +82,8 @@ class AiProviderFormHelper {
     string $provider_id = '',
     $title = '',
     $description = '',
-    $default_provider = FALSE) {
+    $default_provider = FALSE,
+  ) {
     $providers = $this->getAiProvidersOptions($operation_type);
 
     // Make sure the prefix is properly formatted.

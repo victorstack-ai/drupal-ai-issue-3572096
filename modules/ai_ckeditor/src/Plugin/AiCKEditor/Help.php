@@ -19,9 +19,6 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 )]
 final class Help extends AiCKEditorPluginBase {
 
-
-
-
   /**
    * {@inheritdoc}
    */

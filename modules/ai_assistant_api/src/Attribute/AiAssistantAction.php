@@ -32,4 +32,5 @@ final class AiAssistantAction extends AttributeBase {
     public readonly ?string $deriver = NULL,
   ) {
   }
+
 }

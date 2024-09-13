@@ -33,6 +33,7 @@ class AiAssistantSystemRoleEvent extends Event {
    * Gets the system prompt.
    *
    * @return string
+   *   The system prompt.
    */
   public function getSystemPrompt() {
     return $this->systemPrompt;

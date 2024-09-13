@@ -14,6 +14,9 @@ use Drupal\token\TreeBuilder;
 use Http\Discovery\Exception\NotFoundException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * The AI chain form.
+ */
 class AiChainForm extends FormBase {
 
   use AutomatorInstructionTrait;
@@ -96,7 +99,8 @@ class AiChainForm extends FormBase {
     AiAutomatorTypeManager $automator_type_manager,
     TokenEntityMapperInterface $token_entity_mapper,
     TreeBuilder $token_tree_builder,
-    RouteMatchInterface $route_match) {
+    RouteMatchInterface $route_match,
+  ) {
     $this->entityTypeManager = $entity_type_manager;
     $this->entityFieldManager = $entity_field_manager;
     $this->automatorTypeManager = $automator_type_manager;
@@ -131,7 +135,7 @@ class AiChainForm extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     // Get entity type from the route.
-    [$type, $automator, $entity_type] = explode(".", $this->routeMatch->getRouteName());
+    [, , $entity_type] = explode(".", $this->routeMatch->getRouteName());
     if (empty($entity_type)) {
       throw new NotFoundException('Entity type and bundle are required.');
     }
@@ -238,14 +242,14 @@ class AiChainForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     // First get the lowest values.
     $weight = NULL;
-    foreach($form_state->getValues()['items'] as $instruction => $new_weight) {
+    foreach ($form_state->getValues()['items'] as $instruction => $new_weight) {
       if (is_null($weight) || $new_weight['weight'] < $weight) {
         $weight = $new_weight['weight'];
       }
     }
 
     // Now loop through the instructions and update the weight.
-    foreach($form_state->getValues()['items'] as $instruction => $new_weight) {
+    foreach ($form_state->getValues()['items'] as $instruction => $new_weight) {
       /** @var \Drupal\ai_automator\Entity\AiAutomator */
       $definition = $this->entityTypeManager->getStorage('ai_automator')->load($instruction);
       $definition->set('weight', (int) $weight);

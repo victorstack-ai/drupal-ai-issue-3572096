@@ -7,7 +7,13 @@ use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Validation\BasicRecursiveValidatorFactory;
 use Symfony\Component\Validator\Constraint;
-use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Constraints\Choice;
+use Symfony\Component\Validator\Constraints\Collection;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Optional;
+use Symfony\Component\Validator\Constraints\Range;
+use Symfony\Component\Validator\Constraints\Required;
+use Symfony\Component\Validator\Constraints\Type;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationInterface;
 use Symfony\Component\Validator\ConstraintViolationList;
@@ -86,36 +92,36 @@ class AiProviderValidator implements AiProviderValidatorInterface {
 
       // Constraint on primitive type.
       if (!empty($config['type'])) {
-        $constraints[] = new Assert\Type($config['type']);
+        $constraints[] = new Type($config['type']);
       }
       // Constraint on required.
       if (isset($config['required']) && $config['required'] === TRUE) {
-        $constraints[] = new Assert\NotBlank();
+        $constraints[] = new NotBlank();
         $isRequired = TRUE;
       }
       // Additional constraints.
       if (!empty($config['constraints'])) {
         // Constraint on min and max value.
         if (isset($config['constraints']['min']) || isset($config['constraints']['max'])) {
-          $constraints[] = new Assert\Range([
+          $constraints[] = new Range([
             'min' => $config['constraints']['min'] ?? NULL,
             'max' => $config['constraints']['max'] ?? NULL,
           ]);
         }
         // Constraint on allowed string values.
         if (!empty($config['constraints']['options'])) {
-          $constraints[] = new Assert\Choice([
+          $constraints[] = new Choice([
             'choices' => $config['constraints']['options'],
           ]);
         }
       }
 
       $fields[$key] = $isRequired ?
-        new Assert\Required(['constraints' => $constraints])
-        : new Assert\Optional(['constraints' => $constraints]);
+        new Required(['constraints' => $constraints])
+        : new Optional(['constraints' => $constraints]);
     }
 
-    return new Assert\Collection([
+    return new Collection([
       'fields' => $fields + $this->extraConstraints,
       'allowExtraFields' => FALSE,
     ]);
@@ -144,6 +150,7 @@ class AiProviderValidator implements AiProviderValidatorInterface {
       array_map(fn ($key) => str_replace('%', '@', $key), array_keys($message->getArguments())),
       array_values($message->getArguments()),
     );
+    // phpcs:ignore
     $message = new TranslatableMarkup($string, $arguments, $message->getOptions());
 
     return new ConstraintViolation(

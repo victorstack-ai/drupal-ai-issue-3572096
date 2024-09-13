@@ -135,8 +135,8 @@ class RagAction extends AiAssistantActionBase {
   /**
    * {@inheritdoc}
    */
-  public function triggerAction(string $action_id, $parameters = []): void  {
-    switch($action_id) {
+  public function triggerAction(string $action_id, $parameters = []): void {
+    switch ($action_id) {
       case 'search_rag':
         $this->searchRagAction($parameters['database'], $parameters['query']);
         break;
@@ -208,7 +208,7 @@ class RagAction extends AiAssistantActionBase {
    * @return string
    *   The RAG response.
    */
-  protected function renderRagResponseAsString($results, string  $query, array $rag_database) {
+  protected function renderRagResponseAsString($results, string $query, array $rag_database) {
     $response = '';
 
     foreach ($results as $result) {
@@ -230,7 +230,7 @@ class RagAction extends AiAssistantActionBase {
     $this->storeActionContext('rag', [
       'query' => $query,
       'database' => $rag_database,
-      'response' => $response
+      'response' => $response,
     ]);
     return $response;
   }
@@ -265,7 +265,8 @@ class RagAction extends AiAssistantActionBase {
       $queries = $query_string;
       $query->keys($queries);
       $results = $query->execute();
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       throw new \Exception('Failed to search: ' . $e->getMessage());
     }
     return $results;

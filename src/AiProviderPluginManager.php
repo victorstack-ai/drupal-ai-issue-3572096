@@ -72,7 +72,8 @@ final class AiProviderPluginManager extends DefaultPluginManager {
     CacheBackendInterface $cache_backend,
     ModuleHandlerInterface $module_handler,
     ContainerInterface $container,
-    MessengerInterface $messenger) {
+    MessengerInterface $messenger,
+  ) {
     parent::__construct('Plugin/AiProvider', $namespaces, $module_handler, AiProviderInterface::class, AiProvider::class);
     $this->alterInfo('ai_provider_info');
     $this->setCacheBackend($cache_backend, 'ai_provider_plugins');

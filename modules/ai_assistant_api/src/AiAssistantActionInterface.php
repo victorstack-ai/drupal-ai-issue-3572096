@@ -14,6 +14,7 @@ interface AiAssistantActionInterface extends PluginFormInterface, ConfigurableIn
    * Sets the assistant.
    *
    * @param \Drupal\ai_assistant_api\AiAssistantInterface $assistant
+   *   The assistant.
    */
   public function setAssistant(AiAssistantInterface $assistant): void;
 
@@ -21,6 +22,7 @@ interface AiAssistantActionInterface extends PluginFormInterface, ConfigurableIn
    * Sets the ai provider.
    *
    * @param \Drupal\ai\AiProviderInterface|\Drupal\ai\Plugin\ProviderProxy $ai_provider
+   *   The ai provider.
    */
   public function setAiProvider($ai_provider): void;
 
@@ -61,8 +63,8 @@ interface AiAssistantActionInterface extends PluginFormInterface, ConfigurableIn
    *
    * @param string $action_id
    *   The action id.
-   * @param array $context
-   *   The context.
+   * @param array $parameters
+   *   The parameters.
    */
   public function triggerAction(string $action_id, array $parameters = []): void;
 

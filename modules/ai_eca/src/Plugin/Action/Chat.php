@@ -5,7 +5,8 @@ namespace Drupal\ai_eca\Plugin\Action;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\Core\Form\FormStateInterface;
-use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Constraints\Optional;
+use Symfony\Component\Validator\Constraints\Type;
 
 /**
  * Describes the AI ai_eca_execute_chat action.
@@ -44,6 +45,7 @@ class Chat extends AiConfigActionBase {
     /** @var \Drupal\Core\StringTranslation\TranslatableMarkup $description */
     $description = $form['config']['#description'];
     $description = $this->t(
+      // phpcs:ignore
       sprintf('%s<br/>The "profile" helps set the behavior of the LLM response. You can change/influence how it response by adjusting the system prompt. Eg. <pre>system_name: system<br>system_prompt: you are a helpful assistant</pre>', $description->getUntranslatedString()),
       $description->getArguments(),
       $description->getOptions(),
@@ -112,11 +114,11 @@ class Chat extends AiConfigActionBase {
    */
   protected function getExtraConstraints(): array {
     return [
-      'system_name' => new Assert\Optional([
-        'constraints' => [new Assert\Type('string')],
+      'system_name' => new Optional([
+        'constraints' => [new Type('string')],
       ]),
-      'system_prompt' => new Assert\Optional([
-        'constraints' => [new Assert\Type('string')],
+      'system_prompt' => new Optional([
+        'constraints' => [new Type('string')],
       ]),
     ];
   }
