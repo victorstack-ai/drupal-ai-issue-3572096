@@ -14,6 +14,8 @@ use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Link;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -98,15 +100,23 @@ class AiContentForm {
   private $entityFieldManager;
 
   /**
+   * The messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
+
+  /**
    * Constructor.
    */
-  public function __construct(AccountProxyInterface $account, ConfigFactoryInterface $configFactory, AiProviderPluginManager $aiProvider, RendererInterface $renderer, EntityTypeManagerInterface $entityTypeManager, EntityFieldManagerInterface $entityFieldManager) {
+  public function __construct(AccountProxyInterface $account, ConfigFactoryInterface $configFactory, AiProviderPluginManager $aiProvider, RendererInterface $renderer, EntityTypeManagerInterface $entityTypeManager, EntityFieldManagerInterface $entityFieldManager, MessengerInterface $messenger) {
     $this->account = $account;
     $this->configFactory = $configFactory;
     $this->aiProvider = $aiProvider;
     $this->renderer = $renderer;
     $this->entityTypeManager = $entityTypeManager;
     $this->entityFieldManager = $entityFieldManager;
+    $this->messenger = $messenger;
   }
 
   /**
@@ -445,6 +455,40 @@ class AiContentForm {
   }
 
   /**
+   * Get the preferred provider if configured, else take the default one.
+   * @param $preferred_model
+   *
+   * @return array|null
+   * @throws \Drupal\Component\Plugin\Exception\PluginException
+   */
+  public function getSetProvider($preferred_model, $operationType) {
+    // Check if there is a preferred model.
+    $provider = NULL;
+    $model = NULL;
+    if ($preferred_model) {
+      $provider = $this->aiProvider->loadProviderFromSimpleOption($preferred_model);
+      $model = $this->aiProvider->getModelNameFromSimpleOption($preferred_model);
+    } else {
+      // Get the default provider.
+      $default_provider = $this->aiProvider->getDefaultProviderForOperationType($operationType);
+      if (empty($default_provider['provider_id'])) {
+        $this->messenger->addError(t('No AI provider is set for chat. Please configure one in the %ai_content_settings_link or setup a default Chat model in the %ai_settings_link.', [
+          '%ai_content_settings_link' => Link::createFromRoute(t('AI Content settings'), 'ai_content.settings_form')->toString(),
+          '%ai_settings_link' => Link::createFromRoute(t('AI settings'), 'ai.settings_form')->toString(),
+        ]));
+        throw new \exception('No AI provider is set for chat. Please configure one in the AI default settings or in the ai_content settings form.');
+        return NULL;
+      }
+      $provider = $this->aiProvider->createInstance($default_provider['provider_id']);
+      $model = $default_provider['model_id'];
+    }
+    return [
+      'provider_id' => $provider,
+      'model_id' => $model,
+    ];
+  }
+
+  /**
    * The AJAX callback for analyzing content.
    *
    * @param array $form
@@ -461,19 +505,13 @@ class AiContentForm {
     $target_field_value = $form_state->getValue($target_field)[0]['value'];
     $output = $this->t('The @field field has no text. Please supply content to the @field field.', ['@field' => $target_field]);
     if (!empty($target_field_value)) {
-      // Load the chosen provider/model.
-      $ai_settings = explode('__', $this->getConfig()->get('analyse_policies_enabled'));
-      if (count($ai_settings) !== 2) {
-        throw new \Exception('No AI provider or model is configured for this operation.');
-      }
-      $ai_provider = $this->aiProvider->createInstance($ai_settings[0]);
-
+      $provider_config = $this->getSetProvider($this->getConfig()->get('analyse_policies_model'), 'moderation');
+      $ai_provider = $provider_config['provider_id'];
       /** @var \Drupal\ai\OperationType\Moderation $response */
-      $response = $ai_provider->moderation($target_field_value, $ai_settings[1])->getNormalized();
+      $response = $ai_provider->moderation($target_field_value, $provider_config['model_id'])->getNormalized();
       $content = [];
       if ($response->isFlagged()) {
         $categories = $response->getInformation();
-
         $content['heading'] = [
           '#markup' => '<p>' . $this->t('Violation(s) found for these categories:') . '</p>',
         ];
@@ -523,19 +561,23 @@ class AiContentForm {
     $tone = $ai_tone_edit['tone'];
     $text = $this->t('The @field field has no text. Please supply content to the @field field.', ['@field' => $target_field]);
     if (!empty($target_field_value)) {
-      // Load the chosen provider/model.
-      $ai_settings = explode('__', $this->getConfig()->get('tone_adjust_enabled'));
-      if (count($ai_settings) !== 2) {
-        throw new \Exception('No AI provider or model is configured for this operation.');
+      $provider_config = $this->getSetProvider($this->getConfig()->get('tone_adjust_model'), 'chat');
+      if (empty($provider_config['provider_id'])) {
+        \Drupal::messenger()->addError(t('No AI provider is set for chat. Please configure one in the %ai_content_settings_link or setup a default Chat model in the %ai_settings_link.', [
+          '%ai_content_settings_link' => Link::createFromRoute(t('AI Content settings'), 'ai_content.settings_form')->toString(),
+          '%ai_settings_link' => Link::createFromRoute(t('AI settings'), 'ai.settings_form')->toString(),
+        ]));
+        throw new \exception('No AI provider is set for chat. Please configure one in the AI default settings or in the ai_content settings form.');
+        return NULL;
       }
-      $ai_provider = $this->aiProvider->createInstance($ai_settings[0]);
+      $ai_provider = $provider_config['provider_id'];
       $truncated_value = $target_field_value;
       $prompt = 'Change the tone of the following text to be ' . $tone . ' using the same language as the following text:\r\n"' . $truncated_value . '"';
       $messages = new ChatInput([
         new ChatMessage('system', 'You are helpful assistant.'),
         new chatMessage('user', $prompt),
       ]);
-      $message = $ai_provider->chat($messages, $ai_settings[1])->getNormalized();
+      $message = $ai_provider->chat($messages, $provider_config['model_id'])->getNormalized();
       $text = trim($message->getText()) ?? $this->t('No result could be generated.');
     }
     $response = new AjaxResponse();
@@ -560,18 +602,22 @@ class AiContentForm {
     $target_field_value = $form_state->getValue($target_field)[0]['value'];
     $text = $this->t('The @field field has no text. Please supply content to the @field field.', ['@field' => $target_field]);
     if (!empty($target_field_value)) {
-      // Load the chosen provider/model.
-      $ai_settings = explode('__', $this->getConfig()->get('summarise_enabled'));
-      if (count($ai_settings) !== 2) {
-        throw new \Exception('No AI provider or model is configured for this operation.');
+      $provider_config = $this->getSetProvider($this->getConfig()->get('summarise_model'), 'chat');
+      if (empty($provider_config['provider_id'])) {
+        \Drupal::messenger()->addError(t('No AI provider is set for chat. Please configure one in the %ai_content_settings_link or setup a default Chat model in the %ai_settings_link.', [
+          '%ai_content_settings_link' => Link::createFromRoute(t('AI Content settings'), 'ai_content.settings_form')->toString(),
+          '%ai_settings_link' => Link::createFromRoute(t('AI settings'), 'ai.settings_form')->toString(),
+        ]));
+        throw new \exception('No AI provider is set for chat. Please configure one in the AI default settings or in the ai_content settings form.');
+        return NULL;
       }
-      $ai_provider = $this->aiProvider->createInstance($ai_settings[0]);
+      $ai_provider = $provider_config['provider_id'];
       $prompt = 'Create a detailed summary of the following text in less than 130 words using the same language as the following text:\r\n"' . $target_field_value . '"';
       $messages = new ChatInput([
         new chatMessage('system', 'You are helpful assistant.'),
         new chatMessage('user', $prompt),
       ]);
-      $message = $ai_provider->chat($messages, $ai_settings[1])->getNormalized();
+      $message = $ai_provider->chat($messages, $provider_config['model_id'])->getNormalized();
       $text = trim($message->getText()) ?? $this->t('No result could be generated.');
     }
 
@@ -597,17 +643,22 @@ class AiContentForm {
     $target_field_value = $form_state->getValue($target_field)[0]['value'];
     $text = $this->t('The @field field has no text. Please supply content to the @field field.', ['@field' => $target_field]);
     if (!empty($target_field_value)) {
-      $ai_settings = explode('__', $this->getConfig()->get('summarise_enabled'));
-      if (count($ai_settings) !== 2) {
-        throw new \Exception('No AI provider or model is configured for this operation.');
+      $provider_config = $this->getSetProvider($this->getConfig()->get('suggest_title_model'), 'chat');
+      if (empty($provider_config['provider_id'])) {
+        \Drupal::messenger()->addError(t('No AI provider is set for chat. Please configure one in the %ai_content_settings_link or setup a default Chat model in the %ai_settings_link.', [
+          '%ai_content_settings_link' => Link::createFromRoute(t('AI Content settings'), 'ai_content.settings_form')->toString(),
+          '%ai_settings_link' => Link::createFromRoute(t('AI settings'), 'ai.settings_form')->toString(),
+        ]));
+        throw new \exception('No AI provider is set for chat. Please configure one in the AI default settings or in the ai_content settings form.');
+        return NULL;
       }
-      $ai_provider = $this->aiProvider->createInstance($ai_settings[0]);
+      $ai_provider = $provider_config['provider_id'];
       $prompt = 'Suggest an SEO friendly title for this page based off of the following content in 10 words or less, in the same language as the input:\r\n"' . $target_field_value . '"';
       $messages = new ChatInput([
         new chatMessage('system', 'You are helpful assistant.'),
         new chatMessage('user', $prompt),
       ]);
-      $message = $ai_provider->chat($messages, $ai_settings[1])->getNormalized();
+      $message = $ai_provider->chat($messages, $provider_config['model_id'])->getNormalized();
       $text = trim($message->getText()) ?? $this->t('No result could be generated.');
     }
 
@@ -639,12 +690,16 @@ class AiContentForm {
     $target_field_value = $form_state->getValue($target_field)[0]['value'];
     $text = $this->t('The @field field has no text. Please supply content to the @field field.', ['@field' => $target_field]);
     if (!empty($target_field_value)) {
-      $ai_settings = explode('__', $this->getConfig()->get('suggest_tax_enabled'));
-      if (count($ai_settings) !== 2) {
-        throw new \Exception('No AI provider or model is configured for this operation.');
+      $provider_config = $this->getSetProvider($this->getConfig()->get('suggest_tax_model'), 'chat');
+      if (empty($provider_config['provider_id'])) {
+        \Drupal::messenger()->addError(t('No AI provider is set for chat. Please configure one in the %ai_content_settings_link or setup a default Chat model in the %ai_settings_link.', [
+          '%ai_content_settings_link' => Link::createFromRoute(t('AI Content settings'), 'ai_content.settings_form')->toString(),
+          '%ai_settings_link' => Link::createFromRoute(t('AI settings'), 'ai.settings_form')->toString(),
+        ]));
+        throw new \exception('No AI provider is set for chat. Please configure one in the AI default settings or in the ai_content settings form.');
+        return NULL;
       }
-      $ai_provider = $this->aiProvider->createInstance($ai_settings[0]);
-
+      $ai_provider = $provider_config['provider_id'];
       if ($use_source_vocabulary) {
         $prompt = 'Choose five words to classify the following text using the same language as the input text:\r\n"""' . $target_field_value . '"""\r\n\r\n';
         if ($use_source_vocabulary_hierarchy) {
@@ -661,7 +716,7 @@ class AiContentForm {
         new chatMessage('system', 'You are helpful assistant.'),
         new chatMessage('user', $prompt),
       ]);
-      $message = $ai_provider->chat($messages, $ai_settings[1])->getNormalized();
+      $message = $ai_provider->chat($messages, $provider_config['model_id'])->getNormalized();
       $text = trim($message->getText()) ?? $this->t('No result could be generated.');
     }
 

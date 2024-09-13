@@ -72,11 +72,14 @@ final class Translate extends AiCKEditorPluginBase {
       '#default_value' => $this->configuration['use_description'] ?? FALSE,
     ];
 
+    $options = $this->aiProviderManager->getSimpleProviderModelOptions('chat');
+    array_shift($options);
+    array_splice($options, 0, 1);
     $form['provider'] = [
       '#type' => 'select',
+      "#empty_option" => $this->t('-- Default from AI module (chat) --'),
       '#title' => $this->t('AI provider'),
-      '#options' => $this->aiProviderManager->getSimpleProviderModelOptions('chat'),
-      '#required' => TRUE,
+      '#options' => $options,
       '#default_value' => $this->configuration['provider'] ?? $this->aiProviderManager->getSimpleDefaultProviderOptions('chat'),
       '#description' => $this->t('Select which provider to use for this plugin. See the <a href=":link">Provider overview</a> for details about each provider.', [':link' => '/admin/config/ai/providers']),
     ];

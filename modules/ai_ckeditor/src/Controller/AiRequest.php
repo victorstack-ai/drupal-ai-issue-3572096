@@ -11,6 +11,8 @@ use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
+use Drupal\Core\Link;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\editor\EditorInterface;
@@ -62,14 +64,22 @@ class AiRequest implements ContainerInjectionInterface {
   protected LoggerChannelInterface $logger;
 
   /**
+   * The messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
+
+  /**
    * {@inheritdoc}
    */
-  public function __construct(AiCKEditorPluginManager $plugin_manager, AiProviderPluginManager $ai_provider_manager, EntityTypeManagerInterface $entity_type_manager, AccountProxyInterface $account, LoggerChannelFactoryInterface $logger_factory) {
+  public function __construct(AiCKEditorPluginManager $plugin_manager, AiProviderPluginManager $ai_provider_manager, EntityTypeManagerInterface $entity_type_manager, AccountProxyInterface $account, LoggerChannelFactoryInterface $logger_factory, MessengerInterface $messenger) {
     $this->pluginManager = $plugin_manager;
     $this->aiProviderManager = $ai_provider_manager;
     $this->entityTypeManager = $entity_type_manager;
     $this->account = $account;
     $this->logger = $logger_factory->get('ai_ckeditor');
+    $this->messenger = $messenger;
   }
 
   /**
@@ -82,6 +92,7 @@ class AiRequest implements ContainerInjectionInterface {
       $container->get('entity_type.manager'),
       $container->get('current_user'),
       $container->get('logger.factory'),
+      $container->get('messenger'),
     );
   }
 
@@ -94,8 +105,25 @@ class AiRequest implements ContainerInjectionInterface {
     try {
       $settings = $editor->getSettings();
       $configuration = $settings["plugins"]["ai_ckeditor_ai"]["plugins"];
-      $ai_provider = $this->aiProviderManager->loadProviderFromSimpleOption($configuration[$ai_ckeditor_plugin->getPluginId()]['provider']);
-      $ai_model = $this->aiProviderManager->getModelNameFromSimpleOption($configuration[$ai_ckeditor_plugin->getPluginId()]['provider']);
+      $preferred_model = $configuration[$ai_ckeditor_plugin->getPluginId()]['provider'];
+
+      if ($preferred_model) {
+        $ai_provider = $this->aiProviderManager->loadProviderFromSimpleOption($preferred_model);
+        $ai_model = $this->aiProviderManager->getModelNameFromSimpleOption($preferred_model);
+      } else {
+        // Get the default provider.
+        $default_provider = $this->aiProviderManager->getDefaultProviderForOperationType('chat');
+        if (empty($default_provider['provider_id'])) {
+          // If we got nothing return NULL.
+          $this->messenger->addError(t('No AI provider is set for chat. Please configure one in the "Text format and editors settings" or setup a default Chat model in the %ai_settings_link.', [
+            '%ai_settings_link' => Link::createFromRoute(t('AI settings'), 'ai.settings_form')->toString(),
+          ]));
+          throw new \exception('No AI provider is set for chat. Please configure one in the AI default settings or in the ai_content settings form.');
+          return NULL;
+        }
+        $ai_provider = $this->aiProviderManager->createInstance($default_provider['provider_id']);
+        $ai_model = $default_provider['model_id'];
+      }
 
       // @todo Check config if user wants answers as HTML.
       /** @var \Drupal\filter\FilterFormatInterface $format */
