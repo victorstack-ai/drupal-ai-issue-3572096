@@ -35,13 +35,13 @@
 
 code.ai-code {
   display: block;
-  white-space: pre-wrap;
   padding: 20px;
+  white-space: pre-wrap;
 }
 
 .ai-code-wrapper {
-  background: #ccc;
   padding: 5px;
+  background: #ccc;
 }
 
 .gin--dark-mode .ai-three-info,
