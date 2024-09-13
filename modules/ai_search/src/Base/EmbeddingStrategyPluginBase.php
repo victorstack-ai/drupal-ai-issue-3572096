@@ -7,6 +7,7 @@ use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\ai\Utility\TextChunker;
 use Drupal\ai_search\EmbeddingStrategyInterface;
 use Drupal\Core\Entity\EntityTypeManager;
+use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use League\HTMLToMarkdown\Converter\TableConverter;
@@ -70,6 +71,8 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
    *   The text chunker.
    * @param \Drupal\Core\Entity\EntityTypeManager $entityTypeManager
    *   The entity type manager.
+   * @param \Drupal\Core\Extension\ModuleExtensionList $extensionList
+   *   The module extension list.
    */
   final public function __construct(
     protected string $pluginId,
@@ -78,6 +81,7 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
     protected HtmlConverter $converter,
     protected TextChunker $textChunker,
     protected EntityTypeManager $entityTypeManager,
+    protected ModuleExtensionList $extensionList,
   ) {
     // Set the default converter settings.
     $this->converter->getConfig()->setOption('strip_tags', TRUE);
@@ -134,6 +138,7 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
       new HtmlConverter(),
       $text_chunker,
       $container->get('entity_type.manager'),
+      $container->get('extension.list.module'),
     );
   }
 
@@ -170,7 +175,7 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
       '#type' => 'details',
       '#title' => $this->t('How to select your chunk size'),
     ];
-    $path = \Drupal::service('extension.list.module')->getPath('ai_search');
+    $path = $this->extensionList->getPath('ai_search');
     $file = $path . '/assets/html/chunk-size-advice.html';
     $form['chunk_size_details']['content'] = [
       '#markup' => file_get_contents($file),

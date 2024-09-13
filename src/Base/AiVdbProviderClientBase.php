@@ -4,7 +4,6 @@ namespace Drupal\ai\Base;
 
 use Drupal\ai\AiVdbProviderInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\key\KeyRepositoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -16,48 +15,6 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, ContainerFactoryPluginInterface {
 
   /**
-   * Config factory.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected ConfigFactoryInterface $configFactory;
-
-  /**
-   * Key repository.
-   *
-   * @var \Drupal\key\KeyRepositoryInterface
-   */
-  protected KeyRepositoryInterface $keyRepository;
-
-  /**
-   * Module Handler.
-   *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
-   */
-  protected ModuleHandlerInterface $moduleHandler;
-
-  /**
-   * The event dispatcher.
-   *
-   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
-   */
-  protected EventDispatcherInterface $eventDispatcher;
-
-  /**
-   * The plugin definition.
-   *
-   * @var array
-   */
-  protected mixed $pluginDefinition;
-
-  /**
-   * The plugin ID.
-   *
-   * @var string
-   */
-  protected string $pluginId;
-
-  /**
    * Custom configurations.
    *
    * @var array
@@ -67,29 +24,24 @@ abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, Contai
   /**
    * Constructs a new AiVdbClientBase abstract class.
    *
-   * @param string $plugin_id
+   * @param string $pluginId
    *   Plugin ID.
-   * @param mixed $plugin_definition
+   * @param mixed $pluginDefinition
    *   Plugin definition.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory.
-   * @param \Drupal\key\KeyRepositoryInterface $key_repository
+   * @param \Drupal\key\KeyRepositoryInterface $keyRepository
    *   The key repository.
-   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
    *   The event dispatcher.
    */
-  final public function __construct(
-    string $plugin_id,
-    mixed $plugin_definition,
-    ConfigFactoryInterface $config_factory,
-    KeyRepositoryInterface $key_repository,
-    EventDispatcherInterface $event_dispatcher,
+  public function __construct(
+    protected string $pluginId,
+    protected mixed $pluginDefinition,
+    protected ConfigFactoryInterface $configFactory,
+    protected KeyRepositoryInterface $keyRepository,
+    protected EventDispatcherInterface $eventDispatcher,
   ) {
-    $this->pluginDefinition = $plugin_definition;
-    $this->pluginId = $plugin_id;
-    $this->configFactory = $config_factory;
-    $this->keyRepository = $key_repository;
-    $this->eventDispatcher = $event_dispatcher;
   }
 
   /**

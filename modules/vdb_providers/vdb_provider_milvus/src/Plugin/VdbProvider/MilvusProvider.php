@@ -5,11 +5,15 @@ namespace Drupal\vdb_provider_milvus\Plugin\VdbProvider;
 use Drupal\ai\Attribute\AiVdbProvider;
 use Drupal\ai\Base\AiVdbProviderClientBase;
 use Drupal\ai\Enum\VdbSimilarityMetrics;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\key\KeyRepositoryInterface;
 use Drupal\vdb_provider_milvus\MilvusV2;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Plugin implementation of the 'Milvus DB' provider.
@@ -30,11 +34,51 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
   protected string $apiKey = '';
 
   /**
-   * The Milvus client.
+   * Constructs an override for the AiVdbClientBase class to add Milvus V2.
    *
-   * @var \Drupal\vdb_provider_milvus\MilvusV2|null
+   * @param string $pluginId
+   *   Plugin ID.
+   * @param mixed $pluginDefinition
+   *   Plugin definition.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The config factory.
+   * @param \Drupal\key\KeyRepositoryInterface $keyRepository
+   *   The key repository.
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
+   *   The event dispatcher.
+   * @param \Drupal\vdb_provider_milvus\MilvusV2 $client
+   *   The Milvus V2 API client.
    */
-  protected MilvusV2 $client;
+  public function __construct(
+    protected string $pluginId,
+    protected mixed $pluginDefinition,
+    protected ConfigFactoryInterface $configFactory,
+    protected KeyRepositoryInterface $keyRepository,
+    protected EventDispatcherInterface $eventDispatcher,
+    protected MilvusV2 $client,
+  ) {
+    parent::__construct(
+      $this->pluginId,
+      $this->pluginDefinition,
+      $this->configFactory,
+      $this->keyRepository,
+      $this->eventDispatcher,
+    );
+  }
+
+  /**
+   * Load from dependency injection container.
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): AiVdbProviderClientBase|static {
+    return new static(
+      $plugin_id,
+      $plugin_definition,
+      $container->get('config.factory'),
+      $container->get('key.repository'),
+      $container->get('event_dispatcher'),
+      $container->get('milvus_v2.api'),
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -63,12 +107,11 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
    *   The Milvus v2 client.
    */
   public function getClient(): MilvusV2 {
-    $service = \Drupal::service('milvus_v2.api');
     $config = $this->getConnectionData();
-    $service->setBaseUrl($config['server']);
-    $service->setPort($config['port']);
-    $service->setApiKey($config['api_key']);
-    return $service;
+    $this->client->setBaseUrl($config['server']);
+    $this->client->setPort($config['port']);
+    $this->client->setApiKey($config['api_key']);
+    return $this->client;
   }
 
   /**
@@ -231,19 +274,6 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
     int $offset = 0,
     string $database = 'default',
   ): array {
-    $params = [
-      'collectionName' => $collection_name,
-      'vector' => $vector_input,
-      'outputFields' => $output_fields,
-      'dbName' => $database,
-      'limit' => $limit,
-      'offset' => $offset,
-    ];
-
-    if ($filters !== '') {
-      $params['filter'] = $filters;
-    }
-
     $data = $this->getClient()->search(
       $collection_name,
       $vector_input,
