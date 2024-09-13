@@ -10,7 +10,7 @@ use Drupal\Component\EventDispatcher\Event;
 class PrepromptSystemRoleEvent extends Event {
 
   // The event name.
-  const EVENT_NAME = 'ai_assistant.change_assistant_message';
+  const EVENT_NAME = 'ai_assistant.change_preprompt_message';
 
   /**
    * The system prompt.
