@@ -102,7 +102,12 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
     $this->textChunker->setModel($chat_model_id);
     /** @var \Drupal\ai\OperationType\Embeddings\EmbeddingsInterface $embeddingLlm */
     $this->embeddingLlm = $this->aiProviderManager->createInstance($this->providerId);
-    $this->chunkSize = $configuration['chunk_size'] ?? $this->embeddingLlm->maxEmbeddingsInput($this->modelId);
+    if (!empty($configuration['chunk_size']) && is_numeric($configuration['chunk_size'])) {
+      $this->chunkSize = (int) $configuration['chunk_size'];
+    }
+    else {
+      $this->chunkSize = $this->embeddingLlm->maxEmbeddingsInput($this->modelId);
+    }
 
     if (!empty($configuration['chunk_min_overlap'])) {
       $this->chunkMinOverlap = (int) $configuration['chunk_min_overlap'];
