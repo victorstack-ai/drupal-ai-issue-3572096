@@ -678,11 +678,16 @@
       "responses": [
         {
           "uuid": "db54c0ad-e5ca-44ef-a03d-718274cad43f",
-          "body": "{\n    \"object\": \"list\",\n    \"data\": [\n        {\n            \"id\": \"dall-e-3\",\n            \"object\": \"model\",\n            \"created\": 1698785189,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"gpt-4-1106-preview\",\n            \"object\": \"model\",\n            \"created\": 1698957206,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"dall-e-2\",\n            \"object\": \"model\",\n            \"created\": 1698798177,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"tts-1-hd-1106\",\n            \"object\": \"model\",\n            \"created\": 1699053533,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"tts-1-hd\",\n            \"object\": \"model\",\n            \"created\": 1699046015,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"text-embedding-3-large\",\n            \"object\": \"model\",\n            \"created\": 1705953180,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"gpt-4-0125-preview\",\n            \"object\": \"model\",\n            \"created\": 1706037612,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"babbage-002\",\n            \"object\": \"model\",\n            \"created\": 1692634615,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"gpt-4-turbo-preview\",\n            \"object\": \"model\",\n            \"created\": 1706037777,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"gpt-4o\",\n            \"object\": \"model\",\n            \"created\": 1715367049,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"gpt-4o-2024-05-13\",\n            \"object\": \"model\",\n            \"created\": 1715368132,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"text-embedding-3-small\",\n            \"object\": \"model\",\n            \"created\": 1705948997,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"tts-1\",\n            \"object\": \"model\",\n            \"created\": 1681940951,\n            \"owned_by\": \"openai-internal\"\n        },\n        {\n            \"id\": \"gpt-3.5-turbo\",\n            \"object\": \"model\",\n            \"created\": 1677610602,\n            \"owned_by\": \"openai\"\n        },\n        {\n            \"id\": \"whisper-1\",\n            \"object\": \"model\",\n            \"created\": 1677532384,\n            \"owned_by\": \"openai-internal\"\n        },\n        {\n            \"id\": \"text-embedding-ada-002\",\n            \"object\": \"model\",\n            \"created\": 1671217299,\n            \"owned_by\": \"openai-internal\"\n        },\n        {\n            \"id\": \"gpt-3.5-turbo-16k\",\n            \"object\": \"model\",\n            \"created\": 1683758102,\n            \"owned_by\": \"openai-internal\"\n        },\n        {\n            \"id\": \"davinci-002\",\n            \"object\": \"model\",\n            \"created\": 1692634301,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"gpt-4-turbo-2024-04-09\",\n            \"object\": \"model\",\n            \"created\": 1712601677,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"tts-1-1106\",\n            \"object\": \"model\",\n            \"created\": 1699053241,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"gpt-3.5-turbo-0125\",\n            \"object\": \"model\",\n            \"created\": 1706048358,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"gpt-4-turbo\",\n            \"object\": \"model\",\n            \"created\": 1712361441,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"gpt-3.5-turbo-1106\",\n            \"object\": \"model\",\n            \"created\": 1698959748,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"gpt-3.5-turbo-instruct-0914\",\n            \"object\": \"model\",\n            \"created\": 1694122472,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"gpt-4o-2024-08-06\",\n            \"object\": \"model\",\n            \"created\": 1722814719,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"gpt-4-vision-preview\",\n            \"object\": \"model\",\n            \"created\": 1698894917,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"gpt-4-1106-vision-preview\",\n            \"object\": \"model\",\n            \"created\": 1711473033,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"gpt-3.5-turbo-instruct\",\n            \"object\": \"model\",\n            \"created\": 1692901427,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"gpt-4-0613\",\n            \"object\": \"model\",\n            \"created\": 1686588896,\n            \"owned_by\": \"openai\"\n        },\n        {\n            \"id\": \"gpt-4\",\n            \"object\": \"model\",\n            \"created\": 1687882411,\n            \"owned_by\": \"openai\"\n        },\n        {\n            \"id\": \"gpt-4o-mini-2024-07-18\",\n            \"object\": \"model\",\n            \"created\": 1721172717,\n            \"owned_by\": \"system\"\n        },\n        {\n            \"id\": \"gpt-4o-mini\",\n            \"object\": \"model\",\n            \"created\": 1721172741,\n            \"owned_by\": \"system\"\n        }\n    ]\n}",
+          "body": "{\n  \"object\": \"list\",\n  \"data\": [\n    {\n      \"id\": \"dall-e-3\",\n      \"object\": \"model\",\n      \"created\": 1698785189,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-4-1106-preview\",\n      \"object\": \"model\",\n      \"created\": 1698957206,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"dall-e-2\",\n      \"object\": \"model\",\n      \"created\": 1698798177,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"tts-1-hd-1106\",\n      \"object\": \"model\",\n      \"created\": 1699053533,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"tts-1-hd\",\n      \"object\": \"model\",\n      \"created\": 1699046015,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"text-embedding-3-large\",\n      \"object\": \"model\",\n      \"created\": 1705953180,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-4-0125-preview\",\n      \"object\": \"model\",\n      \"created\": 1706037612,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"babbage-002\",\n      \"object\": \"model\",\n      \"created\": 1692634615,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-4-turbo-preview\",\n      \"object\": \"model\",\n      \"created\": 1706037777,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-4o\",\n      \"object\": \"model\",\n      \"created\": 1715367049,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-4o-2024-05-13\",\n      \"object\": \"model\",\n      \"created\": 1715368132,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"text-embedding-3-small\",\n      \"object\": \"model\",\n      \"created\": 1705948997,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"tts-1\",\n      \"object\": \"model\",\n      \"created\": 1681940951,\n      \"owned_by\": \"openai-internal\"\n    },\n    {\n      \"id\": \"gpt-3.5-turbo\",\n      \"object\": \"model\",\n      \"created\": 1677610602,\n      \"owned_by\": \"openai\"\n    },\n    {\n      \"id\": \"whisper-1\",\n      \"object\": \"model\",\n      \"created\": 1677532384,\n      \"owned_by\": \"openai-internal\"\n    },\n    {\n      \"id\": \"text-embedding-ada-002\",\n      \"object\": \"model\",\n      \"created\": 1671217299,\n      \"owned_by\": \"openai-internal\"\n    },\n    {\n      \"id\": \"gpt-3.5-turbo-16k\",\n      \"object\": \"model\",\n      \"created\": 1683758102,\n      \"owned_by\": \"openai-internal\"\n    },\n    {\n      \"id\": \"davinci-002\",\n      \"object\": \"model\",\n      \"created\": 1692634301,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-4-turbo-2024-04-09\",\n      \"object\": \"model\",\n      \"created\": 1712601677,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"tts-1-1106\",\n      \"object\": \"model\",\n      \"created\": 1699053241,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-3.5-turbo-0125\",\n      \"object\": \"model\",\n      \"created\": 1706048358,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-4-turbo\",\n      \"object\": \"model\",\n      \"created\": 1712361441,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-3.5-turbo-1106\",\n      \"object\": \"model\",\n      \"created\": 1698959748,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-3.5-turbo-instruct-0914\",\n      \"object\": \"model\",\n      \"created\": 1694122472,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-4o-2024-08-06\",\n      \"object\": \"model\",\n      \"created\": 1722814719,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-4-vision-preview\",\n      \"object\": \"model\",\n      \"created\": 1698894917,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-4-1106-vision-preview\",\n      \"object\": \"model\",\n      \"created\": 1711473033,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-3.5-turbo-instruct\",\n      \"object\": \"model\",\n      \"created\": 1692901427,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-4-0613\",\n      \"object\": \"model\",\n      \"created\": 1686588896,\n      \"owned_by\": \"openai\"\n    },\n    {\n      \"id\": \"gpt-4\",\n      \"object\": \"model\",\n      \"created\": 1687882411,\n      \"owned_by\": \"openai\"\n    },\n    {\n      \"id\": \"gpt-4o-mini-2024-07-18\",\n      \"object\": \"model\",\n      \"created\": 1721172717,\n      \"owned_by\": \"system\"\n    },\n    {\n      \"id\": \"gpt-4o-mini\",\n      \"object\": \"model\",\n      \"created\": 1721172741,\n      \"owned_by\": \"system\"\n    }\n  ]\n}",
           "latency": 0,
           "statusCode": 200,
           "label": "",
-          "headers": [],
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
           "bodyType": "INLINE",
           "filePath": "",
           "databucketID": "",
@@ -692,7 +697,7 @@
               "target": "header",
               "modifier": "Authorization",
               "value": "Bearer abc123",
-              "invert": true,
+              "invert": false,
               "operator": "equals"
             }
           ],
@@ -1232,9 +1237,46 @@
         }
       ],
       "responseMode": null
+    },
+    {
+      "uuid": "78171258-9427-4135-a808-dd20ccb8e8f3",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "v1/moderations",
+      "responses": [
+        {
+          "uuid": "25b17bf2-95e4-42e9-8694-f9471dd6381c",
+          "body": "{\n  \"id\": \"modr-XXXXX\",\n  \"model\": \"text-moderation-007\",\n  \"results\": [\n    {\n      \"flagged\": false,\n      \"categories\": {\n        \"sexual\": false,\n        \"hate\": false,\n        \"harassment\": false,\n        \"self-harm\": false,\n        \"sexual/minors\": false,\n        \"hate/threatening\": false,\n        \"violence/graphic\": false,\n        \"self-harm/intent\": false,\n        \"self-harm/instructions\": false,\n        \"harassment/threatening\": false,\n        \"violence\": false,\n      },\n      \"category_scores\": {\n        \"sexual\": 1.2282071e-06,\n        \"hate\": 0.010696256,\n        \"harassment\": 0.29842457,\n        \"self-harm\": 1.5236925e-08,\n        \"sexual/minors\": 5.7246268e-08,\n        \"hate/threatening\": 0.0060676364,\n        \"violence/graphic\": 4.435014e-06,\n        \"self-harm/intent\": 8.098441e-10,\n        \"self-harm/instructions\": 2.8498655e-11,\n        \"harassment/threatening\": 0.010696256,\n        \"violence\": 0.010696256,\n      }\n    }\n  ]\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null
     }
   ],
   "rootChildren": [
+    {
+      "type": "route",
+      "uuid": "a9b2488f-3999-4102-9b3f-c7f7e63967b1"
+    },
+    {
+      "type": "route",
+      "uuid": "78171258-9427-4135-a808-dd20ccb8e8f3"
+    },
     {
       "type": "route",
       "uuid": "d84883b8-293f-4cb3-bf4a-1d9a69c2d4f6"
@@ -1258,10 +1300,6 @@
     {
       "type": "route",
       "uuid": "541f0587-7748-4313-9fde-2cd08cea4bc7"
-    },
-    {
-      "type": "route",
-      "uuid": "a9b2488f-3999-4102-9b3f-c7f7e63967b1"
     },
     {
       "type": "route",
