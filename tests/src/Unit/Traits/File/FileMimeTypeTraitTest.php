@@ -15,12 +15,7 @@ use PHPUnit\Framework\TestCase;
  */
 class FileMimeTypeTraitTest extends TestCase {
 
-  /**
-   * The trait object.
-   *
-   * @var \Drupal\ai\Traits\File\FileMimeTypeTrait
-   */
-  protected $traitObject;
+  use FileMimeTypeTrait;
 
   /**
    * The mime type guesser mock.
@@ -41,15 +36,13 @@ class FileMimeTypeTraitTest extends TestCase {
     $container->set('file.mime_type.guesser', $this->mimeTypeGuesser);
     \Drupal::setContainer($container);
 
-    // Create an instance of the class using the trait.
-    $this->traitObject = $this->getMockForTrait(FileMimeTypeTrait::class);
   }
 
   /**
    * Tests the getFileMimeTypeGuesser method.
    */
   public function testGetFileMimeTypeGuesser() {
-    $this->assertSame($this->mimeTypeGuesser, $this->traitObject->getFileMimeTypeGuesser());
+    $this->assertSame($this->mimeTypeGuesser, $this->getFileMimeTypeGuesser());
   }
 
 }

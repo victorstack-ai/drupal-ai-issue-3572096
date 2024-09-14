@@ -11,6 +11,8 @@
         "hkulekci/qdrant": "^0.5.5"
     },
     "require-dev": {
-        "drupal/eca": "^2.0"
+        "drupal/eca": "^2.0",
+        "drupal/search_api": "^1.35",
+        "drupal/token": "^1.14"
     }
 }

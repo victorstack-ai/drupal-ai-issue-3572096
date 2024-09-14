@@ -7,7 +7,7 @@ use Drupal\FunctionalJavascriptTests\WebDriverTestBase;
 /**
  * Functional test for Ajax loading the VDB providers vectors.
  *
- * @coversDefaultClass \Drupal\ai_assistant_api\Form\AiAssistantFormTest
+ * @coversDefaultClass \Drupal\ai_assistant_api\Form\AiAssistantForm
  *
  * @group ai_assistant_api
  */
@@ -107,7 +107,7 @@ class AiAssistantFormTest extends WebDriverTestBase {
         if (!file_exists($dir)) {
           mkdir($dir, 0777, TRUE);
         }
-        $this->createScreenshot($dir . $this->getName() . '.png');
+        $this->createScreenshot($dir . 'testAjaxForm.png');
       }
 
       throw $e;

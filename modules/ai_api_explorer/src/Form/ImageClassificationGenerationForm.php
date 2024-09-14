@@ -184,6 +184,7 @@ class ImageClassificationGenerationForm extends FormBase {
 
     $input = new ImageClassificationInput($image_file, $labels);
     $response = '';
+    $classification = NULL;
     try {
       $classification = $provider->imageClassification($input, $form_state->getValue('image_class_ai_model'), ['ai_api_explorer'])->getNormalized();
     }

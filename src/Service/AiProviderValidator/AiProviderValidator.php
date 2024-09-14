@@ -2,18 +2,18 @@
 
 namespace Drupal\ai\Service\AiProviderValidator;
 
-use Assert\Choice;
-use Assert\Collection;
-use Assert\NotBlank;
-use Assert\Optional;
-use Assert\Range;
-use Assert\Required;
-use Assert\Type;
 use Drupal\ai\AiProviderInterface;
 use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Validation\BasicRecursiveValidatorFactory;
 use Symfony\Component\Validator\Constraint;
+use Symfony\Component\Validator\Constraints\Choice;
+use Symfony\Component\Validator\Constraints\Collection;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Optional;
+use Symfony\Component\Validator\Constraints\Range;
+use Symfony\Component\Validator\Constraints\Required;
+use Symfony\Component\Validator\Constraints\Type;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationInterface;
 use Symfony\Component\Validator\ConstraintViolationList;

@@ -38,7 +38,7 @@ class CastUtilityTest extends UnitTestCase {
    * @return array
    *   Types, values and expected values.
    */
-  public function typeAndValueProvider(): array {
+  public static function typeAndValueProvider(): array {
     return [
       ["int", "1", 1],
       ["integer", "1", 1],

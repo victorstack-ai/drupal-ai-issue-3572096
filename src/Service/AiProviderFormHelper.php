@@ -107,7 +107,7 @@ class AiProviderFormHelper {
         '#title' => $title ? $title : $this->t('LLM Provider'),
         '#options' => $providers,
         '#default_value' => $provider,
-        '#description' => $description ?? '',
+        '#description' => $description,
         '#required' => TRUE,
         '#empty_option' => $this->t('Select a provider'),
         '#ajax' => [
@@ -311,6 +311,7 @@ class AiProviderFormHelper {
    */
   public function getAiProvidersOptions(string $operation_type) {
     $providers = $this->aiProviderPluginManager->getDefinitions();
+    $options = [];
     foreach ($providers as $id => $provider) {
       // Check so its setup.
       $providerInstance = $this->aiProviderPluginManager->createInstance($id);

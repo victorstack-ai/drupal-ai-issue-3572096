@@ -14,7 +14,7 @@ use Drupal\KernelTests\KernelTestBase;
 /**
  * This tests the Chat calling.
  *
- * @coversDefaultClass \Drupal\ai\OperationType\Chat
+ * @coversDefaultClass \Drupal\ai\OperationType\Chat\ChatInterface
  *
  * @group ai
  */

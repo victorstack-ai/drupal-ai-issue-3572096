@@ -183,7 +183,9 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
   /**
    * {@inheritdoc}
    */
-  public function validateCkEditorModalForm(array $form, FormStateInterface $form_state): array {}
+  public function validateCkEditorModalForm(array $form, FormStateInterface $form_state): array {
+    return [];
+  }
 
   /**
    * {@inheritdoc}

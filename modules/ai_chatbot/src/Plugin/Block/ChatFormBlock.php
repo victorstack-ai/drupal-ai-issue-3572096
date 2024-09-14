@@ -28,14 +28,14 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  protected readonly EntityTypeManagerInterface $entityTypeManager;
+  protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
    * The form builder.
    *
    * @var \Drupal\Core\Form\FormBuilderInterface
    */
-  protected readonly FormBuilderInterface $formBuilder;
+  protected FormBuilderInterface $formBuilder;
 
   /**
    * Current user.

@@ -69,7 +69,7 @@ class TextChunkerTest extends KernelTestBase {
     $expected_chunks = Json::decode(file_get_contents($directory . $filename));
 
     // Check that the expected results match.
-    $this->assertSame($expected_count, count($chunks));
+    $this->assertCount($expected_count, $chunks);
     $this->assertSame($expected_chunks, $chunks);
   }
 

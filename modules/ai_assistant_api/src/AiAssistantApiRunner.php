@@ -12,12 +12,17 @@ use Drupal\ai_assistant_api\Data\UserMessage;
 use Drupal\ai_assistant_api\Entity\AiAssistant;
 use Drupal\ai_assistant_api\Event\AiAssistantSystemRoleEvent;
 use Drupal\ai_assistant_api\Event\PrepromptSystemRoleEvent;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Controller\TitleResolverInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Render\Renderer;
 use Drupal\Core\Render\RendererInterface;
+use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\TempStore\PrivateTempStoreFactory;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * The runner for the AI assistant.
@@ -79,6 +84,41 @@ class AiAssistantApiRunner {
    * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
    */
   protected EventDispatcherInterface $eventDispatcher;
+
+  /**
+   * Get the current user.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface
+   */
+  protected AccountProxyInterface $currentUser;
+
+  /**
+   * The request stack.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  protected RequestStack $requestStack;
+
+  /**
+   * The title resolver.
+   *
+   * @var \Drupal\Core\TitleResolverInterface
+   */
+  protected TitleResolverInterface $titleResolver;
+
+  /**
+   * The language manager.
+   *
+   * @var \Drupal\Core\Language\LanguageManagerInterface
+   */
+  protected LanguageManagerInterface $languageManager;
+
+  /**
+   * The configuration factory.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected ConfigFactoryInterface $configFactory;
 
   /**
    * If it should be a streaming result.
@@ -144,6 +184,16 @@ class AiAssistantApiRunner {
    *   The AI Assistant Action Plugin Manager.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
    *   The event dispatcher.
+   * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
+   *   The current user.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $requestStack
+   *   The request stack.
+   * @param \Drupal\Core\Controller\TitleResolverInterface $titleResolver
+   *   The title resolver.
+   * @param \Drupal\Core\Language\LanguageManagerInterface $languageManager
+   *   The language manager.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The configuration factory.
    */
   public function __construct(
     EntityTypeManagerInterface $entityTypeManager,
@@ -152,6 +202,11 @@ class AiAssistantApiRunner {
     PrivateTempStoreFactory $tempStore,
     AiAssistantActionPluginManager $actions,
     EventDispatcherInterface $eventDispatcher,
+    AccountProxyInterface $currentUser,
+    RequestStack $requestStack,
+    TitleResolverInterface $titleResolver,
+    LanguageManagerInterface $languageManager,
+    ConfigFactoryInterface $configFactory,
   ) {
     $this->entityTypeManager = $entityTypeManager;
     $this->aiProvider = $aiProvider;
@@ -159,6 +214,11 @@ class AiAssistantApiRunner {
     $this->tempStore = $tempStore;
     $this->actions = $actions;
     $this->eventDispatcher = $eventDispatcher;
+    $this->currentUser = $currentUser;
+    $this->requestStack = $requestStack;
+    $this->titleResolver = $titleResolver;
+    $this->languageManager = $languageManager;
+    $this->configFactory = $configFactory;
   }
 
   /**
@@ -615,21 +675,18 @@ class AiAssistantApiRunner {
    */
   public function getPrePromptDrupalContext() {
     $context = [];
-    $current_user = \Drupal::currentUser();
-    $request = \Drupal::request();
-    $current_request = \Drupal::requestStack()->getCurrentRequest();
-    $title_resolver = \Drupal::service('title_resolver');
-    $context['is_logged_in'] = $current_user->isAuthenticated() ? 'is logged in' : 'is not logged in';
-    $context['user_name'] = $current_user->getAccountName();
-    $context['user_roles'] = implode(', ', $current_user->getRoles());
-    $context['user_email'] = $current_user->getEmail();
-    $context['user_id'] = $current_user->id();
-    $context['user_language'] = $current_user->getPreferredLangcode();
-    $context['user_timezone'] = $current_user->getTimeZone();
-    $context['page_title'] = (string) $title_resolver->getTitle($current_request, $current_request->attributes->get('_route_object'));
-    $context['page_path'] = $request->getRequestUri();
-    $context['page_language'] = \Drupal::languageManager()->getCurrentLanguage()->getId();
-    $context['site_name'] = \Drupal::config('system.site')->get('name');
+    $current_request = $this->requestStack->getCurrentRequest();
+    $context['is_logged_in'] = $this->currentUser->isAuthenticated() ? 'is logged in' : 'is not logged in';
+    $context['user_name'] = $this->currentUser->getAccountName();
+    $context['user_roles'] = implode(', ', $this->currentUser->getRoles());
+    $context['user_email'] = $this->currentUser->getEmail();
+    $context['user_id'] = $this->currentUser->id();
+    $context['user_language'] = $this->currentUser->getPreferredLangcode();
+    $context['user_timezone'] = $this->currentUser->getTimeZone();
+    $context['page_title'] = (string) $this->titleResolver->getTitle($current_request, $current_request->attributes->get('_route_object'));
+    $context['page_path'] = $current_request->getRequestUri();
+    $context['page_language'] = $this->languageManager->getCurrentLanguage()->getId();
+    $context['site_name'] = $this->configFactory->get('system.site')->get('name');
 
     return $context;
   }

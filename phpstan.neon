@@ -13,6 +13,16 @@ parameters:
   paths:
     - .
 
+  # AI Validations, will not work with phpstan next until D11.
+  excludePaths:
+    - modules/ai_validations
+
+  fileExtensions:
+    - php
+    - module
+    - inc
+    - install
+
   ignoreErrors:
     # new static() is a best practice in Drupal, so we cannot fix that.
     - "#^Unsafe usage of new static#"

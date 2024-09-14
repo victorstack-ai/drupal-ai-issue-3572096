@@ -165,6 +165,7 @@ class VectorDbGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function getResponse(array &$form, FormStateInterface $form_state) {
+    $amount = 0;
     try {
       /** @var \Drupal\search_api\Entity\Index */
       $index = $this->entityTypeManager->getStorage('search_api_index')->load($form_state->getValue('index'));
@@ -178,7 +179,7 @@ class VectorDbGenerationForm extends FormBase {
       $query->setOption('search_api_ai_get_chunks_result', $form_state->getValue('group_results'));
       $query->keys([$form_state->getValue('prompt')]);
       $results = $query->execute();
-      if ((empty($results) || $results->getResultCount() === 0)) {
+      if ($results->getResultCount() === 0) {
         throw new \Exception('No results found.');
       }
 
@@ -188,13 +189,14 @@ class VectorDbGenerationForm extends FormBase {
         $response .= "<strong>Chunk: </strong>" . nl2br($result->getExtraData('content')) . "<br><br>";
         $response .= '----------------------------------------' . "<br><br>";
       }
+      $amount = $results->getResultCount();
     }
     catch (\Exception $e) {
       $response = $this->explorerHelper->renderException($e);
     }
 
     $form['response']['#context'] = [
-      'db' => '<h2>Found ' . $results->getResultCount() . ' results</h2>' . $response,
+      'db' => '<h2>Found ' . $amount . ' results</h2>' . $response,
     ];
     return $form['response'];
   }

@@ -15,7 +15,7 @@ use Drupal\Tests\media\Traits\MediaTypeCreationTrait;
 /**
  * This tests the Text to Image calling.
  *
- * @coversDefaultClass \Drupal\ai\OperationType\TextToImage
+ * @coversDefaultClass \Drupal\ai\OperationType\TextToImage\TextToImageInterface
  *
  * @group ai
  */

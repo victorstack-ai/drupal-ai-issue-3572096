@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Drupal\ai_assistant_api\Form;
 
+use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai\Utility\CastUtility;
+use Drupal\ai_assistant_api\AiAssistantActionPluginManager;
 use Drupal\ai_assistant_api\Entity\AiAssistant;
 use Drupal\Core\Entity\EntityForm;
+use Drupal\Core\Extension\ExtensionPathResolver;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformState;
 
@@ -15,6 +18,61 @@ use Drupal\Core\Form\SubformState;
  * AI Assistant form.
  */
 final class AiAssistantForm extends EntityForm {
+
+  /**
+   * The ai assistant action plugin manager.
+   *
+   * @var \Drupal\ai_assistant_api\AiAssistantActionPluginManager
+   */
+  protected $actionPluginManager;
+
+  /**
+   * The path extension resolver.
+   *
+   * @var \Drupal\Core\Extension\ExtensionPathResolver
+   */
+  protected $extensionPathResolver;
+
+  /**
+   * The AI form helper.
+   *
+   * @var \Drupal\ai\Service\AiProviderFormHelper
+   */
+  protected $formHelper;
+
+  /**
+   * The AI Provider.
+   *
+   * @var \Drupal\ai\AiProviderPluginManager
+   */
+  protected $aiProvider;
+
+  /**
+   * Constructs a new AiAssistantForm object.
+   */
+  public function __construct(
+    AiAssistantActionPluginManager $action_plugin_manager,
+    ExtensionPathResolver $extension_path_resolver,
+    AiProviderFormHelper $form_helper,
+    AiProviderPluginManager $ai_provider,
+  ) {
+    $this->actionPluginManager = $action_plugin_manager;
+    $this->extensionPathResolver = $extension_path_resolver;
+    $this->formHelper = $form_helper;
+    $this->aiProvider = $ai_provider;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create($container) {
+    return new static(
+      $container->get('ai_assistant_api.action_plugin.manager'),
+      $container->get('extension.path.resolver'),
+      $container->get('ai.form_helper'),
+      $container->get('ai.provider')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -97,8 +155,7 @@ final class AiAssistantForm extends EntityForm {
     ];
 
     // phpcs:ignore
-    $actions = \Drupal::service('ai_assistant_api.action_plugin.manager');
-    foreach ($actions->getDefinitions() as $definition) {
+    foreach ($this->actionPluginManager->getDefinitions() as $definition) {
       $form['action_plugin_' . $definition['id']] = [
         '#type' => 'details',
         '#title' => $definition['label'],
@@ -135,13 +192,9 @@ final class AiAssistantForm extends EntityForm {
         ]),
       ];
 
-      $instance = $actions->createInstance($definition['id'], $entity->get('actions_enabled')[$definition['id']] ?? []);
+      $instance = $this->actionPluginManager->createInstance($definition['id'], $entity->get('actions_enabled')[$definition['id']] ?? []);
       $subform = $form['action_plugin_' . $definition['id']]['configuration'] ?? [];
       $subform_state = SubformState::createForSubform($subform, $form, $form_state);
-
-      if (isset($query_parameters['selected_text'])) {
-        $subform_state->setStorage(['selected_text' => $query_parameters['selected_text']]);
-      }
 
       $form['action_plugin_' . $definition['id']]['configuration'] = $instance->buildConfigurationForm([], $subform_state);
       $form['action_plugin_' . $definition['id']]['#tree'] = TRUE;
@@ -199,9 +252,8 @@ Always use HTML when outputting your message, never markdown. You can use the fo
     if ($form_state->getValue('llm_ai_model') == NULL) {
       $form_state->setValue('llm_ai_model', $entity->get('llm_model'));
     }
-    // phpcs:ignore
-    $form_helper = \Drupal::service('ai.form_helper');
-    $form_helper->generateAiProvidersForm($form, $form_state, 'chat', 'llm', AiProviderFormHelper::FORM_CONFIGURATION_FULL, 0, '', $this->t('Advanced LLM'), $this->t('The AI Provider to use for the advanced interactions.'), TRUE);
+
+    $this->formHelper->generateAiProvidersForm($form, $form_state, 'chat', 'llm', AiProviderFormHelper::FORM_CONFIGURATION_FULL, 0, '', $this->t('Advanced LLM'), $this->t('The AI Provider to use for the advanced interactions.'), TRUE);
 
     // Set default values.
     $llm_configs = $entity->get('llm_configuration');
@@ -211,7 +263,7 @@ Always use HTML when outputting your message, never markdown. You can use the fo
       }
     }
     // phpcs:ignore
-    $pre_action_prompt = file_get_contents(\Drupal::service('extension.path.resolver')->getPath('module', 'ai_assistant_api') . '/resources/pre_action_prompt.txt');
+    $pre_action_prompt = file_get_contents($this->extensionPathResolver->getPath('module', 'ai_assistant_api') . '/resources/pre_action_prompt.txt');
 
     $form['advanced'] = [
       '#type' => 'details',
@@ -254,8 +306,7 @@ Always use HTML when outputting your message, never markdown. You can use the fo
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     parent::validateForm($form, $form_state);
-    // phpcs:ignore
-    \Drupal::service('ai.form_helper')->validateAiProvidersConfig($form, $form_state, 'chat', 'llm');
+    $this->formHelper->validateAiProvidersConfig($form, $form_state, 'chat', 'llm');
   }
 
   /**
@@ -282,8 +333,7 @@ Always use HTML when outputting your message, never markdown. You can use the fo
     if ($form_state->getValue('llm_ai_provider') !== '__default__') {
       $entity->set('llm_model', $form_state->getValue('llm_ai_model'));
       $llm_config = [];
-      // phpcs:ignore
-      $provider = \Drupal::service('ai.provider')->createInstance($form_state->getValue('llm_ai_provider'));
+      $provider = $this->aiProvider->createInstance($form_state->getValue('llm_ai_provider'));
       $schema = $provider->getAvailableConfiguration('chat', $form_state->getValue('llm_ai_model'));
       foreach ($form_state->getValues() as $key => $val) {
         if (strpos($key, 'llm_') === 0 && $key !== 'llm_ai_provider' && $key !== 'llm_ai_model') {

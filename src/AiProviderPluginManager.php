@@ -166,14 +166,12 @@ final class AiProviderPluginManager extends DefaultPluginManager {
    *
    * @param string $operation_type
    *   The operation type.
-   * @param array $capabilities
-   *   The capabilities the provider should have.
    *
    * @return string
    *   The simple default provider option.
    */
-  public function getSimpleDefaultProviderOptions(string $operation_type, array $capabilities = []): string {
-    $default_provider = $this->getDefaultProviderForOperationType($operation_type, $capabilities);
+  public function getSimpleDefaultProviderOptions(string $operation_type): string {
+    $default_provider = $this->getDefaultProviderForOperationType($operation_type);
     return !empty($default_provider['provider_id']) && !empty($default_provider['model_id']) ?
       $default_provider['provider_id'] . '__' . $default_provider['model_id'] : '';
   }

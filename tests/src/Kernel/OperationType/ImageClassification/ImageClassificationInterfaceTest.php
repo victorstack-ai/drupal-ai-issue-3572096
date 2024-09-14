@@ -15,7 +15,7 @@ use Drupal\Tests\media\Traits\MediaTypeCreationTrait;
 /**
  * This tests the Image classification calling.
  *
- * @coversDefaultClass \Drupal\ai\OperationType\ImageClassification
+ * @coversDefaultClass \Drupal\ai\OperationType\ImageClassification\ImageClassificationInterface
  *
  * @group ai
  */

@@ -5,6 +5,7 @@ namespace Drupal\Tests\ai_eca\Kernel\Service;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai_eca\Service\AiProviderValidatorInterface;
 use Drupal\KernelTests\KernelTestBase;
+use Drupal\TestTools\Random;
 use Symfony\Component\Validator\Constraints\Required;
 use Symfony\Component\Validator\Constraints\Type;
 
@@ -89,7 +90,7 @@ class AiProviderValidatorTest extends KernelTestBase {
    * @return \Generator
    *   Returns the necessary data to run the validator.
    */
-  public function providerValues(): \Generator {
+  public static function providerValues(): \Generator {
     yield [
       'chat',
       [],
@@ -151,7 +152,7 @@ class AiProviderValidatorTest extends KernelTestBase {
     yield [
       'text_to_image',
       [
-        'response_format' => $this->randomMachineName(),
+        'response_format' => Random::machineName(),
       ],
       [
         '[response_format]' => 'The value you selected is not a valid choice.',
@@ -166,11 +167,11 @@ class AiProviderValidatorTest extends KernelTestBase {
       ],
     ];
 
-    $key = $this->randomMachineName();
+    $key = Random::machineName();
     yield [
       'speech_to_text',
       [
-        $key => $this->randomString(),
+        $key => Random::string(),
       ],
       [
         sprintf('[%s]', $key) => 'This field was not expected.',

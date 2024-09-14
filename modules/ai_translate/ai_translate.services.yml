@@ -12,4 +12,3 @@ services:
   plugin.manager.text_extractor:
     class: Drupal\ai_translate\FieldTextExtractorPluginManager
     parent: default_plugin_manager
-    arguments: ['@service_container', '@cache.discovery', '@module_handler', '@logger.channel.default']

@@ -9,7 +9,6 @@ use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Field translation plugin manager.
@@ -28,7 +27,7 @@ final class FieldTextExtractorPluginManager extends DefaultPluginManager impleme
   /**
    * Constructs the object.
    */
-  public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, ModuleHandlerInterface $module_handler, ContainerInterface $container) {
+  public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, ModuleHandlerInterface $module_handler) {
     parent::__construct('Plugin/FieldTextExtractor', $namespaces, $module_handler, FieldTextExtractorInterface::class, FieldTextExtractor::class);
     $this->alterInfo('ai_translate_text_extract_info');
     $this->setCacheBackend($cache_backend, 'ai_translate_text_extractors');
