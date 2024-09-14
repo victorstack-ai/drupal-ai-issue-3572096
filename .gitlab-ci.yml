@@ -17,9 +17,14 @@ variables:
   OPT_IN_TEST_MAX_PHP: 1
   _PHPUNIT_CONCURRENT: 1
   SKIP_ESLINT: 1
-  _CSPELL_WORDS: 'grumphp, modr, programmatical, gray, email, grey, etcdctl, erging, e-mail, echoai, Eblank, boxcolor, chatcmpl, dango, absmiddle, AICK, aickeditor, anns, AIUI, Aiui, aiui, analyse, APPROOT, approot, autocompleting, Automators, automators, autopopulated, autoresize, bangbang, BASEHOST, bento, boxolor, bullettrain, busstop, chatbots, chatmpl, Chunker, chunker, couplekiss, Dall, dall, dalle, databucket, Datasource, datasource, davinci, derivite, detab, drawtext, dsts, e-mail, eachother, endhours, endverbatim, Explainability, Falconsai, faqfield, ffprobe, Finegrained, flac, fleur, fuelpump, grey, guardswoman, Handlex, hankey, healthcheck, heartpulse, hocho, hotsprings, hyperparameters, ibilities, icecream, Initialise, interrobang, intrensic, Iskariot, izakaya, keycap, koko, laidback, libx, livechat, logprobs, Longstockings, midword, milvusdb, minidisc, MINIO, minio, minioadmin, MOCKOON, mockoon, moderations, moyai, nostdin, octect, octocat, oden, oneshot, overriden, paranthesis, Pippi, placesholders, precode, precodenum, prenum, Preprompt, preprompt, pseudofield, qscale, qslw, Radisson, Recogniztion, Renederer, Rulehelpers, scikit, seccomp,  specifices, starthours, Sublists, sublists, Summarisation, Summarise, summarise, tada, tanabata, TCHA, testsetestt, Tiktoken, tophat, unflatten, unhash, usabled, Valiudate, vals, vectordb, vframes, vsync, wantm, Webform, WHATWG, whiteline, womens, XFALSE, XTRUE, Yethee, Zilliz, zilliz, zillizcloud'
+  _CSPELL_WORDS: 'Auphonics, tunlp, mkdocs, hmmmpf, hotswap, Gufw, Elevenlabs, elevenlabs, dropai, Drupals, dport, Deepgram, deepgram, Deepgrams, camelcase, Auphonic, auphonic, grumphp, modr, programmatical, gray, email, grey, etcdctl, erging, e-mail, echoai, Eblank, boxcolor, chatcmpl, dango, absmiddle, AICK, aickeditor, anns, AIUI, Aiui, aiui, analyse, APPROOT, approot, autocompleting, Automators, automators, autopopulated, autoresize, bangbang, BASEHOST, bento, boxolor, bullettrain, busstop, chatbots, chatmpl, Chunker, chunker, couplekiss, Dall, dall, dalle, databucket, Datasource, datasource, davinci, derivite, detab, drawtext, dsts, e-mail, eachother, endhours, endverbatim, Explainability, Falconsai, faqfield, ffprobe, Finegrained, flac, fleur, fuelpump, grey, guardswoman, Handlex, hankey, healthcheck, heartpulse, hocho, hotsprings, hyperparameters, ibilities, icecream, Initialise, interrobang, intrensic, Iskariot, izakaya, keycap, koko, laidback, libx, livechat, logprobs, Longstockings, midword, milvusdb, minidisc, MINIO, minio, minioadmin, MOCKOON, mockoon, moderations, moyai, nostdin, octect, octocat, oden, oneshot, overriden, paranthesis, Pippi, placesholders, precode, precodenum, prenum, Preprompt, preprompt, pseudofield, qscale, qslw, Radisson, Recogniztion, Renederer, Rulehelpers, scikit, seccomp,  specifices, starthours, Sublists, sublists, Summarisation, Summarise, summarise, tada, tanabata, TCHA, testsetestt, Tiktoken, tophat, unflatten, unhash, usabled, Valiudate, vals, vectordb, vframes, vsync, wantm, Webform, WHATWG, whiteline, womens, XFALSE, XTRUE, Yethee, Zilliz, zilliz, zillizcloud'
   # showdown.js is full of emoji words.
   _CSPELL_IGNORE_PATHS: 'modules/ai_chatbot/js'
+
+pages:
+  stage: .post
+  before_script:
+    - python docs/build-docs.py
 
 cspell:
   allow_failure: false
@@ -34,3 +39,4 @@ phpstan:
   before_script:
     - npm install -g @mockoon/cli
     - export MOCKOON_BASEHOST=http://localhost:3010 && mockoon-cli start --data tests/assets/mockoon/openai.json --port 3010 & > /dev/null 2>&1
+
