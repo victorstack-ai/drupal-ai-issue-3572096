@@ -186,7 +186,8 @@ class ReferenceFieldExtractor implements ConfigurableFieldTextExtractorInterface
    *   TRUE to translate referenced entities of this type by default.
    */
   protected function entityTypeTranslatedDefault(string $entityTypeId) : bool {
-    $defaults = $this->config->get('reference_defaults', []);
+    $defaults = $this->config->get('reference_defaults') ?? [];
+
     // Default is to not translate entities of unknown type.
     return (array_search($entityTypeId, $defaults) !== FALSE);
   }
