@@ -87,6 +87,11 @@
   font-size: 12px;
 }
 
+/* Specific change for Gin Admin theme */
+#live-chat #gin_sidebar {
+  display: none;
+}
+
 #live-chat input[type="submit"] {
   display: none;
 }
