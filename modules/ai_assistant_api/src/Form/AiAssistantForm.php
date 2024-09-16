@@ -13,6 +13,7 @@ use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Extension\ExtensionPathResolver;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformState;
+use Drupal\Core\Site\Settings;
 
 /**
  * AI Assistant form.
@@ -87,6 +88,7 @@ final class AiAssistantForm extends EntityForm {
       '#title' => $this->t('Label'),
       '#maxlength' => 255,
       '#default_value' => $entity->label(),
+      '#description' => $this->t('This is the title of the AI Assistant'),
       '#required' => TRUE,
       '#attributes' => [
         'placeholder' => $this->t('Article finder assistant'),
@@ -122,7 +124,7 @@ final class AiAssistantForm extends EntityForm {
     $form['allow_history'] = [
       '#type' => 'select',
       '#title' => $this->t('Allow History'),
-      '#default_value' => $entity->get('allow_history'),
+      '#default_value' => $entity->get('allow_history') ?? 'session',
       '#description' => $this->t('If enabled, the AI Assistant will try store the questions and answers in history during a session. This makes it possible to ask follow-up questions to the Assistant. Note that this raises the price and size of AI calls, and might not be needed for all assistants. Sessions means that it will be stored in the session until the page is reloaded. (coming) Database means that it will be stored in the database with an ID and can be continued later in multiple threads.'),
       '#options' => [
         'none' => $this->t('None'),
@@ -132,13 +134,13 @@ final class AiAssistantForm extends EntityForm {
 
     $form['system_role'] = [
       '#type' => 'textarea',
-      '#title' => $this->t('System role'),
+      '#title' => $this->t('Pre-prompt System role'),
       '#default_value' => $entity->get('system_role'),
-      '#description' => $this->t('The system role that this AI assistant should have. This is used to determine how and with what the AI Assistant should act.'),
+      '#description' => $this->t('The pre-prompt system role that this AI assistant should have for the prompt. This is used to determine how and with what the AI Assistant should act.'),
       '#required' => TRUE,
       '#attributes' => [
         'rows' => 2,
-        'placeholder' => $this->t('You are an assistant helping people find old articles in the archive using natural language. Answer in a professional and neutral tone. Be short and concise. You may use the following HTML tags - a, em, strong, ul, ol, li, pre. Link to the article in question using its title.'),
+        'placeholder' => $this->t('You are an assistant helping people find old articles in the archive using natural language. Answer in a professional and neutral tone. Be short and concise. Answer in markdown. Link to the article in question using its title.'),
       ],
     ];
 
@@ -146,7 +148,7 @@ final class AiAssistantForm extends EntityForm {
       '#type' => 'textarea',
       '#title' => $this->t('Pre-prompt Instructions'),
       '#default_value' => $entity->get('preprompt_instructions'),
-      '#description' => $this->t('Extra instruction that should be run before each message from the user. This can be used to control the content of the prompt.'),
+      '#description' => $this->t('Extra instruction to the pre-prompt. This can be used to control the content of the pre-prompt.'),
       '#required' => FALSE,
       '#attributes' => [
         'rows' => 2,
@@ -154,7 +156,6 @@ final class AiAssistantForm extends EntityForm {
       ],
     ];
 
-    // phpcs:ignore
     foreach ($this->actionPluginManager->getDefinitions() as $definition) {
       $form['action_plugin_' . $definition['id']] = [
         '#type' => 'details',
@@ -200,36 +201,15 @@ final class AiAssistantForm extends EntityForm {
       $form['action_plugin_' . $definition['id']]['#tree'] = TRUE;
     }
 
-    $form['rag']['no_results_message'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('RAG No results message'),
-      '#description' => $this->t('This is a hard coded message you can answer if the threshold of RAG is not enough, this will bypass the assistant message and send it out right away. Can be left empty if you want a natural answer.'),
-      '#default_value' => $entity->get('no_results_message') ?? $this->t('I am sorry, but I could not find any relevant information in the archives. Please try to ask the question in a different way or try to ask a different question.'),
-      '#states' => [
-        'visible' => [
-          ':input[name="rag_enabled"]' => ['checked' => TRUE],
-        ],
-      ],
-      '#attributes' => [
-        'placeholder' => $this->t('I am sorry, but I could not find any relevant information in the archives. Please try to ask the question in a different way or try to ask a different question.'),
-        'rows' => 2,
-      ],
-    ];
+    $assistant_message = file_get_contents($this->extensionPathResolver->getPath('module', 'ai_assistant_api') . '/resources/assistant_message.txt');
 
     $form['assistant_message'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Assistant message'),
-      '#description' => $this->t('The assistant message is for responses created by the LLM, they will get contexts from the different action providers like RAG and the chat history if session is enabled. You may use the token [question] for the users last question, though that will be provided in the messages sent.'),
-      '#default_value' => $entity->get('assistant_message'),
+      '#description' => $this->t('The assistant message is the system role for responses created by the LLM after an action like RAG lookup or agent actions are taken, they will get contexts from the different action providers like RAG and the chat history if session is enabled.'),
+      '#default_value' => $entity->get('assistant_message') ?? $assistant_message,
       '#attributes' => [
-        'placeholder' => $this->t("Based on the users question, you will first be given a result that were fetched from a database and the chat thread, check if you can answer the question truthfully. If you can not answer the question, please respond that you do not have enough information to do so. If there is an error from the agent, please just forward it. Do NOT make up information, but you may answer fairly freely based on the database lookup. You may reframe words that appear there and concise them or express them, but not make up stuff. Answer in a laidback and informal manner. If a link is provided with the article, use HTML to link to the article using the articles title. Please also answer with the author name at the end if its known. Use american english.
-
-When you get assistant messages of results from RAG use them when you answer.
-
-Please answer using HTML with the link as this <a href=\"{uri}\">{title}</a>. You may use tags like a, em, strong, ul, ol, li, p, br, hr. Do not answer in markdown, just answer with HTML.
-
-Always use HTML when outputting your message, never markdown. You can use the following HTML tags - a, em, strong, ul, ol, li, pre.  Please use paragraphs and lists when possible to make it more readable.
-"),
+        'placeholder' => $assistant_message,
         'rows' => 15,
       ],
     ];
@@ -275,7 +255,7 @@ Always use HTML when outputting your message, never markdown. You can use the fo
       '#type' => 'textarea',
       '#title' => $this->t('Pre Action Prompt'),
       '#default_value' => $entity->get('pre_action_prompt') ?? $pre_action_prompt,
-      '#description' => $this->t("The pre prompts gets a list of actions that it can take, including RAG databases and either gives back actions that the Assistant can take or an outputted answer. You may use [list_of_actions] to list the actions that the Assistant can take. You can only change this via manual config change. DO NOT CHANGE THIS UNLESS YOU KNOW WHAT YOU ARE DOING. <br><br><strong>The following placesholders can be used:</strong><br>
+      '#description' => $this->t("This field can be enabled by adding <strong>\$settings['ai_assistant_advanced_mode_enabled'] = TRUE;</strong> in settings.php. The pre prompts gets a list of actions that it can take, including RAG databases and either gives back actions that the Assistant can take or an outputted answer. You may use [list_of_actions] to list the actions that the Assistant can take. You can only change this via manual config change. DO NOT CHANGE THIS UNLESS YOU KNOW WHAT YOU ARE DOING. <br><br><strong>The following placesholders can be used:</strong><br>
       <em>[list_of_actions]</em> - The list of actions that the Assistant can take.<br>
       <em>[pre_prompt]</em> - The setup pre_prompt.<br>
       <em>[system_role]</em> - The system role of the Assistant.<br>
@@ -292,7 +272,7 @@ Always use HTML when outputting your message, never markdown. You can use the fo
       <em>[site_name]</em> - The name of the site.<br>
       "),
       '#required' => TRUE,
-      '#disabled' => FALSE,
+      '#disabled' => !Settings::get('ai_assistant_advanced_mode_enabled', FALSE),
       '#attributes' => [
         'rows' => 75,
       ],
@@ -327,6 +307,7 @@ Always use HTML when outputting your message, never markdown. You can use the fo
       }
     }
     $entity->set('actions_enabled', $action_plugins);
+
     // LLM provider.
     $entity->set('llm_provider', $form_state->getValue('llm_ai_provider'));
     // If its default, we don't set the last.

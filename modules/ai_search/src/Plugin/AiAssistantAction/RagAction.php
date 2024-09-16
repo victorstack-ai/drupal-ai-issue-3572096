@@ -360,11 +360,14 @@ class RagAction extends AiAssistantActionBase {
       ],
     ];
 
+    $threshold = $this->configuration['rag_' . $i]['score_threshold'] ?? $form_state->getValue('score_threshold');
+    $threshold = $threshold ?? 0.6;
+
     $form['rag_' . $i]['score_threshold'] = [
       '#type' => 'number',
       '#title' => $this->t('RAG threshold'),
       '#description' => $this->t('This is the threshold that the answer have to meet to be thought of as a valid response. Note that the number may shift depending on the similar metric you are using.'),
-      '#default_value' => $this->configuration['rag_' . $i]['score_threshold'] ?? $form_state->getValue('score_threshold'),
+      '#default_value' => $threshold,
       '#attributes' => [
         'placeholder' => 0.6,
       ],
@@ -373,21 +376,27 @@ class RagAction extends AiAssistantActionBase {
       '#step' => 0.01,
     ];
 
+    $min_results = $this->configuration['rag_' . $i]['min_results'] ?? $form_state->getValue('min_results');
+    $min_results = $min_results ?? 1;
+
     $form['rag_' . $i]['min_results'] = [
       '#type' => 'number',
       '#title' => $this->t('RAG minimum results'),
       '#description' => $this->t('The minimum chunks needed to pass the threshold, before leaving a response based on RAG.'),
-      '#default_value' => $this->configuration['rag_' . $i]['min_results'] ?? $form_state->getValue('min_results'),
+      '#default_value' => $min_results,
       '#attributes' => [
         'placeholder' => 1,
       ],
     ];
 
+    $max_results = $this->configuration['rag_' . $i]['max_results'] ?? $form_state->getValue('max_results');
+    $max_results = $max_results ?? 5;
+
     $form['rag_' . $i]['max_results'] = [
       '#type' => 'number',
       '#title' => $this->t('RAG max results'),
       '#description' => $this->t('The maximum results that passed the threshold, to take into account.'),
-      '#default_value' => $this->configuration['rag_' . $i]['max_results'] ?? $form_state->getValue('max_results'),
+      '#default_value' => $max_results,
       '#attributes' => [
         'placeholder' => 20,
       ],

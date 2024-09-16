@@ -51,7 +51,6 @@ use Drupal\Core\Config\Entity\ConfigEntityBase;
  *     "system_role",
  *     "actions_enabled",
  *     "assistant_message",
- *     "no_results_message",
  *     "error_message",
  *     "llm_provider",
  *     "llm_model",
@@ -105,11 +104,6 @@ final class AiAssistant extends ConfigEntityBase implements AiAssistantInterface
    * The assistant message.
    */
   protected string $assistant_message;
-
-  /**
-   * The no results message.
-   */
-  protected string $no_results_message;
 
   /**
    * The error message.

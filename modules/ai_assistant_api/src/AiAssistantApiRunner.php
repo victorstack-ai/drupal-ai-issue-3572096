@@ -398,7 +398,7 @@ class AiAssistantApiRunner {
     }
     if ($this->using_action) {
       // Add the information that search is done.
-      $assistant_message .= "\n\n Start the message with the following information: \nThank you for your question. I am looking up the answer.<br><br>";
+      $assistant_message .= "\n\n Start the message with the following information: \nThank you for your question. I am looking up the answer.\n\n";
     }
     // Let other modules change the system role.
     $event = new AiAssistantSystemRoleEvent($assistant_message);
@@ -519,7 +519,9 @@ class AiAssistantApiRunner {
     $provider = $this->aiProvider->createInstance($connect['provider_id']);
 
     $provider->setChatSystemRole($pre_prompt);
-    $provider->streamedOutput(TRUE);
+    if ($this->streaming) {
+      $provider->streamedOutput(TRUE);
+    }
     $messages = [];
     $history = $this->getMessageHistory();
     foreach ($history as $message) {
@@ -532,23 +534,44 @@ class AiAssistantApiRunner {
       'ai_assistant_api_preprompt_' . $this->assistant->id(),
     ]);
     $values = $response->getNormalized();
+
     $full = '';
-    $i = 0;
     $text = FALSE;
-    foreach ($values as $value) {
-      if ($value->getText()) {
-        $full .= $value->getText();
-        if (!$i && (substr($full, 0, 3) != '```' && substr($full, 0, 1) != '{')) {
-          $text = TRUE;
-          // Stop because its an actual text.
-          break;
+    // Special solution.
+    if ($this->streaming) {
+      $i = 0;
+      foreach ($values as $value) {
+        if ($value->getText()) {
+          $full .= $value->getText();
+          if (!$i && (substr($full, 0, 3) != '```' && substr($full, 0, 1) != '{')) {
+            $text = TRUE;
+            // Stop because its an actual text.
+            break;
+          }
+          $i++;
         }
-        $i++;
+      }
+    }
+    else {
+      $full = $values->getText();
+      // Check if json exists.
+      if (strpos($full, '```json') === FALSE) {
+        $text = TRUE;
       }
     }
 
     if (!$text) {
-      return json_decode(str_replace(['```json', '```'], '', $full), TRUE);
+      preg_match('/```json(.*)```/s', $full, $matches);
+      $json = $matches[1] ?? '';
+      // Send error message, something went wrong.
+      if (!$json) {
+        return new ChatOutput(
+          new ChatMessage('assistant', $this->assistant->get('error_message')),
+          [$this->assistant->get('error_message')],
+          [],
+        );
+      }
+      return json_decode($json, TRUE);
     }
 
     if ($this->streaming) {
