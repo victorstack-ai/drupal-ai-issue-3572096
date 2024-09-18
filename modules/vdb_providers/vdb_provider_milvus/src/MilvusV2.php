@@ -121,7 +121,7 @@ class MilvusV2 {
       'collectionName' => $collection_name,
     ];
     if ($database_name && !$this->isZilliz()) {
-      $params['databaseName'] = $database_name;
+      $params['dbName'] = $database_name;
     }
     return json_decode($this->makeRequest('vectordb/collections/drop', [], 'POST', $params), TRUE);
   }
@@ -137,7 +137,7 @@ class MilvusV2 {
    */
   public function listCollections(string $database_name = ''): array {
     // Has to be an object, when empty ¯\_(ツ)_/¯.
-    $data = $database_name && !$this->isZilliz() ? ['databaseName' => $database_name] : new \stdClass();
+    $data = $database_name && !$this->isZilliz() ? ['dbName' => $database_name] : new \stdClass();
     return json_decode($this->makeRequest('vectordb/collections/list', [], 'POST', $data), TRUE);
   }
 
@@ -160,7 +160,7 @@ class MilvusV2 {
       'data' => [$data],
     ];
     if ($database_name && !$this->isZilliz()) {
-      $params['databaseName'] = $database_name;
+      $params['dbName'] = $database_name;
     }
     return json_decode($this->makeRequest('vectordb/entities/insert', [], 'POST', $params), TRUE);
   }
@@ -184,7 +184,7 @@ class MilvusV2 {
       'filter' => 'id in [' . implode(',', $ids) . ']',
     ];
     if ($database_name && !$this->isZilliz()) {
-      $params['databaseName'] = $database_name;
+      $params['dbName'] = $database_name;
     }
     return json_decode($this->makeRequest('vectordb/entities/delete', [], 'POST', $params), TRUE);
   }
@@ -217,7 +217,7 @@ class MilvusV2 {
       'offset' => $offset,
     ];
     if ($database_name) {
-      $params['databaseName'] = $database_name;
+      $params['dbName'] = $database_name;
     }
 
     $response = $this->makeRequest('vectordb/entities/query', [], 'POST', $params);
@@ -323,7 +323,7 @@ class MilvusV2 {
    */
   public function isZilliz(): bool {
     // The base url could either contain zillizcloud.com or cloud.zilliz.com.
-    return preg_match('(zillizcloud.com|cloud.zilliz.com)', $this->baseUrl) !== FALSE;
+    return preg_match('(zillizcloud.com|cloud.zilliz.com)', $this->baseUrl) === 1;
   }
 
 }
