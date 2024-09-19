@@ -62,6 +62,7 @@ class AiAutomatorStatusField {
   public function modifyStatusField($entityType, $bundle) {
     // Check if field is needed.
     $fieldIsNeeded = $this->automatorFieldNeeded($entityType, $bundle);
+
     // Check if field exists.
     $fieldExists = $this->automatorFieldExists($entityType, $bundle);
 
@@ -89,13 +90,10 @@ class AiAutomatorStatusField {
    *   If the status field is needed or not.
    */
   protected function automatorFieldNeeded($entityType, $bundle) {
-    $fields = $this->fieldManager->getFieldDefinitions($entityType, $bundle);
-    foreach ($fields as $field) {
-      if ($field->getConfig($bundle)->getThirdPartySetting('ai_automator', 'automator_enabled', 0)) {
-        return TRUE;
-      }
-    }
-    return FALSE;
+    return count($this->entityType->getStorage('ai_automator')->loadByProperties([
+      'entity_type' => $entityType,
+      'bundle' => $bundle,
+    ])) > 0;
   }
 
   /**
