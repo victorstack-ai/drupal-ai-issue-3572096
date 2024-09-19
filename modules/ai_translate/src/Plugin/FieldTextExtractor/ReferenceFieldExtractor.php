@@ -94,6 +94,10 @@ class ReferenceFieldExtractor implements ConfigurableFieldTextExtractorInterface
     string $fieldName,
     array $textMeta,
   ) : void {
+    // Don't do anything if the field is empty.
+    if ($entity->get($fieldName)->isEmpty()) {
+      return;
+    }
 
     $newValue = [];
     $referencedEntities = $entity->get($fieldName)->referencedEntities();
