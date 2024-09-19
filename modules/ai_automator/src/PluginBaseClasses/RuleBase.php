@@ -187,7 +187,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
       $model = $formState->getValue('automator_ai_model');
       if (!$model) {
         $model = $defaultValues['automator_ai_model'];
-        if (isset($defaults['model_id'])) {
+        if (isset($defaults['model_id']) && !$model) {
           $model = $defaults['model_id'];
         }
       }
@@ -334,6 +334,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     if (!$provider) {
       $provider = $defaultValues['automator_ai_provider' . $suffix] ?? $defaults['provider_id'];
     }
+
     $form['automator_ai_provider' . $suffix] = [
       '#type' => 'select',
       '#title' => $title,
