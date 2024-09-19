@@ -423,19 +423,17 @@ class AiAssistantApiRunner {
     foreach ($history as $key => $message) {
       $messages[] = new ChatMessage($message['role'], $message['message']);
     }
-    // Set context messages.
-    if ($this->assistant->get('allow_history') == 'session') {
-      if (!empty($this->getOutputHistory())) {
-        $message = '';
-        foreach ($this->getOutputHistory() as $key => $data) {
-          $message .= "The following are the results the different actions from the $key action: \n";
-          foreach ($data as $item) {
-            $message .= $item . "\n";
-          }
-          $message .= "\n";
+    // Set context messages from the actions.
+    if (!empty($this->getOutputContexts())) {
+      $message = '';
+      foreach ($this->getOutputContexts() as $key => $data) {
+        $message .= "The following are the results the different actions from the $key action: \n";
+        foreach ($data as $item) {
+          $message .= $item . "\n";
         }
-        $messages[] = new ChatMessage('assistant', $message);
+        $message .= "\n";
       }
+      $messages[] = new ChatMessage('assistant', $message);
     }
     $input = new ChatInput($messages);
 
@@ -449,12 +447,12 @@ class AiAssistantApiRunner {
   }
 
   /**
-   * Gets the output history.
+   * Gets the output contexts.
    *
    * @return array
-   *   The output history.
+   *   The output contexts.
    */
-  public function getOutputHistory() {
+  public function getOutputContexts() {
     return $this->getTempStore()->get($this->thread_id)['output_contexts'] ?? [];
   }
 
