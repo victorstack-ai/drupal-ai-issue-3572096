@@ -536,7 +536,7 @@ class AiAssistantApiRunner {
     $full = '';
     $text = FALSE;
     // Special solution.
-    if ($this->streaming) {
+    if ($this->streaming && $values instanceof StreamedChatMessageIteratorInterface) {
       $i = 0;
       foreach ($values as $value) {
         if ($value->getText()) {
@@ -553,12 +553,20 @@ class AiAssistantApiRunner {
     else {
       $full = $values->getText();
       // Check if json exists.
-      if (strpos($full, '```json') === FALSE) {
-        $text = TRUE;
+      json_decode($full);
+      if (json_last_error() !== JSON_ERROR_NONE) {
+        if (strpos($full, '```json') === FALSE) {
+          $text = TRUE;
+        }
       }
     }
 
     if (!$text) {
+      $json = json_decode($full, TRUE);
+
+      if ($json) {
+        return $json;
+      }
       preg_match('/```json(.*)```/s', $full, $matches);
       $json = $matches[1] ?? '';
       // Send error message, something went wrong.
@@ -572,7 +580,7 @@ class AiAssistantApiRunner {
       return json_decode($json, TRUE);
     }
 
-    if ($this->streaming) {
+    if ($this->streaming && $values instanceof StreamedChatMessageIteratorInterface) {
       $stream = new AssistantStreamIterator($values);
       $stream->setFirstMessage($full);
       return new ChatOutput($stream, [$full], []);
