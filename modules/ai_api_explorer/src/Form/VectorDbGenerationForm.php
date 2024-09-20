@@ -128,11 +128,7 @@ class VectorDbGenerationForm extends FormBase {
       '#default_value' => 0,
     ];
 
-    $form['actions'] = [
-      '#type' => 'actions',
-    ];
-
-    $form['actions']['submit'] = [
+    $form['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Run DB Query'),
       '#ajax' => [
