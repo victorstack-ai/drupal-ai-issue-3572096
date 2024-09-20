@@ -496,10 +496,12 @@ class AiAssistantApiRunner {
     $pre_prompt = $this->assistant->get('pre_action_prompt');
     $actions = $this->getPreparedActions();
     $pre_prompt = str_replace([
+      '[learning_examples]',
       '[list_of_actions]',
       '[pre_prompt]',
       '[system_role]',
     ], [
+      $this->getFewShotExamples(),
       $actions,
       $this->assistant->get('preprompt_instructions'),
       $this->assistant->get('system_role'),
@@ -515,7 +517,6 @@ class AiAssistantApiRunner {
 
     $connect = $this->getProviderAndModel();
     $provider = $this->aiProvider->createInstance($connect['provider_id']);
-
     $provider->setChatSystemRole($pre_prompt);
     if ($this->streaming) {
       $provider->streamedOutput(TRUE);
@@ -592,6 +593,26 @@ class AiAssistantApiRunner {
         [],
       );
     }
+  }
+
+  /**
+   * Gets all the few shot examples of the installed actions.
+   *
+   * @return string
+   *   The few shot examples string.
+   */
+  public function getFewShotExamples() {
+    $enabled_actions = $this->assistant->get('actions_enabled');
+    $text = '';
+    foreach ($enabled_actions as $action => $config) {
+      $instance = $this->actions->createInstance($action, $config);
+      $examples = $instance->provideFewShotLearningExample();
+      foreach ($examples as $example) {
+        $text .= $example['description'] . "\n";
+        $text .= json_encode($example['schema']) . "\n\n";
+      }
+    }
+    return $text;
   }
 
   /**

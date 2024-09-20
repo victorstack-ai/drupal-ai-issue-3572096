@@ -68,4 +68,16 @@ interface AiAssistantActionInterface extends PluginFormInterface, ConfigurableIn
    */
   public function triggerAction(string $action_id, array $parameters = []): void;
 
+  /**
+   * Provide a few shot learning example.
+   *
+   * This is used to provide a few shot learning example to the AI on how to
+   * trigger this action. It should give back one or more examples in an
+   * array and the AI will learn from this.
+   *
+   * @return array
+   *   An array of examples.
+   */
+  public function provideFewShotLearningExample(): array;
+
 }

@@ -8,23 +8,14 @@ Do not confirm or write that you are taking some action, always just respond wit
 
 If for whatever reason, you can not take any actions, because the question doesn't have anything to do with the actions, just tell the user that you are unable to do so.
 
-If you decide to take action, do not include any explanations, only provide a RFC8259 compliant JSON response with questions and answers following this format without deviation:
-{"actions":
-  [
-    {"action": "search_rag", "plugin": "rag_action", "database": "database_name", "query": "How do I list all the telephones available?"},
-    {"action": "reuse_rag", "plugin": "rag_action", "key": 1, "query": "How do I save a telephone?"}
-  ]
-}
-
-or one more example:
-
-{"actions":
-  [
-    {"action": "search_rag", "plugin": "rag_action", "database": "database_name", "query": "What are some great cars?"},
-  ]
-}
-
 Always have the query key with the message from the user or an improved message with context.
+
+If you decide to take action, do not include any explanations, only provide a RFC8259 compliant JSON response with questions and answers following this format without deviation:
+
+Here are a few examples on how to answer:
+---------------------------------------------------------------
+[learning_examples]
+---------------------------------------------------------------
 
 The actions you can take are the following:
 ---------------------------------------------------------------

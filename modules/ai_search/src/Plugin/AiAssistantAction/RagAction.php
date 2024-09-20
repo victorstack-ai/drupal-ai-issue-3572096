@@ -148,6 +148,27 @@ class RagAction extends AiAssistantActionBase {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function provideFewShotLearningExample(): array {
+    return [
+      [
+        'description' => 'Searching the car_reviews database for the best reviewed car.',
+        'schema' => [
+          'actions' => [
+            [
+              'action' => 'search_rag',
+              'plugin' => 'rag_action',
+              'database' => 'car_reviews',
+              'query' => 'Which is the car with the best reviews?',
+            ],
+          ],
+        ],
+      ],
+    ];
+  }
+
+  /**
    * Get all search databases.
    */
   private function getSearchDatabases(): array {
@@ -260,7 +281,7 @@ class RagAction extends AiAssistantActionBase {
       $query = $index->query([
         'limit' => $rag_database['max_results'],
       ]);
-      $query->setOption('search_api_bypass_access', FALSE);
+      $query->setOption('search_api_bypass_access', !$rag_database['access_check']);
       $query->setOption('search_api_ai_get_chunks_result', $rag_database['output_mode'] == 'chunks');
       $queries = $query_string;
       $query->keys($queries);
