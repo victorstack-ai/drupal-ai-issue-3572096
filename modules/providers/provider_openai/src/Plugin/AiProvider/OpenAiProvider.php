@@ -33,6 +33,7 @@ use Drupal\ai\OperationType\TextToImage\TextToImageOutput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInterface;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechOutput;
+use Drupal\ai\Traits\OperationType\ChatTrait;
 use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Config\ImmutableConfig;
@@ -58,6 +59,8 @@ class OpenAiProvider extends AiProviderClientBase implements
   TextToSpeechInterface,
   SpeechToTextInterface,
   TextToImageInterface {
+
+  use ChatTrait;
 
   /**
    * The OpenAI Client.

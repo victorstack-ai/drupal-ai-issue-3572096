@@ -10,6 +10,7 @@ use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\ChatOutput;
+use Drupal\ai\Traits\OperationType\ChatTrait;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -26,6 +27,8 @@ use Symfony\Component\Yaml\Yaml;
 class GroqProvider extends AiProviderClientBase implements
   ContainerFactoryPluginInterface,
   ChatInterface {
+
+  use ChatTrait;
 
   /**
    * The OpenAI Client for API calls.

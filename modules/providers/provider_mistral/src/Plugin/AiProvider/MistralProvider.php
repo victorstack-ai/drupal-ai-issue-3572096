@@ -13,6 +13,7 @@ use Drupal\ai\OperationType\Chat\ChatOutput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInterface;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsOutput;
+use Drupal\ai\Traits\OperationType\ChatTrait;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -30,6 +31,8 @@ class MistralProvider extends AiProviderClientBase implements
   ContainerFactoryPluginInterface,
   ChatInterface,
   EmbeddingsInterface {
+
+  use ChatTrait;
 
   /**
    * The OpenAI Client for API calls.

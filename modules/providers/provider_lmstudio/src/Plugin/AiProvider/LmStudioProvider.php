@@ -11,6 +11,7 @@ use Drupal\ai\OperationType\Chat\ChatOutput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInterface;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsOutput;
+use Drupal\ai\Traits\OperationType\ChatTrait;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -33,6 +34,7 @@ class LmStudioProvider extends AiProviderClientBase implements
   EmbeddingsInterface {
 
   use StringTranslationTrait;
+  use ChatTrait;
 
   /**
    * The OpenAI Client for API calls.

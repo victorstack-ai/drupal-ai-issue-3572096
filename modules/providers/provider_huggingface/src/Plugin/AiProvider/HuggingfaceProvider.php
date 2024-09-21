@@ -19,6 +19,7 @@ use Drupal\ai\OperationType\ImageClassification\ImageClassificationInput;
 use Drupal\ai\OperationType\ImageClassification\ImageClassificationInterface;
 use Drupal\ai\OperationType\ImageClassification\ImageClassificationItem;
 use Drupal\ai\OperationType\ImageClassification\ImageClassificationOutput;
+use Drupal\ai\Traits\OperationType\ChatTrait;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -38,6 +39,8 @@ class HuggingfaceProvider extends AiProviderClientBase implements
   ChatInterface,
   EmbeddingsInterface,
   ImageClassificationInterface {
+
+  use ChatTrait;
 
   /**
    * The Huggingface Client.

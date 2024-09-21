@@ -38,4 +38,12 @@ interface ChatInterface extends OperationTypeInterface {
    */
   public function setChatSystemRole(string|NULL $message): void;
 
+  /**
+   * Gets the system role.
+   *
+   * @return string
+   *   The system role.
+   */
+  public function getChatSystemRole(): string;
+
 }

@@ -11,6 +11,7 @@ use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\ChatOutput;
+use Drupal\ai\Traits\OperationType\ChatTrait;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Symfony\Component\Yaml\Yaml;
@@ -25,6 +26,8 @@ use WpAi\Anthropic\AnthropicAPI;
 )]
 class AnthropicProvider extends AiProviderClientBase implements
   ChatInterface {
+
+  use ChatTrait;
 
   /**
    * The Anthropic Client.

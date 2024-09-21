@@ -306,6 +306,13 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   /**
    * {@inheritdoc}
    */
+  public function getChatSystemRole(): string {
+    return $this->chatSystemRole;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getAvailableConfiguration(string $operation_type, string $model_id): array {
     $generalConfig = $this->getApiDefinition()[$operation_type]['configuration'] ?? [];
     $modelConfig = $this->getModelSettings($model_id, $generalConfig);
