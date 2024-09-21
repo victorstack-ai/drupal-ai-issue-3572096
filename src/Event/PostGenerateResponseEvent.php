@@ -62,6 +62,13 @@ class PostGenerateResponseEvent extends Event {
   protected $tags;
 
   /**
+   * The debug data for the request.
+   *
+   * @var array
+   */
+  protected $debugData;
+
+  /**
    * Constructs the object.
    *
    * @param string $provider_id
@@ -78,8 +85,10 @@ class PostGenerateResponseEvent extends Event {
    *   The output for the request.
    * @param array $tags
    *   The tags for the request.
+   * @param array $debug_data
+   *   The debug data for the request.
    */
-  public function __construct(string $provider_id, string $operation_type, array $configuration, mixed $input, string $model_id, mixed $output, array $tags = []) {
+  public function __construct(string $provider_id, string $operation_type, array $configuration, mixed $input, string $model_id, mixed $output, array $tags = [], array $debug_data = []) {
     $this->providerId = $provider_id;
     $this->configuration = $configuration;
     $this->operationType = $operation_type;
@@ -87,6 +96,7 @@ class PostGenerateResponseEvent extends Event {
     $this->input = $input;
     $this->output = $output;
     $this->tags = $tags;
+    $this->debugData = $debug_data;
   }
 
   /**
@@ -157,6 +167,28 @@ class PostGenerateResponseEvent extends Event {
    */
   public function getTags() {
     return $this->tags;
+  }
+
+  /**
+   * Gets the debug data.
+   *
+   * @return array
+   *   The debug data.
+   */
+  public function getDebugData() {
+    return $this->debugData;
+  }
+
+  /**
+   * Set extra debug data.
+   *
+   * @param string $key
+   *   The key.
+   * @param mixed $value
+   *   The value.
+   */
+  public function setDebugData(string $key, mixed $value) {
+    $this->debugData[$key] = $value;
   }
 
   /**

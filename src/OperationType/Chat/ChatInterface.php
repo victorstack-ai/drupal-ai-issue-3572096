@@ -33,10 +33,10 @@ interface ChatInterface extends OperationTypeInterface {
   /**
    * Sets a normalized way of doing system roles.
    *
-   * @param string|null $message
+   * @param string $message
    *   The message to add.
    */
-  public function setChatSystemRole(string|NULL $message): void;
+  public function setChatSystemRole(string $message): void;
 
   /**
    * Gets the system role.

@@ -135,7 +135,7 @@ class ProviderProxy {
     }
 
     // Invoke the pre generate response event.
-    $pre_generate_event = new PreGenerateResponseEvent($this->plugin->getPluginId(), $operation_type, $this->plugin->configuration, $arguments[0], $arguments[1], $this->plugin->getTags());
+    $pre_generate_event = new PreGenerateResponseEvent($this->plugin->getPluginId(), $operation_type, $this->plugin->configuration, $arguments[0], $arguments[1], $this->plugin->getTags(), $this->plugin->getDebugData());
     $this->eventDispatcher->dispatch($pre_generate_event, PreGenerateResponseEvent::EVENT_NAME);
     // Get the possible new auth, configuration and input from the event.
     $this->plugin->configuration = $pre_generate_event->getConfiguration();
@@ -191,7 +191,7 @@ class ProviderProxy {
     }
 
     // Invoke the post generate response event.
-    $post_generate_event = new PostGenerateResponseEvent($this->plugin->getPluginId(), $operation_type, $this->plugin->configuration, $arguments[0], $arguments[1], $response, $this->plugin->getTags());
+    $post_generate_event = new PostGenerateResponseEvent($this->plugin->getPluginId(), $operation_type, $this->plugin->configuration, $arguments[0], $arguments[1], $response, $this->plugin->getTags(), $this->plugin->getDebugData());
     $this->eventDispatcher->dispatch($post_generate_event, PostGenerateResponseEvent::EVENT_NAME);
     // Get a potential new response from the event.
     $response = $post_generate_event->getOutput();

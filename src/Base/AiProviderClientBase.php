@@ -106,6 +106,13 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   protected array $tags = [];
 
   /**
+   * Extra debug data that can be added to events.
+   *
+   * @var array
+   */
+  protected array $debugData = [];
+
+  /**
    * Streamed output wanted.
    *
    * @var bool
@@ -115,9 +122,9 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   /**
    * Sets a chat system role.
    *
-   * @var string|null
+   * @var string
    */
-  protected string|NULL $chatSystemRole = '';
+  protected string $chatSystemRole = '';
 
   /**
    * The plugin definition.
@@ -299,8 +306,9 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   /**
    * {@inheritdoc}
    */
-  public function setChatSystemRole(string|NULL $message): void {
+  public function setChatSystemRole(string $message): void {
     $this->chatSystemRole = $message;
+    $this->setDebugData('chat_system_role', $message);
   }
 
   /**
@@ -368,6 +376,20 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   /**
    * {@inheritdoc}
    */
+  public function setDebugData(string $key, mixed $value): void {
+    $this->debugData[$key] = $value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDebugData(): array {
+    return $this->debugData;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function removeTag(string $tag): void {
     $this->tags = array_diff($this->tags, [$tag]);
   }
@@ -380,6 +402,8 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    */
   public function streamedOutput(bool $streamed = TRUE): void {
     $this->streamed = $streamed;
+    // We add for debugging that its streamed.
+    $this->setDebugData('is_streamed', $streamed);
   }
 
   /**

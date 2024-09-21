@@ -69,6 +69,13 @@ class PreGenerateResponseEvent extends Event {
   protected $authentication;
 
   /**
+   * The debug data.
+   *
+   * @var array
+   */
+  protected $debugData;
+
+  /**
    * Constructs the object.
    *
    * @param string $provider_id
@@ -83,14 +90,17 @@ class PreGenerateResponseEvent extends Event {
    *   The model ID for the request.
    * @param array $tags
    *   The tags for the request.
+   * @param array $debug_data
+   *   The debug data for the request.
    */
-  public function __construct(string $provider_id, string $operation_type, array $configuration, mixed $input, string $model_id, array $tags = []) {
+  public function __construct(string $provider_id, string $operation_type, array $configuration, mixed $input, string $model_id, array $tags = [], array $debug_data = []) {
     $this->providerId = $provider_id;
     $this->configuration = $configuration;
     $this->operationType = $operation_type;
     $this->modelId = $model_id;
     $this->input = $input;
     $this->tags = $tags;
+    $this->debugData = $debug_data;
   }
 
   /**
@@ -151,6 +161,28 @@ class PreGenerateResponseEvent extends Event {
    */
   public function getTags() {
     return $this->tags;
+  }
+
+  /**
+   * Gets the debug data.
+   *
+   * @return array
+   *   The debug data.
+   */
+  public function getDebugData() {
+    return $this->debugData;
+  }
+
+  /**
+   * Set extra debug data.
+   *
+   * @param string $key
+   *   The key.
+   * @param mixed $value
+   *   The value.
+   */
+  public function setDebugData(string $key, mixed $value) {
+    $this->debugData[$key] = $value;
   }
 
   /**

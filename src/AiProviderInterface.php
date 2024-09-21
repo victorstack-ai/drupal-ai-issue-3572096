@@ -146,6 +146,24 @@ interface AiProviderInterface extends PluginInspectionInterface {
   public function getTags(): array;
 
   /**
+   * Set debug data for the AI Provider.
+   *
+   * @param string $key
+   *   The key to set.
+   * @param mixed $value
+   *   The value to set.
+   */
+  public function setDebugData(string $key, mixed $value): void;
+
+  /**
+   * Get debug data from the AI Provider.
+   *
+   * @return array
+   *   The debug data.
+   */
+  public function getDebugData(): array;
+
+  /**
    * Remove one tag from the AI Provider.
    *
    * @param string $tag
