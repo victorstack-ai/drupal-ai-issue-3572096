@@ -154,7 +154,7 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
     $total = [];
     $instance = $this->prepareLlmInstance('chat', $automatorConfig);
     foreach ($prompts as $prompt) {
-      $values = $this->runChatMessage($prompt, $automatorConfig, $instance);
+      $values = $this->runChatMessage($prompt, $automatorConfig, $instance, $entity);
       if (!empty($values)) {
         // Clean value.
         if ($automatorConfig['clean_up']) {
@@ -242,7 +242,7 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
     $prompt .= "List of available categories:\n" . implode("\n", $list) . "\n\n";
     $prompt .= "List of new categories:\n" . implode("\n", $values) . "\n\n";
     $instance = $this->prepareLlmInstance('chat', $automatorConfig);
-    $data = $this->runChatMessage($prompt, $automatorConfig, $instance);
+    $data = $this->runChatMessage($prompt, $automatorConfig, $instance, $entity);
     // If there is a response, we use it.
     if (!empty($data)) {
       foreach ($data as $change) {

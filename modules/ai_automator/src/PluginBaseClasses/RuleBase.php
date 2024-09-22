@@ -3,8 +3,10 @@
 namespace Drupal\ai_automator\PluginBaseClasses;
 
 use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\Enum\AiModelCapability;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai\Utility\CastUtility;
 use Drupal\ai_automator\PluginInterfaces\AiAutomatorTypeInterface;
@@ -157,6 +159,9 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
       if (empty($defaults['provider_id'])) {
         $provider = $defaults['provider_id'];
       }
+      if (empty($provider)) {
+        $provider = key($providers);
+      }
     }
     $form['automator_ai_provider'] = [
       '#type' => 'select',
@@ -185,10 +190,14 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     if ($provider) {
       $llmInstance = $this->aiPluginManager->createInstance($provider);
       $model = $formState->getValue('automator_ai_model');
+      $models = $llmInstance->getConfiguredModels($this->llmType);
       if (!$model) {
-        $model = $defaultValues['automator_ai_model'];
+        $model = $defaultValues['automator_ai_model'] ?? NULL;
         if (isset($defaults['model_id']) && !$model) {
           $model = $defaults['model_id'];
+        }
+        if (empty($model)) {
+          $model = key($models);
         }
       }
 
@@ -196,7 +205,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
         '#type' => 'select',
         '#title' => $this->t('Model'),
         // Only get chat models.
-        '#options' => $llmInstance->getConfiguredModels($this->llmType),
+        '#options' => $models,
         '#default_value' => $model,
         '#ajax' => [
           'callback' => '\Drupal\ai_automator\PluginBaseClasses\RuleBase::loadModelsAjaxCallback',
@@ -229,6 +238,34 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
               }
             }
           }
+        }
+
+        // Add vision if it is available.
+        if (in_array($model, $llmInstance->getConfiguredModels('chat', [AiModelCapability::ChatWithImageVision]))) {
+          // Add the image field to use.
+          $form['automator_configuration_image_field'] = [
+            '#type' => 'select',
+            '#title' => $this->t('Image Field'),
+            '#options' => $this->getGeneralHelper()->getFieldsOfType($entity, 'image'),
+            '#description' => $this->t('Since this is a vision model you can choose to add an image field to the prompt.'),
+            '#empty_option' => $this->t('No images'),
+            '#default_value' => $defaultValues['automator_configuration_image_field'] ?? NULL,
+          ];
+
+          // Also add the possibility to add an image style.
+          $form['automator_configuration_image_style'] = [
+            '#type' => 'select',
+            '#title' => $this->t('Image Style'),
+            '#description' => $this->t('Use an optional image style to lower costs and increase speed.'),
+            '#empty_option' => $this->t('Use original'),
+            '#options' => $this->getGeneralHelper()->getImageStyles(FALSE),
+            '#default_value' => $defaultValues['automator_configuration_image_style'] ?? NULL,
+            '#states' => [
+              'visible' => [
+                ':input[name="automator_configuration_image_field"]' => ['!value' => ''],
+              ],
+            ],
+          ];
         }
       }
     }
@@ -457,12 +494,14 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
    *   The automator configuration.
    * @param \Drupal\ai\Plugin\ProviderProxy $instance
    *   The LLM instance.
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   The entity.
    *
    * @return array
    *   The response.
    */
-  public function runChatMessage(string $prompt, array $automatorConfig, $instance) {
-    $text = $this->runRawChatMessage($prompt, $automatorConfig, $instance);
+  public function runChatMessage(string $prompt, array $automatorConfig, $instance, ContentEntityInterface $entity = NULL) {
+    $text = $this->runRawChatMessage($prompt, $automatorConfig, $instance, $entity);
 
     // Normalize the response.
     return $this->decodeValueArray(json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $text))), TRUE));
@@ -477,14 +516,30 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
    *   The automator configuration.
    * @param \Drupal\ai\Plugin\ProviderProxy $instance
    *   The LLM instance.
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   The entity.
    *
    * @return string
    *   The response.
    */
-  public function runRawChatMessage(string $prompt, array $automatorConfig, $instance) {
+  public function runRawChatMessage(string $prompt, array $automatorConfig, $instance, ContentEntityInterface $entity = NULL) {
+    $images = [];
+    // Check for images.
+    if (!empty($automatorConfig['configuration_image_field'])) {
+      foreach ($entity->{$automatorConfig['configuration_image_field']} as $imageEntityWrapper) {
+        $imageEntity = $imageEntityWrapper->entity;
+        // If an image style is set, use it.
+        if (!empty($automatorConfig['configuration_image_style'])) {
+          $imageEntity = $this->getGeneralHelper()->preprocessImageStyle($imageEntity, $automatorConfig['configuration_image_style']);
+        }
+        $image = new ImageFile();
+        $image->setFileFromFile($imageEntity);
+        $images[] = $image;
+      }
+    }
     // Create new messages.
     $input = new ChatInput([
-      new ChatMessage("user", $prompt),
+      new ChatMessage("user", $prompt, $images),
     ]);
 
     $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();

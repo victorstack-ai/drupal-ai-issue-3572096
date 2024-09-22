@@ -39,7 +39,7 @@ class SimpleTextCompletion extends RuleBase {
     $total = [];
     $instance = $this->prepareLlmInstance('text_completion', $automatorConfig);
     foreach ($prompts as $prompt) {
-      $value = $this->runChatMessage($prompt, $automatorConfig, $instance);
+      $value = $this->runChatMessage($prompt, $automatorConfig, $instance, $entity);
       if (!empty($value)) {
         $total = array_merge_recursive($total, $value);
       }

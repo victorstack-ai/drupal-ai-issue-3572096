@@ -40,7 +40,7 @@ class FaqField extends RuleBase {
     $instance = $this->prepareLlmInstance('chat', $automatorConfig);
     foreach ($prompts as $prompt) {
       // Create new messages.
-      $values = $this->runChatMessage($prompt, $automatorConfig, $instance);
+      $values = $this->runChatMessage($prompt, $automatorConfig, $instance, $entity);
       if (!empty($values)) {
         $total = array_merge_recursive($total, $values);
       }

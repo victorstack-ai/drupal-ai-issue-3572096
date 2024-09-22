@@ -53,7 +53,7 @@ class Numeric extends RuleBase {
     $total = [];
     $instance = $this->prepareLlmInstance('chat', $automatorConfig);
     foreach ($prompts as $prompt) {
-      $values = $this->runChatMessage($prompt, $automatorConfig, $instance);
+      $values = $this->runChatMessage($prompt, $automatorConfig, $instance, $entity);
       if (!empty($values)) {
         $total = array_merge_recursive($total, $values);
       }
