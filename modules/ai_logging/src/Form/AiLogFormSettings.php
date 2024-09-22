@@ -70,6 +70,30 @@ class AiLogFormSettings extends ConfigFormBase {
       ],
     ];
 
+    $form['prompt_logging_max_messages'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Max messages to log'),
+      '#description' => $this->t('The maximum number of messages to log in the database. Empty or 0 means unlimited.'),
+      '#default_value' => $config->get('prompt_logging_max_messages'),
+      '#states' => [
+        'visible' => [
+          ':input[name="prompt_logging"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+
+    $form['prompt_logging_max_age'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Max age of messages to log'),
+      '#description' => $this->t('The maximum age of messages to log in the database in days. Empty or 0 means unlimited.'),
+      '#default_value' => $config->get('prompt_logging_max_age'),
+      '#states' => [
+        'visible' => [
+          ':input[name="prompt_logging"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -83,6 +107,8 @@ class AiLogFormSettings extends ConfigFormBase {
       ->set('prompt_logging_tags', $form_state->getValue('prompt_logging_tags'))
       ->set('prompt_logging_output', $form_state->getValue('prompt_logging_output'))
       ->set('prompt_logging_bundles', $form_state->getValue('prompt_logging_bundles'))
+      ->set('prompt_logging_max_messages', $form_state->getValue('prompt_logging_max_messages'))
+      ->set('prompt_logging_max_age', $form_state->getValue('prompt_logging_max_age'))
       ->save();
 
     parent::submitForm($form, $form_state);

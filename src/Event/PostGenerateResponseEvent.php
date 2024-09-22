@@ -66,7 +66,7 @@ class PostGenerateResponseEvent extends Event {
    *
    * @var array
    */
-  protected $debugData;
+  protected $debugData = [];
 
   /**
    * Constructs the object.

@@ -8,3 +8,9 @@ ai_logging.settings:
     prompt_logging_tags:
       type: string
       label: 'Tags to log prompts with'
+    prompt_logging_max_messages:
+      type: integer
+      label: 'Maximum number of messages to log'
+    prompt_logging_max_age:
+      type: integer
+      label: 'Maximum age of messages to log in days'
