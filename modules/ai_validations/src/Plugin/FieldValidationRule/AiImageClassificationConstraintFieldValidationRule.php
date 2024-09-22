@@ -93,11 +93,11 @@ class AiImageClassificationConstraintFieldValidationRule extends ConstraintField
       '#default_value' => $this->configuration['model'] ?? '',
     ];
 
-    $form['classification_tag'] = [
+    $form['tag'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Classification Tag'),
       '#description' => $this->t('The tag that the image should be classified as.'),
-      '#default_value' => $this->configuration['classification_tag'] ?? '',
+      '#default_value' => $this->configuration['tag'] ?? '',
       '#required' => TRUE,
     ];
 
@@ -112,25 +112,25 @@ class AiImageClassificationConstraintFieldValidationRule extends ConstraintField
       '#default_value' => $this->configuration['finder'] ?? 'exact',
     ];
 
-    $form['min_confidence'] = [
+    $form['minimum'] = [
       '#type' => 'number',
       '#title' => $this->t('Minimum Confidence'),
       '#description' => $this->t('The minimum confidence level required for the classification to trigger.'),
-      '#default_value' => $this->configuration['min_confidence'] ?? 0.8,
+      '#default_value' => $this->configuration['minimum'] ?? 0.8,
       '#required' => TRUE,
       '#min' => 0,
       '#max' => 1,
       '#step' => 0.001,
     ];
 
-    $form['model_not_available'] = [
+    $form['na'] = [
       '#type' => 'select',
       '#title' => $this->t('If model is not available'),
       '#options' => [
         'skip' => $this->t('Skip validation'),
         'fail' => $this->t('Fail validation'),
       ],
-      '#default_value' => $this->configuration['model_not_available'] ?? 'skip',
+      '#default_value' => $this->configuration['na'] ?? 'skip',
       '#description' => $this->t('What to do if the model is not available.'),
     ];
 
@@ -152,11 +152,11 @@ class AiImageClassificationConstraintFieldValidationRule extends ConstraintField
     parent::submitConfigurationForm($form, $form_state);
 
     $this->configuration['message'] = $form_state->getValue('message');
-    $this->configuration['classification_tag'] = $form_state->getValue('classification_tag');
+    $this->configuration['tag'] = $form_state->getValue('tag');
     $this->configuration['finder'] = $form_state->getValue('finder');
     $this->configuration['model'] = $form_state->getValue('model');
-    $this->configuration['min_confidence'] = $form_state->getValue('min_confidence');
-    $this->configuration['model_not_available'] = $form_state->getValue('model_not_available');
+    $this->configuration['minimum'] = $form_state->getValue('minimum');
+    $this->configuration['na'] = $form_state->getValue('na');
   }
 
 }

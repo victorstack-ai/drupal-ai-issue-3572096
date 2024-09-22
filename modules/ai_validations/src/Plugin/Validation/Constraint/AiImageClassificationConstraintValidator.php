@@ -79,15 +79,15 @@ final class AiImageClassificationConstraintValidator extends ConstraintValidator
       $classifications = $provider->imageClassification($messages, $model)->getNormalized();
     }
     catch (\Exception $e) {
-      if ($constraint->modelNotAvailable == 'fail') {
+      if ($constraint->na == 'fail') {
         $this->context->addViolation('AI provider failed to classify image', []);
       }
       return;
     }
     foreach ($classifications as $classification) {
-      if (($constraint->finder == 'exact' && $classification->getLabel() == $constraint->classificationTag ||
-          $constraint->finder == 'contains' && str_contains($classification->getLabel(), $constraint->classificationTag)) &&
-          $classification->getConfidenceScore() >= $constraint->minConfidence) {
+      if (($constraint->finder == 'exact' && $classification->getLabel() == $constraint->tag ||
+          $constraint->finder == 'contains' && str_contains($classification->getLabel(), $constraint->tag)) &&
+          $classification->getConfidenceScore() >= $constraint->minimum) {
         $this->context->addViolation($constraint->message, []);
       }
     }
