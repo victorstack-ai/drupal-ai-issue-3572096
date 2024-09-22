@@ -70,10 +70,10 @@ class AiImageClassificationConstraintFieldValidationRule extends ConstraintField
    */
   public function defaultConfiguration() {
     return [
-      'classification_tag' => NULL,
+      'tag' => NULL,
       'finder' => 'exact',
       'model' => NULL,
-      'min_confidence' => 0.8,
+      'minimum' => 0.8,
       'message' => NULL,
     ] + parent::defaultConfiguration();
   }
