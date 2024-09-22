@@ -124,7 +124,7 @@ class AiImageClassificationConstraintFieldValidationRule extends ConstraintField
     ];
 
     $form['model_not_available'] = [
-      'type' => 'select',
+      '#type' => 'select',
       '#title' => $this->t('If model is not available'),
       '#options' => [
         'skip' => $this->t('Skip validation'),
