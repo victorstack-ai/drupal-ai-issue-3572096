@@ -24,6 +24,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
  *   ),
  *   handlers = {
  *     "list_builder" = "Drupal\ai_logging\AiLogListBuilder",
+ *     "view_builder" = "Drupal\ai_logging\ViewBuilder\LogViewBuilder",
  *     "views_data" = "Drupal\views\EntityViewsData",
  *     "form" = {
  *       "add" = "Drupal\ai_logging\Form\AiLogForm",
@@ -189,6 +190,24 @@ final class AiLog extends ContentEntityBase implements AiLogInterface {
     $fields['configuration'] = BaseFieldDefinition::create('string_long')
       ->setLabel(t('Configuration'))
       ->setDescription(t('The configuration for the ai log.'))
+      ->setSettings([
+        'default_value' => '',
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'string_textarea',
+        'weight' => 0,
+      ])
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'string',
+        'weight' => 0,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['extra_data'] = BaseFieldDefinition::create('string_long')
+      ->setLabel(t('Extra Data'))
+      ->setDescription(t('Extra Data to log.'))
       ->setSettings([
         'default_value' => '',
       ])

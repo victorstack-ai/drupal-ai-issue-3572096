@@ -78,6 +78,7 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
         'configuration' => json_encode($event->getConfiguration()),
         'tags' => $event->getTags(),
         'prompt' => $this->getInputText($event->getInput()),
+        'extra_data' => json_encode($event->getDebugData()),
       ]);
       if ($this->aiSettings->get('prompt_logging_output')) {
         $log->set('output_text', json_encode($event->getOutput()->getRawOutput()));

@@ -5,6 +5,7 @@
  * Contains ai_logging install hooks.
  */
 
+use Drupal\ai_logging\Entity\AiLog;
 use Drupal\Core\Config\FileStorage;
 
 /**
@@ -43,4 +44,17 @@ function ai_logging_update_10301() {
     $config->save();
   }
 
+}
+
+/**
+ * Implements hook_update_N().
+ */
+function ai_logging_update_10302() {
+  // Load the definition for the extra_data field.
+  $storage = AiLog::baseFieldDefinitions(\Drupal::entityTypeManager()->getDefinition('ai_log'));
+  // Get the entity storage schema handler.
+  $entity_storage_schema = \Drupal::entityDefinitionUpdateManager();
+
+  // Apply any updates required for the entity schema.
+  $entity_storage_schema->installFieldStorageDefinition('extra_data', 'ai_log', 'ai_logging', $storage['extra_data']);
 }
