@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\ai\Kernel\OperationType\ImageClassification;
 
+use Drupal\KernelTests\KernelTestBase;
+use Drupal\Tests\media\Traits\MediaTypeCreationTrait;
 use Drupal\ai\Exception\AiBadRequestException;
 use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\OperationType\ImageClassification\ImageClassificationInput;
 use Drupal\ai\OperationType\ImageClassification\ImageClassificationItem;
 use Drupal\ai\OperationType\ImageClassification\ImageClassificationOutput;
-use Drupal\KernelTests\KernelTestBase;
-use Drupal\Tests\media\Traits\MediaTypeCreationTrait;
 
 /**
  * This tests the Image classification calling.

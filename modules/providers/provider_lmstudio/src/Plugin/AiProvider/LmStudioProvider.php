@@ -2,6 +2,10 @@
 
 namespace Drupal\provider_lmstudio\Plugin\AiProvider;
 
+use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
 use Drupal\ai\OperationType\Chat\ChatInput;
@@ -12,10 +16,6 @@ use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInterface;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsOutput;
 use Drupal\ai\Traits\OperationType\ChatTrait;
-use Drupal\Core\Config\ImmutableConfig;
-use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\provider_lmstudio\LmStudioControlApi;
 use OpenAI\Client;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -79,7 +79,7 @@ class LmStudioProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function getConfiguredModels(string $operation_type = NULL, array $capabilities = []): array {
+  public function getConfiguredModels(?string $operation_type = NULL, array $capabilities = []): array {
     $this->loadClient();
     try {
       $response = $this->controlApi->getModels();
@@ -103,7 +103,7 @@ class LmStudioProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function isUsable(string $operation_type = NULL, array $capabilities = []): bool {
+  public function isUsable(?string $operation_type = NULL, array $capabilities = []): bool {
     if (!$this->getBaseHost()) {
       return FALSE;
     }

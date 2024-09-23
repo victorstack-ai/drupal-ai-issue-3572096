@@ -2,9 +2,9 @@
 
 namespace Drupal\ai\OperationType\Moderation;
 
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\Attribute\OperationType;
 use Drupal\ai\OperationType\OperationTypeInterface;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Interface for moderation models.
@@ -28,6 +28,6 @@ interface ModerationInterface extends OperationTypeInterface {
    * @return \Drupal\ai\OperationType\Moderation\ModerationOutput
    *   The moderation output. True if its flagged.
    */
-  public function moderation(string|ModerationInput $input, string $model_id = NULL, array $tags = []): ModerationOutput;
+  public function moderation(string|ModerationInput $input, ?string $model_id = NULL, array $tags = []): ModerationOutput;
 
 }

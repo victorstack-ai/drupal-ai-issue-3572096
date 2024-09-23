@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\ai\Kernel\OperationType\Chat;
 
+use Drupal\KernelTests\KernelTestBase;
 use Drupal\ai\Exception\AiRequestErrorException;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\ChatOutput;
 use Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface;
-use Drupal\KernelTests\KernelTestBase;
 
 /**
  * This tests the Chat calling.

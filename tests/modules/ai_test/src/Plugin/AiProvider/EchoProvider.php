@@ -2,6 +2,8 @@
 
 namespace Drupal\ai_test\Plugin\AiProvider;
 
+use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
 use Drupal\ai\OperationType\Chat\ChatInput;
@@ -22,8 +24,6 @@ use Drupal\ai\OperationType\SpeechToText\SpeechToTextOutput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInterface;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechOutput;
-use Drupal\Core\Config\ImmutableConfig;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -65,14 +65,14 @@ class EchoProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function getConfiguredModels(string $operation_type = NULL, array $capabilities = []): array {
+  public function getConfiguredModels(?string $operation_type = NULL, array $capabilities = []): array {
     return [];
   }
 
   /**
    * {@inheritdoc}
    */
-  public function isUsable(string $operation_type = NULL, array $capabilities = []): bool {
+  public function isUsable(?string $operation_type = NULL, array $capabilities = []): bool {
     return TRUE;
   }
 
@@ -123,7 +123,7 @@ class EchoProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function moderation(ModerationInput|string $input, string $model_id = NULL, array $tags = []): ModerationOutput {
+  public function moderation(ModerationInput|string $input, ?string $model_id = NULL, array $tags = []): ModerationOutput {
     $response = [
       'input' => sprintf('Hello world! %s', (string) $input),
     ];

@@ -2,10 +2,10 @@
 
 namespace Drupal\ai\Form;
 
-use Drupal\ai\AiProviderPluginManager;
-use Drupal\ai\Enum\AiModelCapability;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\Enum\AiModelCapability;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Drupal\ai;
 
-use Drupal\ai\Attribute\AiVdbProvider;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
+use Drupal\ai\Attribute\AiVdbProvider;
 
 /**
  * Vector DB plugin manager.

@@ -2,8 +2,8 @@
 
 namespace Drupal\ai_search\Plugin\EmbeddingStrategy;
 
-use Drupal\ai_search\Attribute\EmbeddingStrategy;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\ai_search\Attribute\EmbeddingStrategy;
 use Drupal\search_api\Item\ItemInterface;
 
 /**

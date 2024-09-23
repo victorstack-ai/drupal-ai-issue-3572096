@@ -2,9 +2,9 @@
 
 namespace Drupal\ai\Base;
 
-use Drupal\ai\AiVdbProviderInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\ai\AiVdbProviderInterface;
 use Drupal\key\KeyRepositoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Form;
 
+use Drupal\Core\Form\FormBase;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Link;
 use Drupal\ai\AiProviderInterface;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\ai\Service\AiProviderFormHelper;
-use Drupal\Core\Form\FormBase;
-use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Link;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -200,7 +200,7 @@ class EmbeddingsGenerationForm extends FormBase {
    * @return string
    *   The normalized code example.
    */
-  public function normalizeCodeExample(AiProviderInterface|ProviderProxy $provider, FormStateInterface $form_state, string $prompt = "", string $filename = NULL): string {
+  public function normalizeCodeExample(AiProviderInterface|ProviderProxy $provider, FormStateInterface $form_state, string $prompt = "", ?string $filename = NULL): string {
     // Generation code.
     $code = "<details class=\"ai-code-wrapper\"><summary>Code Example</summary><code style=\"display: block; white-space: pre-wrap; padding: 20px;\">";
     if ($filename) {

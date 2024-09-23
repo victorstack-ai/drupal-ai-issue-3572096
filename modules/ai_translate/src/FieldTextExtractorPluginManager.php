@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Drupal\ai_translate;
 
-use Drupal\ai_translate\Attribute\FieldTextExtractor;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\ai_translate\Attribute\FieldTextExtractor;
 
 /**
  * Field translation plugin manager.

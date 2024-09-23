@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\ai\Kernel\OperationType\TextToImage;
 
+use Drupal\KernelTests\KernelTestBase;
+use Drupal\Tests\media\Traits\MediaTypeCreationTrait;
 use Drupal\ai\Exception\AiRequestErrorException;
 use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\OperationType\TextToImage\TextToImageInput;
 use Drupal\ai\OperationType\TextToImage\TextToImageOutput;
 use Drupal\file\Entity\File;
-use Drupal\KernelTests\KernelTestBase;
-use Drupal\Tests\media\Traits\MediaTypeCreationTrait;
 
 /**
  * This tests the Text to Image calling.

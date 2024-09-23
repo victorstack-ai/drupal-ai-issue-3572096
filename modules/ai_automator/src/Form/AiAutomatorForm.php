@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Drupal\ai_automator\Form;
 
-use Drupal\ai_automator\Entity\AiAutomator;
 use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\ai_automator\Entity\AiAutomator;
 
 /**
  * AI Automator form.

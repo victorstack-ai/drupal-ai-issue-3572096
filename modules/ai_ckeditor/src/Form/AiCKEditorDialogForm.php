@@ -2,11 +2,11 @@
 
 namespace Drupal\ai_ckeditor\Form;
 
-use Drupal\ai_ckeditor\PluginManager\AiCKEditorPluginManager;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformState;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\ai_ckeditor\PluginManager\AiCKEditorPluginManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**

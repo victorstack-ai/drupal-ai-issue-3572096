@@ -2,12 +2,12 @@
 
 namespace Drupal\ai_automator\PluginBaseClasses;
 
-use Drupal\ai\OperationType\GenericType\AudioFile;
-use Drupal\ai\OperationType\SpeechToText\SpeechToTextInput;
-use Drupal\ai_automator\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\ai\OperationType\GenericType\AudioFile;
+use Drupal\ai\OperationType\SpeechToText\SpeechToTextInput;
+use Drupal\ai_automator\PluginInterfaces\AiAutomatorTypeInterface;
 
 /**
  * Helper function for audio to text.

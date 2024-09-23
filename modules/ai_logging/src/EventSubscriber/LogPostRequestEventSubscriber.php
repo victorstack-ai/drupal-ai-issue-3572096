@@ -2,13 +2,13 @@
 
 namespace Drupal\ai_logging\EventSubscriber;
 
-use Drupal\ai\Event\PostGenerateResponseEvent;
-use Drupal\ai\OperationType\InputInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
+use Drupal\ai\Event\PostGenerateResponseEvent;
+use Drupal\ai\OperationType\InputInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

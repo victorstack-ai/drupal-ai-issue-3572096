@@ -2,12 +2,12 @@
 
 namespace Drupal\ai_eca\Plugin\Action;
 
-use Drupal\ai\AiProviderPluginManager;
-use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\eca\Plugin\Action\ConfigurableActionBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -36,7 +36,7 @@ abstract class AiActionBase extends ConfigurableActionBase {
   /**
    * {@inheritdoc}
    */
-  public function access($object, AccountInterface $account = NULL, $return_as_object = FALSE): bool|AccessResultInterface {
+  public function access($object, ?AccountInterface $account = NULL, $return_as_object = FALSE): bool|AccessResultInterface {
     $access = AccessResult::allowed();
 
     // Validate that a correct model has been selected.

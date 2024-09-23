@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\ai\Unit\Utility;
 
-use Drupal\ai\Utility\CastUtility;
 use Drupal\Tests\UnitTestCase;
+use Drupal\ai\Utility\CastUtility;
 
 /**
  * @coversDefaultClass \Drupal\ai\Utility\CastUtility

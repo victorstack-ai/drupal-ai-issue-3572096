@@ -2,9 +2,9 @@
 
 namespace Drupal\ai\OperationType\Chat;
 
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\Attribute\OperationType;
 use Drupal\ai\OperationType\OperationTypeInterface;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Interface for chat models.

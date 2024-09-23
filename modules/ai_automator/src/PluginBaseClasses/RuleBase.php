@@ -2,6 +2,11 @@
 
 namespace Drupal\ai_automator\PluginBaseClasses;
 
+use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\Enum\AiModelCapability;
 use Drupal\ai\OperationType\Chat\ChatInput;
@@ -11,11 +16,6 @@ use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai\Utility\CastUtility;
 use Drupal\ai_automator\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\ai_automator\Traits\GeneralHelperTrait;
-use Drupal\Core\Entity\ContentEntityInterface;
-use Drupal\Core\Field\FieldDefinitionInterface;
-use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -500,7 +500,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
    * @return array
    *   The response.
    */
-  public function runChatMessage(string $prompt, array $automatorConfig, $instance, ContentEntityInterface $entity = NULL) {
+  public function runChatMessage(string $prompt, array $automatorConfig, $instance, ?ContentEntityInterface $entity = NULL) {
     $text = $this->runRawChatMessage($prompt, $automatorConfig, $instance, $entity);
 
     // Normalize the response.
@@ -522,7 +522,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
    * @return string
    *   The response.
    */
-  public function runRawChatMessage(string $prompt, array $automatorConfig, $instance, ContentEntityInterface $entity = NULL) {
+  public function runRawChatMessage(string $prompt, array $automatorConfig, $instance, ?ContentEntityInterface $entity = NULL) {
     $images = [];
     // Check for images.
     if (!empty($automatorConfig['configuration_image_field'])) {

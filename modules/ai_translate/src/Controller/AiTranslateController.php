@@ -2,10 +2,6 @@
 
 namespace Drupal\ai_translate\Controller;
 
-use Drupal\ai\AiProviderPluginManager;
-use Drupal\ai\OperationType\Chat\ChatInput;
-use Drupal\ai\OperationType\Chat\ChatMessage;
-use Drupal\ai_translate\TextExtractorInterface;
 use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Component\Plugin\Exception\PluginException;
 use Drupal\Core\Batch\BatchBuilder;
@@ -16,6 +12,10 @@ use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Template\TwigEnvironment;
 use Drupal\Core\Url;
+use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\OperationType\Chat\ChatInput;
+use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai_translate\TextExtractorInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;

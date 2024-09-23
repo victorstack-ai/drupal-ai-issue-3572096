@@ -2,8 +2,6 @@
 
 namespace Drupal\ai_ckeditor;
 
-use Drupal\ai\AiProviderPluginManager;
-use Drupal\ai_ckeditor\PluginInterfaces\AiCKEditorPluginInterface;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\CloseModalDialogCommand;
@@ -15,6 +13,8 @@ use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Plugin\PluginBase;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai_ckeditor\PluginInterfaces\AiCKEditorPluginInterface;
 use Drupal\editor\Ajax\EditorDialogSave;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;

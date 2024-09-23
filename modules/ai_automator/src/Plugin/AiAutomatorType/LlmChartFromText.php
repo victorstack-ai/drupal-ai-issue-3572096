@@ -2,9 +2,9 @@
 
 namespace Drupal\ai_automator\Plugin\AiAutomatorType;
 
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai_automator\Attribute\AiAutomatorType;
 use Drupal\ai_automator\PluginBaseClasses\Chart;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * The rules for an charts field.

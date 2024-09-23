@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Drupal\ai_search;
 
-use Drupal\ai_search\Attribute\EmbeddingStrategy;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
+use Drupal\ai_search\Attribute\EmbeddingStrategy;
 
 /**
  * Embedding strategy plugin manager.

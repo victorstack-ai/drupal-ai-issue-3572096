@@ -2,10 +2,10 @@
 
 namespace Drupal\ai_automator\PluginManager;
 
-use Drupal\ai_automator\Attribute\AiAutomatorProcessRule;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
+use Drupal\ai_automator\Attribute\AiAutomatorProcessRule;
 
 /**
  * Provides an OpenAI Automator Field process plugin manager.

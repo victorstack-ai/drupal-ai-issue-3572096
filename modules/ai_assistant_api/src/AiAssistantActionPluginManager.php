@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Drupal\ai_assistant_api;
 
-use Drupal\ai_assistant_api\Attribute\AiAssistantAction;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
+use Drupal\ai_assistant_api\Attribute\AiAssistantAction;
 
 /**
  * Vector DB plugin manager.

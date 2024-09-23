@@ -2,9 +2,6 @@
 
 namespace Drupal\ai_translate\Plugin\FieldTextExtractor;
 
-use Drupal\ai_translate\Attribute\FieldTextExtractor;
-use Drupal\ai_translate\ConfigurableFieldTextExtractorInterface;
-use Drupal\ai_translate\TextExtractorInterface;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -14,6 +11,9 @@ use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
+use Drupal\ai_translate\Attribute\FieldTextExtractor;
+use Drupal\ai_translate\ConfigurableFieldTextExtractorInterface;
+use Drupal\ai_translate\TextExtractorInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**

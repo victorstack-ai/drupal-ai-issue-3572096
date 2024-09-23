@@ -2,8 +2,6 @@
 
 namespace Drupal\ai_automator\FormAlter;
 
-use Drupal\ai_automator\AiFieldRules;
-use Drupal\ai_automator\PluginManager\AiAutomatorFieldProcessManager;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -12,6 +10,8 @@ use Drupal\Core\Field\Entity\BaseFieldOverride;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\ai_automator\AiFieldRules;
+use Drupal\ai_automator\PluginManager\AiAutomatorFieldProcessManager;
 use Drupal\field\Entity\FieldConfig;
 
 /**

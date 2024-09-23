@@ -2,8 +2,8 @@
 
 namespace Drupal\ai_search;
 
-use Drupal\ai\AiVdbProviderInterface;
 use Drupal\Component\Plugin\PluginInspectionInterface;
+use Drupal\ai\AiVdbProviderInterface;
 use Drupal\search_api\Item\ItemInterface;
 
 /**

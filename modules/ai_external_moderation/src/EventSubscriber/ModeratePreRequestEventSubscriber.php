@@ -2,11 +2,11 @@
 
 namespace Drupal\ai_external_moderation\EventSubscriber;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\Event\PreGenerateResponseEvent;
 use Drupal\ai\Exception\AiUnsafePromptException;
 use Drupal\ai\OperationType\InputInterface;
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

@@ -2,7 +2,6 @@
 
 namespace Drupal\ai_automator\Rulehelpers;
 
-use Drupal\ai_automator\FormAlter\AiAutomatorFieldConfig;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -11,6 +10,7 @@ use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Utility\Token;
+use Drupal\ai_automator\FormAlter\AiAutomatorFieldConfig;
 use Drupal\file\FileInterface;
 use Drupal\token\TreeBuilder;
 

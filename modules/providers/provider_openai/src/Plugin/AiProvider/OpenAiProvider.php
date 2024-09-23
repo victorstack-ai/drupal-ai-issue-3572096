@@ -2,6 +2,12 @@
 
 namespace Drupal\provider_openai\Plugin\AiProvider;
 
+use Drupal\Component\Serialization\Json;
+use Drupal\Component\Utility\Crypt;
+use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\File\FileExists;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
 use Drupal\ai\Enum\AiModelCapability;
@@ -34,12 +40,6 @@ use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInterface;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechOutput;
 use Drupal\ai\Traits\OperationType\ChatTrait;
-use Drupal\Component\Serialization\Json;
-use Drupal\Component\Utility\Crypt;
-use Drupal\Core\Config\ImmutableConfig;
-use Drupal\Core\File\FileExists;
-use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\provider_openai\OpenAiChatMessageIterator;
 use OpenAI\Client;
 use Symfony\Component\Yaml\Yaml;
@@ -86,7 +86,7 @@ class OpenAiProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function getConfiguredModels(string $operation_type = NULL, array $capabilities = []): array {
+  public function getConfiguredModels(?string $operation_type = NULL, array $capabilities = []): array {
     // Load all models, and since OpenAI does not provide information about
     // which models does what, we need to hard code it in a helper function.
     $this->loadClient();
@@ -96,7 +96,7 @@ class OpenAiProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function isUsable(string $operation_type = NULL, array $capabilities = []): bool {
+  public function isUsable(?string $operation_type = NULL, array $capabilities = []): bool {
     // If its not configured, it is not usable.
     if (!$this->getConfig()->get('api_key')) {
       return FALSE;
@@ -353,7 +353,7 @@ class OpenAiProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function moderation(string|ModerationInput $input, string $model_id = NULL, array $tags = []): ModerationOutput {
+  public function moderation(string|ModerationInput $input, ?string $model_id = NULL, array $tags = []): ModerationOutput {
     $this->loadClient();
     // Normalize the prompt if needed.
     if ($input instanceof ModerationInput) {

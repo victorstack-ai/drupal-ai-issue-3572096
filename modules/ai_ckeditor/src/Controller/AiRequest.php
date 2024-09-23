@@ -2,11 +2,6 @@
 
 namespace Drupal\ai_ckeditor\Controller;
 
-use Drupal\ai\AiProviderPluginManager;
-use Drupal\ai\OperationType\Chat\ChatInput;
-use Drupal\ai\OperationType\Chat\ChatMessage;
-use Drupal\ai_ckeditor\PluginInterfaces\AiCKEditorPluginInterface;
-use Drupal\ai_ckeditor\PluginManager\AiCKEditorPluginManager;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Link;
@@ -15,6 +10,11 @@ use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\OperationType\Chat\ChatInput;
+use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai_ckeditor\PluginInterfaces\AiCKEditorPluginInterface;
+use Drupal\ai_ckeditor\PluginManager\AiCKEditorPluginManager;
 use Drupal\editor\EditorInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;

@@ -2,6 +2,9 @@
 
 namespace Drupal\provider_mistral\Plugin\AiProvider;
 
+use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
 use Drupal\ai\Enum\AiModelCapability;
@@ -14,9 +17,6 @@ use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInterface;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsOutput;
 use Drupal\ai\Traits\OperationType\ChatTrait;
-use Drupal\Core\Config\ImmutableConfig;
-use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 use OpenAI\Client;
 use Symfony\Component\Yaml\Yaml;
 
@@ -51,7 +51,7 @@ class MistralProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function getConfiguredModels(string $operation_type = NULL, array $capabilities = []): array {
+  public function getConfiguredModels(?string $operation_type = NULL, array $capabilities = []): array {
     // No vision support.
     if (in_array(AiModelCapability::ChatWithImageVision, $capabilities)) {
       return [];
@@ -80,7 +80,7 @@ class MistralProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function isUsable(string $operation_type = NULL, array $capabilities = []): bool {
+  public function isUsable(?string $operation_type = NULL, array $capabilities = []): bool {
     // No vision support.
     if (in_array(AiModelCapability::ChatWithImageVision, $capabilities)) {
       return FALSE;

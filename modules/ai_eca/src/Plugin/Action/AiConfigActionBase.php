@@ -2,11 +2,11 @@
 
 namespace Drupal\ai_eca\Plugin\Action;
 
-use Drupal\ai_eca\Service\AiProviderValidatorInterface;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\ai_eca\Service\AiProviderValidatorInterface;
 use Drupal\eca\Service\YamlParser;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Validator\ConstraintViolationInterface;
@@ -45,7 +45,7 @@ abstract class AiConfigActionBase extends AiActionBase {
   /**
    * {@inheritdoc}
    */
-  public function access($object, AccountInterface $account = NULL, $return_as_object = FALSE): bool|AccessResultInterface {
+  public function access($object, ?AccountInterface $account = NULL, $return_as_object = FALSE): bool|AccessResultInterface {
     if (!empty($this->configuration['config'])) {
       try {
         $this->yamlParser->parse($this->configuration['config']);

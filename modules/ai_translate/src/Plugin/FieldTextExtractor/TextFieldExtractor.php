@@ -2,11 +2,11 @@
 
 namespace Drupal\ai_translate\Plugin\FieldTextExtractor;
 
-use Drupal\ai_translate\Attribute\FieldTextExtractor;
-use Drupal\ai_translate\FieldTextExtractorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldConfigInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\ai_translate\Attribute\FieldTextExtractor;
+use Drupal\ai_translate\FieldTextExtractorInterface;
 
 /**
  * A field text extractor plugin for text fields.

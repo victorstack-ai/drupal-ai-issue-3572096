@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\ai_assistant_api\Entity;
 
-use Drupal\ai_assistant_api\AiAssistantInterface;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\ai_assistant_api\AiAssistantInterface;
 
 /**
  * Defines the ai assistant entity type.

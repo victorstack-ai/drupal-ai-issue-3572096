@@ -2,8 +2,6 @@
 
 namespace Drupal\ai\Base;
 
-use Drupal\ai\AiProviderInterface;
-use Drupal\ai\Utility\CastUtility;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ImmutableConfig;
@@ -11,6 +9,8 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\ai\AiProviderInterface;
+use Drupal\ai\Utility\CastUtility;
 use Drupal\key\KeyRepositoryInterface;
 use Psr\Http\Client\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;

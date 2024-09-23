@@ -2,10 +2,10 @@
 
 namespace Drupal\ai_ckeditor\Routing;
 
-use Drupal\ai_ckeditor\PluginInterfaces\AiCKEditorPluginInterface;
-use Drupal\ai_ckeditor\PluginManager\AiCKEditorPluginManager;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\ParamConverter\ParamConverterInterface;
+use Drupal\ai_ckeditor\PluginInterfaces\AiCKEditorPluginInterface;
+use Drupal\ai_ckeditor\PluginManager\AiCKEditorPluginManager;
 use Symfony\Component\Routing\Route;
 
 /**

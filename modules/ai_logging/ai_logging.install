@@ -5,8 +5,8 @@
  * Contains ai_logging install hooks.
  */
 
-use Drupal\ai_logging\Entity\AiLog;
 use Drupal\Core\Config\FileStorage;
+use Drupal\ai_logging\Entity\AiLog;
 
 /**
  * Implements hook_update_N().

@@ -32,7 +32,7 @@ class EmbeddingsInput implements InputInterface {
    * @param \Drupal\ai\OperationType\GenericType\ImageFile $image
    *   The image to convert to vectors.
    */
-  public function __construct(string $prompt = '', ImageFile $image = NULL) {
+  public function __construct(string $prompt = '', ?ImageFile $image = NULL) {
     $this->prompt = $prompt;
     $this->image = $image;
   }

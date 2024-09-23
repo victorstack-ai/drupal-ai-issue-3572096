@@ -5,10 +5,10 @@
  * The AI translate module.
  */
 
-use Drupal\ai_translate\ConfigurableFieldTextExtractorInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Url;
+use Drupal\ai_translate\ConfigurableFieldTextExtractorInterface;
 
 /**
  * Implements hook_form_BASE_FORM_ID_alter().

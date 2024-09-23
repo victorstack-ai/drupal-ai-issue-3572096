@@ -2,10 +2,10 @@
 
 namespace Drupal\ai_automator;
 
-use Drupal\ai_automator\Event\RuleIsAllowedEvent;
-use Drupal\ai_automator\PluginManager\AiAutomatorTypeManager;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\ai_automator\Event\RuleIsAllowedEvent;
+use Drupal\ai_automator\PluginManager\AiAutomatorTypeManager;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**

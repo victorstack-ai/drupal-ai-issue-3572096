@@ -2,10 +2,10 @@
 
 namespace Drupal\ai_search\Trait;
 
-use Drupal\ai\AiProviderInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformStateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\ai\AiProviderInterface;
 
 /**
  * Trait for Search API AI Embeddings Strategy.

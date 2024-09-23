@@ -22,7 +22,7 @@ interface AiProviderInterface extends PluginInspectionInterface {
    * @return array
    *   The list of models.
    */
-  public function getConfiguredModels(string $operation_type = NULL, array $capabilities = []): array;
+  public function getConfiguredModels(?string $operation_type = NULL, array $capabilities = []): array;
 
   /**
    * Returns if the provider is setup and ready to use for the type.
@@ -35,7 +35,7 @@ interface AiProviderInterface extends PluginInspectionInterface {
    * @return bool
    *   Returns TRUE if the provider is setup and ready to use.
    */
-  public function isUsable(string $operation_type = NULL, array $capabilities = []): bool;
+  public function isUsable(?string $operation_type = NULL, array $capabilities = []): bool;
 
   /**
    * Returns the supported operation types for this provider.

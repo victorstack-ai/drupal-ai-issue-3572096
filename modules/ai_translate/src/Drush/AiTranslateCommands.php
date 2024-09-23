@@ -2,13 +2,13 @@
 
 namespace Drupal\ai_translate\Drush;
 
-use Drupal\ai_translate\Controller\AiTranslateController;
-use Drupal\ai_translate\TextExtractorInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelTrait;
 use Drupal\Core\Messenger\MessengerTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\ai_translate\Controller\AiTranslateController;
+use Drupal\ai_translate\TextExtractorInterface;
 use Drush\Attributes\Argument;
 use Drush\Attributes\Command;
 use Drush\Commands\DrushCommands;

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Drupal\ai_logging\Entity;
 
-use Drupal\ai_logging\AiLogInterface;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\ai_logging\AiLogInterface;
 
 /**
  * Defines the ai log entity class.

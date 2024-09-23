@@ -18,7 +18,7 @@ trait GenerateBase64Trait {
    * @return string
    *   A base64 encoded string.
    */
-  public function getAsBase64EncodedString(string $data_url_scheme = NULL): string {
+  public function getAsBase64EncodedString(?string $data_url_scheme = NULL): string {
     $base64 = base64_encode($this->getBinary());
     if (!is_null($data_url_scheme)) {
       $base64 = $data_url_scheme . $base64;

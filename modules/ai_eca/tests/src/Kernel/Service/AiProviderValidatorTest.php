@@ -2,10 +2,10 @@
 
 namespace Drupal\Tests\ai_eca\Kernel\Service;
 
-use Drupal\ai\AiProviderPluginManager;
-use Drupal\ai_eca\Service\AiProviderValidatorInterface;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\TestTools\Random;
+use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai_eca\Service\AiProviderValidatorInterface;
 use Symfony\Component\Validator\Constraints\Required;
 use Symfony\Component\Validator\Constraints\Type;
 

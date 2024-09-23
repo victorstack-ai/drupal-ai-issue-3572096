@@ -2,9 +2,9 @@
 
 namespace Drupal\ai_translate\Controller;
 
+use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\ai_translate\Form\AiTranslateForm;
 use Drupal\content_translation\Controller\ContentTranslationController;
-use Drupal\Core\Routing\RouteMatchInterface;
 
 /**
  * Overridden class for entity translation controllers.

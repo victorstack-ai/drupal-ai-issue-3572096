@@ -2,6 +2,9 @@
 
 namespace Drupal\provider_huggingface\Plugin\AiProvider;
 
+use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
 use Drupal\ai\Enum\AiModelCapability;
@@ -20,9 +23,6 @@ use Drupal\ai\OperationType\ImageClassification\ImageClassificationInterface;
 use Drupal\ai\OperationType\ImageClassification\ImageClassificationItem;
 use Drupal\ai\OperationType\ImageClassification\ImageClassificationOutput;
 use Drupal\ai\Traits\OperationType\ChatTrait;
-use Drupal\Core\Config\ImmutableConfig;
-use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\provider_huggingface\HuggingfaceApi;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Yaml\Yaml;
@@ -68,7 +68,7 @@ class HuggingfaceProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function getConfiguredModels(string $operation_type = NULL, array $capabilities = []): array {
+  public function getConfiguredModels(?string $operation_type = NULL, array $capabilities = []): array {
     // No models allows system prompts in chat, so we don't allow it.
     if ($operation_type == 'chat' && in_array(AiModelCapability::ChatSystemRole, $capabilities)) {
       return [];
@@ -86,7 +86,7 @@ class HuggingfaceProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function isUsable(string $operation_type = NULL, array $capabilities = []): bool {
+  public function isUsable(?string $operation_type = NULL, array $capabilities = []): bool {
     // If its not configured, it is not usable.
     if (!$this->getConfig()->get('api_key')) {
       return FALSE;

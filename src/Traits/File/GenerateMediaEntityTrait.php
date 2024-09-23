@@ -2,8 +2,8 @@
 
 namespace Drupal\ai\Traits\File;
 
-use Drupal\ai\Exception\AiBrokenOutputException;
 use Drupal\Core\Field\FieldConfigInterface;
+use Drupal\ai\Exception\AiBrokenOutputException;
 use Drupal\media\Entity\Media;
 
 /**

@@ -216,7 +216,8 @@ class MilvusV2 {
       'limit' => $limit,
       'offset' => $offset,
     ];
-    if ($database_name) {
+    // Only when its Zilliz.
+    if ($database_name && !$this->isZilliz()) {
       $params['dbName'] = $database_name;
     }
 

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\ai_automator\Entity;
 
-use Drupal\ai_automator\AiAutomatorInterface;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\ai_automator\AiAutomatorInterface;
 
 /**
  * Defines the ai automator entity type.

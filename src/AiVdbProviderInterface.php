@@ -2,9 +2,9 @@
 
 namespace Drupal\ai;
 
-use Drupal\ai\Enum\VdbSimilarityMetrics;
 use Drupal\Component\Plugin\PluginInspectionInterface;
 use Drupal\Core\Config\ImmutableConfig;
+use Drupal\ai\Enum\VdbSimilarityMetrics;
 
 /**
  * Defines an interface for VDB (Vector Database) provider services.

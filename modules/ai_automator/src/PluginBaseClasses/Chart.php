@@ -2,11 +2,11 @@
 
 namespace Drupal\ai_automator\PluginBaseClasses;
 
+use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai_automator\PluginInterfaces\AiAutomatorTypeInterface;
-use Drupal\Core\Entity\ContentEntityInterface;
-use Drupal\Core\Field\FieldDefinitionInterface;
 
 /**
  * This is a base class that can be used for LLMs simple chart rules.

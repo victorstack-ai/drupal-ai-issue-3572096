@@ -2,10 +2,10 @@
 
 namespace Drupal\ai_automator\Plugin\AiAutomatorType;
 
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai_automator\Attribute\AiAutomatorType;
 use Drupal\ai_automator\PluginBaseClasses\Taxonomy;
 use Drupal\ai_automator\PluginInterfaces\AiAutomatorTypeInterface;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * The rules for a taxonomy_term field.

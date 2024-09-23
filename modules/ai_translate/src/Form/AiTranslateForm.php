@@ -61,7 +61,7 @@ class AiTranslateForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, array $build = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, ?array $build = NULL) {
     _ai_translate_check_default_provider_and_model();
     $form_state->set('entity', $build['#entity']);
 

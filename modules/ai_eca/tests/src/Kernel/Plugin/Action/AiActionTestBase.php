@@ -3,8 +3,8 @@
 namespace Drupal\Tests\ai_eca\Kernel\Plugin\Action;
 
 use Drupal\Core\Action\ActionManager;
-use Drupal\eca\Token\TokenInterface;
 use Drupal\KernelTests\KernelTestBase;
+use Drupal\eca\Token\TokenInterface;
 
 /**
  * Base class for AI Action tests.

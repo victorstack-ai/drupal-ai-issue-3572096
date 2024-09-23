@@ -2,6 +2,7 @@
 
 namespace Drupal\ai\Plugin;
 
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\ai\Base\AiProviderClientBase;
 use Drupal\ai\Event\PostGenerateResponseEvent;
 use Drupal\ai\Event\PreGenerateResponseEvent;
@@ -14,7 +15,6 @@ use Drupal\ai\Exception\AiRequestErrorException;
 use Drupal\ai\Exception\AiResponseErrorException;
 use Drupal\ai\Exception\AiUnsafePromptException;
 use Drupal\ai\OperationType\OperationTypeInterface;
-use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Psr\Http\Client\ClientExceptionInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 

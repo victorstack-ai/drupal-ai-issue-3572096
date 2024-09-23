@@ -2,10 +2,10 @@
 
 namespace Drupal\ai_automator\PluginBaseClasses;
 
-use Drupal\ai\OperationType\TextToImage\TextToImageInput;
-use Drupal\ai_automator\Traits\FileHelperTrait;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\ai\OperationType\TextToImage\TextToImageInput;
+use Drupal\ai_automator\Traits\FileHelperTrait;
 
 /**
  * This is a base class that can be used for image generators.

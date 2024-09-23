@@ -2,6 +2,8 @@
 
 namespace Drupal\provider_anthropic\Plugin\AiProvider;
 
+use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
 use Drupal\ai\Enum\AiModelCapability;
@@ -12,8 +14,6 @@ use Drupal\ai\OperationType\Chat\ChatInterface;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\ChatOutput;
 use Drupal\ai\Traits\OperationType\ChatTrait;
-use Drupal\Core\Config\ImmutableConfig;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Symfony\Component\Yaml\Yaml;
 use WpAi\Anthropic\AnthropicAPI;
 
@@ -53,7 +53,7 @@ class AnthropicProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function getConfiguredModels(string $operation_type = NULL, array $capabilities = []): array {
+  public function getConfiguredModels(?string $operation_type = NULL, array $capabilities = []): array {
     // No complex JSON support.
     if (in_array(AiModelCapability::ChatJsonOutput, $capabilities)) {
       return [
@@ -75,7 +75,7 @@ class AnthropicProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
-  public function isUsable(string $operation_type = NULL, array $capabilities = []): bool {
+  public function isUsable(?string $operation_type = NULL, array $capabilities = []): bool {
     // If its not configured, it is not usable.
     if (!$this->getConfig()->get('api_key')) {
       return FALSE;

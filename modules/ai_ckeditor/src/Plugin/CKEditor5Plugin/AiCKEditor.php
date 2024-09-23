@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Drupal\ai_ckeditor\Plugin\CKEditor5Plugin;
 
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Form\SubformState;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\Url;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai_ckeditor\PluginManager\AiCKEditorPluginManager;
 use Drupal\ckeditor5\Plugin\CKEditor5PluginConfigurableInterface;
 use Drupal\ckeditor5\Plugin\CKEditor5PluginConfigurableTrait;
 use Drupal\ckeditor5\Plugin\CKEditor5PluginDefault;
 use Drupal\ckeditor5\Plugin\CKEditor5PluginDefinition;
-use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Form\SubformState;
-use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\Core\Url;
 use Drupal\editor\EditorInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 

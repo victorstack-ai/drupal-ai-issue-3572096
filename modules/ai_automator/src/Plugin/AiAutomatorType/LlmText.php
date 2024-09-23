@@ -2,12 +2,12 @@
 
 namespace Drupal\ai_automator\Plugin\AiAutomatorType;
 
-use Drupal\ai_automator\Attribute\AiAutomatorType;
-use Drupal\ai_automator\PluginBaseClasses\ComplexTextChat;
-use Drupal\ai_automator\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\ai_automator\Attribute\AiAutomatorType;
+use Drupal\ai_automator\PluginBaseClasses\ComplexTextChat;
+use Drupal\ai_automator\PluginInterfaces\AiAutomatorTypeInterface;
 
 /**
  * The rules for a text field.

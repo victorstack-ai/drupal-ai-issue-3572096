@@ -2,10 +2,10 @@
 
 namespace Drupal\ai_automator\PluginBaseClasses;
 
-use Drupal\ai\OperationType\Chat\ChatInput;
-use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\ai\OperationType\Chat\ChatInput;
+use Drupal\ai\OperationType\Chat\ChatMessage;
 
 /**
  * This is a base class that can be used for LLMs simple boolean rules.

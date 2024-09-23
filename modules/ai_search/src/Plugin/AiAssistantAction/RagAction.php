@@ -2,10 +2,6 @@
 
 namespace Drupal\ai_search\Plugin\AiAssistantAction;
 
-use Drupal\ai\OperationType\Chat\ChatInput;
-use Drupal\ai\OperationType\Chat\ChatMessage;
-use Drupal\ai_assistant_api\Attribute\AiAssistantAction;
-use Drupal\ai_assistant_api\Base\AiAssistantActionBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformStateInterface;
@@ -13,6 +9,10 @@ use Drupal\Core\Render\Renderer;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TempStore\PrivateTempStoreFactory;
+use Drupal\ai\OperationType\Chat\ChatInput;
+use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai_assistant_api\Attribute\AiAssistantAction;
+use Drupal\ai_assistant_api\Base\AiAssistantActionBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**

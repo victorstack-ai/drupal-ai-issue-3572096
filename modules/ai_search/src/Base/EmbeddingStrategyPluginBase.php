@@ -2,14 +2,14 @@
 
 namespace Drupal\ai_search\Base;
 
-use Drupal\ai\AiProviderPluginManager;
-use Drupal\ai\Plugin\ProviderProxy;
-use Drupal\ai\Utility\TextChunker;
-use Drupal\ai_search\EmbeddingStrategyInterface;
 use Drupal\Core\Entity\EntityTypeManager;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\Plugin\ProviderProxy;
+use Drupal\ai\Utility\TextChunker;
+use Drupal\ai_search\EmbeddingStrategyInterface;
 use League\HTMLToMarkdown\Converter\TableConverter;
 use League\HTMLToMarkdown\HtmlConverter;
 use Symfony\Component\DependencyInjection\ContainerInterface;

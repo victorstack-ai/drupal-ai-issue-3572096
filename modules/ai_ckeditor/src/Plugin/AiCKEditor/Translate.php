@@ -2,12 +2,12 @@
 
 namespace Drupal\ai_ckeditor\Plugin\AICKEditor;
 
-use Drupal\ai_ckeditor\AiCKEditorPluginBase;
-use Drupal\ai_ckeditor\Attribute\AiCKEditor;
-use Drupal\ai_ckeditor\Command\AiRequestCommand;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\ai_ckeditor\AiCKEditorPluginBase;
+use Drupal\ai_ckeditor\Attribute\AiCKEditor;
+use Drupal\ai_ckeditor\Command\AiRequestCommand;
 use Drupal\taxonomy\Entity\Term;
 
 /**
