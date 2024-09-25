@@ -16,6 +16,7 @@ use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai_translate\TextExtractorInterface;
+use Drupal\filter\Entity\FilterFormat;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -214,8 +215,20 @@ class AiTranslateController extends ControllerBase {
     LanguageInterface $langTo,
     array &$context,
   ) {
-    $singleText['translated'] = $this->translateContent(
-      $singleText['value'], $langFrom, $langTo);
+    // Translate the content.
+    $translated_text = $this->translateContent(
+      $singleText['value'], $langFrom, $langTo
+    );
+
+    // Checks if the field allows HTML and decodes the HTML entities.
+    if (isset($singleText['format'])) {
+      $format = $singleText['format'];
+      if ($format_entity = FilterFormat::load($format)) {
+        $translated_text = html_entity_decode($translated_text);
+      }
+    }
+
+    $singleText['translated'] = $translated_text;
     $context['results']['processedTranslations'][] = $singleText;
   }
 
