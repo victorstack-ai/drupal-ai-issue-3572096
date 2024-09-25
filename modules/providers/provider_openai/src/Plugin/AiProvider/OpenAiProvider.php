@@ -184,7 +184,7 @@ class OpenAiProvider extends AiProviderClientBase implements
         'constraints' => [
           'options' => [
             'vivid',
-            'neutral',
+            'natural',
           ],
         ],
       ];
