@@ -203,7 +203,7 @@ class RagAction extends AiAssistantActionBase {
    * Reuse rag action.
    */
   protected function reuseRagAction($index) {
-    $this->setOutputContext('rag', $this->getRagContextHistory()[$index]['response']);
+    $this->setOutputContext('rag', $this->getRagContextHistory()[$index]['response'] ?? '');
   }
 
   /**

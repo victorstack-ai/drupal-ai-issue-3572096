@@ -16,6 +16,7 @@ use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInterface;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsOutput;
 use Drupal\ai\Traits\OperationType\ChatTrait;
+use Drupal\provider_ollama\OllamaChatMessageIterator;
 use Drupal\provider_ollama\OllamaControlApi;
 use GuzzleHttp\Client as GuzzleClient;
 use OpenAI\Client;
@@ -215,11 +216,21 @@ class OllamaProvider extends AiProviderClientBase implements
           'content' => $this->chatSystemRole,
         ];
       }
+      /** @var \Drupal\ai\OperationType\Chat\ChatMessage $message */
       foreach ($input->getMessages() as $message) {
-        $chat_input[] = [
+
+        $images = [];
+        if (count($message->getImages())) {
+          foreach ($message->getImages() as $image) {
+            $images[] = $image->getAsBase64EncodedString('');
+          }
+        }
+        $new_message = [
           'role' => $message->getRole(),
           'content' => $message->getText(),
+          'images' => $images,
         ];
+        $chat_input[] = $new_message;
       }
     }
     $payload = [
@@ -227,7 +238,15 @@ class OllamaProvider extends AiProviderClientBase implements
       'messages' => $chat_input,
     ] + $this->configuration;
     $response = $this->client->chat()->create($payload);
-    $message = new ChatMessage($response['choices'][0]['message']['role'], $response['choices'][0]['message']['content']);
+
+    if ($this->streamed) {
+      $response = $this->client->chat()->createStreamed($payload);
+      $message = new OllamaChatMessageIterator($response);
+    }
+    else {
+      $response = $this->client->chat()->create($payload)->toArray();
+      $message = new ChatMessage($response['choices'][0]['message']['role'], $response['choices'][0]['message']['content']);
+    }
     return new ChatOutput($message, $response, []);
   }
 
