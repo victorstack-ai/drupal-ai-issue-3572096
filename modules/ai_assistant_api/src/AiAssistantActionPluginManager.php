@@ -79,6 +79,9 @@ final class AiAssistantActionPluginManager extends DefaultPluginManager {
   public function listAllContexts(AiAssistantInterface $assistant, string $thread_id, $configs = []): array {
     $contexts = [];
     foreach ($this->getDefinitions() as $definition) {
+      if (!in_array($definition['id'], $assistant->get('actions_enabled'))) {
+        continue;
+      }
       $instance = $this->createInstance($definition['id'], $configs[$definition['id']] ?? []);
       $instance->setThreadId($thread_id);
       $instance->setAssistant($assistant);

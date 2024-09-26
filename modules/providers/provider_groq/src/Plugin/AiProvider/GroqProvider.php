@@ -52,16 +52,20 @@ class GroqProvider extends AiProviderClientBase implements
     if (in_array(AiModelCapability::ChatWithImageVision, $capabilities)) {
       return [];
     }
-    // No complex JSON support.
-    if (in_array(AiModelCapability::ChatJsonOutput, $capabilities)) {
-      return [];
-    }
 
     $response = $this->getClient()->models()->list()->toArray();
     $models = [];
     if (isset($response['data'])) {
       foreach ($response['data'] as $model) {
         $models[$model['id']] = $model['id'];
+      }
+    }
+    // Just one complex JSON support.
+    if (in_array(AiModelCapability::ChatJsonOutput, $capabilities)) {
+      foreach ($models as $model_id => $model_name) {
+        if (strpos($model_id, '3.2-90b') === FALSE) {
+          unset($models[$model_id]);
+        }
       }
     }
     return $models;
