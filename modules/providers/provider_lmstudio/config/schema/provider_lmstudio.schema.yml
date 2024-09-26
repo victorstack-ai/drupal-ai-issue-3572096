@@ -1,5 +1,5 @@
 provider_lmstudio.settings:
-  type: mapping
+  type: config_object
   label: 'LM Studio Settings'
   mapping:
     host_name:

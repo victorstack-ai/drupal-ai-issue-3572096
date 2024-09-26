@@ -1,5 +1,5 @@
 provider_openai.settings:
-  type: mapping
+  type: config_object
   label: 'OpenAI Settings'
   mapping:
     api_key:
@@ -11,6 +11,3 @@ provider_openai.settings:
     host:
       type: string
       label: 'The host to use for the API requests.'
-    _core:
-      type: _core_config_info
-      label: 'Core config info'

@@ -1,5 +1,5 @@
 provider_groq.settings:
-  type: mapping
+  type: config_object
   label: 'Groq Settings'
   mapping:
     api_key:

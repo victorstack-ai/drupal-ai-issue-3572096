@@ -1,5 +1,5 @@
 provider_huggingface.settings:
-  type: mapping
+  type: config_object
   label: 'Huggingface AI Settings'
   mapping:
     api_key:

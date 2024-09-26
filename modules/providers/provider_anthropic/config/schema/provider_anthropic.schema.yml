@@ -1,5 +1,5 @@
 provider_anthropic.settings:
-  type: mapping
+  type: config_object
   label: 'Anthropic Settings'
   mapping:
     api_key:

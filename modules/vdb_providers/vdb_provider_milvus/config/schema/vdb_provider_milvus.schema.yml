@@ -1,5 +1,5 @@
 vdb_provider_milvus.settings:
-  type: mapping
+  type: config_object
   label: 'Milvus Settings'
   mapping:
     api_key:

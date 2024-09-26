@@ -1,5 +1,5 @@
 provider_ollama.settings:
-  type: mapping
+  type: config_object
   label: 'Ollama Settings'
   mapping:
     host_name:

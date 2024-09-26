@@ -1,5 +1,5 @@
 ai_logging.settings:
-  type: mapping
+  type: config_object
   label: 'AI Logging Settings'
   mapping:
     prompt_logging:
