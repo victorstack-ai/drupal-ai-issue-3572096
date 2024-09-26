@@ -10,6 +10,7 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\ai\AiProviderInterface;
+use Drupal\ai\Exception\AiSetupFailureException;
 use Drupal\ai\Utility\CastUtility;
 use Drupal\key\KeyRepositoryInterface;
 use Psr\Http\Client\ClientInterface;
@@ -420,6 +421,21 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
       $values[$key] = $value;
     }
     return $values;
+  }
+
+  /**
+   * Load the provider API key from the key module.
+   *
+   * @return string
+   *   The API key.
+   */
+  protected function loadApiKey(): string {
+    $key = $this->keyRepository->getKey($this->getConfig()->get('api_key'));
+    // If it came here, but the key is missing, something is wrong with the env.
+    if (!$key || !($api_key = $key->getKeyValue())) {
+      throw new AiSetupFailureException(sprintf('Could not load the %s API key, please check your environment settings or your setup key.', $this->getPluginDefinition()['label']));
+    }
+    return $api_key;
   }
 
 }

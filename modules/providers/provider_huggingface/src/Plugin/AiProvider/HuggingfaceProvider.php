@@ -244,16 +244,6 @@ class HuggingfaceProvider extends AiProviderClientBase implements
   }
 
   /**
-   * Load API key from key module.
-   *
-   * @return string
-   *   The API key.
-   */
-  protected function loadApiKey(): string {
-    return $this->keyRepository->getKey($this->getConfig()->get('api_key'))->getKeyValue();
-  }
-
-  /**
    * {@inheritdoc}
    */
   public function maxEmbeddingsInput($model_id = ''): int {

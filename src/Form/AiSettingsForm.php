@@ -6,6 +6,7 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\Enum\AiModelCapability;
+use Drupal\ai\Exception\AiSetupFailureException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -96,6 +97,7 @@ class AiSettingsForm extends ConfigFormBase {
     $operation_types = $this->providerManager->getOperationTypes();
     $default_providers = $config->get('default_providers') ?? [];
     // Get all providers.
+    /** @var \Drupal\ai\AiProviderInterface[] $providers */
     $providers = [];
     foreach ($this->providerManager->getDefinitions() as $id => $definition) {
       $providers[$id] = $this->providerManager->createInstance($id);
@@ -142,12 +144,28 @@ class AiSettingsForm extends ConfigFormBase {
 
       // Add the model id field if the provider is set.
       if ($default_provider && !empty($providers[$default_provider])) {
-        $models = $providers[$default_provider]->getConfiguredModels($operation_type['actual_type'] ?? $operation_type['id'], $filters);
+        $models = [];
+        try {
+          if ($providers[$default_provider]->isUsable()) {
+            $models = $providers[$default_provider]->getConfiguredModels($operation_type['actual_type'] ?? $operation_type['id'], $filters);
+          }
+          else {
+            $this->messenger()->addWarning($this->t('The default %operation provider (%provider_id) is not currently usable. Please review your configuration.', [
+              '%operation' => $operation_type['label'],
+              '%provider_id' => $default_provider,
+            ]));
+          }
+        }
+        catch (AiSetupFailureException $e) {
+          // Don't crash if the provider is not fully configured.
+          $this->messenger()->addError($e->getMessage());
+        }
         $form['default_providers'][$operation_type['id']]['model']['model__' . $operation_type['id']] = [
           '#type' => 'select',
           '#title' => $this->t('Default Model'),
           '#default_value' => $default_providers[$operation_type['id']]['model_id'] ?? '',
           '#options' => $models,
+          '#empty_option' => $this->t('No available models'),
         ];
       }
     }

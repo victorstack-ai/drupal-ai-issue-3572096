@@ -15,7 +15,6 @@ use Drupal\ai\Enum\AiProviderCapability;
 use Drupal\ai\Exception\AiQuotaException;
 use Drupal\ai\Exception\AiRateLimitException;
 use Drupal\ai\Exception\AiResponseErrorException;
-use Drupal\ai\Exception\AiSetupFailureException;
 use Drupal\ai\Exception\AiUnsafePromptException;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
@@ -258,21 +257,6 @@ class OpenAiProvider extends AiProviderClientBase implements
 
       $this->client = $client->make();
     }
-  }
-
-  /**
-   * Load API key from key module.
-   *
-   * @return string
-   *   The API key.
-   */
-  protected function loadApiKey(): string {
-    $key = $this->keyRepository->getKey($this->getConfig()->get('api_key'))->getKeyValue();
-    // If it came here, but the key is missing, something is wrong with env.
-    if (!$key) {
-      throw new AiSetupFailureException('We could not load your OpenAI Key at all, please check your environment settings or your setup key.');
-    }
-    return $key;
   }
 
   /**
