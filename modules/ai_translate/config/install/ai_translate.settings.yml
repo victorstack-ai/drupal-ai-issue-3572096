@@ -12,7 +12,7 @@ prompt: >1
   5. You may translate value and title fields in button and submit elements.
   6. You may translate title in abbr, iframe, label and fieldset elements.
   7. You may change HTML if it makes sense when moving from a LTR (left-to-right) language such as German to a RTL (right-to-left) language like Persian.
-  8. Only respond with the actual translation and nothing else. No greeting or any other pleasantries.
+  8. Only respond with the actual translation and nothing else. No greeting or any other pleasantries, if there are any cultural references or idioms, please provide a suitable equivalent.
   The context text ``` {{ input_text }} ```
 reference_defaults:
   block_content: true

@@ -7,9 +7,11 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Link;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Template\TwigEnvironment;
+use Drupal\ai\AiProviderPluginManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -48,6 +50,20 @@ class AiTranslateSettingsForm extends ConfigFormBase {
   protected ModuleHandlerInterface $moduleHandler;
 
   /**
+   * Language Manager.
+   *
+   * @var Drupal\Core\Language\LanguageManagerInterface
+   */
+  protected LanguageManagerInterface $languageManager;
+
+  /**
+   * Provider Manager.
+   *
+   * @var Drupal\ai\AiProviderPluginManager
+   */
+  protected AiProviderPluginManager $providerManager;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
@@ -55,6 +71,8 @@ class AiTranslateSettingsForm extends ConfigFormBase {
     $instance->entityTypeManager = $container->get('entity_type.manager');
     $instance->twig = $container->get('twig');
     $instance->moduleHandler = $container->get('module_handler');
+    $instance->languageManager = $container->get('language_manager');
+    $instance->providerManager = $container->get('ai.provider');
     return $instance;
   }
 
@@ -81,12 +99,43 @@ class AiTranslateSettingsForm extends ConfigFormBase {
     // Load config.
     $config = $this->config(static::CONFIG_NAME);
 
-    $form['prompt'] = [
-      '#title' => $this->t('Translation prompt'),
-      '#type' => 'textarea',
-      '#default_value' => $config->get('prompt') ?? '',
-      '#description' => $this->t('Prompt used for translating the content.'),
+    $chat_models = $this->providerManager->getSimpleProviderModelOptions('chat');
+    array_shift($chat_models);
+    array_splice($chat_models, 0, 1);
+    $form['#tree'] = TRUE;
+
+    $example_prompt = $config->get('prompt');
+
+    $languages = $this->languageManager->getLanguages();
+    foreach ($languages as $langcode => $language) {
+      $form[$langcode] = [
+        '#type' => 'fieldset',
+        '#title' => $this->t('Translate to @lang', ['@lang' => $language->getName()]),
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+      ];
+      $form[$langcode]['model'] = [
+        '#type' => 'select',
+        '#options' => $chat_models,
+        "#empty_option" => $this->t('-- Default from AI module (chat) --'),
+        '#disabled' => count($chat_models) == 0,
+        '#default_value' => $config->get($langcode . '_model'),
+        '#title' => $this->t('AI model used for translating to @lang', ['@lang' => $language->getName()]),
+      ];
+      $form[$langcode]['prompt'] = [
+        '#title' => $this->t('Translation prompt for translating to @lang', ['@lang' => $language->getName()]),
+        '#type' => 'textarea',
+        '#required' => TRUE,
+        '#default_value' => $config->get($langcode . '_prompt') ?? $example_prompt,
+      ];
+    }
+
+    $example_prompt = '<h3>Example prompt</h3><pre> ' . $example_prompt . ' </pre>';
+    $form['example_prompt'] = [
+      '#type' => 'markup',
+      '#markup' => $example_prompt,
     ];
+
     $helpText = $this->moduleHandler->moduleExists('help')
       ? Link::createFromRoute($this->t('Read more'), 'help.help_topic',
         ['id' => 'ai_translate.prompt'])
@@ -133,19 +182,22 @@ class AiTranslateSettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    try {
-      if (strlen($this->twig->renderInline($form_state->getValue('prompt'), [
-        'source_lang_name' => 'Test 1',
-        'dest_lang_name' => 'Test 2',
-        'input_text' => 'Text to translate',
-      ])) < self::MINIMAL_PROMPT_LENGTH) {
-        $form_state->setErrorByName('prompt',
-          $this->t('Prompt cannot be shorter than @num characters',
-          ['@num' => self::MINIMAL_PROMPT_LENGTH]));
+    $languages = $this->languageManager->getLanguages();
+    foreach ($languages as $langcode => $language) {
+      try {
+        if (strlen($this->twig->renderInline($form_state->getValue($langcode)['prompt'], [
+          'source_lang_name' => 'Test 1',
+          'dest_lang_name' => 'Test 2',
+          'input_text' => 'Text to translate',
+        ])) < self::MINIMAL_PROMPT_LENGTH) {
+          $form_state->setErrorByName('prompt',
+            $this->t('Prompt cannot be shorter than @num characters',
+              ['@num' => self::MINIMAL_PROMPT_LENGTH]));
+        }
       }
-    }
-    catch (\Exception $e) {
-      $form_state->setErrorByName('prompt', $e->getMessage());
+      catch (\Exception $e) {
+        $form_state->setErrorByName('prompt', $e->getMessage());
+      }
     }
   }
 
@@ -153,10 +205,15 @@ class AiTranslateSettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $this->config(static::CONFIG_NAME)
-      ->set('prompt', $form_state->getValue('prompt'))
-      ->set('reference_defaults', array_keys(array_filter($form_state->getValue('reference_defaults'))))
-      ->save();
+    $config = $this->config(static::CONFIG_NAME);
+    $config->set('prompt', $form_state->getValue('prompt'));
+    $config->set('reference_defaults', array_keys(array_filter($form_state->getValue('reference_defaults'))));
+    $languages = $this->languageManager->getLanguages();
+    foreach ($languages as $langcode => $language) {
+      $config->set($langcode . '_model', $form_state->getValue($langcode)['model']);
+      $config->set($langcode . '_prompt', $form_state->getValue($langcode)['prompt']);
+    }
+    $config->save();
     parent::submitForm($form, $form_state);
   }
 

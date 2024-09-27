@@ -2,8 +2,6 @@
 
 namespace Drupal\ai_translate\Controller;
 
-use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
-use Drupal\Component\Plugin\Exception\PluginException;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Controller\ControllerBase;
@@ -57,6 +55,13 @@ class AiTranslateController extends ControllerBase {
   protected TextExtractorInterface $textExtractor;
 
   /**
+   * The module handler for the hooks.
+   *
+   * @var Drupal\Core\Extension\ModuleHandler
+   */
+  protected $moduleHandler;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
@@ -67,6 +72,7 @@ class AiTranslateController extends ControllerBase {
     $instance->aiProviderManager = $container->get('ai.provider');
     $instance->twig = $container->get('twig');
     $instance->textExtractor = $container->get('ai_translate.text_extractor');
+    $instance->moduleHandler = $container->get('module_handler');
     return $instance;
   }
 
@@ -150,20 +156,13 @@ class AiTranslateController extends ControllerBase {
     LanguageInterface $langFrom,
     LanguageInterface $langTo,
   ) {
-    static $provider;
-    static $modelId;
-    if (empty($provider)) {
-      $default_providers = $this->aiConfig->get('default_providers') ?? [];
-      $modelId = $default_providers['chat']['model_id'];
-      try {
-        $provider = $this->aiProviderManager->createInstance(
-          $default_providers['chat']['provider_id']);
-      }
-      catch (InvalidPluginDefinitionException | PluginException) {
-        return '';
-      }
+    $preferred_model = $this->config('ai_translate.settings')->get($langTo->id() . '_model');
+    $provider_config = $this->getSetProvider($preferred_model, 'chat');
+    $provider = $provider_config['provider_id'];
+    $prompt = $this->config('ai_translate.settings')->get($langTo->id() . '_prompt');
+    if (empty($prompt)) {
+      $prompt = $this->config('ai_translate.settings')->get('prompt');
     }
-    $prompt = $this->config('ai_translate.settings')->get('prompt');
     $promptText = $this->twig->renderInline($prompt, [
       'source_lang' => $langFrom->id(),
       'source_lang_name' => $langFrom->getName(),
@@ -176,8 +175,12 @@ class AiTranslateController extends ControllerBase {
         new chatMessage('system', 'You are helpful translator. '),
         new chatMessage('user', $promptText),
       ]);
+
+      // Allow other modules to take over.
+      $this->moduleHandler->alter('ai_translate_translation', $messages, $provider, $provider_config['model_id']);
+
       /** @var /Drupal\ai\OperationType\Chat\ChatOutput $message */
-      $message = $provider->chat($messages, $modelId)->getNormalized();
+      $message = $provider->chat($messages, $provider_config['model_id'])->getNormalized();
     }
     catch (GuzzleException $exception) {
       // Error handling for the API call.
@@ -185,6 +188,44 @@ class AiTranslateController extends ControllerBase {
     }
     $cleaned = trim(trim($message->getText(), '```'), ' ');
     return trim($cleaned, '"');
+  }
+
+  /**
+   * Get the preferred provider if configured, else take the default one.
+   *
+   * @param string $preferred_model
+   *   The preferred model as a string.
+   * @param string $operationType
+   *   The operation type (like chat).
+   *
+   * @return array|null
+   *   An array with the model and provider.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\PluginException
+   *   An exception.
+   */
+  public function getSetProvider($preferred_model, $operationType) {
+    // Check if there is a preferred model.
+    $provider = NULL;
+    $model = NULL;
+    if ($preferred_model) {
+      $provider = $this->aiProviderManager->loadProviderFromSimpleOption($preferred_model);
+      $model = $this->aiProviderManager->getModelNameFromSimpleOption($preferred_model);
+    }
+    else {
+      // Get the default provider.
+      $default_provider = $this->aiProviderManager->getDefaultProviderForOperationType($operationType);
+      if (empty($default_provider['provider_id'])) {
+        // If we got nothing return NULL.
+        return NULL;
+      }
+      $provider = $this->aiProviderManager->createInstance($default_provider['provider_id']);
+      $model = $default_provider['model_id'];
+    }
+    return [
+      'provider_id' => $provider,
+      'model_id' => $model,
+    ];
   }
 
   /**
@@ -223,7 +264,7 @@ class AiTranslateController extends ControllerBase {
     // Checks if the field allows HTML and decodes the HTML entities.
     if (isset($singleText['format'])) {
       $format = $singleText['format'];
-      if ($format_entity = FilterFormat::load($format)) {
+      if (FilterFormat::load($format)) {
         $translated_text = html_entity_decode($translated_text);
       }
     }

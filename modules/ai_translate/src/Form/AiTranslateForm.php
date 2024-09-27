@@ -7,12 +7,18 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Link;
+use Drupal\ai\AiProviderPluginManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Defines the class for Ai Translate Form.
  */
 class AiTranslateForm extends FormBase {
+
+  /**
+   * Config settings.
+   */
+  const CONFIG_NAME = 'ai_translate.settings';
 
   /**
    * The entity type manager.
@@ -29,16 +35,26 @@ class AiTranslateForm extends FormBase {
   protected $languageManager;
 
   /**
+   * The AI Provider service.
+   *
+   * @var \Drupal\ai\AiProviderPluginManager
+   */
+  protected $providerManager;
+
+  /**
    * Constructor for the class.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
    * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
    *   The language manager.
+   * @param \Drupal\ai\AiProviderPluginManager $provider_manager
+   *   The AI provider manager.
    */
-  final public function __construct(EntityTypeManagerInterface $entity_type_manager, LanguageManagerInterface $language_manager) {
+  final public function __construct(EntityTypeManagerInterface $entity_type_manager, LanguageManagerInterface $language_manager, AiProviderPluginManager $provider_manager) {
     $this->entityTypeManager = $entity_type_manager;
     $this->languageManager = $language_manager;
+    $this->providerManager = $provider_manager;
   }
 
   /**
@@ -48,6 +64,7 @@ class AiTranslateForm extends FormBase {
     return new static(
       $container->get('entity_type.manager'),
       $container->get('language_manager'),
+      $container->get('ai.provider')
     );
   }
 
@@ -85,11 +102,23 @@ class AiTranslateForm extends FormBase {
     $entity_type = $entity->getEntityTypeId();
     $lang_from = $entity->getUntranslated()->language()->getId();
 
+    $config = $this->config(static::CONFIG_NAME);
+
     foreach ($languages as $langcode => $language) {
       $option = array_shift($overview['#rows']);
 
       if ($lang_from !== $langcode && !$entity->hasTranslation($langcode)) {
-        $additional = Link::createFromRoute($this->t('Translate using AI'),
+        $model = $config->get($langcode . '_model');
+        $parts = explode('__', $model);
+        if (empty($parts[0])) {
+          $default_model = $this->providerManager->getSimpleDefaultProviderOptions('chat');
+          $parts1 = explode('__', $default_model);
+          $ai_model = $parts1[1];
+        }
+        else {
+          $ai_model = $parts[1];
+        }
+        $additional = Link::createFromRoute($this->t('Translate using @ai', ['@ai' => $ai_model]),
           'ai_translate.translate_content', [
             'entity_type' => $entity_type,
             'entity_id' => $entity_id,
