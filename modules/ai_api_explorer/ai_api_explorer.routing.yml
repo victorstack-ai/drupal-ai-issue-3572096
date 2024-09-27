@@ -82,3 +82,10 @@ ai_api_explorer.vector_db_query:
     _form: 'Drupal\ai_api_explorer\Form\VectorDbGenerationForm'
   requirements:
     _permission: 'access ai prompt'
+ai_api_explorer.translate_text:
+  path: '/admin/config/ai/explorers/translate-text'
+  defaults:
+    _title: 'Text Translation Explorer'
+    _form: 'Drupal\ai_api_explorer\Form\TranslateTextForm'
+  requirements:
+    _permission: 'access ai prompt'

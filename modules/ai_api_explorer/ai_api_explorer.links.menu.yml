@@ -63,6 +63,12 @@ ai_api_explorer.image_classification:
   parent: ai_api_explorer.main
   route_name: ai_api_explorer.image_classification
   weight: 9
+ai_api_explorer.translate_text:
+  title: Translate Text Explorer
+  description: Contains a form where you can test text translations.
+  parent: ai_api_explorer.main
+  route_name: ai_api_explorer.translate_text
+  weight: 10
 ai_api_explorer.vector_db_form:
   title: Vector DB Explorer
   description: Contains a form where you can try out the results you get back from the vector databases.
