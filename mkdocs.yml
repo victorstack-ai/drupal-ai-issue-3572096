@@ -29,6 +29,8 @@ nav:
       - Milvus: modules/vdb_providers/vdb_provider_milvus/index.md
     - AI Content: modules/ai_content/index.md
     - AI Automators: modules/ai_automator/index.md
+    - AI Translate: modules/ai_translate/README.md
+    - AI Eca: modules/ai_eca/README.md
 
 docs_dir: docs
 site_dir: site
