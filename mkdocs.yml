@@ -17,6 +17,7 @@ nav:
       - Audio-To-Audio Call: developers/call_audio_to_audio.md
       - Speech-To-Speech Call: developers/call_speech_to_speech.md
       - Image Classification Call: developers/call_image_classification.md
+      - Translate Text Call: developers/call_translate_text.md
     - Develop an AI Provider: developers/writing_an_ai_provider.md
     - Develop a third-party module: developers/develop_third_party_module.md
     - Contribute to the AI module: developers/contribute.md

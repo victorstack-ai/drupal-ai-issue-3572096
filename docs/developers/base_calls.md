@@ -29,3 +29,4 @@ The AI Logging module or the AI External Moderation example of modules using the
 * [Audio-To-Audio Call](call_audio_to_audio.md)
 * [Speech-To-Speech Call](call_speech_to_speech.md)
 * [Image Classification Call](call_image_classification.md)
+* [Text translations Call](call_translate_text.md)
