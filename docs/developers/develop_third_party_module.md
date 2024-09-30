@@ -133,7 +133,7 @@ $response = $ai_provider->chat($some_messages, 'model')->getNormalized();
 if (is_object($response) && $response instanceof StreamedChatMessageIteratorInterface) {
   // Streamed response.
   return new StreamedResponse(function () use ($response) {
-    // Iteratate the response.
+    // Iterate the response.
     foreach ($response as $message) {
       // Echo and flush.
       echo $message->getText();
