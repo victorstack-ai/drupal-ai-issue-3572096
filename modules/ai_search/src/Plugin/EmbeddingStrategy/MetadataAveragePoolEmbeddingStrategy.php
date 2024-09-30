@@ -36,13 +36,14 @@ class MetadataAveragePoolEmbeddingStrategy extends MetadataEmbeddingBase {
     $raw_embeddings = $this->getRawEmbeddings($chunks);
     $embedding = $this->averagePooling($raw_embeddings);
 
-    return [[
-      'id' => $search_api_item->getId(),
-      'values' => $embedding,
-      'metadata' => [
-        'content' => $title . $main_fields . $metadata,
+    return [
+      [
+        'id' => $search_api_item->getId() . ':0',
+        'values' => $embedding,
+        'metadata' => [
+          'content' => $title . $main_fields . $metadata,
+        ],
       ],
-    ],
     ];
   }
 

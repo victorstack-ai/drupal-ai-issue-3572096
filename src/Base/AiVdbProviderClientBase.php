@@ -14,6 +14,7 @@ use Drupal\ai\AiVdbProviderInterface;
 use Drupal\ai\Enum\VdbSimilarityMetrics;
 use Drupal\ai_search\AiVdbProviderSearchApiInterface;
 use Drupal\ai_search\EmbeddingStrategyInterface;
+use Drupal\ai_search\Plugin\Exception\EmbeddingStrategyException;
 use Drupal\key\KeyRepositoryInterface;
 use Drupal\search_api\IndexInterface;
 use Drupal\search_api\Item\FieldInterface;
@@ -256,6 +257,12 @@ abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, AiVdbP
         $item
       );
       foreach ($embeddings as $embedding) {
+        // Ensure consistent embedding structure as per
+        // EmbeddingStrategyInterface.
+        $this->validateRetrievedEmbedding($embedding);
+
+        // Merge the base array structure with the individual chunk array
+        // structure and add additional details.
         $embedding = array_merge_recursive($embedding, $itemBase);
         $data['drupal_long_id'] = $embedding['id'];
         $data['drupal_entity_id'] = $item->getId();
@@ -274,6 +281,32 @@ abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, AiVdbP
     }
 
     return $successfulItemIds;
+  }
+
+  /**
+   * Validate that the retrieving embedding chunks match the expected format.
+   *
+   * @param array $embedding
+   *   The individual embedding returned in the array of embeddings from the
+   *   EmbeddingStrategyInterface::getEmbedding() method.
+   */
+  public function validateRetrievedEmbedding(array $embedding): void {
+    if (!isset($embedding['id'])) {
+      throw new EmbeddingStrategyException('The individual embedding chunks must have an id.');
+    }
+    if (!str_contains($embedding['id'], ':')) {
+      throw new EmbeddingStrategyException('The individual embedding IDs must have a unique key per chunk even if only one chunk is returned.');
+    }
+    $id_parts = explode(':', $embedding['id']);
+    if (empty($id_parts[0]) || empty($id_parts[1])) {
+      throw new EmbeddingStrategyException('The individual embedding ID prefix and suffix must be filled in.');
+    }
+    if (!isset($embedding['values'])) {
+      throw new EmbeddingStrategyException('The individual embedding chunks must have the vector values.');
+    }
+    if (!isset($embedding['metadata'])) {
+      throw new EmbeddingStrategyException('The individual embedding chunks must have an attached metadata array.');
+    }
   }
 
   /**

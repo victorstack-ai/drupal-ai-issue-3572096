@@ -43,7 +43,7 @@ class MetadataEmbeddingBase extends EmbeddingStrategyPluginBase implements Embed
     $embeddings = [];
     foreach ($chunks as $key => $chunk) {
       $embeddings[] = [
-        'id' => $search_api_item->getId(),
+        'id' => $search_api_item->getId() . ':' . $key,
         'values' => $raw_embeddings[$key],
         'metadata' => [
           'content' => $chunk,
