@@ -127,8 +127,8 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     if (!isset($config['database_settings'])) {
       $config['database_settings'] = [];
     }
-    if (!isset($config['embeddings_strategy'])) {
-      $config['embeddings_strategy'] = NULL;
+    if (!isset($config['embedding_strategy'])) {
+      $config['embedding_strategy'] = NULL;
     }
     return $config;
   }
@@ -251,6 +251,18 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
   /**
    * {@inheritdoc}
    */
+  public function setConfiguration(array $configuration) {
+    $this->configuration = $configuration + $this->defaultConfiguration();
+    if ($this->configuration['embedding_strategy_container']) {
+      $this->configuration = array_merge($this->configuration, $this->configuration['embedding_strategy_container']);
+      unset($this->configuration['embedding_strategy_container']);
+    }
+    parent::setConfiguration($this->configuration);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function supportsDataType($type) {
     if ($type === 'embeddings') {
       return TRUE;
@@ -278,6 +290,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state): void {
+    $this->setConfiguration($form_state->getValues());
     $vdb_client = $this->vdbProviderManager->createInstance($this->configuration['database']);
     $vdb_client->submitSettingsForm($form, $form_state);
   }
