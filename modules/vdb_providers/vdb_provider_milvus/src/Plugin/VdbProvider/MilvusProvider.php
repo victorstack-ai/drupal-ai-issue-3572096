@@ -6,6 +6,7 @@ use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -182,6 +183,43 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
       return TRUE;
     }
     return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateSettingsForm(array &$form, FormStateInterface $form_state): void {
+    parent::validateSettingsForm($form, $form_state);
+
+    $database_settings = $form_state->getValue('database_settings');
+    if (empty($database_settings['database_name'])) {
+      $form_state->setErrorByName('backend_config][database_name', $this->t('Ensure that your Pinecone API key is correct and that you have created at least one Index in the Pinecone UI.'));
+      return;
+    }
+
+    $described = $this->getClient()->describeCollection(
+      database_name: $database_settings['database_name'],
+      collection_name: $database_settings['collection'],
+    );
+    if (!empty($described['data']) && !empty($described['data']['fields'])) {
+      foreach ($described['data']['fields'] as $field) {
+        if ($field['type'] !== 'FloatVector') {
+          continue;
+        }
+
+        if (!isset($field['params'][0]['key']) || $field['params'][0]['key'] !== 'dim') {
+          continue;
+        }
+
+        $embedding_configuration = $form_state->getValue('embeddings_engine_configuration');
+        if ($embedding_configuration['dimensions'] !== (int) $field['params'][0]['value']) {
+          $form_state->setErrorByName('embeddings_engine_configuration][dimensions', $this->t('The dimensions found in Milvus/Zilliz are "@dimensions" which does not match the dimensions set here of "@here".', [
+            '@dimensions' => (int) $field['params'][0]['value'],
+            '@here' => $embedding_configuration['dimensions'],
+          ]));
+        }
+      }
+    }
   }
 
   /**
