@@ -2,6 +2,7 @@
 
 namespace Drupal\vdb_provider_milvus;
 
+use Drupal\Component\Serialization\Json;
 use GuzzleHttp\Client;
 
 /**
@@ -102,7 +103,7 @@ class MilvusV2 {
     $options['schema']['autoID'] = TRUE;
     $options['schema']['enableDynamicField'] = FALSE;
 
-    return json_decode($this->makeRequest('vectordb/collections/create', [], 'POST', $options), TRUE);
+    return Json::decode($this->makeRequest('vectordb/collections/create', [], 'POST', $options));
   }
 
   /**
@@ -123,7 +124,7 @@ class MilvusV2 {
     if ($database_name && !$this->isZilliz()) {
       $params['dbName'] = $database_name;
     }
-    return json_decode($this->makeRequest('vectordb/collections/drop', [], 'POST', $params), TRUE);
+    return Json::decode($this->makeRequest('vectordb/collections/drop', [], 'POST', $params));
   }
 
   /**
@@ -138,7 +139,7 @@ class MilvusV2 {
   public function listCollections(string $database_name = ''): array {
     // Has to be an object, when empty ¯\_(ツ)_/¯.
     $data = $database_name && !$this->isZilliz() ? ['dbName' => $database_name] : new \stdClass();
-    return json_decode($this->makeRequest('vectordb/collections/list', [], 'POST', $data), TRUE);
+    return Json::decode($this->makeRequest('vectordb/collections/list', [], 'POST', $data));
   }
 
   /**
@@ -162,7 +163,7 @@ class MilvusV2 {
     if ($database_name && !$this->isZilliz()) {
       $params['dbName'] = $database_name;
     }
-    return json_decode($this->makeRequest('vectordb/entities/insert', [], 'POST', $params), TRUE);
+    return Json::decode($this->makeRequest('vectordb/entities/insert', [], 'POST', $params));
   }
 
   /**
@@ -186,7 +187,7 @@ class MilvusV2 {
     if ($database_name && !$this->isZilliz()) {
       $params['dbName'] = $database_name;
     }
-    return json_decode($this->makeRequest('vectordb/entities/delete', [], 'POST', $params), TRUE);
+    return Json::decode($this->makeRequest('vectordb/entities/delete', [], 'POST', $params));
   }
 
   /**
@@ -222,7 +223,7 @@ class MilvusV2 {
     }
 
     $response = $this->makeRequest('vectordb/entities/query', [], 'POST', $params);
-    return json_decode($response, TRUE);
+    return Json::decode($response);
   }
 
   /**
@@ -262,7 +263,7 @@ class MilvusV2 {
     }
 
     $response = $this->makeRequest('vectordb/entities/search', [], 'POST', $params);
-    return json_decode($response, TRUE);
+    return Json::decode($response);
   }
 
   /**
