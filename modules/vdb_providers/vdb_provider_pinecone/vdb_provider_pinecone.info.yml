@@ -8,4 +8,5 @@ lifecycle: experimental
 
 dependencies:
   - ai:ai
+  - ai_search:ai_search
   - key:key

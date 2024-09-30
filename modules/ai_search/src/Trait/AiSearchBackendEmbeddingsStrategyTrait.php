@@ -45,7 +45,7 @@ trait AiSearchBackendEmbeddingsStrategyTrait {
     // Keys must start with 'embedding_strategy',
     // see AiSearchBackendPluginBase::buildConfigurationForm().
     return [
-      'embedding_strategy' => NULL,
+      'embedding_strategy' => 'metadata_chunks',
       'embedding_strategy_configuration' => [],
     ];
   }
@@ -70,13 +70,19 @@ trait AiSearchBackendEmbeddingsStrategyTrait {
       $this->strategyConfiguration = $this->defaultStrategyConfiguration();
     }
 
-    $form['embedding_strategy'] = [
+    $form['embedding_strategy_container'] = [
+      '#type' => 'details',
+      '#open' => FALSE,
+      '#title' => $this->t('Embeddings strategy'),
+    ];
+
+    $form['embedding_strategy_container']['embedding_strategy'] = [
       '#type' => 'select',
-      '#title' => $this->t('Embeddings Strategy'),
+      '#title' => $this->t('Strategy'),
       '#options' => $this->getEmbeddingStrategiesOptions(),
       '#required' => TRUE,
       '#default_value' => $this->getConfiguration()['embedding_strategy'] ?? $this->defaultStrategyConfiguration()['embedding_strategy'],
-      '#description' => $this->t('The service to use for embeddings. If you change this, everything will be needed to be re-indexed.'),
+      '#description' => $this->t('The service to use for embeddings. If you change this, everything will be needed to be re-indexed. The Embeddings Strategy decides how to break apart the contents into smaller chunks to be vectorized. The strategy impacts the information stored in the vectors and therefore the performance of accurate retrieval of results.'),
       '#weight' => 10,
       '#ajax' => [
         'callback' => [$this, 'updateEmbeddingStrategyConfigurationForm'],
@@ -86,7 +92,7 @@ trait AiSearchBackendEmbeddingsStrategyTrait {
       ],
     ];
 
-    $form['embedding_strategy_configuration'] = [
+    $form['embedding_strategy_container']['embedding_strategy_configuration'] = [
       '#type' => 'details',
       '#open' => TRUE,
       '#title' => $this->t('Embedding Strategy Configuration'),
@@ -101,7 +107,7 @@ trait AiSearchBackendEmbeddingsStrategyTrait {
       if ($embedding_strategy) {
         $subform = $plugin_manager->createInstance($embedding_strategy)->getConfigurationSubform($this->strategyConfiguration['embedding_strategy_configuration'] ?? []);
         foreach ($subform as $key => $element) {
-          $form['embedding_strategy_configuration'][$key] = $element;
+          $form['embedding_strategy_container']['embedding_strategy_configuration'][$key] = $element;
         }
       }
     }
@@ -152,7 +158,7 @@ trait AiSearchBackendEmbeddingsStrategyTrait {
    *   The updated form.
    */
   public function updateEmbeddingStrategyConfigurationForm(array $form, FormStateInterface $form_state): array {
-    return $form['backend_config']['embedding_strategy_configuration'];
+    return $form['backend_config']['embedding_strategy_container']['embedding_strategy_configuration'];
   }
 
 }
