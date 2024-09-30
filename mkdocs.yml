@@ -28,10 +28,10 @@ nav:
     - VDB Providers:
       - Milvus: modules/vdb_providers/vdb_provider_milvus/index.md
     - AI Content: modules/ai_content/index.md
-    - AI Ckeditor: modules/ai_ckeditor/README.md
+    - AI Ckeditor: modules/ai_ckeditor/index.md
     - AI Automators: modules/ai_automator/index.md
-    - AI Translate: modules/ai_translate/README.md
-    - AI Eca: modules/ai_eca/README.md
+    - AI Translate: modules/ai_translate/index.md
+    - AI Eca: modules/ai_eca/index.md
 
 docs_dir: docs
 site_dir: site

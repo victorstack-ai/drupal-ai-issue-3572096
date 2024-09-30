@@ -117,3 +117,42 @@ public submitForm($form, $form_state) {
 
 ```
 
+## Streaming Chat
+
+There is a way to output the chat as a stream, meaning that it outputs the words as they come in. For your third party provider to support it, you need to first turn this on (or have it as a config) via the method `$provider->streamedOutput(TRUE);`.
+
+When you have turned this on, its important to note that not all providers support this, so you have to add a check and respond correctly depending on how it works. This is an example of how to do this.
+
+```php
+use Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
+$response = $ai_provider->chat($some_messages, 'model')->getNormalized();
+// If its streaming.
+if (is_object($response) && $response instanceof StreamedChatMessageIteratorInterface) {
+  // Streamed response.
+  return new StreamedResponse(function () use ($response) {
+    // Iteratate the response.
+    foreach ($response as $message) {
+      // Echo and flush.
+      echo $message->getText();
+      ob_flush();
+      flush();
+    }
+    // Make sure not to cache.
+  }, 200, [
+    'Cache-Control' => 'no-cache, must-revalidate',
+    'Content-Type' => 'text/event-stream',
+    'X-Accel-Buffering' => 'no',
+  ]);
+}
+// Otherwise non-streaming.
+else {
+  // Return a normal response.
+  return new Response($response->getText());
+}
+```
+
+Note that you might have to have javascript that handles this as well and also a server that does not buffer whole inputs, but can send them out chunked.
+
