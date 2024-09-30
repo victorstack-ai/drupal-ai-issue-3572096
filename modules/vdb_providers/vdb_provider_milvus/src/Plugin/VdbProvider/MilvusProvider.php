@@ -2,6 +2,7 @@
 
 namespace Drupal\vdb_provider_milvus\Plugin\VdbProvider;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
@@ -181,6 +182,91 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
       return TRUE;
     }
     return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function viewIndexSettings(array $database_settings): array {
+    $results = [];
+    $results['ping'] = [
+      'label' => $this->t('Ping'),
+      'info' => $this->t('Able to reach Milvus/Zilliz via their API.'),
+      'status' => $this->ping() ? 'success' : 'error',
+    ];
+
+    $results['is_zilliz'] = [
+      'label' => $this->t('Is this Milvus or Zilliz?'),
+      'info' => $this->getClient()->isZilliz() ? $this->t('Zilliz') : $this->t('Milvus'),
+    ];
+
+    $described = $this->getClient()->describeCollection(
+      database_name: $database_settings['database_name'],
+      collection_name: $database_settings['collection'],
+    );
+    if (!empty($described['data'])) {
+      if (!empty($described['data']['autoId'])) {
+        $results['auto_id'] = [
+          'label' => $this->t('Auto ID'),
+          'info' => $this->t('Uses Auto ID: @value', [
+            '@value' => ($described['data']['autoId'] ? $this->t('True') : $this->t('False')),
+          ]),
+        ];
+      }
+      if (!empty($described['data']['partitionsNum'])) {
+        $results['partitions'] = [
+          'label' => $this->t('Partitions'),
+          'info' => $described['data']['partitionsNum'],
+        ];
+      }
+      if (!empty($described['data']['shardsNum'])) {
+        $results['shards'] = [
+          'label' => $this->t('Shards'),
+          'info' => $described['data']['shardsNum'],
+        ];
+      }
+      if (!empty($described['data']['collectionID'])) {
+        $results['collection_id'] = [
+          'label' => $this->t('Collection ID'),
+          'info' => $described['data']['collectionID'],
+        ];
+      }
+      if (!empty($described['data']['collectionName'])) {
+        $results['collection_name'] = [
+          'label' => $this->t('Collection Name'),
+          'info' => $described['data']['collectionName'],
+        ];
+      }
+      if (!empty($described['data']['consistencyLevel'])) {
+        $results['consistency_level'] = [
+          'label' => $this->t('Consistency Level'),
+          'info' => $described['data']['consistencyLevel'],
+        ];
+      }
+      if (!empty($described['data']['fields'])) {
+        foreach ($described['data']['fields'] as $key => $field) {
+          $results['field_' . $key] = [
+            'label' => $this->t('Field "@name"', [
+              '@name' => $field['name'],
+            ]),
+            'info' => $field['type'] . (!empty($field['params']) ? Json::encode($field['params']) : ''),
+          ];
+        }
+      }
+      if (!empty($described['data']['indexes'])) {
+        foreach ($described['data']['indexes'] as $key => $index) {
+          $results['index_' . $key] = [
+            'label' => $this->t('Index "@number" field name "@fieldName" metric type:', [
+              '@number' => $key,
+              '@fieldName' => $index['fieldName'],
+            ]),
+            'info' => $index['metricType'],
+          ];
+        }
+      }
+    }
+
+    return $results;
   }
 
   /**

@@ -143,6 +143,30 @@ class MilvusV2 {
   }
 
   /**
+   * Describe collection.
+   *
+   * @param string $database_name
+   *   The database.
+   * @param string $collection_name
+   *   The collection name.
+   *
+   * @return array
+   *   The collections.
+   */
+  public function describeCollection(
+    string $database_name = '',
+    string $collection_name = '',
+  ): array {
+    $data = [
+      'collectionName' => $collection_name,
+    ];
+    if ($database_name && !$this->isZilliz()) {
+      $data['dbName'] = $database_name;
+    }
+    return Json::decode($this->makeRequest('vectordb/collections/describe', [], 'POST', $data));
+  }
+
+  /**
    * Insert into the collection.
    *
    * @param string $collection_name
