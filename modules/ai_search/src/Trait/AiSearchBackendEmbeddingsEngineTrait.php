@@ -83,7 +83,7 @@ trait AiSearchBackendEmbeddingsEngineTrait {
       '#options' => $this->getEmbeddingEnginesOptions(),
       '#required' => TRUE,
       '#default_value' => $this->getConfiguration()['embeddings_engine'] ?? $this->defaultEngineConfiguration()['embeddings_engine'],
-      '#description' => $this->t('The service to use for embeddings. If you change this, everything will be needed to be reindexed.'),
+      '#description' => $this->t('The service to use for embeddings. If you change this, everything will be needed to be reindexed. Larger models tend to provide more complete representations of the content and therefore more accurate results, but are however slower (and for paid models, typically with a slightly higher cost).'),
       '#weight' => 20,
       '#ajax' => [
         'callback' => [$this, 'updateEmbeddingEngineConfigurationForm'],
