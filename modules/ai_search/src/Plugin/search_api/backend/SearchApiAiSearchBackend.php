@@ -3,19 +3,18 @@
 namespace Drupal\ai_search\Plugin\search_api\backend;
 
 use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\TranslatableInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Plugin\PluginFormInterface;
-use Drupal\Core\Url;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\AiVdbProviderPluginManager;
-use Drupal\ai\Enum\VdbSimilarityMetrics;
 use Drupal\ai\Utility\TokenizerInterface;
 use Drupal\ai_search\Backend\AiSearchBackendPluginBase;
 use Drupal\ai_search\EmbeddingStrategyPluginManager;
 use Drupal\search_api\IndexInterface;
-use Drupal\search_api\Item\FieldInterface;
 use Drupal\search_api\Item\ItemInterface;
 use Drupal\search_api\Query\QueryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -125,17 +124,11 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     if (!isset($config['database'])) {
       $config['database'] = NULL;
     }
-    if (!isset($config['collection'])) {
-      $config['collection'] = NULL;
+    if (!isset($config['database_settings'])) {
+      $config['database_settings'] = [];
     }
     if (!isset($config['embeddings_strategy'])) {
       $config['embeddings_strategy'] = NULL;
-    }
-    if (!isset($config['metric'])) {
-      $config['metric'] = NULL;
-    }
-    if (!isset($config['database_name'])) {
-      $config['database_name'] = 'default';
     }
     return $config;
   }
@@ -158,8 +151,8 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       ]) . '</div>';
     }
 
-    $vdb_providers = $this->vdbProviderManager->getProviders(TRUE);
-    if (empty($vdb_providers)) {
+    $search_api_vdb_providers = $this->vdbProviderManager->getSearchApiProviders(TRUE);
+    if (empty($search_api_vdb_providers)) {
       $errors[] = '<div class="ai-error">' . $this->t('No Vector DB providers are installed or setup for search in vectors, please %install and %configure one first.', [
         '%install' => Link::createFromRoute($this->t('install'), 'system.modules_list')->toString(),
         '%configure' => Link::createFromRoute($this->t('configure'), 'ai.admin_vdb_providers')->toString(),
@@ -172,21 +165,6 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       ];
       return $form;
     }
-
-    $chosen_database = $this->configuration['database'] ?? NULL;
-    if (!$chosen_database) {
-      // Try to get from form state.
-      $chosen_database = $form_state->get('database') ?? NULL;
-    }
-
-    $form['database'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Vector Database'),
-      '#options' => $vdb_providers,
-      '#required' => TRUE,
-      '#default_value' => $chosen_database,
-      '#description' => $this->t('The Vector Database to use.'),
-    ];
 
     // Get all supported models, default to gpt-3.5 model.
     $supported_models = $this->tokenizer->getSupportedModels();
@@ -203,73 +181,68 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       '#required' => TRUE,
     ];
 
-    $form['database_name'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Database Name'),
-      '#description' => $this->t('The database name to use.'),
-      '#default_value' => $this->configuration['database_name'] ?? NULL,
-      '#required' => TRUE,
-      '#pattern' => '[a-zA-Z0-9_]*',
-      '#disabled' => (bool) FALSE,
-    ];
+    $chosen_database = $this->configuration['database'] ?? NULL;
+    if (!$chosen_database) {
+      // Try to get from form state.
+      $chosen_database = $form_state->get('database') ?? NULL;
+    }
 
-    $form['collection'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Collection'),
-      '#description' => $this->t('The collection to use. This will be generated if it does not exist and cannot be changed.'),
-      '#default_value' => $this->configuration['collection'] ?? NULL,
-      '#required' => TRUE,
-      '#pattern' => '[a-zA-Z0-9_]*',
-      '#disabled' => (bool) FALSE,
-    ];
-
-    $metric_distance = [
-      VdbSimilarityMetrics::CosineSimilarity->value => $this->t('Cosine Similarity'),
-      VdbSimilarityMetrics::EuclideanDistance->value => $this->t('Euclidean Distance'),
-      VdbSimilarityMetrics::InnerProduct->value => $this->t('Inner Product'),
-    ];
-
-    $form['metric'] = [
+    $form['database'] = [
       '#type' => 'select',
-      '#title' => $this->t('Similarity Metric'),
-      '#options' => $metric_distance,
+      '#title' => $this->t('Vector Database'),
+      '#options' => $search_api_vdb_providers,
       '#required' => TRUE,
-      '#default_value' => $this->configuration['metric'] ?? VdbSimilarityMetrics::CosineSimilarity->value,
-      '#description' => $this->t('The metric to use for similarity calculations.'),
+      '#default_value' => $chosen_database,
+      '#description' => $this->t('The Vector Database to use.'),
+      '#ajax' => [
+        'callback' => [$this, 'updateVectorDatabaseSettingsForm'],
+        'event' => 'change',
+        'method' => 'replaceWith',
+        'wrapper' => 'database-settings-wrapper',
+      ],
     ];
+
+    // Container for database-specific settings.
+    $form['database_settings'] = [
+      '#type' => 'details',
+      '#open' => TRUE,
+      '#attributes' => ['id' => 'database-settings-wrapper'],
+      '#title' => $this->t('Vector Database Configuration'),
+    ];
+
+    // If a Vector Database has been chosen, build the custom fields.
+    if ($chosen_database) {
+      $vdb_client = $this->vdbProviderManager->createInstance($chosen_database);
+      $form['database_settings'] = $vdb_client->buildSettingsForm(
+        $form['database_settings'],
+        $form_state,
+        $this->configuration
+      );
+    }
 
     // Add Embeddings Engine or Embeddings Strategy subform.
-    $form = parent::buildConfigurationForm($form, $form_state);
-    return $form;
+    return parent::buildConfigurationForm($form, $form_state);
+  }
+
+  /**
+   * AJAX callback to update the database-specific fields.
+   */
+  public function updateVectorDatabaseSettingsForm(array &$form, FormStateInterface $form_state): array {
+    return $form['backend_config']['database_settings'] ?? [];
   }
 
   /**
    * {@inheritdoc}
    */
   public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
-    if (!empty($this->configuration['database'])) {
-      $vdb_client = $this->vdbProviderManager->createInstance($this->configuration['database']);
-      $collections = $vdb_client->getCollections($form_state->getValue('database_name'));
-      // Check so the collection doesn't exist already.
-      /** @var \Drupal\Core\Entity\Form $form_object */
-      $form_object = $form_state->getFormObject();
-      $entity = $form_object->getEntity();
-      if ($entity->isNew() && isset($collections['data']) && in_array($form_state->getValue('collection'), $collections['data'])) {
-        $form_state->setErrorByName('collection', $this->t('The collection already exists in the selected vector database.'));
+    if (!empty($form_state->getValue('database'))) {
+      try {
+        $vdb_client = $this->vdbProviderManager->createInstance($form_state->getValue('database'));
+        $vdb_client->validateSettingsForm($form, $form_state);
       }
-
-      // Ensure the vector database selected has already been configured to
-      // avoid a fatal error.
-      $config = $vdb_client->getConfig()->getRawData();
-      if (isset($config['_core'])) {
-        unset($config['_core']);
-      }
-      $config = array_filter($config);
-      if (empty($config)) {
-
-        // Explain to the user where to configure the vector database first.
-        $form_state->setErrorByName('database', $this->t('The selected vector database has not yet been configured. <a href="@url">Please configure it first</a>.', [
-          '@url' => Url::fromRoute('ai.admin_vdb_providers')->toString(),
+      catch (\Exception $exception) {
+        $form_state->setErrorByName('database', $this->t('An error occurred: "@error"', [
+          '@error' => $exception->getMessage(),
         ]));
       }
     }
@@ -306,12 +279,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state): void {
     $vdb_client = $this->vdbProviderManager->createInstance($this->configuration['database']);
-    $vdb_client->createCollection(
-      collection_name: $form_state->getValue('collection'),
-      dimension: $form_state->getValue('embeddings_engine_configuration')['dimensions'],
-      metric_type: VdbSimilarityMetrics::from($form_state->getValue('metric')),
-      database: $form_state->getValue('database_name'),
-    );
+    $vdb_client->submitSettingsForm($form, $form_state);
   }
 
   /**
@@ -321,47 +289,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    */
   public function indexItems(IndexInterface $index, array $items): array {
     $embedding_strategy = $this->embeddingStrategyProviderManager->createInstance($this->configuration['embedding_strategy']);
-    $successfulItemIds = [];
-    $itemBase = [
-      'metadata' => [
-        'server_id' => $this->server->id(),
-        'index_id' => $index->id(),
-      ],
-    ];
-
-    // Check if we need to delete some items first.
-    $this->deleteItems($index, array_values(array_map(function ($item) {
-      return $item->getId();
-    }, $items)));
-
-    /** @var \Drupal\search_api\Item\ItemInterface $item */
-    foreach ($items as $item) {
-      $embeddings = $embedding_strategy->getEmbedding(
-        $this->configuration['embeddings_engine'],
-        $this->configuration['chat_model'],
-        $this->configuration['embedding_strategy_configuration'],
-        $item->getFields(),
-        $item
-      );
-      foreach ($embeddings as $embedding) {
-        $embedding = array_merge_recursive($embedding, $itemBase);
-        $data['drupal_long_id'] = $embedding['id'];
-        $data['drupal_entity_id'] = $item->getId();
-        $data['vector'] = $embedding['values'];
-        foreach ($embedding['metadata'] as $key => $value) {
-          $data[$key] = $value;
-        }
-        $this->getClient()->insertIntoCollection(
-          collection_name: $this->configuration['collection'],
-          data: $data,
-          database: $this->configuration['database_name'],
-        );
-      }
-
-      $successfulItemIds[] = $item->getId();
-    }
-
-    return $successfulItemIds;
+    return $this->getClient()->indexItems($this->configuration, $index, $items, $embedding_strategy);
   }
 
   /**
@@ -370,16 +298,8 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
   public function deleteItems(IndexInterface $index, array $item_ids): void {
-    $vdbIds = $this->getClient()->getVdbIds(
-      collection_name: $this->configuration['collection'],
-      drupalIds: $item_ids,
-      database: $this->configuration['database_name'],
-    );
-    $this->getClient()->deleteFromCollection(
-      collection_name: $this->configuration['collection'],
-      ids: $vdbIds,
-      database: $this->configuration['database_name'],
-    );
+    $vdb_client = $this->vdbProviderManager->createInstance($this->configuration['database']);
+    $vdb_client->deleteIndexItems($this->configuration, $index, $item_ids);
   }
 
   /**
@@ -388,15 +308,8 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
   public function deleteAllIndexItems(IndexInterface $index, $datasource_id = NULL): void {
-    $this->getClient()->dropCollection(
-      collection_name: $this->configuration['collection'],
-      database: $this->configuration['database_name'],
-    );
-    $this->getClient()->createCollection(
-      collection_name: $this->configuration['collection'],
-      dimension: $this->configuration['embeddings_engine_configuration']['dimensions'],
-      database: $this->configuration['database_name'],
-    );
+    $vdb_client = $this->vdbProviderManager->createInstance($this->configuration['database']);
+    $vdb_client->deleteAllIndexItems($this->configuration, $index, $datasource_id);
   }
 
   /**
@@ -436,47 +349,15 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
 
     // Prepare params.
     $params = [
-      'collection_name' => $this->configuration['collection'],
+      'collection_name' => $this->configuration['database_settings']['collection'],
       'output_fields' => ['id', 'drupal_entity_id', 'drupal_long_id', 'content'],
-      // Double the limit if we need to run over access checks.
+      // If an access check is in place, multiple iterations of the query are
+      // run to attempt to reach this limit.
       'limit' => (int) $query->getOption('limit', 10),
       'offset' => (int) $query->getOption('offset', 0),
     ];
-
-    // Filters.
-    $condition_group = $query->getConditionGroup();
-    $filters = [];
-    foreach ($condition_group->getConditions() as $condition) {
-      $fieldData = $index->getField($condition->getField());
-      // Get the field type or its intrensic field, like drupal_entity_id.
-      $fieldType = $fieldData ? $fieldData->getType() : 'string';
-      $isMultiple = $fieldData ? $this->isMultiple($fieldData) : FALSE;
-      $values = is_array($condition->getValue()) ? $condition->getValue() : [$condition->getValue()];
-      if (in_array($fieldType, ['string', 'full_text'])) {
-        $normalizedValues = '"' . implode('","', $values) . '"';
-      }
-      else {
-        $normalizedValues = implode(',', $values);
-      }
-      if ($isMultiple) {
-        if (in_array($condition->getOperator(), [
-          '=',
-          'IN',
-        ])) {
-          $filters[] = '(ARRAY_CONTAINS(' . $condition->getField() . ', ' . $normalizedValues . '))';
-        }
-        else {
-          $this->messenger->addWarning('The vector database @name does not support negative operator on multiple fields.', [
-            '@name' => $this->getClient()->getPluginId(),
-          ]);
-        }
-      }
-      else {
-        $filters[] = '(' . $condition->getField() . ' ' . $condition->getOperator() . ' ' . $normalizedValues . ')';
-      }
-    }
-    if ($filters) {
-      $params['filters'] = implode(' AND ', $filters);
+    if ($filters = $this->getClient()->prepareFilters($query)) {
+      $params['filters'] = $filters;
     }
 
     // Conduct the search.
@@ -525,6 +406,9 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    * Run the search until enough items are found.
    */
   protected function doSearch(QueryInterface $query, $params, $bypass_access, &$results, $start_limit, $start_offset, $iteration = 0) {
+    $params['database'] = $this->configuration['database_settings']['database_name'];
+    $params['collection_name'] = $this->configuration['database_settings']['collection'];
+
     // Conduct the search.
     if (!$bypass_access) {
       // Double the results, if we need to run over access checks.
@@ -537,7 +421,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       $embedding_llm = $this->aiProviderManager->createInstance($provider_id);
       // We don't have to redo this.
       if (!isset($params['vector_input'])) {
-        // Handlex complex search queries, but we just normalize to string.
+        // Handle complex search queries, but we just normalize to string.
         // It makes no sense to do Boolean or other complex searches on vectors.
         if (is_array($search_words)) {
           if (isset($search_words['#conjunction'])) {
@@ -612,29 +496,6 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
   }
 
   /**
-   * Figure out cardinality from field item.
-   *
-   * @param \Drupal\search_api\Item\FieldInterface $field
-   *   The field.
-   *
-   * @return bool
-   *   If the cardinality is multiple or not.
-   */
-  public function isMultiple(FieldInterface $field): bool {
-    [$fieldName] = explode(':', $field->getPropertyPath());
-    [, $entity_type] = explode(':', $field->getDatasourceId());
-    $fields = $this->entityFieldManager->getFieldStorageDefinitions($entity_type);
-    foreach ($fields as $field) {
-      if ($field->getName() === $fieldName) {
-        $cardinality = $field->getCardinality();
-        return !($cardinality === 1);
-      }
-    }
-
-    return TRUE;
-  }
-
-  /**
    * Get the Vector DB client instance.
    *
    * @return \Drupal\ai\AiVdbProviderInterface
@@ -661,12 +522,30 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
   private function checkEntityAccess(string $drupal_id): bool {
     [$entity_type, $id_lang] = explode('/', str_replace('entity:', '', $drupal_id));
     [$id, $lang] = explode(':', $id_lang);
-    /** @var \Drupal\Core\Entity\ContentEntityBase */
+    /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
     $entity = $this->entityTypeManager->getStorage($entity_type)->load($id);
-    if ($entity->hasTranslation($lang)) {
+
+    // If the entity fails to load, assume false.
+    if (!$entity instanceof EntityInterface) {
+      return FALSE;
+    }
+
+    // Get the entity translation if a specific language is requested so long
+    // as the entity is translatable in the first place.
+    if (
+      $entity instanceof TranslatableInterface
+      && $entity->hasTranslation($lang)
+    ) {
       $entity = $entity->getTranslation($lang);
     }
     return $entity->access('view', $this->currentUser);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function viewSettings(): array {
+    return $this->getClient()->viewIndexSettings($this->configuration['database_settings']);
   }
 
 }

@@ -4,6 +4,8 @@ namespace Drupal\vdb_provider_milvus\Plugin\VdbProvider;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -11,6 +13,7 @@ use Drupal\ai\Attribute\AiVdbProvider;
 use Drupal\ai\Base\AiVdbProviderClientBase;
 use Drupal\ai\Enum\VdbSimilarityMetrics;
 use Drupal\key\KeyRepositoryInterface;
+use Drupal\search_api\Query\QueryInterface;
 use Drupal\vdb_provider_milvus\MilvusV2;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -46,6 +49,10 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
    *   The key repository.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
    *   The event dispatcher.
+   * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entityFieldManager
+   *   The entity field manager.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger.
    * @param \Drupal\vdb_provider_milvus\MilvusV2 $client
    *   The Milvus V2 API client.
    */
@@ -55,6 +62,8 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
     protected ConfigFactoryInterface $configFactory,
     protected KeyRepositoryInterface $keyRepository,
     protected EventDispatcherInterface $eventDispatcher,
+    protected EntityFieldManagerInterface $entityFieldManager,
+    protected MessengerInterface $messenger,
     protected MilvusV2 $client,
   ) {
     parent::__construct(
@@ -63,6 +72,8 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
       $this->configFactory,
       $this->keyRepository,
       $this->eventDispatcher,
+      $this->entityFieldManager,
+      $this->messenger,
     );
   }
 
@@ -76,6 +87,8 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
       $container->get('config.factory'),
       $container->get('key.repository'),
       $container->get('event_dispatcher'),
+      $container->get('entity_field.manager'),
+      $container->get('messenger'),
       $container->get('milvus_v2.api'),
     );
   }
@@ -238,13 +251,55 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
 
   /**
    * {@inheritdoc}
+   */
+  public function prepareFilters(QueryInterface $query): mixed {
+    $index = $query->getIndex();
+    $condition_group = $query->getConditionGroup();
+    $filters = [];
+    foreach ($condition_group->getConditions() as $condition) {
+      $fieldData = $index->getField($condition->getField());
+      // Get the field type or its intrinsic field, like drupal_entity_id.
+      $fieldType = $fieldData ? $fieldData->getType() : 'string';
+      $isMultiple = $fieldData ? $this->isMultiple($fieldData) : FALSE;
+      $values = is_array($condition->getValue()) ? $condition->getValue() : [$condition->getValue()];
+      if (in_array($fieldType, ['string', 'full_text'])) {
+        $normalizedValues = '"' . implode('","', $values) . '"';
+      }
+      else {
+        $normalizedValues = implode(',', $values);
+      }
+      if ($isMultiple) {
+        if (in_array($condition->getOperator(), [
+          '=',
+          'IN',
+        ])) {
+          $filters[] = '(ARRAY_CONTAINS(' . $condition->getField() . ', ' . $normalizedValues . '))';
+        }
+        else {
+          $this->messenger->addWarning('The vector database @name does not support negative operator on multiple fields.', [
+            '@name' => $this->getClient()->getPluginId(),
+          ]);
+        }
+      }
+      else {
+        $filters[] = '(' . $condition->getField() . ' ' . $condition->getOperator() . ' ' . $normalizedValues . ')';
+      }
+    }
+    if ($filters) {
+      return implode(' AND ', $filters);
+    }
+    return '';
+  }
+
+  /**
+   * {@inheritdoc}
    *
    * @throws \JsonException
    */
   public function querySearch(
     string $collection_name,
     array $output_fields,
-    string $filters = 'id not in [0]',
+    mixed $filters = 'id not in [0]',
     int $limit = 10,
     int $offset = 0,
     string $database = 'default',
@@ -269,7 +324,7 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
     string $collection_name,
     array $vector_input,
     array $output_fields,
-    string $filters = '',
+    mixed $filters = '',
     int $limit = 10,
     int $offset = 0,
     string $database = 'default',

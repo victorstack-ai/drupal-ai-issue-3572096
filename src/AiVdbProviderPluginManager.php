@@ -64,4 +64,36 @@ final class AiVdbProviderPluginManager extends DefaultPluginManager {
     return $plugins;
   }
 
+  /**
+   * Gets the available Vector DB providers that support Search API.
+   *
+   * @param bool $setup
+   *   If TRUE, only return the providers that are setup.
+   *
+   * @return array
+   *   The providers.
+   */
+  public function getSearchApiProviders($setup = FALSE): array {
+    $plugins = [];
+    if (!interface_exists('\Drupal\ai_search\AiVdbProviderSearchApiInterface')) {
+      return [];
+    }
+    foreach ($this->getDefinitions() as $definition) {
+      $instance = $this->createInstance($definition['id']);
+      if ($setup && !$instance->isSetup()) {
+        continue;
+      }
+
+      // Ignore this line since AI Search submodule may not be
+      // enabled, so we need to use the full namespace, but we bailed
+      // early in this method if the class does not yet exist.
+      // phpcs:ignore
+      if (!$instance instanceof \Drupal\ai_search\AiVdbProviderSearchApiInterface) {
+        continue;
+      }
+      $plugins[$definition['id']] = $definition['label']->__toString();
+    }
+    return $plugins;
+  }
+
 }

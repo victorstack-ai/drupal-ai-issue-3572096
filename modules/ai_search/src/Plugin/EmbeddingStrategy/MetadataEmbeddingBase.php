@@ -174,12 +174,12 @@ class MetadataEmbeddingBase extends EmbeddingStrategyPluginBase implements Embed
           $metadata,
           $metadata_chunk_size,
           $this->chunkMinOverlap
-              );
+        );
         $main_chunks = $this->textChunker->chunkText(
-                $main_fields,
-                $main_chunk_size,
-                $this->chunkMinOverlap
-              );
+          $main_fields,
+          $main_chunk_size,
+          $this->chunkMinOverlap
+        );
         foreach ($main_chunks as $main_chunk) {
           foreach ($metadata_chunks as $metadata_chunk) {
             $chunks[] = $this->prepareChunkText($title, $main_chunk, $metadata_chunk);

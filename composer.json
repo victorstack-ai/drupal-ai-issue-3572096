@@ -8,7 +8,8 @@
         "drupal/key": "^1.18",
         "league/html-to-markdown": "^5.1",
         "yethee/tiktoken": "^0.5.1",
-        "hkulekci/qdrant": "^0.5.5"
+        "hkulekci/qdrant": "^0.5.5",
+        "probots-io/pinecone-php": "^1.0"
     },
     "require-dev": {
         "drupal/eca": "^2.0",

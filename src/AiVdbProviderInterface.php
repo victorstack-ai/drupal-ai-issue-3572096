@@ -7,7 +7,11 @@ use Drupal\Core\Config\ImmutableConfig;
 use Drupal\ai\Enum\VdbSimilarityMetrics;
 
 /**
- * Defines an interface for VDB (Vector Database) provider services.
+ * Defines an interface for All VDB (Vector Database) provider services.
+ *
+ * All VDB providers must implement this; however, the implementation of
+ * AiVdbProviderSearchApiInterface is optional if the VDB provider is only
+ * to be used independently of Search API.
  */
 interface AiVdbProviderInterface extends PluginInspectionInterface {
 
@@ -103,6 +107,32 @@ interface AiVdbProviderInterface extends PluginInspectionInterface {
   ): void;
 
   /**
+   * Delete items by ID from the vector database index.
+   *
+   * @param array $configuration
+   *   The configuration from SearchApiAISearchBackend.
+   * @param array $item_ids
+   *   The Drupal IDs to be deleted.
+   */
+  public function deleteItems(
+    array $configuration,
+    array $item_ids,
+  ): void;
+
+  /**
+   * Delete all items from the vector database index.
+   *
+   * @param array $configuration
+   *   The configuration from SearchApiAISearchBackend.
+   * @param mixed $datasource_id
+   *   The datasource ID from SearchApiAISearchBackend.
+   */
+  public function deleteAllItems(
+    array $configuration,
+    mixed $datasource_id = NULL,
+  ): void;
+
+  /**
    * Delete records from collection.
    *
    * @param string $collection_name
@@ -125,8 +155,8 @@ interface AiVdbProviderInterface extends PluginInspectionInterface {
    *   The name of the collection.
    * @param array $output_fields
    *   The output fields.
-   * @param string $filters
-   *   The filters.
+   * @param mixed $filters
+   *   The filters as prepared by the VDB provider in ::prepareFilters().
    * @param int $limit
    *   The limit.
    * @param int $offset
@@ -155,8 +185,8 @@ interface AiVdbProviderInterface extends PluginInspectionInterface {
    *   The vector input.
    * @param array $output_fields
    *   The output fields.
-   * @param string $filters
-   *   The filters.
+   * @param mixed $filters
+   *   The filters as prepared by the VDB provider in ::prepareFilters().
    * @param int $limit
    *   The limit.
    * @param int $offset
