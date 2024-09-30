@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Tests that the FileMimeTypeTrait trait works correctly.
  *
- * @group traits
+ * @group ai
  * @covers \Drupal\ai\Traits\File\FileMimeTypeTrait
  */
 class FileMimeTypeTraitTest extends TestCase {

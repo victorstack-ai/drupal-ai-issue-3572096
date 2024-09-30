@@ -377,6 +377,13 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   /**
    * {@inheritdoc}
    */
+  public function removeTag(string $tag): void {
+    $this->tags = array_values(array_diff($this->tags, [$tag]));
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function setDebugData(string $key, mixed $value): void {
     $this->debugData[$key] = $value;
   }
@@ -386,13 +393,6 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    */
   public function getDebugData(): array {
     return $this->debugData;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function removeTag(string $tag): void {
-    $this->tags = array_diff($this->tags, [$tag]);
   }
 
   /**

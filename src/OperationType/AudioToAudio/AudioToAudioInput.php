@@ -43,7 +43,7 @@ class AudioToAudioInput implements InputInterface {
    * @param \Drupal\ai\OperationType\GenericType\AudioFile $file
    *   The audio file.
    */
-  public function setBinary(AudioFile $file) {
+  public function setAudioFile(AudioFile $file) {
     $this->file = $file;
   }
 

@@ -43,7 +43,7 @@ class ImageToVideoInput implements InputInterface {
    * @param \Drupal\ai\OperationType\GenericType\ImageFile $file
    *   The audio file.
    */
-  public function setBinary(ImageFile $file) {
+  public function setImageFile(ImageFile $file) {
     $this->file = $file;
   }
 

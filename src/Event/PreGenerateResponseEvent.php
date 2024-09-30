@@ -206,6 +206,16 @@ class PreGenerateResponseEvent extends Event {
   }
 
   /**
+   * Sets a new configuration.
+   *
+   * @param array $configuration
+   *   The configuration.
+   */
+  public function setConfiguration(array $configuration) {
+    $this->configuration = $configuration;
+  }
+
+  /**
    * Gets the authentication.
    *
    * Note: This only gets a new authentication layer if set. It does not return

@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Tests to generate base64 encoded string trait.
  *
- * @group traits
+ * @group ai
  * @covers \Drupal\ai\Traits\File\GenerateBase64Trait
  */
 class GenerateBase64TraitTest extends TestCase {
