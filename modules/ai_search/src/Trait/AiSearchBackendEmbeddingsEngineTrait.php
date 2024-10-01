@@ -83,8 +83,8 @@ trait AiSearchBackendEmbeddingsEngineTrait {
       '#options' => $this->getEmbeddingEnginesOptions(),
       '#required' => TRUE,
       '#default_value' => $this->getConfiguration()['embeddings_engine'] ?? $this->defaultEngineConfiguration()['embeddings_engine'],
-      '#description' => $this->t('The service to use for embeddings. If you change this, everything will be needed to be reindexed. Larger models tend to provide more complete representations of the content and therefore more accurate results, but are however slower (and for paid models, typically with a slightly higher cost).'),
-      '#weight' => 20,
+      '#description' => $this->t("The service to use for generating the embeddings (the vectorized representations of each chunk of your content). If you change this, everything will be needed to be reindexed. Larger models tend to provide more complete representations of the content and therefore more accurate results, but are however slower (and for paid models, typically with a slightly higher cost). The general idea here is that the engine creates vectorized representations of your chunks of content, then vectorize the user's query in the same manner (i.e., using the same engine) to mathematically compare the vectors and find the nearest matches."),
+      '#weight' => 1,
       '#ajax' => [
         'callback' => [$this, 'updateEmbeddingEngineConfigurationForm'],
         'wrapper' => 'embedding-engine-configuration-wrapper',
@@ -97,16 +97,16 @@ trait AiSearchBackendEmbeddingsEngineTrait {
 
     $form['embeddings_engine_configuration'] = [
       '#type' => 'details',
-      '#open' => TRUE,
+      '#open' => FALSE,
       '#attributes' => ['id' => 'embedding-engine-configuration-wrapper'],
-      '#title' => $this->t('Embeddings Engine Configuration'),
-      '#weight' => 25,
+      '#title' => $this->t('Advanced Embeddings Engine Configuration'),
+      '#weight' => 5,
     ];
 
     $form['embeddings_engine_configuration']['set_dimensions'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Set Dimensions Manually'),
-      '#description' => $this->t('This is for advanced usage, when you want to use custom embeddings engines.'),
+      '#description' => $this->t('This is for advanced usage, when you want to use custom embeddings engines. The dimensions entered must match the dimensions your embedding engine generates and must match the dimensions your vector database accepts or you should expect errors. Once the index has been created, the dimensions can no longer be changed or overridden.'),
       '#default_value' => FALSE,
       // This is disabled if its editing.
       '#disabled' => !$entity->isNew(),
@@ -114,10 +114,11 @@ trait AiSearchBackendEmbeddingsEngineTrait {
 
     $form['embeddings_engine_configuration']['dimensions'] = [
       '#type' => 'number',
-      '#title' => $this->t('Dimensions'),
-      '#description' => $this->t('The number of dimensions for the embeddings.'),
+      '#title' => $this->t('Number of dimensions'),
+      '#description' => $this->t('The number of dimensions for the embeddings. This is essentially the amount of information to store about each chunk of content. More information (more dimensions) leads to more accurate results, but slower performance. Depending on the provider, more dimensions may also have a higher cost.'),
       '#default_value' => $this->engineConfiguration['embeddings_engine_configuration']['dimensions'] ?? '',
       '#required' => TRUE,
+      '#field_suffix' => $this->t('dimensions'),
       '#states' => [
         'disabled' => [
           ':input[name="backend_config[embeddings_engine_configuration][set_dimensions]"]' => ['checked' => FALSE],

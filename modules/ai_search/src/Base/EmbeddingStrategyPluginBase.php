@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_search\Base;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManager;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
@@ -73,6 +74,8 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
    *   The entity type manager.
    * @param \Drupal\Core\Extension\ModuleExtensionList $extensionList
    *   The module extension list.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The configuration factory.
    */
   final public function __construct(
     protected string $pluginId,
@@ -82,6 +85,7 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
     protected TextChunker $textChunker,
     protected EntityTypeManager $entityTypeManager,
     protected ModuleExtensionList $extensionList,
+    protected ConfigFactoryInterface $configFactory,
   ) {
     // Set the default converter settings.
     $this->converter->getConfig()->setOption('strip_tags', TRUE);
@@ -139,6 +143,7 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
       $text_chunker,
       $container->get('entity_type.manager'),
       $container->get('extension.list.module'),
+      $container->get('config.factory'),
     );
   }
 
@@ -165,11 +170,12 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
       $configuration = $this->getDefaultConfigurationValues();
     }
     $form['chunk_size'] = [
-      '#title' => $this->t('Maximum chunk size'),
-      '#description' => $this->t('The number of tokens allowed per chunk of content. Leave blank to use the maximum size provided by the selected model.'),
+      '#title' => $this->t('Maximum chunk size allowed when breaking up larger content'),
+      '#description' => $this->t('When the content is longer than this in tokens (which roughly equates to syllables when oversimplified), the content should be broken into smaller "Chunks". This setting defines how to segment or break up the larger text. When configuring Fields for this Index, the fields with the indexing option "Main Content" will be split into chunks no greater than this size. This includes any added "Contextual Content" as well as the "Title" to ensure an accurate vectorized representation of the content. More details are provided when configuring the Fields within your Index. Leave this blank to use the maximum size provided by the selected model.'),
       '#required' => FALSE,
       '#type' => 'number',
       '#default_value' => $configuration['chunk_size'] ?? '',
+      '#field_suffix' => $this->t('tokens'),
     ];
     $form['chunk_size_details'] = [
       '#type' => 'details',
@@ -181,11 +187,12 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
       '#markup' => file_get_contents($file),
     ];
     $form['chunk_min_overlap'] = [
-      '#title' => $this->t('Minimum chunk overlap'),
-      '#description' => $this->t('The number of tokens to retrieve from the preceding chunk to provide overlapping context for each chunk of text.'),
+      '#title' => $this->t("Minimum chunk overlap for 'Main Content'"),
+      '#description' => $this->t('When breaking apart the content into smaller chunks, copy a bit of the content from the previous chunk to avoid anything important being missed overall by inadvertently splitting for example mid-concept. This specifies the number of tokens to retrieve from the preceding chunk to provide that overlapping content.'),
       '#required' => TRUE,
       '#type' => 'number',
       '#default_value' => $configuration['chunk_min_overlap'] ?? '',
+      '#field_suffix' => $this->t('tokens'),
     ];
     return $form;
   }

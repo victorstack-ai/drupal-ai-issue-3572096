@@ -4,6 +4,8 @@ namespace Drupal\ai_search;
 
 use Drupal\Component\Plugin\PluginInspectionInterface;
 use Drupal\ai\AiVdbProviderInterface;
+use Drupal\ai\Enum\EmbeddingStrategyCapability;
+use Drupal\search_api\IndexInterface;
 use Drupal\search_api\Item\ItemInterface;
 
 /**
@@ -12,7 +14,7 @@ use Drupal\search_api\Item\ItemInterface;
 interface EmbeddingStrategyInterface extends PluginInspectionInterface {
 
   /**
-   * Returns array of vectors for given body and metadata.
+   * Returns array of vectors for given main content and contextual content.
    *
    * Depending on the strategy, one or more vectors are returned in an array.
    *
@@ -26,6 +28,8 @@ interface EmbeddingStrategyInterface extends PluginInspectionInterface {
    *   The fields.
    * @param \Drupal\search_api\Item\ItemInterface $search_api_item
    *   The search API item.
+   * @param \Drupal\search_api\IndexInterface $index
+   *   The search API index.
    *
    * @return array<array{id: string, values: array, metadata: array}>
    *   The vectors.
@@ -36,6 +40,7 @@ interface EmbeddingStrategyInterface extends PluginInspectionInterface {
     array $configuration,
     array $fields,
     ItemInterface $search_api_item,
+    IndexInterface $index,
   ): array;
 
   /**
@@ -51,6 +56,17 @@ interface EmbeddingStrategyInterface extends PluginInspectionInterface {
    *   TRUE if the strategy fits the VDB, FALSE otherwise.
    */
   public function fits(AiVdbProviderInterface $vdb_provider): bool;
+
+  /**
+   * Check whether an embedding strategy supports a capability.
+   *
+   * @param \Drupal\ai\Enum\EmbeddingStrategyCapability $capability
+   *   The capability to check if supported.
+   *
+   * @return bool
+   *   Whether the embedding strategy supports a particular capability.
+   */
+  public function supports(EmbeddingStrategyCapability $capability): bool;
 
   /**
    * Get the configuration subform for the Search API plugin embedding strategy.

@@ -22,13 +22,16 @@ final class EmbeddingStrategy extends AttributeBase {
    *   identical to group or prefixed with the group. E.g. if the group is "foo"
    *   the ID must be either "foo" or "foo:bar".
    * @param \Drupal\Core\StringTranslation\TranslatableMarkup|null $label
-   *   (optional) The human-readable name of the plugin.
+   *   The human-readable name of the plugin.
+   * @param \Drupal\Core\StringTranslation\TranslatableMarkup|null $description
+   *   The more lay-person understandable description.
    * @param class-string|null $deriver
    *   (optional) The deriver class.
    */
   public function __construct(
     public readonly string $id,
     public readonly TranslatableMarkup $label,
+    public readonly TranslatableMarkup $description,
     public readonly ?string $deriver = NULL,
   ) {
   }

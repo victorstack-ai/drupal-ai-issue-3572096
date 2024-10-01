@@ -174,11 +174,12 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     $default_model = reset($default_model_possibilities);
     $form['chat_model'] = [
       '#type' => 'select',
-      '#title' => $this->t('Tokenizer chat model'),
-      '#description' => $this->t('This is recommended to ensure the right number of tokens is calculated for the embeddings.'),
+      '#title' => $this->t('Tokenizer chat counting model'),
+      '#description' => $this->t('This is recommended to ensure the right number of tokens is calculated for the embeddings. Depending on the vector database and dimensions, the number of Tokens allowed per chunk of content differs. This service is used to count the number of tokens in your content as accurately as possible to better make use of the available space.'),
       '#default_value' => $this->configuration['chat_model'] ?? $default_model,
       '#options' => $this->tokenizer->getSupportedModels(),
       '#required' => TRUE,
+      '#weight' => 2,
     ];
 
     $chosen_database = $this->configuration['database'] ?? NULL;
@@ -193,25 +194,31 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       '#options' => $search_api_vdb_providers,
       '#required' => TRUE,
       '#default_value' => $chosen_database,
-      '#description' => $this->t('The Vector Database to use.'),
+      '#description' => $this->t("The Vector Database to use. This is where the generated Embeddings (vectorized representations of your content) are stored. The user's queries are then vectorized in the same manner and the mathematical distance between the query and the vectors stored in the database are compared to find the nearest results."),
       '#ajax' => [
         'callback' => [$this, 'updateVectorDatabaseSettingsForm'],
         'event' => 'change',
         'method' => 'replaceWith',
         'wrapper' => 'database-settings-wrapper',
       ],
+      '#weight' => 3,
     ];
 
     // Container for database-specific settings.
     $form['database_settings'] = [
       '#type' => 'details',
-      '#open' => TRUE,
+      '#open' => FALSE,
       '#attributes' => ['id' => 'database-settings-wrapper'],
       '#title' => $this->t('Vector Database Configuration'),
+      '#weight' => 4,
     ];
 
     // If a Vector Database has been chosen, build the custom fields.
     if ($chosen_database) {
+
+      // Only open the settings once there is a chosen database.
+      $form['database_settings']['#open'] = TRUE;
+
       $vdb_client = $this->vdbProviderManager->createInstance($chosen_database);
       $form['database_settings'] = $vdb_client->buildSettingsForm(
         $form['database_settings'],

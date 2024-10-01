@@ -45,7 +45,7 @@ trait AiSearchBackendEmbeddingsStrategyTrait {
     // Keys must start with 'embedding_strategy',
     // see AiSearchBackendPluginBase::buildConfigurationForm().
     return [
-      'embedding_strategy' => 'metadata_chunks',
+      'embedding_strategy' => 'contextual_chunks',
       'embedding_strategy_configuration' => [],
     ];
   }
@@ -73,23 +73,38 @@ trait AiSearchBackendEmbeddingsStrategyTrait {
     $form['embedding_strategy_container'] = [
       '#type' => 'details',
       '#open' => FALSE,
-      '#title' => $this->t('Embeddings strategy'),
+      '#title' => $this->t('Advanced Embeddings Strategy Configuration'),
+      '#weight' => 6,
     ];
 
     $form['embedding_strategy_container']['embedding_strategy'] = [
       '#type' => 'select',
-      '#title' => $this->t('Strategy'),
+      '#title' => $this->t('Strategy for breaking content into smaller chunks for indexing'),
       '#options' => $this->getEmbeddingStrategiesOptions(),
       '#required' => TRUE,
       '#default_value' => $this->getConfiguration()['embedding_strategy'] ?? $this->defaultStrategyConfiguration()['embedding_strategy'],
-      '#description' => $this->t('The service to use for embeddings. If you change this, everything will be needed to be re-indexed. The Embeddings Strategy decides how to break apart the contents into smaller chunks to be vectorized. The strategy impacts the information stored in the vectors and therefore the performance of accurate retrieval of results.'),
-      '#weight' => 10,
+      '#description' => $this->t('The service to use for embeddings. If you change this, everything will be needed to be re-indexed. The Embeddings Strategy decides how to break apart the contents into smaller chunks to be vectorized. The strategy impacts the information stored in the vectors and therefore the accuracy level when retrieving results.'),
       '#ajax' => [
         'callback' => [$this, 'updateEmbeddingStrategyConfigurationForm'],
         'wrapper' => 'embedding-strategy-configuration-wrapper',
         'method' => 'replaceWith',
         'effect' => 'fade',
       ],
+    ];
+    $rows = [];
+    foreach ($this->getEmbeddingStrategyDetails() as $strategy) {
+      $rows[] = [
+        'label' => $strategy['label'],
+        'description' => $strategy['description'],
+      ];
+    }
+    $form['embedding_strategy_container']['embedding_strategy_details'] = [
+      '#type' => 'table',
+      '#header' => [
+        ['data' => t('Strategy name')],
+        ['data' => t('Explanation')],
+      ],
+      '#rows' => $rows,
     ];
 
     $form['embedding_strategy_container']['embedding_strategy_configuration'] = [
@@ -144,6 +159,16 @@ trait AiSearchBackendEmbeddingsStrategyTrait {
    */
   public function getEmbeddingStrategiesOptions(): array {
     return \Drupal::service('ai_search.embedding_strategy')->getStrategies();
+  }
+
+  /**
+   * Returns all available embedding strategy details for help text.
+   *
+   * @return array
+   *   The embedding strategies.
+   */
+  public function getEmbeddingStrategyDetails(): array {
+    return \Drupal::service('ai_search.embedding_strategy')->getStrategyDetails();
   }
 
   /**

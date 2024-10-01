@@ -1,0 +1,17 @@
+<?php
+
+/**
+ * @file
+ * AI Search module file.
+ */
+
+/**
+ * Implements hook_entity_type_alter().
+ */
+function ai_search_entity_type_alter(array &$entity_types) {
+  if (isset($entity_types['search_api_index'])) {
+    /** @var \Drupal\Core\Config\Entity\ConfigEntityTypeInterface $entity_type */
+    $entity_type = $entity_types['search_api_index'];
+    $entity_type->setFormClass('fields', 'Drupal\ai_search\Form\AiSearchIndexFieldsForm');
+  }
+}

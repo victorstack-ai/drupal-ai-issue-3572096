@@ -67,4 +67,18 @@ final class EmbeddingStrategyPluginManager extends DefaultPluginManager {
     return $plugins;
   }
 
+  /**
+   * Gets all the available Embedding Strategies.
+   *
+   * @return array
+   *   The strategies.
+   */
+  public function getStrategyDetails(): array {
+    $plugins = [];
+    foreach ($this->getDefinitions() as $definition) {
+      $plugins[$definition['id']] = (array) $definition;
+    }
+    return $plugins;
+  }
+
 }

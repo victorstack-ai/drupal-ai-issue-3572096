@@ -19,6 +19,7 @@ use Drupal\search_api\Query\QueryInterface;
 use Drupal\vdb_provider_milvus\MilvusV2;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Plugin implementation of the 'Milvus DB' provider.
@@ -57,6 +58,8 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
    *   The messenger.
    * @param \Drupal\vdb_provider_milvus\MilvusV2 $client
    *   The Milvus V2 API client.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request.
    */
   public function __construct(
     protected string $pluginId,
@@ -67,6 +70,7 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
     protected EntityFieldManagerInterface $entityFieldManager,
     protected MessengerInterface $messenger,
     protected MilvusV2 $client,
+    protected Request $request,
   ) {
     parent::__construct(
       $this->pluginId,
@@ -92,6 +96,7 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
       $container->get('entity_field.manager'),
       $container->get('messenger'),
       $container->get('milvus_v2.api'),
+      $container->get('request_stack')->getCurrentRequest(),
     );
   }
 
@@ -301,6 +306,14 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
             'info' => $index['metricType'],
           ];
         }
+      }
+      if (getenv('IS_DDEV_PROJECT') == 'true' && !$this->getClient()->isZilliz()) {
+        $results['ddev_ui'] = [
+          'label' => $this->t('Milvus DDEV UI'),
+          'info' => $this->t('<a href="@milvus" target="_blank">Milvus DDEV UI</a>', [
+            '@milvus' => 'https://' . $this->request->getHost() . ':8521',
+          ]),
+        ];
       }
     }
 

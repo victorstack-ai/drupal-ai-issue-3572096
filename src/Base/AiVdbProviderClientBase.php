@@ -254,7 +254,8 @@ abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, AiVdbP
         $configuration['chat_model'],
         $configuration['embedding_strategy_configuration'],
         $item->getFields(),
-        $item
+        $item,
+        $index,
       );
       foreach ($embeddings as $embedding) {
         // Ensure consistent embedding structure as per
