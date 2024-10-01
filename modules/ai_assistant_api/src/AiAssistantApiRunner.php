@@ -17,6 +17,7 @@ use Drupal\Core\Controller\TitleResolverInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Render\Renderer;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Session\AccountProxyInterface;
@@ -121,6 +122,13 @@ class AiAssistantApiRunner {
   protected ConfigFactoryInterface $configFactory;
 
   /**
+   * The logger channel factory.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
+   */
+  protected LoggerChannelFactoryInterface $loggerChannelFactory;
+
+  /**
    * If it should be a streaming result.
    *
    * @var bool
@@ -194,6 +202,8 @@ class AiAssistantApiRunner {
    *   The language manager.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The configuration factory.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
+   *   The logger channel factory.
    */
   public function __construct(
     EntityTypeManagerInterface $entityTypeManager,
@@ -207,6 +217,7 @@ class AiAssistantApiRunner {
     TitleResolverInterface $titleResolver,
     LanguageManagerInterface $languageManager,
     ConfigFactoryInterface $configFactory,
+    LoggerChannelFactoryInterface $loggerChannelFactory,
   ) {
     $this->entityTypeManager = $entityTypeManager;
     $this->aiProvider = $aiProvider;
@@ -219,6 +230,7 @@ class AiAssistantApiRunner {
     $this->titleResolver = $titleResolver;
     $this->languageManager = $languageManager;
     $this->configFactory = $configFactory;
+    $this->loggerChannelFactory = $loggerChannelFactory;
   }
 
   /**
@@ -356,25 +368,38 @@ class AiAssistantApiRunner {
       throw new \Exception('Message is required to process.');
     }
 
-    $pre_prompt = $this->assistant->get('pre_action_prompt');
-    if ($pre_prompt) {
-      $return = $this->prePrompt();
-      // If its a normal response, we just return it.
-      if ($return instanceof ChatOutput || $return instanceof StreamedChatMessageIteratorInterface) {
-        return $return;
-      }
+    try {
+      $pre_prompt = $this->assistant->get('pre_action_prompt');
+      if ($pre_prompt) {
+        $return = $this->prePrompt();
+        // If its a normal response, we just return it.
+        if ($return instanceof ChatOutput || $return instanceof StreamedChatMessageIteratorInterface) {
+          return $return;
+        }
 
-      // Currently for debugging.
-      $defaults = $this->getProviderAndModel();
-      foreach ($return['actions'] as $action) {
-        $this->using_action = TRUE;
-        $instance = $this->actions->createInstance($action['plugin'], $this->assistant->get('actions_enabled')[$action['plugin']] ?? []);
-        $instance->setAssistant($this->assistant);
-        $instance->setThreadId($this->thread_id);
-        $instance->setAiProvider($this->aiProvider->createInstance($defaults['provider_id']));
-        $instance->setMessages($this->getMessageHistory());
-        $instance->triggerAction($action['action'], $action);
+        // Currently for debugging.
+        $defaults = $this->getProviderAndModel();
+        foreach ($return['actions'] as $action) {
+          $this->using_action = TRUE;
+          $instance = $this->actions->createInstance($action['plugin'], $this->assistant->get('actions_enabled')[$action['plugin']] ?? []);
+          $instance->setAssistant($this->assistant);
+          $instance->setThreadId($this->thread_id);
+          $instance->setAiProvider($this->aiProvider->createInstance($defaults['provider_id']));
+          $instance->setMessages($this->getMessageHistory());
+          $instance->triggerAction($action['action'], $action);
+        }
       }
+    }
+    catch (\Exception $e) {
+      // Log the error.
+      $this->loggerChannelFactory->get('ai_assistant_api')->error($e->getMessage());
+      $error_message = str_replace('[error_message]', $e->getMessage(), $this->assistant->get('error_message'));
+      // Return the error message.
+      return new ChatOutput(
+        new ChatMessage('assistant', $error_message),
+        [$error_message],
+        [],
+      );
     }
 
     // Run the response to the final assistants message.
@@ -572,11 +597,7 @@ class AiAssistantApiRunner {
       $json = $matches[1] ?? '';
       // Send error message, something went wrong.
       if (!$json) {
-        return new ChatOutput(
-          new ChatMessage('assistant', $this->assistant->get('error_message')),
-          [$this->assistant->get('error_message')],
-          [],
-        );
+        throw new \Exception('Could not extract JSON from the response.');
       }
       return json_decode($json, TRUE);
     }

@@ -13,6 +13,7 @@ services:
       - '@title_resolver'
       - '@language_manager'
       - '@config.factory'
+      - '@logger.factory'
   ai_assistant_api.action_plugin.manager:
     class: Drupal\ai_assistant_api\AiAssistantActionPluginManager
     parent: default_plugin_manager
