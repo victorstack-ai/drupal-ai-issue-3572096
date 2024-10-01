@@ -147,9 +147,11 @@ class AiRequest implements ContainerInjectionInterface {
       $data->prompt .= ". Do not try to use any image, video, or audio tags. Do not use backticks or ```html indicator.";
 
       $messages = new ChatInput([
-        new ChatMessage('system', 'You are helpful website assistant for content writing and editing. Do not give responses in the first, second or third person form. Do not add any commentary to the answer.'),
         new ChatMessage('user', $data->prompt),
       ]);
+
+      // Add the system message.
+      $ai_provider->setChatSystemRole('You are helpful website assistant for content writing and editing. Do not give responses in the first, second or third person form. Do not add any commentary to the answer.');
 
       // @todo Not all providers stream.
       // @see: https://www.drupal.org/project/ai/issues/3466906
