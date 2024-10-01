@@ -3,9 +3,10 @@
 namespace Drupal\ai_search\Plugin\AiAssistantAction;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Entity\TranslatableInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformStateInterface;
-use Drupal\Core\Render\Renderer;
+use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TempStore\PrivateTempStoreFactory;
@@ -13,6 +14,8 @@ use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai_assistant_api\Attribute\AiAssistantAction;
 use Drupal\ai_assistant_api\Base\AiAssistantActionBase;
+use League\HTMLToMarkdown\Converter\TableConverter;
+use League\HTMLToMarkdown\HtmlConverter;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -27,27 +30,32 @@ class RagAction extends AiAssistantActionBase {
   use StringTranslationTrait;
 
   /**
-   * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected EntityTypeManagerInterface $entityTypeManager;
-
-
-  /**
-   * The Drupal renderer.
-   *
-   * @var \Drupal\Core\Render\Renderer
-   */
-  protected Renderer $renderer;
-
-  /**
    * Constructor.
+   *
+   * @param array $configuration
+   *   The configuration.
+   * @param \Drupal\Core\TempStore\PrivateTempStoreFactory $tmpStore
+   *   The temp store.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity type manager.
+   * @param \Drupal\Core\Render\RendererInterface $renderer
+   *   The renderer.
+   * @param \League\HTMLToMarkdown\HtmlConverter $converter
+   *   The html to markdown converter.
    */
-  public function __construct(array $configuration, PrivateTempStoreFactory $tmpStore, EntityTypeManagerInterface $entityTypeManager, Renderer $renderer) {
+  public function __construct(
+    array $configuration,
+    protected PrivateTempStoreFactory $tmpStore,
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected RendererInterface $renderer,
+    protected HtmlConverter $converter,
+  ) {
     parent::__construct($configuration, $tmpStore);
-    $this->entityTypeManager = $entityTypeManager;
-    $this->renderer = $renderer;
+
+    // Set the default converter settings.
+    $this->converter->getConfig()->setOption('strip_tags', TRUE);
+    $this->converter->getConfig()->setOption('strip_placeholder_links', TRUE);
+    $this->converter->getEnvironment()->addConverter(new TableConverter());
   }
 
   /**
@@ -58,7 +66,8 @@ class RagAction extends AiAssistantActionBase {
       $configuration,
       $container->get('tempstore.private'),
       $container->get('entity_type.manager'),
-      $container->get('renderer')
+      $container->get('renderer'),
+      new HtmlConverter(),
     );
   }
 
@@ -184,12 +193,20 @@ class RagAction extends AiAssistantActionBase {
    * Take rag action.
    */
   protected function searchRagAction($db, $query) {
+    // Attempt to let the LLM choose the database to use.
+    $rag_database = NULL;
     foreach ($this->configuration as $config) {
       if ($config['database'] == $db) {
         $rag_database = $config;
         break;
       }
     }
+
+    // Fall back to the default RAG database from this plugin configuration.
+    if (!$rag_database && !empty($this->configuration)) {
+      $rag_database = reset($this->configuration);
+    }
+
     if (!isset($rag_database)) {
       $this->setOutputContext('rag', 'No RAG database found.');
       return;
@@ -314,15 +331,20 @@ class RagAction extends AiAssistantActionBase {
     [$entity_type, $entity_id] = explode('/', $entity_parts);
     /** @var \Drupal\Core\Entity\ContentEntityBase */
     $entity = $this->entityTypeManager->getStorage($entity_type)->load($entity_id);
+
     // Get translated if possible.
-    if (method_exists($entity, 'hasTranslation')) {
-      if ($entity->hasTranslation($lang)) {
-        $entity = $entity->getTranslation($lang);
-      }
+    if (
+      $entity instanceof TranslatableInterface
+      && $entity->language()->getId() !== $lang
+      && $entity->hasTranslation($lang)
+    ) {
+      $entity = $entity->getTranslation($lang);
     }
+
     // Render the entity in default view mode.
     $pre_render_entity = $this->entityTypeManager->getViewBuilder($entity_type)->view($entity);
-    $rendered_entity = nl2br(trim(strip_tags($this->renderer->render($pre_render_entity))));
+    $rendered = $this->renderer->render($pre_render_entity);
+    $rendered_entity = $this->converter->convert((string) $rendered);
     $message = str_replace([
       '[question]',
       '[entity]',
