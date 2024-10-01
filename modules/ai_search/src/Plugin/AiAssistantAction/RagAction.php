@@ -160,21 +160,23 @@ class RagAction extends AiAssistantActionBase {
    * {@inheritdoc}
    */
   public function provideFewShotLearningExample(): array {
-    return [
-      [
-        'description' => 'Searching the car_reviews database for the best reviewed car.',
+    $example = [];
+    foreach ($this->configuration as $db) {
+      $example[] = [
+        'description' => 'Searching the ' . $db['database'] . ' database for content. The database is described as "' . $db['description'] . '".',
         'schema' => [
           'actions' => [
             [
               'action' => 'search_rag',
               'plugin' => 'rag_action',
-              'database' => 'car_reviews',
-              'query' => 'Which is the car with the best reviews?',
+              'database' => $db['database'],
+              'query' => 'What can I find in here?',
             ],
           ],
         ],
-      ],
-    ];
+      ];
+    }
+    return $example;
   }
 
   /**
