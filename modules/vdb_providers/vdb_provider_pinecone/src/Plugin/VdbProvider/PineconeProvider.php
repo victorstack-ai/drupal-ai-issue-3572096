@@ -592,7 +592,6 @@ class PineconeProvider extends AiVdbProviderClientBase implements ContainerFacto
     if (empty($vector_input)) {
       return [];
     }
-    $filters = [];
     $matches = $this->getClient()->query(
       namespace: $collection_name,
       index_name: $database,

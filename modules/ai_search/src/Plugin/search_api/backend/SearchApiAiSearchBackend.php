@@ -376,6 +376,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       'limit' => (int) $query->getOption('limit', 10),
       'offset' => (int) $query->getOption('offset', 0),
     ];
+
     if ($filters = $this->getClient()->prepareFilters($query)) {
       $params['filters'] = $filters;
     }

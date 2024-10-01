@@ -125,7 +125,7 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
         $label_key = $entity_type->getKey('label');
       }
 
-      $value = $this->compositeValues($field);
+      $value = $this->getValue($field);
       // The title field.
       if ($field->getFieldIdentifier() == $label_key) {
         $title = $value;
@@ -271,7 +271,7 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
       ) {
         continue;
       }
-      $metadata[$field->getFieldIdentifier()] = $this->compositeValues($field);
+      $metadata[$field->getFieldIdentifier()] = $this->getValue($field);
     }
     return $metadata;
   }
@@ -320,15 +320,39 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
    * @param \Drupal\search_api\Item\FieldInterface $field
    *   The Search API field.
    *
-   * @return string
-   *   The composite field.
+   * @return int|string|bool|float
+   *   The field value.
    */
-  private function compositeValues(FieldInterface $field): string {
-    $composite_field = '';
-    foreach ($field->getValues() as $value) {
-      $composite_field .= $this->converter->convert((string) $value);
+  protected function getValue(FieldInterface $field): int|string|bool|float {
+    $values = $field->getValues();
+
+    // Always composite if field supports multiple. Otherwise, if the field is
+    // a single value, we can choose base on the field type At some point we
+    // probably need to consider what field types the Vector Database supports
+    // as metadata, but for now let's assume, strings, floats, integers, and
+    // boolean values are fine for all.
+    if (in_array($field->getType(), ['date', 'boolean', 'integer']) && count($values) === 1) {
+      return (int) reset($values);
     }
-    return $composite_field;
+    elseif (in_array($field->getType(), ['boolean']) && count($values) === 1) {
+      return (bool) reset($values);
+    }
+    elseif (in_array($field->getType(), ['decimal']) && count($values) === 1) {
+      return (float) reset($values);
+    }
+    elseif (count($values) == 1) {
+      return $this->converter->convert((string) reset($values));
+    }
+    elseif (count($values) > 1) {
+
+      // Separate multiple values by comma and space.
+      $parts = [];
+      foreach ($field->getValues() as $value) {
+        $parts[] = $this->converter->convert((string) $value);
+      }
+      return implode(', ', $parts);
+    }
+    return '';
   }
 
   /**
