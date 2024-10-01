@@ -8,8 +8,8 @@ use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\PluginFormInterface;
-use Drupal\ai_automator\AiAutomatorRuleRunner;
-use Drupal\ai_automator\PluginManager\AiAutomatorTypeManager;
+use Drupal\ai_automators\AiAutomatorRuleRunner;
+use Drupal\ai_automators\PluginManager\AiAutomatorTypeManager;
 use Drupal\eca\Plugin\Action\ActionBase;
 use Drupal\eca\Plugin\Action\ConfigurableActionTrait;
 use Drupal\eca\Plugin\ECA\PluginFormTrait;
@@ -196,7 +196,7 @@ class AiAutomatorRule extends ActionBase implements ConfigurableInterface, Plugi
   /**
    * Set the AI Automator type manager.
    *
-   * @param \Drupal\ai_automator\PluginManager\AiAutomatorTypeManager $automatorType
+   * @param \Drupal\ai_automators\PluginManager\AiAutomatorTypeManager $automatorType
    *   The AI Automator type manager.
    */
   protected function setAiAutomatorTypeManager(AiAutomatorTypeManager $automatorType): void {
@@ -206,7 +206,7 @@ class AiAutomatorRule extends ActionBase implements ConfigurableInterface, Plugi
   /**
    * Set the AI Automator rule runner.
    *
-   * @param \Drupal\ai_automator\AiAutomatorRuleRunner $ruleRunner
+   * @param \Drupal\ai_automators\AiAutomatorRuleRunner $ruleRunner
    *   The AI Automator rule runner.
    */
   protected function setAiAutomatorRuleRunner(AiAutomatorRuleRunner $ruleRunner): void {

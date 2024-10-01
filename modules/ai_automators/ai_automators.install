@@ -1,0 +1,27 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall function for AI Automator.
+ */
+
+use Drupal\ai_automators\AiAutomatorStatusField;
+
+/**
+ * Implements hook_uninstall().
+ */
+function ai_automators_uninstall($is_syncing) {
+  // Don't run delete hooks.
+  ai_automators_entity_can_save_toggle(FALSE);
+  // Delete any lingering status fields.
+  foreach (['field_config', 'field_storage_config'] as $type) {
+    $loader = \Drupal::entityTypeManager()->getStorage($type);
+    $query = $loader->getQuery();
+    $query->condition('label', AiAutomatorStatusField::FIELD_NAME);
+    foreach ($query->execute() as $id) {
+      $entity = $loader->load($id);
+      $entity->delete();
+    }
+  }
+  ai_automators_entity_can_save_toggle(TRUE);
+}

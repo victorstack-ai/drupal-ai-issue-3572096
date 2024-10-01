@@ -5,23 +5,35 @@
  * Install, update and uninstall function for AI Automator.
  */
 
-use Drupal\ai_automator\AiAutomatorStatusField;
-
 /**
- * Implements hook_uninstall().
+ * Installs the AI Automators and disables the AI Automator module.
  */
-function ai_automator_uninstall($is_syncing) {
-  // Don't run delete hooks.
-  _ai_automator_entity_can_save_toggle(FALSE);
-  // Delete any lingering status fields.
-  foreach (['field_config', 'field_storage_config'] as $type) {
-    $loader = \Drupal::entityTypeManager()->getStorage($type);
-    $query = $loader->getQuery();
-    $query->condition('label', AiAutomatorStatusField::FIELD_NAME);
-    foreach ($query->execute() as $id) {
-      $entity = $loader->load($id);
-      $entity->delete();
+function ai_automator_update_10301() {
+  $storage = \Drupal::service('config.storage');
+
+  // List all configurations starting with 'ai_automator.'.
+  $config_names = $storage->listAll('ai_automator.');
+
+  foreach ($config_names as $old_config_name) {
+    // Generate the new configuration name.
+    $new_config_name = str_replace('ai_automator.ai_automator', 'ai_automators.ai_automator', $old_config_name);
+
+    // Load the old configuration data.
+    $config_data = $storage->read($old_config_name);
+
+    if ($config_data !== FALSE) {
+      // Write the data to the new configuration.
+      $storage->write($new_config_name, $config_data);
+
+      // Delete the old configuration.
+      $storage->delete($old_config_name);
+
+      \Drupal::logger('ai_automators')->notice('Migrated config from %old to %new.', [
+        '%old' => $old_config_name,
+        '%new' => $new_config_name,
+      ]);
     }
   }
-  _ai_automator_entity_can_save_toggle(TRUE);
+  \Drupal::service('module_installer')->uninstall(['ai_automator']);
+  \Drupal::service('module_installer')->install(['ai_automators']);
 }

@@ -1,9 +1,10 @@
-name: AI Automators
-description: Automate anything and everything using AI.
-package: AI (Experimental)
+name: AI Automator (Deprecated)
+description: This module is now renamed AI Automator, please run update scripts.
+package: AI (Deprecated)
 type: module
 core_version_requirement: ^10.2 || ^11
-lifecycle: experimental
+lifecycle: deprecated
+lifecycle_link: https://www.drupal.org/project/ai/issues/3477989
 
 dependencies:
   - ai:ai

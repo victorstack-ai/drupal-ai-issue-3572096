@@ -1,0 +1,10 @@
+name: AI Automators
+description: Automate anything and everything using AI.
+package: AI (Experimental)
+type: module
+core_version_requirement: ^10.2 || ^11
+lifecycle: experimental
+
+dependencies:
+  - ai:ai
+  - token:token
