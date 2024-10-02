@@ -29,3 +29,6 @@ services:
   ai_automator.rule_helper.file:
     class: Drupal\ai_automators\Rulehelpers\FileHelper
     arguments: ['@entity_type.manager', '@file_system', '@file.repository', '@token', '@current_user']
+  ai_automator.automate:
+    class: Drupal\ai_automators\Service\Automate
+    arguments: ['@entity_type.manager']

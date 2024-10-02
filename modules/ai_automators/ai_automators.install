@@ -25,3 +25,16 @@ function ai_automators_uninstall($is_syncing) {
   }
   ai_automators_entity_can_save_toggle(TRUE);
 }
+
+/**
+ * Implements hook_update_N().
+ */
+function ai_automators_update_10200() {
+  // Add the Automator Chain base tables if they do not exist.
+  $entity_type_manager = \Drupal::entityTypeManager();
+  $entity_type_definition = $entity_type_manager->getDefinition('automator_chain');
+  \Drupal::entityDefinitionUpdateManager()->installEntityType($entity_type_definition);
+
+  // Log a message indicating the update was successful.
+  \Drupal::messenger()->addMessage(t('Base tables for the new entity type "automator_chain" have been created successfully.'));
+}

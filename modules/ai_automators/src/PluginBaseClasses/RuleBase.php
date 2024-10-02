@@ -152,6 +152,11 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
   public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
     // Load the AI models.
     $providers = $this->formHelper->getAiProvidersOptions($this->llmType);
+    // Add to the start of the array.
+    $providers = [
+      'default_json' => $this->t('Default Advanced JSON model'),
+      'default_vision' => $this->t('Default Vision model'),
+    ] + $providers;
     $defaults = $this->aiPluginManager->getDefaultProviderForOperationType($this->llmType);
     $provider = $formState->getValue('automator_ai_provider');
     if (!$provider) {
@@ -187,16 +192,18 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
       ],
     ];
 
-    if ($provider) {
+    $llmInstance = NULL;
+    $model = NULL;
+    if ($provider && $provider !== 'default_json' && $provider !== 'default_vision') {
       $llmInstance = $this->aiPluginManager->createInstance($provider);
       $model = $formState->getValue('automator_ai_model');
       $models = $llmInstance->getConfiguredModels($this->llmType);
-      if (!$model) {
+      if (!$model || !in_array($model, array_keys($models))) {
         $model = $defaultValues['automator_ai_model'] ?? NULL;
         if (isset($defaults['model_id']) && !$model) {
           $model = $defaults['model_id'];
         }
-        if (empty($model)) {
+        if (empty($model) || !in_array($model, array_keys($models))) {
           $model = key($models);
         }
       }
@@ -239,37 +246,36 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
             }
           }
         }
-
-        // Add vision if it is available.
-        if (in_array($model, $llmInstance->getConfiguredModels('chat', [AiModelCapability::ChatWithImageVision]))) {
-          // Add the image field to use.
-          $form['automator_configuration_image_field'] = [
-            '#type' => 'select',
-            '#title' => $this->t('Image Field'),
-            '#options' => $this->getGeneralHelper()->getFieldsOfType($entity, 'image'),
-            '#description' => $this->t('Since this is a vision model you can choose to add an image field to the prompt.'),
-            '#empty_option' => $this->t('No images'),
-            '#default_value' => $defaultValues['automator_configuration_image_field'] ?? NULL,
-          ];
-
-          // Also add the possibility to add an image style.
-          $form['automator_configuration_image_style'] = [
-            '#type' => 'select',
-            '#title' => $this->t('Image Style'),
-            '#description' => $this->t('Use an optional image style to lower costs and increase speed.'),
-            '#empty_option' => $this->t('Use original'),
-            '#options' => $this->getGeneralHelper()->getImageStyles(FALSE),
-            '#default_value' => $defaultValues['automator_configuration_image_style'] ?? NULL,
-            '#states' => [
-              'visible' => [
-                ':input[name="automator_configuration_image_field"]' => ['!value' => ''],
-              ],
-            ],
-          ];
-        }
       }
     }
 
+    // Add vision if it is available or default vision.
+    if (($llmInstance && in_array($model, $llmInstance->getConfiguredModels('chat', [AiModelCapability::ChatWithImageVision]))) || $provider == 'default_vision') {
+      // Add the image field to use.
+      $form['automator_configuration_image_field'] = [
+        '#type' => 'select',
+        '#title' => $this->t('Image Field'),
+        '#options' => $this->getGeneralHelper()->getFieldsOfType($entity, 'image'),
+        '#description' => $this->t('Since this is a vision model you can choose to add an image field to the prompt.'),
+        '#empty_option' => $this->t('No images'),
+        '#default_value' => $defaultValues['automator_configuration_image_field'] ?? NULL,
+      ];
+
+      // Also add the possibility to add an image style.
+      $form['automator_configuration_image_style'] = [
+        '#type' => 'select',
+        '#title' => $this->t('Image Style'),
+        '#description' => $this->t('Use an optional image style to lower costs and increase speed.'),
+        '#empty_option' => $this->t('Use original'),
+        '#options' => $this->getGeneralHelper()->getImageStyles(FALSE),
+        '#default_value' => $defaultValues['automator_configuration_image_style'] ?? NULL,
+        '#states' => [
+          'visible' => [
+            ':input[name="automator_configuration_image_field"]' => ['!value' => ''],
+          ],
+        ],
+      ];
+    }
     return $form;
   }
 
@@ -468,11 +474,13 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
    *   The LLM instance.
    */
   public function prepareLlmInstance($operationType, array $automatorConfig) {
-    $instance = $this->aiPluginManager->createInstance($automatorConfig['ai_provider']);
+    $provider = $this->getProvider($automatorConfig);
+    $model = $this->getModel($automatorConfig);
+    $instance = $this->aiPluginManager->createInstance($provider);
 
     // Get configuration.
     $config = [];
-    $configCast = $instance->getAvailableConfiguration($operationType, $automatorConfig['ai_model']);
+    $configCast = $instance->getAvailableConfiguration($operationType, $model);
     foreach ($automatorConfig as $key => $val) {
       if (strpos($key, 'configuration_') === 0 && $val) {
         $configKey = str_replace('configuration_', '', $key);
@@ -542,10 +550,49 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
       new ChatMessage("user", $prompt, $images),
     ]);
 
-    $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
+    $model = $this->getModel($automatorConfig);
+    $response = $instance->chat($input, $model)->getNormalized();
 
     // Normalize the response.
     return $response->getText();
+  }
+
+  /**
+   * Get the provider.
+   *
+   * @param array $automatorConfig
+   *   The automator configuration.
+   *
+   * @return string
+   *   The provider.
+   */
+  protected function getProvider(array $automatorConfig) {
+    if ($automatorConfig['ai_provider'] == 'default_json') {
+      $automatorConfig['ai_provider'] = $this->aiPluginManager->getDefaultProviderForOperationType('chat_with_complex_json')['provider_id'];
+    }
+    elseif ($automatorConfig['ai_provider'] == 'default_vision') {
+      $automatorConfig['ai_provider'] = $this->aiPluginManager->getDefaultProviderForOperationType('chat_with_image_vision')['provider_id'];
+    }
+    return $automatorConfig['ai_provider'];
+  }
+
+  /**
+   * Get the model.
+   *
+   * @param array $automatorConfig
+   *   The automator configuration.
+   *
+   * @return string
+   *   The model.
+   */
+  protected function getModel(array $automatorConfig) {
+    if ($automatorConfig['ai_provider'] == 'default_json') {
+      $automatorConfig['ai_model'] = $this->aiPluginManager->getDefaultProviderForOperationType('chat_with_complex_json')['model_id'];
+    }
+    elseif ($automatorConfig['ai_provider'] == 'default_vision') {
+      $automatorConfig['ai_model'] = $this->aiPluginManager->getDefaultProviderForOperationType('chat_with_image_vision')['model_id'];
+    }
+    return $automatorConfig['ai_model'];
   }
 
   /**
