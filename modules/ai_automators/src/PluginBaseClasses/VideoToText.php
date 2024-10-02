@@ -19,6 +19,7 @@ use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\GenericType\AudioFile;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInput;
 use Drupal\ai\Service\AiProviderFormHelper;
+use Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface;
 use Drupal\ai_automators\Exceptions\AiAutomatorRequestErrorException;
 use Drupal\ai_automators\Exceptions\AiAutomatorResponseErrorException;
 use Drupal\file\Entity\File;
@@ -90,12 +91,19 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
   protected EntityTypeBundleInfo $entityTypeBundleInfo;
 
   /**
+   * The prompt json decoder.
+   */
+  protected PromptJsonDecoderInterface $promptJsonDecoder;
+
+  /**
    * Construct a video to text field.
    *
    * @param \Drupal\ai\AiProviderPluginManager $pluginManager
    *   The AI provider plugin manager.
    * @param \Drupal\ai\Service\AiProviderFormHelper $formHelper
    *   The AI provider form helper.
+   * @param \Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface $promptJsonDecoder
+   *   The prompt json decoder.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityManager
    *   The entity type manager.
    * @param \Drupal\Core\File\FileSystemInterface $fileSystem
@@ -114,6 +122,7 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
   public function __construct(
     AiProviderPluginManager $pluginManager,
     AiProviderFormHelper $formHelper,
+    PromptJsonDecoderInterface $promptJsonDecoder,
     EntityTypeManagerInterface $entityManager,
     FileSystemInterface $fileSystem,
     Token $token,
@@ -122,7 +131,7 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
     EntityFieldManagerInterface $fieldManager,
     EntityTypeBundleInfo $entityTypeBundleInfo,
   ) {
-    parent::__construct($pluginManager, $formHelper);
+    parent::__construct($pluginManager, $formHelper, $promptJsonDecoder);
     $this->entityManager = $entityManager;
     $this->fileSystem = $fileSystem;
     $this->token = $token;
@@ -140,6 +149,7 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
     return new static(
       $container->get('ai.provider'),
       $container->get('ai.form_helper'),
+      $container->get('ai.prompt_json_decode'),
       $container->get('entity_type.manager'),
       $container->get('file_system'),
       $container->get('token'),

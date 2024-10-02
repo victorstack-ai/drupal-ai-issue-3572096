@@ -13,6 +13,7 @@ use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\Service\AiProviderFormHelper;
+use Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface;
 use Drupal\ai\Utility\CastUtility;
 use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\ai_automators\Traits\GeneralHelperTrait;
@@ -48,19 +49,30 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
   protected AiProviderFormHelper $formHelper;
 
   /**
+   * The prompt JSON decoder.
+   *
+   * @var \Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface
+   */
+  protected PromptJsonDecoderInterface $promptJsonDecoder;
+
+  /**
    * Constructs a new AiClientBase abstract class.
    *
    * @param \Drupal\ai\AiProviderPluginManager $pluginManager
    *   The plugin manager.
    * @param \Drupal\ai\Service\AiProviderFormHelper $formHelper
    *   The form helper.
+   * @param \Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface $promptJsonDecoder
+   *   The prompt JSON decoder.
    */
   public function __construct(
     AiProviderPluginManager $pluginManager,
     AiProviderFormHelper $formHelper,
+    PromptJsonDecoderInterface $promptJsonDecoder,
   ) {
     $this->aiPluginManager = $pluginManager;
     $this->formHelper = $formHelper;
+    $this->promptJsonDecoder = $promptJsonDecoder;
   }
 
   /**
@@ -69,7 +81,8 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
       $container->get('ai.provider'),
-      $container->get('ai.form_helper')
+      $container->get('ai.form_helper'),
+      $container->get('ai.prompt_json_decode'),
     );
   }
 
@@ -512,7 +525,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     $text = $this->runRawChatMessage($prompt, $automatorConfig, $instance, $entity);
 
     // Normalize the response.
-    return $this->decodeValueArray(json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $text))), TRUE));
+    return $this->decodeValueArray($this->promptJsonDecoder->decode($text));
   }
 
   /**
@@ -527,7 +540,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity.
    *
-   * @return string
+   * @return \Drupal\ai\OperationType\Chat\ChatMessage
    *   The response.
    */
   public function runRawChatMessage(string $prompt, array $automatorConfig, $instance, ?ContentEntityInterface $entity = NULL) {
@@ -553,8 +566,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     $model = $this->getModel($automatorConfig);
     $response = $instance->chat($input, $model)->getNormalized();
 
-    // Normalize the response.
-    return $response->getText();
+    return $response;
   }
 
   /**

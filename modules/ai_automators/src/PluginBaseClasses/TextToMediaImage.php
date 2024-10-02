@@ -12,6 +12,7 @@ use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\OperationType\TextToImage\TextToImageInput;
 use Drupal\ai\Service\AiProviderFormHelper;
+use Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface;
 use Drupal\ai_automators\Traits\FileHelperTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -49,12 +50,21 @@ class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterfa
   protected EntityFieldManagerInterface $fieldManager;
 
   /**
+   * The prompt json decoder.
+   *
+   * @var \Drupal\ai\service\PromptJsonDecoder\PromptJsonDecoderInterface
+   */
+  protected PromptJsonDecoderInterface $promptJsonDecoder;
+
+  /**
    * Constructs a new AiClientBase abstract class.
    *
    * @param \Drupal\ai\AiProviderPluginManager $pluginManager
    *   The plugin manager.
    * @param \Drupal\ai\Service\AiProviderFormHelper $formHelper
    *   The form helper.
+   * @param \Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface $promptJsonDecoder
+   *   The prompt json decoder.
    * @param \Drupal\Core\Entity\EntityTypeBundleInfo $entityTypeBundleInfo
    *   The entity type bundle info.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
@@ -65,11 +75,12 @@ class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterfa
   final public function __construct(
     AiProviderPluginManager $pluginManager,
     AiProviderFormHelper $formHelper,
+    PromptJsonDecoderInterface $promptJsonDecoder,
     EntityTypeBundleInfo $entityTypeBundleInfo,
     EntityTypeManagerInterface $entityTypeManager,
     EntityFieldManagerInterface $fieldManager,
   ) {
-    parent::__construct($pluginManager, $formHelper);
+    parent::__construct($pluginManager, $formHelper, $promptJsonDecoder);
     $this->entityTypeBundleInfo = $entityTypeBundleInfo;
     $this->entityTypeManager = $entityTypeManager;
     $this->fieldManager = $fieldManager;
@@ -82,6 +93,7 @@ class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterfa
     return new static(
       $container->get('ai.provider'),
       $container->get('ai.form_helper'),
+      $container->get('ai.prompt_json_decode'),
       $container->get('entity_type.bundle.info'),
       $container->get('entity_type.manager'),
       $container->get('entity_field.manager')

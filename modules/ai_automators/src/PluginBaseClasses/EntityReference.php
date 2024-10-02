@@ -11,6 +11,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\Service\AiProviderFormHelper;
+use Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -47,12 +48,19 @@ abstract class EntityReference extends RuleBase {
   protected $entityFieldManager;
 
   /**
+   * The prompt JSON decoder.
+   */
+  protected PromptJsonDecoderInterface $promptJsonDecoder;
+
+  /**
    * Constructs a new AiClientBase abstract class.
    *
    * @param \Drupal\ai\AiProviderPluginManager $pluginManager
    *   The plugin manager.
    * @param \Drupal\ai\Service\AiProviderFormHelper $formHelper
    *   The form helper.
+   * @param \Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface $promptJsonDecoder
+   *   The prompt JSON decoder.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity type manager.
    * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
@@ -65,12 +73,13 @@ abstract class EntityReference extends RuleBase {
   final public function __construct(
     AiProviderPluginManager $pluginManager,
     AiProviderFormHelper $formHelper,
+    PromptJsonDecoderInterface $promptJsonDecoder,
     EntityTypeManagerInterface $entityTypeManager,
     AccountProxyInterface $currentUser,
     EntityTypeBundleInfo $entityTypeBundleInfo,
     EntityFieldManagerInterface $entityFieldManager,
   ) {
-    parent::__construct($pluginManager, $formHelper);
+    parent::__construct($pluginManager, $formHelper, $promptJsonDecoder);
     $this->entityTypeManager = $entityTypeManager;
     $this->currentUser = $currentUser;
     $this->entityTypeBundleInfo = $entityTypeBundleInfo;
@@ -84,6 +93,7 @@ abstract class EntityReference extends RuleBase {
     return new static(
       $container->get('ai.provider'),
       $container->get('ai.form_helper'),
+      $container->get('ai.prompt_json_decode'),
       $container->get('entity_type.manager'),
       $container->get('current_user'),
       $container->get('entity_type.bundle.info'),
