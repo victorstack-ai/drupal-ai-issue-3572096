@@ -17,6 +17,7 @@ use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInterface;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsOutput;
 use Drupal\ai\Traits\OperationType\ChatTrait;
+use Drupal\provider_mistral\MistralChatMessageIterator;
 use OpenAI\Client;
 use Symfony\Component\Yaml\Yaml;
 
@@ -202,7 +203,14 @@ class MistralProvider extends AiProviderClientBase implements
     $response = $this->client->chat()->create($payload);
     restore_error_handler();
 
-    $message = new ChatMessage($response['choices'][0]['message']['role'], $response['choices'][0]['message']['content']);
+    if ($this->streamed) {
+      $response = $this->client->chat()->createStreamed($payload);
+      $message = new MistralChatMessageIterator($response);
+    }
+    else {
+      $response = $this->client->chat()->create($payload)->toArray();
+      $message = new ChatMessage($response['choices'][0]['message']['role'], $response['choices'][0]['message']['content']);
+    }
     return new ChatOutput($message, $response, []);
   }
 
