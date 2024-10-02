@@ -165,12 +165,34 @@ class AiSettingsForm extends ConfigFormBase {
           '#title' => $this->t('Default Model'),
           '#default_value' => $default_providers[$operation_type['id']]['model_id'] ?? '',
           '#options' => $models,
-          '#empty_option' => $this->t('No available models'),
+          '#empty_option' => $this->t('- Select -'),
         ];
       }
     }
 
     return parent::buildForm($form, $form_state);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    parent::validateForm($form, $form_state);
+
+    $values = $form_state->getValues();
+    foreach ($this->providerManager->getOperationTypes() as $operation_type) {
+
+      // If a provider is selected, a model must also be selected.
+      if (
+        !empty($values['operation__' . $operation_type['id']])
+        && empty($values['model__' . $operation_type['id']])
+      ) {
+        $message = $this->t('You have selected a provider for @operation but have not selected a model.', [
+          '@operation' => $operation_type['label'],
+        ]);
+        $form_state->setErrorByName('model__' . $operation_type['id'], $message);
+      }
+    }
   }
 
   /**
