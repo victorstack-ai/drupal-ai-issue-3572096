@@ -34,6 +34,9 @@ The following files defines the methods available when doing a chat call as well
 * [ChatInput.php](https://git.drupalcode.org/project/ai/-/blob/1.0.x/src/OperationType/Chat/ChatInput.php?ref_type=heads)
 * [ChatOutput.php](https://git.drupalcode.org/project/ai/-/blob/1.0.x/src/OperationType/Chat/ChatOutput.php?ref_type=heads)
 
+### Setting system messages.
+There is an abstracted way to set system messages for the providers that allows for it, the method is called `setChatSystemRole` and just takes the system role you want to set. Note that different providers weights these instructions more or less, so in certain cases it might make more sense to use two user messages instead.
+
 ### Streaming vs None-Streaming output.
 There is a helper method when using the chat providers that makes it possible to stream the output, if the chat provider has the possibility to do so. This can be set via the method `$provider->streamedOutput(TRUE);`. This will give you back an iterator or generator that you can do a foreach on flush the output buffers each time. See the section in [Develop Third Party module](develop_third_party_module.md/#streaming-chat) about how to add checks for it.
 

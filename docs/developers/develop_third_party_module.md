@@ -117,6 +117,17 @@ public submitForm($form, $form_state) {
 
 ```
 
+### Setting Chat system messages.
+There is an abstracted way to set system messages for the providers that allows for it, the method is called `setChatSystemRole` and just takes the system role you want to set. Note that different providers weights these instructions more or less, so in certain cases it might make more sense to use two user messages instead.
+
+So it would be something like this:
+
+```php
+$provider =  \Drupal::service('ai.provider')->createInstance('openai');
+// Set a system message.
+$provider->setChatSystemRole('You are an expert at bananas.')
+```
+
 ## Streaming Chat
 
 There is a way to output the chat as a stream, meaning that it outputs the words as they come in. For your third party provider to support it, you need to first turn this on (or have it as a config) via the method `$provider->streamedOutput(TRUE);`.
