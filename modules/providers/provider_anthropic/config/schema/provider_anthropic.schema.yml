@@ -5,7 +5,7 @@ provider_anthropic.settings:
     api_key:
       type: string
       label: 'The API key for Anthropic via Key module'
-    moderation:
+    openai_moderation:
       type: boolean
       label: 'Enable moderation requests before each request.'
     version:

@@ -59,36 +59,67 @@ class ModeratePreRequestEventSubscriber implements EventSubscriberInterface {
   public function moderatePreRequest(PreGenerateResponseEvent $event) {
     // Check the config if we should moderate the provider and type.
     $config = $this->getConfig()->get('moderations');
-    $key = $event->getProviderId() . '__' . $event->getOperationType();
-    if (empty($config) || !isset($config[$key])) {
-      return;
-    }
-    // Get the openai provider.
-    [$moderator, $model_id] = explode('__', $config[$key]);
-    try {
-      $provider = $this->aiProvider->createInstance($moderator);
-    }
-    catch (\Exception $e) {
-      throw new AiUnsafePromptException($moderator . ' moderation is wanted on a request of type ' . $event->getOperationType() . ' for the provider ' . $event->getProviderId() . ', but it is not installed.');
-    }
-    // Check that its configured and model id exists.
-    if (!$provider->isUsable('moderation') || !$model_id) {
-      throw new AiUnsafePromptException($moderator . ' moderation is wanted on a request of type ' . $event->getOperationType() . ' for the provider ' . $event->getProviderId() . ', but it is not configured.');
+    $configs = $this->matchConfigs($config, $event);
+
+    foreach ($configs as $config) {
+      if (!isset($config['models'])) {
+        continue;
+      }
+      foreach ($config['models'] as $model) {
+        [$provider_id, $model_id] = explode('__', $model);
+        try {
+          $provider = $this->aiProvider->createInstance($provider_id);
+        }
+        catch (\Exception $e) {
+          throw new AiUnsafePromptException($provider_id . ' moderation is wanted on a request of type ' . $event->getOperationType() . ' for the provider ' . $event->getProviderId() . ', but it is not installed.');
+        }
+
+        // Get the input and json_encode it since it might be complex.
+        $input = '';
+        if ($event->getInput() instanceof InputInterface) {
+          $input = $event->getInput()->toString();
+        }
+        else {
+          // If its raw data, lets json encode it into a string.
+          $input = json_encode($event->getInput());
+        }
+
+        // Test it against the provider and fail if its not safe.
+        if ($provider->moderation($input, $model_id)->getNormalized()->isFlagged()) {
+          throw new AiUnsafePromptException($provider_id . ' moderation endpoint flagged and stopped this prompt.');
+        }
+      }
     }
 
-    // Get the input and json_encode it since it might be complex.
-    $input = '';
-    if ($event->getInput() instanceof InputInterface) {
-      $input = $event->getInput()->toString();
+  }
+
+  /**
+   * Match providers.
+   *
+   * @param array $configs
+   *   All the configs.
+   * @param \Drupal\ai\Event\PreGenerateResponseEvent $event
+   *   The event.
+   *
+   * @return array
+   *   The configs left.
+   */
+  protected function matchConfigs(array $configs, PreGenerateResponseEvent $event): array {
+    $new_configs = [];
+    foreach ($configs as $key => $config) {
+      if ($event->getProviderId() !== $config['provider']) {
+        continue;
+      }
+      // Cleanup the tags, explode on comma and trim, remove empty.
+      $tags = array_filter(array_map('trim', explode(',', $config['tags'])));
+
+      // If it has tags and they don't match, skip.
+      if (count($tags) && !array_intersect($event->getTags(), $tags)) {
+        continue;
+      }
+      $new_configs[$key] = $config;
     }
-    else {
-      // If its raw data, lets json encode it into a string.
-      $input = json_encode($event->getInput());
-    }
-    // Test it against the provider and fail if its not safe.
-    if ($provider->moderation($input, $model_id)->getNormalized()->isFlagged()) {
-      throw new AiUnsafePromptException($moderator . ' moderation endpoint flagged and stopped this prompt.');
-    }
+    return $new_configs;
   }
 
   /**

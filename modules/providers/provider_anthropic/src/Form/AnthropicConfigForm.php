@@ -140,19 +140,29 @@ class AnthropicConfigForm extends ConfigFormBase {
     $config = $this->configFactory->getEditable('ai_external_moderation.settings');
     $moderations = $config->get('moderations');
     if ($form_state->getValue('openai_moderation')) {
-      if (!isset($moderations['anthropic__chat'])) {
-        $moderations['anthropic__chat'] = 'openai__text-moderation-latest';
-        $config->set('moderations', $moderations);
-        $config->save();
+      foreach ($moderations as $key => $value) {
+        if ($value['provider'] === 'anthropic') {
+          break;
+        }
       }
+      $moderations[] = [
+        'provider' => 'anthropic',
+        'tags' => '',
+        'model_title' => '',
+        'models' => [
+          'openai__text-moderation-latest',
+        ],
+      ];
     }
     else {
-      if (isset($moderations['anthropic__chat'])) {
-        unset($moderations['anthropic__chat']);
-        $config->set('moderations', $moderations);
-        $config->save();
+      foreach ($moderations as $key => $value) {
+        if ($value['provider'] === 'anthropic' && isset($value['models'][0]) && $value['models'][0] === 'openai__text-moderation-latest') {
+          unset($moderations[$key]);
+        }
       }
     }
+    $config->set('moderations', $moderations);
+    $config->save();
 
     // Set some defaults.
     $this->aiProviderManager->defaultIfNone('chat', 'anthropic', 'claude-3-sonnet-20240229');
