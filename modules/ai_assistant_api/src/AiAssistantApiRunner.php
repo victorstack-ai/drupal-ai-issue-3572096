@@ -7,6 +7,7 @@ use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\ChatOutput;
 use Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface;
+use Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface;
 use Drupal\ai_assistant_api\Data\AssistantStreamIterator;
 use Drupal\ai_assistant_api\Data\UserMessage;
 use Drupal\ai_assistant_api\Entity\AiAssistant;
@@ -129,6 +130,13 @@ class AiAssistantApiRunner {
   protected LoggerChannelFactoryInterface $loggerChannelFactory;
 
   /**
+   * The message to json service.
+   *
+   * @var \Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface
+   */
+  protected PromptJsonDecoderInterface $promptJsonDecoder;
+
+  /**
    * If it should be a streaming result.
    *
    * @var bool
@@ -204,6 +212,8 @@ class AiAssistantApiRunner {
    *   The configuration factory.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
    *   The logger channel factory.
+   * @param \Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface $promptJsonDecoder
+   *   The message to json service.
    */
   public function __construct(
     EntityTypeManagerInterface $entityTypeManager,
@@ -218,6 +228,7 @@ class AiAssistantApiRunner {
     LanguageManagerInterface $languageManager,
     ConfigFactoryInterface $configFactory,
     LoggerChannelFactoryInterface $loggerChannelFactory,
+    PromptJsonDecoderInterface $promptJsonDecoder,
   ) {
     $this->entityTypeManager = $entityTypeManager;
     $this->aiProvider = $aiProvider;
@@ -231,6 +242,7 @@ class AiAssistantApiRunner {
     $this->languageManager = $languageManager;
     $this->configFactory = $configFactory;
     $this->loggerChannelFactory = $loggerChannelFactory;
+    $this->promptJsonDecoder = $promptJsonDecoder;
   }
 
   /**
@@ -559,61 +571,11 @@ class AiAssistantApiRunner {
     ]);
     $values = $response->getNormalized();
 
-    $full = '';
-    $text = FALSE;
-    // Special solution.
-    if ($this->streaming && $values instanceof StreamedChatMessageIteratorInterface) {
-      $i = 0;
-      foreach ($values as $value) {
-        if ($value->getText()) {
-          $full .= $value->getText();
-          if (!$i && (substr($full, 0, 3) != '```' && substr($full, 0, 1) != '{')) {
-            $text = TRUE;
-            // Stop because its an actual text.
-            break;
-          }
-          $i++;
-        }
-      }
+    $response = $this->promptJsonDecoder->decode($values, 20);
+    if (is_array($response)) {
+      return $response;
     }
-    else {
-      $full = $values->getText();
-      // Check if json exists.
-      json_decode($full);
-      if (json_last_error() !== JSON_ERROR_NONE) {
-        if (strpos($full, '```json') === FALSE) {
-          $text = TRUE;
-        }
-      }
-    }
-
-    if (!$text) {
-      $json = json_decode($full, TRUE);
-
-      if ($json) {
-        return $json;
-      }
-      preg_match('/```json(.*)```/s', $full, $matches);
-      $json = $matches[1] ?? '';
-      // Send error message, something went wrong.
-      if (!$json) {
-        throw new \Exception('Could not extract JSON from the response.');
-      }
-      return json_decode($json, TRUE);
-    }
-
-    if ($this->streaming && $values instanceof StreamedChatMessageIteratorInterface) {
-      $stream = new AssistantStreamIterator($values);
-      $stream->setFirstMessage($full);
-      return new ChatOutput($stream, [$full], []);
-    }
-    else {
-      return new ChatOutput(
-        new ChatMessage('assistant', $full),
-        [$full],
-        [],
-      );
-    }
+    return new ChatOutput($response, $values, []);
   }
 
   /**

@@ -58,14 +58,14 @@ class PromptJsonDecoder implements PromptJsonDecoderInterface {
     $full = "";
     $could_be_json = FALSE;
     foreach ($payload as $value) {
+      $full .= $value->getText();
       if ($value->getText() && $i <= $chunks_to_test) {
-        $full .= $value->getText();
         // Test against the different start combinations.
         foreach ($this->jsonStart as $start) {
           if (strpos($full, $start) !== FALSE) {
             $could_be_json = TRUE;
             // Stop because its a candidate.
-            break;
+            break 2;
           }
         }
       }
