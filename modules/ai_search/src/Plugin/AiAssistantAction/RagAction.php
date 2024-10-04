@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_search\Plugin\AiAssistantAction;
 
+use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\TranslatableInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -42,6 +43,8 @@ class RagAction extends AiAssistantActionBase {
    *   The renderer.
    * @param \League\HTMLToMarkdown\HtmlConverter $converter
    *   The html to markdown converter.
+   * @param \Drupal\Core\Entity\EntityDisplayRepositoryInterface $entityDisplayRepository
+   *   The entity display repository.
    */
   public function __construct(
     array $configuration,
@@ -49,6 +52,7 @@ class RagAction extends AiAssistantActionBase {
     protected EntityTypeManagerInterface $entityTypeManager,
     protected RendererInterface $renderer,
     protected HtmlConverter $converter,
+    protected EntityDisplayRepositoryInterface $entityDisplayRepository,
   ) {
     parent::__construct($configuration, $tmpStore);
 
@@ -68,6 +72,7 @@ class RagAction extends AiAssistantActionBase {
       $container->get('entity_type.manager'),
       $container->get('renderer'),
       new HtmlConverter(),
+      $container->get('entity_display.repository'),
     );
   }
 
@@ -344,7 +349,8 @@ class RagAction extends AiAssistantActionBase {
     }
 
     // Render the entity in default view mode.
-    $pre_render_entity = $this->entityTypeManager->getViewBuilder($entity_type)->view($entity);
+    $view_mode = $rag_database['aggregated_llm'] ?? 'full';
+    $pre_render_entity = $this->entityTypeManager->getViewBuilder($entity_type)->view($entity, $view_mode);
     $rendered = $this->renderer->render($pre_render_entity);
     $rendered_entity = $this->converter->convert((string) $rendered);
     $message = str_replace([
@@ -455,6 +461,21 @@ class RagAction extends AiAssistantActionBase {
       '#options' => [
         'chunks' => $this->t('Chunks'),
         'rendered' => $this->t('Aggregated and Rendered entities'),
+      ],
+    ];
+
+    // @todo Dynamically load the options based on search api server types.
+    $options = $this->entityDisplayRepository->getViewModeOptions('node');
+    $form['rag_' . $i]['rendered_view_mode'] = [
+      '#type' => 'select',
+      '#title' => $this->t('RAG rendered view mode'),
+      '#description' => $this->t('Select a preferred view mode. If not found, the default view mode will be used for the given entity type.'),
+      '#options' => $options,
+      '#default_value' => 'full',
+      '#states' => [
+        'visible' => [
+          ':input[name="action_plugin_rag_action[configuration][rag_' . $i . '][output_mode]"]' => ['value' => 'rendered'],
+        ],
       ],
     ];
 
