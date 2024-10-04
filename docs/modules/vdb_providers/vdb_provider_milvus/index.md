@@ -1,6 +1,23 @@
 # Milvus Vector Database Provider
 
-## Using with DDEV.
+## Overview
+
+This Drupal module provides integration with Milvus (local) and Zilliz (managed
+cloud). It includes features for inserting, deleting, and managing vector data.
+
+## Requirements
+
+- Milvus local or Zilliz cloud
+
+## Installation
+
+1. Enable the module.
+2. Configure the API connection to Pine via Admin > Configuration > Vector
+   Database Providers > Milvus.
+4. Create a new Search API Server using Milvus/Zilliz as the backend.
+5. Set up AI Search as desired (see AI Search documentation).
+
+### Using with DDEV.
 
 1. Copy the `ddev-example.docker-compose.milvus.yaml` to your `.ddev` folder.
    1. Assuming your project uses the `web` docroot, you can use the below 
@@ -14,14 +31,14 @@
    1. Host: `http://milvus`
    2. Port: `19530`
 
-## Connecting to a hosted Milvus instance.
+### Connecting to a hosted Milvus instance.
 
 You can use Zilliz Cloud for example at https://zilliz.com/cloud. To get 
 started:
 1. Sign up for a free trial if you do not already have a plan
 2. Use the credentials provided
 
-# Contributing to the Milvus PHP library dependency.
+## Contributing to the Milvus PHP library dependency.
 
 This provider depends on https://github.com/HelgeSverre/milvus. For developers
 wishing to contribute to it:
