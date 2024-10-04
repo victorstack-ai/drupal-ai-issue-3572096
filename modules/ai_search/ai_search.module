@@ -5,6 +5,9 @@
  * AI Search module file.
  */
 
+use Drupal\Core\Database\Query\AlterableInterface;
+use Drupal\ai_search\Plugin\search_api\processor\DatabaseBoostByAiSearch;
+
 /**
  * Implements hook_entity_type_alter().
  */
@@ -14,4 +17,11 @@ function ai_search_entity_type_alter(array &$entity_types) {
     $entity_type = $entity_types['search_api_index'];
     $entity_type->setFormClass('fields', 'Drupal\ai_search\Form\AiSearchIndexFieldsForm');
   }
+}
+
+/**
+ * Implements hook_query_TAG_alter().
+ */
+function ai_search_query_search_api_db_search_alter(AlterableInterface $query) {
+  DatabaseBoostByAiSearch::queryAlter($query);
 }

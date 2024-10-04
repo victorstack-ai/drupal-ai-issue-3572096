@@ -41,6 +41,9 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildForm($form, $form_state);
+    if ($this->entity->getServerInstance()->getBackendId() !== 'search_api_ai_search') {
+      return $form;
+    }
     $index_config = $this->config('search_api.index.' . $this->entity->id())->getRawData();
 
     // Advance controls.
@@ -99,7 +102,7 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
       if (!empty($field_group['#header'])) {
         $operations_header = array_pop($field_group['#header']);
         $field_group['#header'][] = $this->t('Indexing option');
-        if ($index_config['control_field_max_length']) {
+        if (isset($index_config['control_field_max_length']) && $index_config['control_field_max_length']) {
           $field_group['#header'][] = $this->t('Maximum length');
         }
         $field_group['#header'][] = $operations_header;
@@ -120,7 +123,7 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
               $row['indexing_option']['#default_value'] = $index_config['indexing_options'][$field_id]['indexing_option'];
             }
 
-            if ($index_config['control_field_max_length']) {
+            if (isset($index_config['control_field_max_length']) && $index_config['control_field_max_length']) {
               if (
                 isset($row['type']['#default_value'])
                 && $row['type']['#default_value'] === 'string'
@@ -158,6 +161,9 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     parent::validateForm($form, $form_state);
+    if ($this->entity->getServerInstance()->getBackendId() !== 'search_api_ai_search') {
+      return $form;
+    }
 
     // Check if the embedding strategy does not support multiple 'Main Content'
     // fields.
@@ -198,6 +204,10 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
    */
   public function save(array $form, FormStateInterface $form_state) {
     $return = parent::save($form, $form_state);
+    if ($this->entity->getServerInstance()->getBackendId() !== 'search_api_ai_search') {
+      return $form;
+    }
+
     $index_config = $this->configFactory()->getEditable('search_api.index.' . $this->entity->id());
     $values = $form_state->getValues();
 
