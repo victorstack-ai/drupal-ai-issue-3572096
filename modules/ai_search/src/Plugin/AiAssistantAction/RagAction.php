@@ -256,21 +256,29 @@ class RagAction extends AiAssistantActionBase {
   protected function renderRagResponseAsString($results, string $query, array $rag_database) {
     $response = '';
 
-    foreach ($results as $result) {
+    $result_items = [];
+    foreach ($results->getResultItems() as $result) {
       // Filter the results.
       if ($rag_database['score_threshold'] > $result->getScore()) {
         continue;
       }
+
+      $result_items[] = $result;
+
       // Chunked mode is easy.
       if ($rag_database['output_mode'] == 'chunks') {
         $response .= $result->getExtraData('content') . "\n\n";
         $response .= '----------------------------------------' . "\n\n";
       }
-      else {
-        // LLM checking results.
-        $response .= $this->fullEntityCheck($result, $query, $rag_database);
-      }
     }
+
+    // For the full entity check, we make a single subsequent chat call to
+    // have the LLM extract relevant data for the conversation based on the
+    // question the user asked.
+    if ($rag_database['output_mode'] === 'rendered' && !empty($result_items)) {
+      $response .= $this->fullEntityCheck($result_items, $query, $rag_database);
+    }
+
     // Store the response in context.
     $this->storeActionContext('rag', [
       'query' => $query,
@@ -288,7 +296,7 @@ class RagAction extends AiAssistantActionBase {
    * @param string $query_string
    *   The query to search for (optional).
    *
-   * @return \Drupal\search_api\Query\ResultSet
+   * @return \Drupal\search_api\Query\ResultSetInterface
    *   The RAG response.
    */
   protected function getRagResults(array $rag_database, string $query_string = '') {
@@ -320,7 +328,7 @@ class RagAction extends AiAssistantActionBase {
   /**
    * Full entity check with a LLM checking the rendered entity.
    *
-   * @param \Drupal\search_api\Query\Result $result
+   * @param \Drupal\search_api\Item\ItemInterface[] $result_items
    *   The result to check.
    * @param string $query_string
    *   The query to search for.
@@ -330,39 +338,42 @@ class RagAction extends AiAssistantActionBase {
    * @return string
    *   The response.
    */
-  protected function fullEntityCheck($result, string $query_string, array $rag_database) {
-    $entity_string = $result->getExtraData('drupal_entity_id');
-    // Load the entity from search api key.
-    // @todo probably exists a function for this.
-    [, $entity_parts, $lang] = explode(':', $entity_string);
-    [$entity_type, $entity_id] = explode('/', $entity_parts);
-    /** @var \Drupal\Core\Entity\ContentEntityBase */
-    $entity = $this->entityTypeManager->getStorage($entity_type)->load($entity_id);
+  protected function fullEntityCheck(array $result_items, string $query_string, array $rag_database): string {
+    $rendered_entities = [];
+    foreach ($result_items as $result) {
+      $entity_string = $result->getExtraData('drupal_entity_id');
+      // Load the entity from search api key.
+      // @todo probably exists a function for this.
+      [, $entity_parts, $lang] = explode(':', $entity_string);
+      [$entity_type, $entity_id] = explode('/', $entity_parts);
+      /** @var \Drupal\Core\Entity\ContentEntityBase */
+      $entity = $this->entityTypeManager->getStorage($entity_type)->load($entity_id);
 
-    // Get translated if possible.
-    if (
-      $entity instanceof TranslatableInterface
-      && $entity->language()->getId() !== $lang
-      && $entity->hasTranslation($lang)
-    ) {
-      $entity = $entity->getTranslation($lang);
+      // Get translated if possible.
+      if (
+        $entity instanceof TranslatableInterface
+        && $entity->language()->getId() !== $lang
+        && $entity->hasTranslation($lang)
+      ) {
+        $entity = $entity->getTranslation($lang);
+      }
+
+      // Render the entity in selected view mode.
+      $view_mode = $rag_database['aggregated_llm'] ?? 'full';
+      $pre_render_entity = $this->entityTypeManager->getViewBuilder($entity_type)->view($entity, $view_mode);
+      $rendered = $this->renderer->render($pre_render_entity);
+      $rendered_entities[] = $this->converter->convert((string) $rendered);
     }
-
-    // Render the entity in default view mode.
-    $view_mode = $rag_database['aggregated_llm'] ?? 'full';
-    $pre_render_entity = $this->entityTypeManager->getViewBuilder($entity_type)->view($entity, $view_mode);
-    $rendered = $this->renderer->render($pre_render_entity);
-    $rendered_entity = $this->converter->convert((string) $rendered);
     $message = str_replace([
       '[question]',
       '[entity]',
     ], [
       $query_string,
-      $rendered_entity,
+      implode("\n------------\n", $rendered_entities),
     ], nl2br($rag_database['aggregated_llm']));
 
     // Now we have the entity, we can check it with the LLM.
-    $provider = $this->aiProvider->createInstance($this->assistant->get('llm_provider'));
+    $provider = $this->aiProvider;
     $config = [];
     foreach ($rag_database['llm_configuration'] as $key => $val) {
       $config[$key] = $val;
@@ -482,11 +493,11 @@ class RagAction extends AiAssistantActionBase {
     $form['rag_' . $i]['aggregated_llm'] = [
       '#type' => 'textarea',
       '#title' => $this->t('RAG LLM Agent'),
-      '#description' => $this->t('With Aggregated and Rendered entities, this agent will take each of the entities returned and create one summarized answer to feed to the assistant. This can take the tokens [question] and [entity] or even specific tokens from the entity below.'),
+      '#description' => $this->t('With Aggregated and Rendered entities, this agent will take each of the entities returned and create one summarized answer to feed to the assistant. This can take the tokens [question] and [entity] or even specific tokens from the entity below. If multiple results are found the [entity] will be replaced with the contents of multiple results separated by --------- and new lines.'),
       '#default_value' => $this->configuration['rag_' . $i]['aggregated_llm'] ?? $form_state->getValue('aggregated_llm'),
       '#attributes' => [
         'rows' => 10,
-        'placeholder' => $this->t('Can you summarize if the following article is relevant to the question?
+        'placeholder' => $this->t('Can you summarize if the following article(s) are relevant to the question?
 If it is not, please just answer "no answer".
 If it is, answer with the details that are needed to answer this from a larger perspective.
 
@@ -495,7 +506,7 @@ The question is:
 [question]
 -----------------------
 
-The article is:
+The article(s) are:
 -----------------------
 [entity]
 -----------------------'),
