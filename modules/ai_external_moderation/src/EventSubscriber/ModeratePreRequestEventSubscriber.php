@@ -58,7 +58,7 @@ class ModeratePreRequestEventSubscriber implements EventSubscriberInterface {
    */
   public function moderatePreRequest(PreGenerateResponseEvent $event) {
     // Check the config if we should moderate the provider and type.
-    $config = $this->getConfig()->get('moderations');
+    $config = $this->getConfig()->get('moderations') ?? [];
     $configs = $this->matchConfigs($config, $event);
 
     foreach ($configs as $config) {
