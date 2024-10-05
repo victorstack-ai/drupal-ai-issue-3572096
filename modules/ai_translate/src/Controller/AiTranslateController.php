@@ -164,9 +164,9 @@ class AiTranslateController extends ControllerBase {
       $prompt = $this->config('ai_translate.settings')->get('prompt');
     }
     $promptText = $this->twig->renderInline($prompt, [
-      'source_lang' => $langFrom->id(),
+      'source_lang' => $langFrom->getId(),
       'source_lang_name' => $langFrom->getName(),
-      'dest_lang' => $langTo->id(),
+      'dest_lang' => $langTo->getId(),
       'dest_lang_name' => $langTo->getName(),
       'input_text' => $input_text,
     ]);
