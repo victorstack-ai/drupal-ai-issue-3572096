@@ -134,7 +134,7 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
         'uppercase' => $this->t('UPPERCASE'),
         'first_char' => $this->t('First character uppercase'),
       ],
-      '#default_value' => $fieldDefinition->getConfig($entity->bundle())->getThirdPartySetting('ai_automator', 'automator_clean_up', ''),
+      '#default_value' => $defaultValues["automator_clean_up"] ?? '',
       '#weight' => 23,
     ];
 
@@ -143,7 +143,7 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
         '#type' => 'checkbox',
         '#title' => 'Find similar tags',
         '#description' => $this->t('This will use GPT-4 to find similar tags. Meaning if the tag "Jesus Christ" exists and the system wants to store "Jesus" it will store it as "Jesus Christ". This uses extra calls and is slower and more costly.'),
-        '#default_value' => $fieldDefinition->getConfig($entity->bundle())->getThirdPartySetting('ai_automator', 'automator_search_similar_tags', FALSE),
+        '#default_value' => $defaultValues["automator_search_similar_tags"] ?? FALSE,
         '#weight' => 23,
       ];
     }
