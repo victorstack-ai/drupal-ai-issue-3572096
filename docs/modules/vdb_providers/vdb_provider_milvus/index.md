@@ -23,7 +23,7 @@ cloud). It includes features for inserting, deleting, and managing vector data.
    1. Assuming your project uses the `web` docroot, you can use the below 
       command: 
       ```
-      cp web/modules/vdb_providers/vdb_provider_milvus/docs/docker-compose-examples/ddev-example.docker-compose.milvus.yaml .ddev/docker-compose.milvus.yaml
+      cp web/modules/contrib/ai/vdb_providers/vdb_provider_milvus/docs/docker-compose-examples/ddev-example.docker-compose.milvus.yaml .ddev/docker-compose.milvus.yaml
       ```
 2. Run `ddev restart` 
 3. Access your Milvus UI at `https://{project}.ddev.site:8521`
