@@ -44,7 +44,7 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
     if ($this->entity->getServerInstance()->getBackendId() !== 'search_api_ai_search') {
       return $form;
     }
-    $index_config = $this->config('search_api.index.' . $this->entity->id())->getRawData();
+    $ai_search_index_config = $this->config('ai_search.index.' . $this->entity->id())->getRawData();
 
     // Advance controls.
     $form['advanced'] = [
@@ -56,13 +56,13 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
       '#type' => 'checkbox',
       '#title' => $this->t('Advanced usage: Set maximum lengths for each string "Filterable attribute".'),
       '#description' => $this->t('Vector Databases allow attaching of metadata to the vectorized content; however, they typically have limits to how much metadata can be attached. If you set very long fields as "Filterable attributes" you may wish to control the maximum length per field. Disabling this checkbox will reset the maximum lengths to no restriction.'),
-      '#default_value' => $index_config['control_field_max_length'] ?? FALSE,
+      '#default_value' => $ai_search_index_config['control_field_max_length'] ?? FALSE,
     ];
     $form['advanced']['exclude_chunk_from_metadata'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Advanced usage: Exclude the "Chunk" of the "Main Content" from the metadata.'),
       '#description' => $this->t('By default the metadata contains a "content" attribute attached to it. This may be used by some tools when a chunk is returned such as an AI Assistant. If you however ensure that the returned results are used to load the full entity (also an option in AI Assistants and the default for Views) then the "content" attribute in the metadata is not needed and can save space.'),
-      '#default_value' => $index_config['exclude_chunk_from_metadata'] ?? FALSE,
+      '#default_value' => $ai_search_index_config['exclude_chunk_from_metadata'] ?? FALSE,
     ];
     if (
       $form['advanced']['control_field_max_length']['#default_value']
@@ -102,7 +102,7 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
       if (!empty($field_group['#header'])) {
         $operations_header = array_pop($field_group['#header']);
         $field_group['#header'][] = $this->t('Indexing option');
-        if (isset($index_config['control_field_max_length']) && $index_config['control_field_max_length']) {
+        if (isset($ai_search_index_config['control_field_max_length']) && $ai_search_index_config['control_field_max_length']) {
           $field_group['#header'][] = $this->t('Maximum length');
         }
         $field_group['#header'][] = $operations_header;
@@ -119,11 +119,11 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
               '#empty_option' => $this->t('- Select -'),
               '#default_value' => '',
             ];
-            if (!empty($index_config['indexing_options'][$field_id]['indexing_option'])) {
-              $row['indexing_option']['#default_value'] = $index_config['indexing_options'][$field_id]['indexing_option'];
+            if (!empty($ai_search_index_config['indexing_options'][$field_id]['indexing_option'])) {
+              $row['indexing_option']['#default_value'] = $ai_search_index_config['indexing_options'][$field_id]['indexing_option'];
             }
 
-            if (isset($index_config['control_field_max_length']) && $index_config['control_field_max_length']) {
+            if (isset($ai_search_index_config['control_field_max_length']) && $ai_search_index_config['control_field_max_length']) {
               if (
                 isset($row['type']['#default_value'])
                 && $row['type']['#default_value'] === 'string'
@@ -136,10 +136,10 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
                   '#default_value' => '',
                 ];
                 if (
-                  !empty($index_config['indexing_options'][$field_id]['max'])
-                  && $index_config['indexing_options'][$field_id]['max'] > 0
+                  !empty($ai_search_index_config['indexing_options'][$field_id]['max'])
+                  && $ai_search_index_config['indexing_options'][$field_id]['max'] > 0
                 ) {
-                  $row['max']['#default_value'] = (int) $index_config['indexing_options'][$field_id]['max'];
+                  $row['max']['#default_value'] = (int) $ai_search_index_config['indexing_options'][$field_id]['max'];
                 }
               }
               else {
@@ -208,8 +208,9 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
       return $form;
     }
 
-    $index_config = $this->configFactory()->getEditable('search_api.index.' . $this->entity->id());
+    // Get subsets of values for ease of access.
     $values = $form_state->getValues();
+    $advanced = $form_state->getValue('advanced');
 
     // Determine the selected indexing options by looping through all fields.
     $indexing_options = [];
@@ -234,15 +235,15 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
         }
       }
     }
-    $index_config->set('indexing_options', $indexing_options);
 
-    // Advanced options.
-    $advanced = $form_state->getValue('advanced');
-    $index_config->set('control_field_max_length', (bool) $advanced['control_field_max_length']);
-    $index_config->set('exclude_chunk_from_metadata', (bool) $advanced['exclude_chunk_from_metadata']);
+    // Save the configuration to a separate configuration object since Search
+    // API does not support custom configuration.
+    $ai_search_index_config = $this->configFactory()->getEditable('ai_search.index.' . $this->entity->id());
+    $ai_search_index_config->set('indexing_options', $indexing_options);
+    $ai_search_index_config->set('control_field_max_length', (bool) $advanced['control_field_max_length']);
+    $ai_search_index_config->set('exclude_chunk_from_metadata', (bool) $advanced['exclude_chunk_from_metadata']);
+    $ai_search_index_config->save();
 
-    // Save the changes.
-    $index_config->save();
     return $return;
   }
 

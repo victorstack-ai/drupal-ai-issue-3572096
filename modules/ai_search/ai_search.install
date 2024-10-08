@@ -66,7 +66,6 @@ function ai_search_update_10002() {
   // that to avoid fatal errors.
   $updated_indexes = 0;
   foreach ($indexes as $index) {
-    $has_updates = FALSE;
     $config_object = $config_factory->getEditable($index);
     $config = $config_object->getRawData();
 
@@ -77,37 +76,63 @@ function ai_search_update_10002() {
     ) {
       continue;
     }
+    $ai_search_config_object = $config_factory->getEditable('ai_search.index.' . $config['id']);
+    $ai_search_config = $config_object->getRawData();
 
     // Update fields to use the indexing options instead of embeddings field
     // data type.
+    $indexing_options = [];
     if (!empty($config['field_settings'])) {
       foreach ($config['field_settings'] as $key => $setting) {
-        if (!isset($setting['type']) || $setting['type'] !== 'embeddings') {
+        if (!isset($setting['type'])) {
           continue;
         }
-        $has_updates = TRUE;
+
+        $indexing_options[$key] = [
+          'indexing_option' => '',
+          'max' => -1,
+        ];
+
+        if ($setting['type'] !== 'embeddings') {
+          continue;
+        }
         $setting['type'] = 'string';
-        $setting['indexing_option'] = EmbeddingStrategyIndexingOptions::MAIN_CONTENT->getKey();
-        $setting['indexing_max_length'] = -1;
         $config_object->set('field_settings.' . $key, $setting);
+        $indexing_options[$key]['indexing_option'] = EmbeddingStrategyIndexingOptions::MAIN_CONTENT->getKey();
       }
     }
 
     // Add the boolean to determine if the max length fields should be shown
     // next to indexing options.
-    if (!isset($config['control_field_max_length'])) {
-      $has_updates = TRUE;
-      $config_object->set('control_field_max_length', FALSE);
+    if (!isset($ai_search_config['control_field_max_length'])) {
+      $control_field_max_length = $config['control_field_max_length'] ?? FALSE;
+      $ai_search_config_object->set('control_field_max_length', $control_field_max_length);
+      if (isset($config['control_field_max_length'])) {
+        $config_object->clear('control_field_max_length');
+      }
     }
-    if (!isset($config['exclude_chunk_from_metadata'])) {
-      $has_updates = TRUE;
-      $config_object->set('exclude_chunk_from_metadata', FALSE);
+    if (!isset($ai_search_config['exclude_chunk_from_metadata'])) {
+      $exclude_chunk_from_metadata = $config['exclude_chunk_from_metadata'] ?? FALSE;
+      $ai_search_config_object->set('exclude_chunk_from_metadata', $exclude_chunk_from_metadata);
+      if (isset($config['exclude_chunk_from_metadata'])) {
+        $config_object->clear('exclude_chunk_from_metadata');
+      }
+    }
+    if (!empty($config['indexing_options'])) {
+      $ai_search_config_object->set('indexing_options', $config['indexing_options']);
+      $config_object->clear('indexing_options');
+    }
+    elseif ($indexing_options) {
+      $ai_search_config_object->set('indexing_options', $indexing_options);
     }
 
-    if ($has_updates) {
-      $config_object->save();
-      $updated_indexes++;
+    if (isset($config['control_field_max_length'])) {
+      $config_object->clear('control_field_max_length');
     }
+
+    $config_object->save();
+    $ai_search_config_object->save();
+    $updated_indexes++;
   }
 
   // If we have at least one, tell the user to go to manage their fields.
@@ -171,4 +196,13 @@ function ai_search_update_10003() {
   return t('Search API Servers using the AI Search module updated: @number.', [
     '@number' => $updated_servers,
   ]);
+}
+
+/**
+ * Update the indexes that use AI Search with new index and settings via config.
+ */
+function ai_search_update_10004() {
+  // Re-run the updated 10002 hook as that has been updated to handle both
+  // pre and post 10001 scenarios.
+  return ai_search_update_10002();
 }
