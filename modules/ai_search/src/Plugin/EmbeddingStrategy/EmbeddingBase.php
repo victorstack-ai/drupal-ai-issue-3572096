@@ -125,7 +125,12 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
         $label_key = $entity_type->getKey('label');
       }
 
+      // Get and flatten the value to prepare for conversion to vector.
       $value = $this->getValue($field);
+      if (is_array($value)) {
+        $value = implode(', ', $value);
+      }
+
       // The title field.
       if ($field->getFieldIdentifier() == $label_key) {
         $title = $value;
@@ -323,7 +328,7 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
    * @return int|string|bool|float
    *   The field value.
    */
-  protected function getValue(FieldInterface $field): int|string|bool|float {
+  protected function getValue(FieldInterface $field): int|array|string|bool|float {
     $values = $field->getValues();
 
     // Always composite if field supports multiple. Otherwise, if the field is
@@ -345,12 +350,18 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
     }
     elseif (count($values) > 1) {
 
-      // Separate multiple values by comma and space.
+      // Some Vector Databases support arrays, return that in the metadata
+      // and leave it to the Provider to flatten if needed.
       $parts = [];
       foreach ($field->getValues() as $value) {
-        $parts[] = $this->converter->convert((string) $value);
+        if (in_array($field->getType(), ['date', 'boolean', 'integer'])) {
+          $parts[] = (int) $value;
+        }
+        else {
+          $parts[] = $this->converter->convert((string) $value);
+        }
       }
-      return implode(', ', $parts);
+      return $parts;
     }
     return '';
   }

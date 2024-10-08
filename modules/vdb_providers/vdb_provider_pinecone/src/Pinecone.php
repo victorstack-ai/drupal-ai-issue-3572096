@@ -155,6 +155,17 @@ class Pinecone {
   public function insertIntoNamespace(string $namespace, array $data, string $index_name): void {
     $metadata = $data;
     unset($metadata['vector']);
+
+    // Pinecone metadata only supports nested strings. This is their "List of
+    // strings" metadata option.
+    foreach ($metadata as &$item) {
+      if (is_array($item)) {
+        foreach ($item as &$nested_item) {
+          $nested_item = (string) $nested_item;
+        }
+      }
+    }
+
     $this->getClientForIndex($index_name)->data()->vectors()->upsert(
       vectors: [
         'id' => $data['drupal_long_id'],

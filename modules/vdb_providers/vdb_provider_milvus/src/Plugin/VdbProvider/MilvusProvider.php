@@ -15,6 +15,8 @@ use Drupal\ai\Attribute\AiVdbProvider;
 use Drupal\ai\Base\AiVdbProviderClientBase;
 use Drupal\ai\Enum\VdbSimilarityMetrics;
 use Drupal\key\KeyRepositoryInterface;
+use Drupal\search_api\IndexInterface;
+use Drupal\search_api\Query\ConditionGroupInterface;
 use Drupal\search_api\Query\QueryInterface;
 use Drupal\vdb_provider_milvus\MilvusV2;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -389,11 +391,41 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
   /**
    * {@inheritdoc}
    */
-  public function prepareFilters(QueryInterface $query): mixed {
+  public function prepareFilters(QueryInterface $query): string {
+    $filters = [];
     $index = $query->getIndex();
     $condition_group = $query->getConditionGroup();
-    $filters = [];
+    $filters = $this->processConditionGroup($filters, $index, $condition_group);
+    if ($filters) {
+      return implode(' && ', $filters);
+    }
+    return '';
+  }
+
+  /**
+   * Processes a condition group, including handling nested condition groups.
+   *
+   * @param array $filters
+   *   The filters built thus far.
+   * @param \Drupal\search_api\IndexInterface $index
+   *   The Search API Index.
+   * @param \Drupal\search_api\Query\ConditionGroupInterface $condition_group
+   *   The condition group.
+   *
+   * @return array
+   *   The updated build of the filters.
+   */
+  protected function processConditionGroup(array $filters, IndexInterface $index, ConditionGroupInterface $condition_group): array {
+
     foreach ($condition_group->getConditions() as $condition) {
+
+      // Check if the current condition is actually a nested ConditionGroup.
+      if ($condition instanceof ConditionGroupInterface) {
+        // Recursively process the nested ConditionGroup.
+        $filters = $this->processConditionGroup($filters, $index, $condition);
+        continue;
+      }
+
       $fieldData = $index->getField($condition->getField());
       // Get the field type or its intrinsic field, like drupal_entity_id.
       $fieldType = $fieldData ? $fieldData->getType() : 'string';
@@ -406,11 +438,11 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
         $normalizedValues = implode(',', $values);
       }
       if ($isMultiple) {
-        if (in_array($condition->getOperator(), [
-          '=',
-          'IN',
-        ])) {
-          $filters[] = '(ARRAY_CONTAINS(' . $condition->getField() . ', ' . $normalizedValues . '))';
+        if ($condition->getOperator() === '=') {
+          $filters[] = 'JSON_CONTAINS_ALL(' . $fieldData->getFieldIdentifier() . ', [' . $normalizedValues . '])';
+        }
+        if ($condition->getOperator() === 'IN') {
+          $filters[] = 'JSON_CONTAINS_ANY(' . $fieldData->getFieldIdentifier() . ', [' . $normalizedValues . '])';
         }
         else {
           $this->messenger->addWarning('The vector database @name does not support negative operator on multiple fields.', [
@@ -419,13 +451,14 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
         }
       }
       else {
-        $filters[] = '(' . $condition->getField() . ' ' . $condition->getOperator() . ' ' . $normalizedValues . ')';
+        $operator = $condition->getOperator();
+        if ($operator === '=') {
+          $operator = '==';
+        }
+        $filters[] = '(' . $fieldData->getFieldIdentifier() . ' ' . $operator . ' ' . $normalizedValues . ')';
       }
     }
-    if ($filters) {
-      return implode(' AND ', $filters);
-    }
-    return '';
+    return $filters;
   }
 
   /**

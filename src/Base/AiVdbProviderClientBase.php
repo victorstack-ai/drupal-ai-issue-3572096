@@ -178,7 +178,12 @@ abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, AiVdbP
     // Check that the collection doesn't exist already.
     $form_object = $form_state->getFormObject();
     $entity = $form_object->getEntity();
-    if ($entity->isNew() && isset($collections['data']) && in_array($database_settings['collection'], $collections['data'])) {
+    if (
+      $entity->isNew()
+      && isset($collections['data'])
+      && isset($database_settings['collection'])
+      && in_array($database_settings['collection'], $collections['data'])
+    ) {
       $form_state->setErrorByName('database_settings][collection', $this->t('The collection already exists in the selected vector database.'));
     }
 
