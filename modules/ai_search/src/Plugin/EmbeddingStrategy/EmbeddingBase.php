@@ -12,21 +12,21 @@ use Drupal\search_api\Item\FieldInterface;
 use Drupal\search_api\Item\ItemInterface;
 
 /**
- * Base class for the metadata strategies.
+ * Base class for the embedding strategies.
  */
 class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface {
 
   /**
-   * The maximum percentage that metadata is allowed to take.
+   * The maximum percentage that contextual content is allowed to take.
    *
    * The rest of the space is consumed by the main field data; however, we
-   * prepend the title and basic metadata to give context to each chunk.
-   * 30 in this case is 30%, allowing 70% of the space to be taken by the
+   * prepend the title and basic contextual content to give context to each
+   * chunk. 30 in this case is 30%, allowing 70% of the space to be taken by the
    * main field data.
    *
    * @var int
    */
-  protected int $metaDataMaxPercentage = 30;
+  protected int $contextualContentMaxPercentage = 30;
 
   /**
    * {@inheritDoc}
@@ -171,11 +171,11 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
    */
   protected function getChunks(string $title, string $main_content, string $contextual_content): array {
 
-    // This determines the available space in each chunk used by metadata vs
-    // the main fields. See the description for metaDataMaxPercentage for more
-    // details.
-    $max_metadata = $this->metaDataMaxPercentage / 100;
-    $max_main_fields = 1 - $max_metadata;
+    // This determines the available space in each chunk used by contextual
+    // content vs the main fields. See the description for
+    // contextual content max percentage for more details.
+    $max_contextual_content = $this->contextualContentMaxPercentage / 100;
+    $max_main_fields = 1 - $max_contextual_content;
 
     if (strlen($title . $main_content . $contextual_content) <= $this->chunkSize) {
       // Ideal situation, all fits min single embedding.
@@ -187,8 +187,9 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
     }
     else {
       $chunks = [];
-      if ((strlen($title . $contextual_content) / $this->chunkSize) < $max_metadata) {
-        // Arbitrarily suppose that if 30% of embedding are metadata it is fine.
+      if ((strlen($title . $contextual_content) / $this->chunkSize) < $max_contextual_content) {
+        // Arbitrarily suppose that if 30% of embedding content is contextual
+        // content, it is fine.
         $main_chunks = $this->textChunker->chunkText(
           $main_content,
           intval($this->chunkSize * $max_main_fields),
@@ -199,9 +200,9 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
         }
       }
       else {
-        // Both metadata and main fields need chunking.
+        // Both contextual content and main fields need chunking.
         $available_chunk_size = $this->chunkSize - strlen($title);
-        $contextual_chunk_size = intval($available_chunk_size * $max_metadata);
+        $contextual_chunk_size = intval($available_chunk_size * $max_contextual_content);
         $main_chunk_size = intval($available_chunk_size * $max_main_fields);
         $contextual_chunks = $this->textChunker->chunkText(
           $contextual_content,
@@ -231,7 +232,7 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
    * @param string $main_chunk
    *   The main field content.
    * @param string $contextual_chunk
-   *   The metadata related content.
+   *   The contextual content.
    *
    * @return string
    *   The rendered chunk.
@@ -250,7 +251,11 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
   }
 
   /**
-   * Build the base metadata.
+   * Build the base metadata from filterable attributes.
+   *
+   * This metadata can be used for basic filtering. More advanced filtering
+   * can be done by combining traditional database or SOLR search with vector
+   * database search. See the documentation pages for more details.
    *
    * @param array $fields
    *   The Search API configured fields.
@@ -376,7 +381,7 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
     $form = parent::getConfigurationSubform($configuration);
     $form['contextual_content_max_percentage'] = [
       '#title' => $this->t('Contextual content maximum percentage'),
-      '#description' => $this->t('Title and other contextual content are prepended to all chunks to provide context. This setting defines the maximum space they are allowed to take up. Setting to 30 means 30% of the chunk is allowed to be metadata, leaving 70% for the Main Content information. Defaults to 30% if left blank.'),
+      '#description' => $this->t('Title and other contextual content are prepended to all chunks to provide context. This setting defines the maximum space they are allowed to take up. Setting to 30 means 30% of the chunk is allowed to be Contextual Content, leaving 70% for the Main Content information. Defaults to 30% if left blank.'),
       '#required' => TRUE,
       '#type' => 'number',
       '#min' => 1,
@@ -393,7 +398,7 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
   public function init(string $embedding_engine, string $chat_model, array $configuration): void {
     parent::init($embedding_engine, $chat_model, $configuration);
     if (!empty($configuration['contextual_content_max_percentage'])) {
-      $this->metaDataMaxPercentage = $configuration['contextual_content_max_percentage'];
+      $this->contextualContentMaxPercentage = $configuration['contextual_content_max_percentage'];
     }
   }
 
