@@ -5,6 +5,7 @@ namespace Drupal\provider_openai\Form;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\ai\AiProviderPluginManager;
+use Drupal\key\KeyRepositoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -25,10 +26,18 @@ class OpenAiConfigForm extends ConfigFormBase {
   protected $aiProviderManager;
 
   /**
+   * The key factory.
+   *
+   * @var \Drupal\key\KeyRepositoryInterface
+   */
+  protected $keyRepository;
+
+  /**
    * Constructs a new GroqConfigForm object.
    */
-  final public function __construct(AiProviderPluginManager $ai_provider_manager) {
+  final public function __construct(AiProviderPluginManager $ai_provider_manager, KeyRepositoryInterface $key_repository) {
     $this->aiProviderManager = $ai_provider_manager;
+    $this->keyRepository = $key_repository;
   }
 
   /**
@@ -37,6 +46,7 @@ class OpenAiConfigForm extends ConfigFormBase {
   final public static function create(ContainerInterface $container) {
     return new static(
       $container->get('ai.provider'),
+      $container->get('key.repository'),
     );
   }
 
@@ -80,6 +90,26 @@ class OpenAiConfigForm extends ConfigFormBase {
     ];
 
     return parent::buildForm($form, $form_state);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    // Validate the api key against model listing.
+    $key = $form_state->getValue('api_key');
+    $api_key = $this->keyRepository->getKey($key)->getKeyValue();
+    if (!$api_key) {
+      $form_state->setErrorByName('api_key', $this->t('The API Key is invalid.'));
+      return;
+    }
+    $client = \OpenAI::client($api_key);
+    try {
+      $client->models()->list();
+    }
+    catch (\Exception $e) {
+      $form_state->setErrorByName('api_key', $this->t('The API Key is not working.'));
+    }
   }
 
   /**
