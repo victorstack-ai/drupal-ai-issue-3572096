@@ -93,7 +93,7 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
    * @return array
    *   The title, contextual content, and main content.
    */
-  protected function groupFieldData(array $fields, IndexInterface $index): array {
+  public function groupFieldData(array $fields, IndexInterface $index): array {
     $title = '';
     $contextual_content = '';
     $main_content = '';
@@ -363,7 +363,7 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
       $parts = [];
       foreach ($field->getValues() as $value) {
         if (in_array($field->getType(), ['date', 'boolean', 'integer'])) {
-          $parts[] = (int) $value;
+          $parts[] = (int) $this->converter->convert((string) $value);
         }
         else {
           $parts[] = $this->converter->convert((string) $value);

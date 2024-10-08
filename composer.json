@@ -6,6 +6,7 @@
         "openai-php/client": ">=v0.10.1",
         "wpai-inc/anthropic-sdk-php": ">=0.1.0",
         "drupal/key": "^1.18",
+        "league/commonmark": "^2.5",
         "league/html-to-markdown": "^5.1",
         "yethee/tiktoken": "^0.5.1",
         "hkulekci/qdrant": "^0.5.5",

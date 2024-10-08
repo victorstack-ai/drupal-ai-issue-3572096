@@ -2,10 +2,15 @@
 
 namespace Drupal\ai_search\Form;
 
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\TypedData\ComplexDataInterface;
 use Drupal\ai\Enum\EmbeddingStrategyCapability;
 use Drupal\ai\Enum\EmbeddingStrategyIndexingOptions;
+use Drupal\search_api\Datasource\DatasourceInterface;
 use Drupal\search_api\Form\IndexFieldsForm;
+use Drupal\search_api\Item\ItemInterface;
+use League\CommonMark\CommonMarkConverter;
 
 /**
  * Override the Search API Index Fields Form.
@@ -153,7 +158,225 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
       }
 
     }
+
+    // Chunk checker form.
+    if ($data_sources = $this->entity->getDatasources()) {
+      $form['checker'] = [
+        '#type' => 'details',
+        '#title' => $this->t('Check configured chunking'),
+        '#description' => $this->t('Resave your configuration then use this form to check the chunking of a specific item.'),
+        '#open' => FALSE,
+        '#attributes' => ['id' => 'checker-wrapper'],
+      ];
+
+      // Entity type.
+      $current_type = FALSE;
+      $current_data_source = FALSE;
+      $current_bundles = [];
+      $form['checker']['data_source'] = [
+        '#title' => $this->t('Data source'),
+        '#type' => 'select',
+        '#options' => [],
+        '#ajax' => [
+          'callback' => [$this, 'updateChecker'],
+          'event' => 'change',
+          'method' => 'replaceWith',
+          'wrapper' => 'checker-wrapper',
+        ],
+      ];
+      foreach ($data_sources as $key => $data_source) {
+        if (
+          !isset($form['checker']['data_source']['#default_value'])
+          || $form_state->getValue(['checker', 'data_source']) === $key
+        ) {
+          $form['checker']['data_source']['#default_value'] = $key;
+          $current_type_parts = explode(':', $key);
+          $current_type = end($current_type_parts);
+          $current_data_source = $data_source;
+          $configuration = $data_source->getConfiguration();
+
+          // Ignore static Drupal Service call: we do this to make it easier to
+          // keep this compatible with Search API as changes are expected here.
+          // @phpstan-ignore-next-line
+          $all_bundles = array_keys(\Drupal::service('entity_type.bundle.info')->getBundleInfo($current_type));
+          if ($configuration['bundles']['default']) {
+
+            // All selections are exclusions.
+            $current_bundles = $all_bundles;
+            if (!empty($configuration['bundles']['selected'])) {
+              $exclude_bundles = array_values($configuration['bundles']['selected']);
+              $current_bundles = array_diff($all_bundles, $exclude_bundles);
+            }
+          }
+          else {
+
+            // All selections are inclusions.
+            if (!empty($configuration['bundles']['selected'])) {
+              $current_bundles = array_values($configuration['bundles']['selected']);
+            }
+          }
+        }
+        $form['checker']['data_source']['#options'][$key] = $data_source->label();
+      }
+
+      if ($current_type && $current_bundles) {
+        $form['checker']['entity'] = [
+          '#type' => 'entity_autocomplete',
+          '#title' => $this->t('Search for an item by title'),
+          '#target_type' => $current_type,
+          '#selection_handler' => 'default',
+          '#selection_settings' => [
+            'target_bundles' => $current_bundles,
+          ],
+          '#ajax' => [
+            'callback' => [$this, 'updateChecker'],
+            'event' => 'autocompleteclose',
+            'method' => 'replaceWith',
+            'wrapper' => 'checker-wrapper',
+          ],
+        ];
+
+        $entity_id = $form_state->getValue(['checker', 'entity']);
+        if ($entity_id) {
+          $form['checker']['#open'] = TRUE;
+          $check_entity = $this->entityTypeManager->getStorage($current_type)->load($entity_id);
+          if ($check_entity instanceof EntityInterface) {
+            $embeddings = $this->getCheckerEmbeddings(
+              $current_data_source,
+              $check_entity,
+            );
+            $form['checker']['embeddings_count'] = [
+              '#type' => 'html_tag',
+              '#tag' => 'h3',
+              '#value' => $this->t('Total chunks for this content: @count', [
+                '@count' => count($embeddings),
+              ]),
+            ];
+            foreach (array_values($embeddings) as $number => $embedding) {
+              $form = $this->buildCheckerChunkTable($form, $number, $embedding);
+            }
+          }
+        }
+      }
+    }
+
     return $form;
+  }
+
+  /**
+   * Get the embeddings for the given entity.
+   *
+   * @param \Drupal\search_api\Datasource\DatasourceInterface $current_data_source
+   *   The index data source.
+   * @param \Drupal\Core\Entity\EntityInterface $check_entity
+   *   The entity to check.
+   *
+   * @return array
+   *   The embeddings.
+   */
+  protected function getCheckerEmbeddings(
+    DatasourceInterface $current_data_source,
+    EntityInterface $check_entity,
+  ): array {
+    $backend_config = $this->entity->getServerInstance()->getBackendConfig();
+
+    // Ignore static Drupal Service call: we do this to make it easier to keep
+    // this compatible with Search API as changes are expected here.
+    /** @var \Drupal\ai_search\EmbeddingStrategyPluginManager $embedding_strategy_provider */
+    // @phpstan-ignore-next-line
+    $embedding_strategy_provider = \Drupal::service('ai_search.embedding_strategy');
+    /** @var \Drupal\ai_search\EmbeddingStrategyInterface $embedding_strategy */
+    $embedding_strategy = $embedding_strategy_provider->createInstance($backend_config['embedding_strategy']);
+    if ($current_data_source instanceof DatasourceInterface) {
+      $item_id = $current_data_source->getItemId($check_entity->getTypedData());
+      $item = $current_data_source->load($item_id);
+      if ($item instanceof ComplexDataInterface) {
+        // @phpstan-ignore-next-line
+        $search_item = \Drupal::getContainer()
+          ->get('search_api.fields_helper')
+          ->createItemFromObject($this->entity, $item, $item_id, $current_data_source);
+        if ($search_item instanceof ItemInterface) {
+          return $embedding_strategy->getEmbedding(
+            $backend_config['embeddings_engine'],
+            $backend_config['chat_model'],
+            $backend_config['embedding_strategy_configuration'],
+            $search_item->getFields(),
+            $search_item,
+            $this->entity,
+          );
+        }
+      }
+    }
+    return [];
+  }
+
+  /**
+   * Build a table per embedding chunk.
+   *
+   * @param array $form
+   *   The original form.
+   * @param int $number
+   *   The chunk number.
+   * @param array $embedding
+   *   The embedding chunk.
+   *
+   * @return array
+   *   The updated form.
+   */
+  protected function buildCheckerChunkTable(array $form, int $number, array $embedding): array {
+    $form['checker']['embeddings_' . $number] = [
+      '#type' => 'table',
+      '#header' => [
+        ['data' => $this->t('Property')],
+        ['data' => $this->t('Content')],
+      ],
+      '#rows' => [],
+      '#empty' => $this->t('No chunks were generated for the given entity.'),
+    ];
+    $form['checker']['embeddings_' . $number]['#rows'][] = [
+      'property' => $this->t('ID for chunk @chunk', [
+        '@chunk' => $number,
+      ]),
+      'content' => $embedding['id'],
+    ];
+    $form['checker']['embeddings_' . $number]['#rows'][] = [
+      'property' => $this->t('Dimensions'),
+      'content' => count($embedding['values']),
+    ];
+    $converter = new CommonMarkConverter([
+      'html_input' => 'strip',
+      'allow_unsafe_links' => FALSE,
+    ]);
+    foreach ($embedding['metadata'] as $key => $item) {
+      if (is_array($item)) {
+        $form['checker']['embeddings_' . $number]['#rows'][] = [
+          'property' => $key,
+          'content' => implode(', ', $item) . ' (' . $this->t('Imploded array') . ')',
+        ];
+      }
+      else {
+        if ($key === 'content') {
+          $item = $converter->convert($item);
+        }
+
+        $form['checker']['embeddings_' . $number]['#rows'][] = [
+          'property' => $key,
+          'content' => [
+            'data' => [
+              '#markup' => $item,
+            ],
+          ],
+        ];
+      }
+    }
+    return $form;
+  }
+
+  /**
+   * AJAX callback to update the checker.
+   */
+  public function updateChecker(array &$form, FormStateInterface $form_state): array {
+    return $form['checker'] ?? [];
   }
 
   /**
