@@ -173,4 +173,6 @@ Probots
 pinecone
 Pinecone
 dotproduct
+qwen
+Qwen
 autocompleteclose

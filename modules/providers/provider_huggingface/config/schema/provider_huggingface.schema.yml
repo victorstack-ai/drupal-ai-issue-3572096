@@ -6,26 +6,3 @@ provider_huggingface.settings:
       type: string
       label: 'API Key'
       required: true
-    models:
-      type: mapping
-      label: 'Models'
-      required: false
-      mapping:
-        chat:
-          type: sequence
-          label: 'Model'
-          required: false
-          sequence:
-            type: string
-        embeddings:
-          type: sequence
-          label: 'Model'
-          required: false
-          sequence:
-            type: string
-        image_classification:
-          type: sequence
-          label: 'Model'
-          required: false
-          sequence:
-            type: string

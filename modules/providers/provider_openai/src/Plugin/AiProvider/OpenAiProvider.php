@@ -645,6 +645,14 @@ class OpenAiProvider extends AiProviderClientBase implements
       if (in_array(AiModelCapability::ChatJsonOutput, $capabilities) && (!preg_match('/^(gpt-4o|o1|gpt-4-turbo)/i', $model['id']) || preg_match('/(mini)/i', $model['id']))) {
         continue;
       }
+      // Don't allow audio or video for now.
+      if (in_array(AiModelCapability::ChatWithAudio, $capabilities)) {
+        continue;
+      }
+      if (in_array(AiModelCapability::ChatWithVideo, $capabilities)) {
+        continue;
+      }
+
       $models[$model['id']] = $model['id'];
     }
 

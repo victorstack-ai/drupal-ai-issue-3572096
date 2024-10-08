@@ -85,7 +85,6 @@ class ProviderProxy {
     if (!method_exists($this->plugin, $name)) {
       throw new AiOperationTypeMissingException("Method {$name} does not exist on provider " . $this->plugin->getPluginId());
     }
-
   }
 
   /**
@@ -106,6 +105,10 @@ class ProviderProxy {
     $operation_type = $this->camelToSnake($method->getName());
     // If the method is not a trigger method, just call it.
     if (!in_array($method->getName(), $proxiedMethods)) {
+      // Special add on for the configured models.
+      if ($method->getName() == 'getConfiguredModels') {
+        return $this->resetConfiguredModels($method->invokeArgs($this->plugin, $arguments), $arguments);
+      }
       return $method->invokeArgs($this->plugin, $arguments);
     }
 
@@ -223,6 +226,38 @@ class ProviderProxy {
    */
   public function __set($name, $value) {
     $this->plugin->$name = $value;
+  }
+
+  /**
+   * Reset the configured models.
+   *
+   * @param array $models
+   *   The models.
+   * @param array $arguments
+   *   The operation type and the capabilities.
+   *
+   * @return array
+   *   The models.
+   */
+  public function resetConfiguredModels(array $models, array $arguments): array {
+    // Load all the extra models.
+    $config = $this->plugin->getModelsConfig()->get('models') ?? [];
+    $plugin_id = $this->plugin->getPluginId();
+    if (empty($arguments[0]) || empty($config) || empty($config[$plugin_id]) || empty($config[$plugin_id][$arguments[0]])) {
+      return $models;
+    }
+    $provider_config = $config[$plugin_id][$arguments[0]];
+    foreach ($provider_config as $model_id => $model) {
+      // Override.
+      if (isset($models[$model_id]) && !empty($model['label'])) {
+        $models[$model_id] = $model['label'];
+      }
+      // Add.
+      elseif (!empty($model['label'])) {
+        $models[$model_id] = $model['label'];
+      }
+    }
+    return $models;
   }
 
   /**

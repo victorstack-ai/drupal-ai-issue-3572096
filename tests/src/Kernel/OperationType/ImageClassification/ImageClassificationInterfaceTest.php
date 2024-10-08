@@ -63,13 +63,27 @@ class ImageClassificationInterfaceTest extends KernelTestBase {
 
     // DDEV or local.
     $host = getenv('DDEV_PROJECT') ? 'http://mockoon:3010/huggingface' : 'http://localhost:3010/huggingface';
-    $this->model = $host . '/Falconsai/nsfw_image_detection';
+    $this->model = 'nsfw_image_detection';
     // Setup Huggingface as the provider.
     \Drupal::configFactory()
       ->getEditable('provider_huggingface.settings')
       ->set('api_key', 'mockup_huggingface')
+      ->save();
+
+    \Drupal::configFactory()
+      ->getEditable('ai_models.settings')
       ->set('models', [
-        'image_classification' => [$this->model],
+        'huggingface' => [
+          'image_classification' => [
+            $this->model => [
+              'model_id' => $this->model,
+              'label' => 'NSFW Image Detection',
+              'huggingface_endpoint' => $host . '/Falconsai/nsfw_image_detection',
+              'operation_type' => 'image_classification',
+              'provider' => 'huggingface',
+            ],
+          ],
+        ],
       ])
       ->save();
   }

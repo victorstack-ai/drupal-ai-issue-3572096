@@ -171,4 +171,41 @@ interface AiProviderInterface extends PluginInspectionInterface {
    */
   public function removeTag(string $tag): void;
 
+  /**
+   * Load the models form for the provider.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param string $operation_type
+   *   The operation type to generate a response for.
+   * @param string|null $model_id
+   *   The model id.
+   *
+   * @return array
+   *   The form array.
+   */
+  public function loadModelsForm(array $form, $form_state, string $operation_type, string|NULL $model_id = NULL): array;
+
+  /**
+   * Validate the models form for the provider.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   */
+  public function validateModelsForm(array $form, $form_state): void;
+
+  /**
+   * Method to check if the provider has predefined models.
+   *
+   * If set to false it means that the system generates models for it.
+   *
+   * @return bool
+   *   True if the provider has predefined models.
+   */
+  public function hasPredefinedModels(): bool;
+
 }

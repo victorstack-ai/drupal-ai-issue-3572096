@@ -3,7 +3,10 @@
 namespace Drupal\ai\Service;
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Link;
+use Drupal\Core\Path\CurrentPathStack;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\Url;
 use Drupal\ai\AiProviderInterface;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\Plugin\ProviderProxy;
@@ -39,13 +42,23 @@ class AiProviderFormHelper {
   protected $aiProviderPluginManager;
 
   /**
+   * The current path.
+   *
+   * @var \Drupal\Core\Path\CurrentPathStack
+   */
+  protected $currentPath;
+
+  /**
    * Constructs a new AiProviderHelper object.
    *
    * @param \Drupal\ai\AiProviderPluginManager $aiProviderPluginManager
    *   The LLM Providers plugin manager.
+   * @param \Drupal\Core\Path\CurrentPathStack $currentPath
+   *   The current path.
    */
-  public function __construct(AiProviderPluginManager $aiProviderPluginManager) {
+  public function __construct(AiProviderPluginManager $aiProviderPluginManager, CurrentPathStack $currentPath) {
     $this->aiProviderPluginManager = $aiProviderPluginManager;
+    $this->currentPath = $currentPath;
   }
 
   /**
@@ -396,6 +409,104 @@ class AiProviderFormHelper {
       default:
         return 'textfield';
     }
+  }
+
+  /**
+   * Helper function to expose the possibility to override/add/remove models.
+   *
+   * @param array $form
+   *   The form array to add the table to.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param \Drupal\ai\AiProviderInterface|\Drupal\ai\Plugin\ProviderProxy $provider
+   *   The provider.
+   *
+   * @return array
+   *   The form array with the detail and table.
+   */
+  public function getModelsTable($form, FormStateInterface $form_state, AiProviderInterface|ProviderProxy $provider): array {
+    $form['models'] = [
+      '#type' => 'details',
+      '#title' => $this->t('%provider Advanced Model Settings', [
+        '%provider' => $provider->getPluginDefinition()['label'],
+      ]),
+      '#open' => !$provider->hasPredefinedModels(),
+      '#description' => $this->t('Here you can see and if permitted add, remove or overwrite models for %provider.', [
+        '%provider' => $provider->getPluginDefinition()['label'],
+      ]),
+    ];
+
+    if (!$provider->hasPredefinedModels()) {
+
+      $form['models']['actions'] = [
+        '#type' => 'actions',
+        '#weight' => -10,
+      ];
+    }
+
+    $rows = [];
+    $provider = $this->aiProviderPluginManager->createInstance($provider->getPluginId());
+    $text = !$provider->hasPredefinedModels() ? $this->t('Edit') : $this->t('Overwrite');
+    foreach ($this->aiProviderPluginManager->getOperationTypes() as $operation_type) {
+      if ($provider->isUsable($operation_type['id'])) {
+        foreach ($provider->getConfiguredModels($operation_type['id']) as $id => $model) {
+          $rows[] = [
+            $operation_type['label'],
+            $id,
+            $model,
+            Link::fromTextAndUrl($text, Url::fromRoute('ai.edit_model_settings_form', [
+              'operation_type' => $operation_type['id'],
+              'provider' => $provider->getPluginId(),
+              'model_id' => $id,
+            ],
+            [
+              'query' => [
+                'destination' => $this->currentPath->getPath(),
+              ],
+            ])),
+          ];
+        }
+        if (isset($form['models']['actions'])) {
+          $form['models']['actions']['add_model_' . $operation_type['id']] = [
+            '#type' => 'link',
+            '#title' => $this->t('Add %operation_type Model', [
+              '%operation_type' => $operation_type['label'],
+            ]),
+            '#url' => Url::fromRoute('ai.create_model_settings_form', [
+              'operation_type' => $operation_type['id'],
+              'provider' => $provider->getPluginId(),
+            ],
+            [
+              'query' => [
+                'destination' => $this->currentPath->getPath(),
+              ],
+            ]),
+            '#attributes' => [
+              'class' => 'button',
+            ],
+          ];
+        }
+      }
+    }
+    if (count($rows)) {
+      $form['models']['model_table'] = [
+        '#type' => 'table',
+        '#header' => [
+          $this->t('Operation Type'),
+          $this->t('Model ID'),
+          $this->t('Label'),
+          $this->t('Action'),
+        ],
+        '#rows' => $rows,
+      ];
+    }
+    else {
+      $form['models']['no_models'] = [
+        '#markup' => $this->t('No models available. You may add models.'),
+      ];
+    }
+
+    return $form['models'];
   }
 
 }

@@ -46,4 +46,26 @@ interface ChatInterface extends OperationTypeInterface {
    */
   public function getChatSystemRole(): string;
 
+  /**
+   * Gets the maximum input tokens for a model.
+   *
+   * @param string $model_id
+   *   The model id.
+   *
+   * @return int
+   *   The maximum input tokens.
+   */
+  public function getMaxInputTokens(string $model_id): int;
+
+  /**
+   * Gets the maximum output tokens for a model.
+   *
+   * @param string $model_id
+   *   The model id.
+   *
+   * @return int
+   *   The maximum output tokens.
+   */
+  public function getMaxOutputTokens(string $model_id): int;
+
 }

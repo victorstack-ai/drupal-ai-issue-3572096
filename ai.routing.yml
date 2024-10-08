@@ -29,3 +29,19 @@ ai.admin_vdb_providers:
     _title: 'Vector Database Providers'
   requirements:
     _permission: 'administer ai'
+
+ai.create_model_settings_form:
+  path: '/admin/config/ai/providers/{operation_type}/{provider}'
+  defaults:
+    _form: '\Drupal\ai\Form\AiModelSettingsForm'
+    _title_callback: '\Drupal\ai\Form\AiModelSettingsForm::createTitle'
+  requirements:
+    _permission: 'administer ai providers'
+
+ai.edit_model_settings_form:
+  path: '/admin/config/ai/providers/{operation_type}/{provider}/{model_id}'
+  defaults:
+    _form: '\Drupal\ai\Form\AiModelSettingsForm'
+    _title_callback: '\Drupal\ai\Form\AiModelSettingsForm::createTitle'
+  requirements:
+    _permission: 'administer ai providers'

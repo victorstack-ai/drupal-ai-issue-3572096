@@ -6,6 +6,9 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
+use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\Service\AiProviderFormHelper;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Configure Huggingface access.
@@ -13,29 +16,41 @@ use Drupal\Core\Url;
 class HuggingfaceConfigForm extends ConfigFormBase {
 
   /**
+   * The form helper.
+   *
+   * @var \Drupal\ai\Service\AiProviderFormHelper
+   */
+  protected $formHelper;
+
+  /**
+   * The AI Provider manager.
+   *
+   * @var \Drupal\ai\AiProviderPluginManager
+   */
+  protected $providerManager;
+
+  /**
+   * Constructs a new HuggingfaceConfigForm object.
+   */
+  final public function __construct(AiProviderFormHelper $form_helper, AiProviderPluginManager $provider_manager) {
+    $this->formHelper = $form_helper;
+    $this->providerManager = $provider_manager;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  final public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('ai.form_helper'),
+      $container->get('ai.provider'),
+    );
+  }
+
+  /**
    * Config settings.
    */
   const CONFIG_NAME = 'provider_huggingface.settings';
-
-  /**
-   * Supported Types.
-   *
-   * @var array
-   */
-  protected $supportedTypes = [
-    'chat' => [
-      'label' => 'Chat',
-      'filter' => 'text-generation',
-    ],
-    'embeddings' => [
-      'label' => 'Embeddings',
-      'filter' => 'feature-extraction',
-    ],
-    'image_classification' => [
-      'label' => 'Image Classification',
-      'filter' => 'image-classification',
-    ],
-  ];
 
   /**
    * {@inheritdoc}
@@ -59,14 +74,6 @@ class HuggingfaceConfigForm extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config(static::CONFIG_NAME);
 
-    $models = [];
-    if (!$form_state->get('models')) {
-      $models = $config->get('models');
-    }
-    else {
-      $models = $form_state->get('models');
-    }
-
     $form['api_key'] = [
       '#type' => 'key_select',
       '#title' => $this->t('Huggingface Access Token'),
@@ -76,59 +83,8 @@ class HuggingfaceConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('api_key'),
     ];
 
-    foreach ($this->supportedTypes as $type => $type_info) {
-      $form[$type] = [
-        '#type' => 'fieldset',
-        '#title' => $type_info['label'],
-        '#description' => $this->t('Add the models you want to use for @link by autocompleting them. Follow the link to @link for the full list.', [
-          '@link' => Link::fromTextAndUrl($type_info['label'], Url::fromUri('https://huggingface.co/models?pipeline_tag=' . $type_info['filter'] . '&sort=trending'))->toString(),
-        ]),
-        '#prefix' => '<div id="' . $type . '-wrapper">',
-        '#suffix' => '</div>',
-        // Only visible if the key is set.
-        '#states' => [
-          'visible' => [
-            ':input[name="api_key"]' => ['filled' => TRUE],
-          ],
-        ],
-      ];
-
-      $i = 0;
-      if (!empty($models[$type])) {
-        foreach ($models[$type] as $model) {
-          $form[$type]['model__' . $type . '__' . $i] = [
-            '#type' => 'textfield',
-            '#autocomplete_route_name' => 'provider_huggingface.autocomplete.models',
-            '#autocomplete_route_parameters' => [
-              'model_type' => $type_info['filter'],
-            ],
-            '#default_value' => $model,
-          ];
-          $i++;
-        }
-      }
-      $form[$type]['model__' . $type . '__' . $i] = [
-        '#type' => 'textfield',
-        '#autocomplete_route_name' => 'provider_huggingface.autocomplete.models',
-        '#autocomplete_route_parameters' => [
-          'model_type' => $type_info['filter'],
-        ],
-      ];
-
-      $form[$type]['add_more_' . $type] = [
-        '#type' => 'submit',
-        '#value' => $this->t('Add another @type model', ['@type' => strtolower($type_info['label'])]),
-        '#submit' => ['::addMoreModel'],
-        '#attributes' => [
-          'data-type' => $type,
-        ],
-        '#ajax' => [
-          'callback' => '::addMoreModelCallback',
-          'wrapper' => $type . '-wrapper',
-        ],
-      ];
-
-    }
+    $provider = $this->providerManager->createInstance('huggingface');
+    $form['models'] = $this->formHelper->getModelsTable($form, $form_state, $provider);
 
     return parent::buildForm($form, $form_state);
   }

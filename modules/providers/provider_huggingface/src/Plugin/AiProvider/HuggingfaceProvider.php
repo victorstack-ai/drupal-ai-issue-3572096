@@ -4,10 +4,10 @@ namespace Drupal\provider_huggingface\Plugin\AiProvider;
 
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Base\AiProviderClientBase;
-use Drupal\ai\Enum\AiModelCapability;
 use Drupal\ai\Exception\AiMissingFeatureException;
 use Drupal\ai\Exception\AiRateLimitException;
 use Drupal\ai\Exception\AiResponseErrorException;
@@ -40,6 +40,7 @@ class HuggingfaceProvider extends AiProviderClientBase implements
   EmbeddingsInterface,
   ImageClassificationInterface {
 
+  use StringTranslationTrait;
   use ChatTrait;
 
   /**
@@ -57,30 +58,39 @@ class HuggingfaceProvider extends AiProviderClientBase implements
   protected string $apiKey = '';
 
   /**
+   * We want to add models to the provider dynamically.
+   *
+   * @var bool
+   */
+  protected bool $hasPredefinedModels = FALSE;
+
+  /**
+   * Supported Types.
+   *
+   * @var array
+   */
+  protected $supportedTypes = [
+    'chat' => [
+      'label' => 'Chat',
+      'filter' => 'text-generation',
+    ],
+    'embeddings' => [
+      'label' => 'Embeddings',
+      'filter' => 'feature-extraction',
+    ],
+    'image_classification' => [
+      'label' => 'Image Classification',
+      'filter' => 'image-classification',
+    ],
+  ];
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): static {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->client = $container->get('provider_huggingface.api');
     return $instance;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getConfiguredModels(?string $operation_type = NULL, array $capabilities = []): array {
-    // No models allows system prompts in chat, so we don't allow it.
-    if ($operation_type == 'chat' && in_array(AiModelCapability::ChatSystemRole, $capabilities)) {
-      return [];
-    }
-    $models_config = $this->getConfig()->get('models') ?: [];
-    $models = [];
-    if (!empty($models_config[$operation_type])) {
-      foreach ($models_config[$operation_type] as $model) {
-        $models[$model] = $model;
-      }
-    }
-    return $models;
   }
 
   /**
@@ -168,6 +178,10 @@ class HuggingfaceProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function chat(array|string|ChatInput $input, string $model_id, array $tags = []): ChatOutput {
+    $info = $this->getModelInfo('chat', $model_id);
+    if (!$info['huggingface_endpoint']) {
+      throw new AiMissingFeatureException('Huggingface endpoint is missing.');
+    }
     $this->loadClient();
     // Normalize the input if needed.
     $chat_input = $input;
@@ -185,7 +199,7 @@ class HuggingfaceProvider extends AiProviderClientBase implements
       }
     }
     try {
-      $response = json_decode($this->client->textGeneration($model_id, $chat_input), TRUE);
+      $response = json_decode($this->client->textGeneration($info['huggingface_endpoint'], $chat_input), TRUE);
     }
     catch (\Exception $e) {
       // If the rate limit is reach, special error.
@@ -203,13 +217,17 @@ class HuggingfaceProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function embeddings(string|EmbeddingsInput $input, string $model_id, array $tags = []): EmbeddingsOutput {
+    $info = $this->getModelInfo('embeddings', $model_id);
+    if (!$info['huggingface_endpoint']) {
+      throw new AiMissingFeatureException('Huggingface endpoint is missing.');
+    }
     $this->loadClient();
     // Normalize the input if needed.
     if ($input instanceof EmbeddingsInput) {
       $input = $input->getPrompt();
     }
     // Send the request.
-    $response = json_decode($this->client->featureExtraction($model_id, $input), TRUE);
+    $response = json_decode($this->client->featureExtraction($info['huggingface_endpoint'], $input), TRUE);
 
     return new EmbeddingsOutput($response, $response, []);
   }
@@ -218,6 +236,10 @@ class HuggingfaceProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function imageClassification(string|array|ImageClassificationInput $input, string $model_id, array $tags = []): ImageClassificationOutput {
+    $info = $this->getModelInfo('image_classification', $model_id);
+    if (!$info['huggingface_endpoint']) {
+      throw new AiMissingFeatureException('Huggingface endpoint is missing.');
+    }
     $this->loadClient();
     // Normalize the input if needed.
     if ($input instanceof ImageClassificationInput) {
@@ -227,7 +249,7 @@ class HuggingfaceProvider extends AiProviderClientBase implements
     $temp_file = tempnam(sys_get_temp_dir(), 'ai_image_classification');
     file_put_contents($temp_file, $input);
     // Send the request.
-    $response = json_decode($this->client->imageClassification($model_id, $temp_file), TRUE);
+    $response = json_decode($this->client->imageClassification($info['huggingface_endpoint'], $temp_file), TRUE);
     // Remove the temporary file.
     unlink($temp_file);
     $classifications = [];
@@ -249,6 +271,29 @@ class HuggingfaceProvider extends AiProviderClientBase implements
   public function maxEmbeddingsInput($model_id = ''): int {
     // @todo this is playing safe. Ideally, we should provide real number per model.
     return 1024;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function loadModelsForm(array $form, $form_state, string $operation_type, string|NULL $model_id = NULL): array {
+    $form = parent::loadModelsForm($form, $form_state, $operation_type, $model_id);
+    $config = $this->loadModelConfig($operation_type, $model_id);
+
+    $form['model_data']['huggingface_endpoint'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Endpoint'),
+      '#description' => $this->t('The endpoint needed to access the Azure API. Can be found in Azure AI Studio under the Target URI label. NOTE that some models have different versions, its the endpoints with completions in the end you need to copy.'),
+      '#default_value' => $config['huggingface_endpoint'] ?? '',
+      '#required' => TRUE,
+      '#weight' => -10,
+      '#autocomplete_route_name' => 'provider_huggingface.autocomplete.models',
+      '#autocomplete_route_parameters' => [
+        'model_type' => $this->supportedTypes[$operation_type]['filter'],
+      ],
+    ];
+
+    return $form;
   }
 
 }

@@ -10,7 +10,11 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\ai\AiProviderInterface;
+use Drupal\ai\Enum\AiModelCapability;
 use Drupal\ai\Exception\AiSetupFailureException;
+use Drupal\ai\OperationType\Chat\ChatModelForm;
+use Drupal\ai\OperationType\GenericType\AbstractModelFormBase;
+use Drupal\ai\Traits\OperationType\ChatTrait;
 use Drupal\ai\Utility\CastUtility;
 use Drupal\key\KeyRepositoryInterface;
 use Psr\Http\Client\ClientInterface;
@@ -21,6 +25,8 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  * Service to handle API requests server.
  */
 abstract class AiProviderClientBase implements AiProviderInterface, ContainerFactoryPluginInterface {
+
+  use ChatTrait;
 
   /**
    * Logger factory.
@@ -126,6 +132,16 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    * @var string
    */
   protected string $chatSystemRole = '';
+
+  /**
+   * Has predefined models.
+   *
+   * If the provider needs to load models after its installed you should set
+   * this to FALSE.
+   *
+   * @var bool
+   */
+  protected bool $hasPredefinedModels = TRUE;
 
   /**
    * The plugin definition.
@@ -250,6 +266,14 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    */
   public function getPluginDefinition() {
     return $this->pluginDefinition;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getConfiguredModels(?string $operation_type = NULL, array $capabilities = []): array {
+    // Default returns nothing.
+    return [];
   }
 
   /**
@@ -384,6 +408,30 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   /**
    * {@inheritdoc}
    */
+  public function loadModelsForm(array $form, $form_state, string $operation_type, string|NULL $model_id = NULL): array {
+    $config = $this->loadModelConfig($operation_type, $model_id);
+    switch ($operation_type) {
+      case 'chat':
+        return ChatModelForm::form($form, $form_state, $config, $operation_type);
+
+      default:
+        return AbstractModelFormBase::form($form, $form_state, $config, $operation_type);
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateModelsForm(array $form, $form_state): void {
+    // Model ID has to be alphanumeric, hyphens or underscore.
+    if (!preg_match('/^[a-zA-Z0-9_-]+$/', $form_state->getValue('model_id'))) {
+      $form_state->setErrorByName('model_id', 'Model ID can only contain letters, numbers, hyphens and underscores.');
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function setDebugData(string $key, mixed $value): void {
     $this->debugData[$key] = $value;
   }
@@ -393,6 +441,50 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    */
   public function getDebugData(): array {
     return $this->debugData;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function hasPredefinedModels(): bool {
+    return $this->hasPredefinedModels;
+  }
+
+  /**
+   * Load config for provider, operation type and model.
+   *
+   * @param string $operation_type
+   *   The operation type to generate a response for.
+   * @param string|null $model_id
+   *   ID of model as set in getConfiguredModels().
+   *
+   * @return array
+   *   The configuration array.
+   */
+  public function loadModelConfig(string $operation_type, string|NULL $model_id): array {
+    if ($model_id) {
+      $configs = $this->getModelsConfig()->get('models');
+      if (isset($configs[$this->getPluginId()][$operation_type][$model_id])) {
+        $config = $configs[$this->getPluginId()][$operation_type][$model_id];
+      }
+      else {
+        $config['model_id'] = $model_id;
+        $config['label'] = $this->getConfiguredModels($operation_type)[$model_id];
+        foreach (AiModelCapability::cases() as $capability) {
+          $config[$capability->value] = $this->modelSupportsCapabilities($operation_type, $model_id, [$capability]);
+        }
+        $config['max_input_tokens'] = $this->getMaxInputTokens($model_id);
+        $config['max_output_tokens'] = $this->getMaxOutputTokens($model_id);
+      }
+      $config['new_model'] = FALSE;
+    }
+    else {
+      $config = [
+        'new_model' => TRUE,
+      ];
+    }
+    $config['has_predefined_models'] = $this->hasPredefinedModels;
+    return $config;
   }
 
   /**
@@ -436,6 +528,44 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
       throw new AiSetupFailureException(sprintf('Could not load the %s API key, please check your environment settings or your setup key.', $this->getPluginDefinition()['label']));
     }
     return $api_key;
+  }
+
+  /**
+   * Get the models configuration.
+   *
+   * @return \Drupal\Core\Config\ImmutableConfig
+   *   The models configuration.
+   */
+  public function getModelsConfig(): ImmutableConfig {
+    return $this->configFactory->get('ai_models.settings');
+  }
+
+  /**
+   * Get model information.
+   *
+   * @param string $operation_type
+   *   The operation type.
+   * @param string $model_id
+   *   The model ID.
+   *
+   * @return array
+   *   The model information.
+   */
+  public function getModelInfo(string $operation_type, string $model_id): array {
+    // Check first override.
+    $models = $this->getModelsConfig()->get('models');
+    if (isset($models[$this->getPluginId()][$operation_type][$model_id])) {
+      return $models[$this->getPluginId()][$operation_type][$model_id];
+    }
+    // Otherwise get the models.
+    $models = $this->getConfiguredModels($operation_type);
+    if (isset($models[$model_id])) {
+      return [
+        'model_id' => $model_id,
+        'label' => $models[$model_id],
+      ];
+    }
+    return NULL;
   }
 
 }
