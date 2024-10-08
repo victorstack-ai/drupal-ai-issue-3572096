@@ -15,15 +15,8 @@ export default class AiDrupalDialog extends Command {
       return;
     }
 
-    const selection = this.editor.model.document.selection;
-    const range = selection.getFirstRange();
-    let selectedText = '';
-
-    for (const item of range.getItems()) {
-      if (typeof item.data !== undefined) {
-        selectedText += item.data + ' ';
-      }
-    }
+    const selected = this.editor.editing.model.getSelectedContent(this.editor.model.document.selection);
+    const selectedText = this.editor.data.stringify(selected);
 
     dialogSettings.title = dialogSettings.title + ' - ' + plugin_label;
 
