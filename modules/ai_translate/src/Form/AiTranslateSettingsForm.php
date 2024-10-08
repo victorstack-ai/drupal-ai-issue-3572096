@@ -154,6 +154,7 @@ class AiTranslateSettingsForm extends ConfigFormBase {
     ];
     $form['reference_defaults'] = [
       '#type' => 'details',
+      '#tree' => FALSE,
       '#title' => $this->t('Entity reference translation'),
       '#description' => $this->moduleHandler->moduleExists('help')
         ? Link::createFromRoute($this->t('Read more'), 'help.help_topic',
