@@ -17,6 +17,7 @@ function ai_logging_cron() {
 
   if (($current_time - $last_run) >= $interval) {
     // Get the service.
+    /** @var \Drupal\ai_logging\Cron\AiLogPruning $service */
     $service = \Drupal::service('ai_logging.prune');
     $service->pruneLogs();
     // Set a new last run.

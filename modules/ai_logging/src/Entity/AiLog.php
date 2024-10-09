@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Drupal\ai_logging\Entity;
 
 use Drupal\Core\Entity\ContentEntityBase;
@@ -10,50 +8,47 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\ai_logging\AiLogInterface;
 
 /**
- * Defines the ai log entity class.
+ * Defines the AI Log entity.
  *
  * @ContentEntityType(
  *   id = "ai_log",
  *   label = @Translation("AI Log"),
- *   label_collection = @Translation("AI Logs"),
- *   label_singular = @Translation("ai log"),
- *   label_plural = @Translation("ai logs"),
- *   label_count = @PluralTranslation(
- *     singular = "@count ai logs",
- *     plural = "@count ai logs",
- *   ),
+ *   base_table = "ai_log",
+ *   entity_keys = {
+ *     "id" = "id",
+ *     "uuid" = "uuid",
+ *     "bundle" = "bundle",
+ *   },
  *   handlers = {
- *     "list_builder" = "Drupal\ai_logging\AiLogListBuilder",
- *     "view_builder" = "Drupal\ai_logging\ViewBuilder\LogViewBuilder",
- *     "views_data" = "Drupal\views\EntityViewsData",
  *     "form" = {
- *       "add" = "Drupal\ai_logging\Form\AiLogForm",
- *       "edit" = "Drupal\ai_logging\Form\AiLogForm",
+ *       "default" = "Drupal\Core\Entity\ContentEntityForm",
+ *       "add" = "Drupal\Core\Entity\ContentEntityForm",
+ *       "edit" = "Drupal\Core\Entity\ContentEntityForm",
  *       "delete" = "Drupal\Core\Entity\ContentEntityDeleteForm",
- *       "delete-multiple-confirm" = "Drupal\Core\Entity\Form\DeleteMultipleForm",
  *     },
  *     "route_provider" = {
  *       "html" = "Drupal\Core\Entity\Routing\AdminHtmlRouteProvider",
  *     },
- *   },
- *   base_table = "ai_log",
- *   admin_permission = "administer ai_log",
- *   entity_keys = {
- *     "id" = "id",
- *     "label" = "id",
- *     "uuid" = "uuid",
+ *     "access" = "Drupal\ai_logging\AiLogAccessControlHandler",
+ *     "views_data" = "Drupal\views\EntityViewsData",
+ *     "list_builder" = "Drupal\Core\Entity\EntityListBuilder",
+ *     "view_builder" = "Drupal\ai_logging\ViewBuilder\LogViewBuilder",
+ *     "field_ui" = "Drupal\field_ui\Entity\EntityFormDisplay",
  *   },
  *   links = {
- *     "collection" = "/admin/content/ai-log",
- *     "add-form" = "/ai-log/add",
- *     "canonical" = "/ai-log/{ai_log}",
- *     "edit-form" = "/ai-log/{ai_log}/edit",
- *     "delete-form" = "/ai-log/{ai_log}/delete",
- *     "delete-multiple-form" = "/admin/content/ai-log/delete-multiple",
+ *     "canonical" = "/admin/config/ai/logging/collection/{ai_log}",
+ *     "add-page" = "/admin/config/ai/logging/collection/add",
+ *     "add-form" = "/admin/config/ai/logging/collection/add/{ai_log_type}",
+ *     "edit-form" = "/admin/config/ai/logging/collection/{ai_log}/edit",
+ *     "delete-form" = "/admin/config/ai/logging/collection/{ai_log}/delete",
+ *     "collection" = "/admin/config/ai/logging/collection",
  *   },
+ *   admin_permission = "administer ai log",
+ *   bundle_entity_type = "ai_log_type",
+ *   field_ui_base_route = "entity.ai_log_type.edit_form",
  * )
  */
-final class AiLog extends ContentEntityBase implements AiLogInterface {
+class AiLog extends ContentEntityBase implements AiLogInterface {
 
   /**
    * {@inheritdoc}
@@ -61,6 +56,9 @@ final class AiLog extends ContentEntityBase implements AiLogInterface {
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type): array {
 
     $fields = parent::baseFieldDefinitions($entity_type);
+
+    $fields[$entity_type->getKey('bundle')]->setDisplayConfigurable('form', TRUE);
+    $fields[$entity_type->getKey('bundle')]->setDisplayConfigurable('view', TRUE);
 
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(t('Authored on'))

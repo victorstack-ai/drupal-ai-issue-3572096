@@ -14,5 +14,5 @@ entity.ai_log.delete_form:
 entity.ai_log.collection:
   title: 'AI Logs'
   route_name: entity.ai_log.collection
-  base_route: system.admin_content
+  base_route: ai_log.logging
   weight: 10

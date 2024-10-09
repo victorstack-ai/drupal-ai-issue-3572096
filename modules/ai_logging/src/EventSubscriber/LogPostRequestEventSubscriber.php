@@ -76,6 +76,7 @@ class LogPostRequestEventSubscriber implements EventSubscriberInterface {
         'model' => $event->getModelId(),
         'operation_type' => $event->getOperationType(),
         'configuration' => json_encode($event->getConfiguration()),
+        'bundle' => 'generic',
         'tags' => $event->getTags(),
         'prompt' => $this->getInputText($event->getInput()),
         'extra_data' => json_encode($event->getDebugData()),

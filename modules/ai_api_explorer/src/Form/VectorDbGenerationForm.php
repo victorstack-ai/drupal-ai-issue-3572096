@@ -181,8 +181,9 @@ class VectorDbGenerationForm extends FormBase {
 
       $response = "";
       foreach ($results as $result) {
+        $content = $result->getExtraData('content');
         $response .= "<strong>Score: </strong>" . $result->getScore() . "<br>";
-        $response .= "<strong>Chunk: </strong>" . nl2br($result->getExtraData('content')) . "<br><br>";
+        $response .= "<strong>Chunk: </strong>" . ($content ? nl2br($content) : '') . "<br><br>";
         $response .= '----------------------------------------' . "<br><br>";
       }
       $amount = $results->getResultCount();
