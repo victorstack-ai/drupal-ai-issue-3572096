@@ -62,7 +62,7 @@ abstract class AbstractModelFormBase implements ModelFormInterface {
       '#description' => t('The model ID to use.'),
       '#default_value' => $config['model_id'] ?? '',
       '#required' => TRUE,
-      '#disabled' => !empty($config['has_predefined_models']) || empty($config['new_model']),
+      '#disabled' => !empty($config['has_predefined_models']) || (empty($config['new_model'])&& empty($config['has_overriden_settings'])),
       '#weight' => 0,
     ];
 
@@ -71,7 +71,7 @@ abstract class AbstractModelFormBase implements ModelFormInterface {
       '#title' => t('Label'),
       '#description' => t('The label for the model. Will use the model ID if not set.'),
       '#default_value' => $config['label'] ?? '',
-      '#disabled' => !empty($config['has_predefined_models']),
+      '#disabled' => !empty($config['has_predefined_models']) && empty($config['has_overriden_settings']),
       '#weight' => 3,
     ];
 
@@ -79,18 +79,17 @@ abstract class AbstractModelFormBase implements ModelFormInterface {
       '#type' => 'submit',
       '#value' => $config['new_model'] ? t('Create Model') : t('Edit Model'),
       '#weight' => 50,
-      '#disabled' => !empty($config['has_predefined_models']),
+      '#disabled' => !empty($config['has_predefined_models']) && empty($config['has_overriden_settings']),
       '#attributes' => [
         'class' => ['button--primary'],
       ],
     ];
 
-    if (!$config['new_model']) {
+    if (!$config['new_model'] && empty($config['has_predefined_models'])) {
       $form['action']['delete'] = [
         '#type' => 'submit',
-        '#value' => empty($config['has_predefined_models']) ? t('Delete Model') : t('Disable Model'),
+        '#value' => t('Delete Model'),
         '#weight' => 51,
-        '#disabled' => !empty($config['has_predefined_models']),
         '#attributes' => [
           'class' => ['button--danger'],
         ],

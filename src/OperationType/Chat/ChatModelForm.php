@@ -28,7 +28,7 @@ class ChatModelForm extends AbstractModelFormBase {
         '#description' => $capability->getDescription(),
         '#default_value' => $config[$key] ?? FALSE,
         '#weight' => 20,
-        '#disabled' => !empty($config['has_predefined_models']),
+        '#disabled' => !empty($config['has_predefined_models']) && empty($config['has_overriden_settings']),
       ];
     }
 
@@ -38,7 +38,7 @@ class ChatModelForm extends AbstractModelFormBase {
       '#description' => t('The maximum number of tokens to input.'),
       '#default_value' => $config['max_input_tokens'] ?? 0,
       '#weight' => 25,
-      '#disabled' => !empty($config['has_predefined_models']),
+      '#disabled' => !empty($config['has_predefined_models']) && empty($config['has_overriden_settings']),
     ];
 
     $form['model_data']['max_output_tokens'] = [
@@ -47,7 +47,7 @@ class ChatModelForm extends AbstractModelFormBase {
       '#description' => t('The maximum number of tokens to output.'),
       '#default_value' => $config['max_output_tokens'] ?? 0,
       '#weight' => 25,
-      '#disabled' => !empty($config['has_predefined_models']),
+      '#disabled' => !empty($config['has_predefined_models']) && empty($config['has_overriden_settings']),
     ];
 
     return $form;

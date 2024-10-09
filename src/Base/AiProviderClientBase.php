@@ -9,6 +9,7 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\Site\Settings;
 use Drupal\ai\AiProviderInterface;
 use Drupal\ai\Enum\AiModelCapability;
 use Drupal\ai\Exception\AiSetupFailureException;
@@ -484,6 +485,7 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
       ];
     }
     $config['has_predefined_models'] = $this->hasPredefinedModels;
+    $config['has_overriden_settings'] = Settings::get('ai_override_models') ?? FALSE;
     return $config;
   }
 
