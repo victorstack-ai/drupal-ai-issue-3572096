@@ -6,6 +6,7 @@ use Drupal\Core\Database\Query\AlterableInterface;
 use Drupal\Core\Database\Query\SelectInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\search_api\Entity\Server;
+use Drupal\search_api\IndexInterface;
 use Drupal\search_api\Query\QueryInterface;
 
 /**
@@ -21,6 +22,16 @@ use Drupal\search_api\Query\QueryInterface;
  * )
  */
 class DatabaseBoostByAiSearch extends BoostByAiSearchBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function supportsIndex(IndexInterface $index): bool {
+    if ($index->getServerInstance()->getBackendId() == 'search_api_database') {
+      return TRUE;
+    }
+    return FALSE;
+  }
 
   /**
    * {@inheritdoc}

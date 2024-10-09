@@ -4,6 +4,7 @@ namespace Drupal\ai_search\Plugin\search_api\processor;
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\search_api\Entity\Server;
+use Drupal\search_api\IndexInterface;
 use Drupal\search_api\Query\QueryInterface;
 use Solarium\Core\Query\QueryInterface as SolariumQueryInterface;
 
@@ -20,6 +21,16 @@ use Solarium\Core\Query\QueryInterface as SolariumQueryInterface;
  * )
  */
 class SolrBoostByAiSearch extends BoostByAiSearchBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function supportsIndex(IndexInterface $index): bool {
+    if ($index->getServerInstance()->getBackendId() == 'search_api_solr') {
+      return TRUE;
+    }
+    return FALSE;
+  }
 
   /**
    * {@inheritdoc}
