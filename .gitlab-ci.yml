@@ -33,6 +33,8 @@ phpcs:
   allow_failure: false
 phpstan:
   allow_failure: false
+  before_script:
+    - composer require --dev drush/drush
 
 .phpunit-base:
   before_script:
