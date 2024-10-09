@@ -5,6 +5,8 @@ namespace Drupal\ai_search\Base;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManager;
 use Drupal\Core\Extension\ModuleExtensionList;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\ai\AiProviderPluginManager;
@@ -76,6 +78,10 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
    *   The module extension list.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The configuration factory.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
+   *   The logger factory.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger.
    */
   final public function __construct(
     protected string $pluginId,
@@ -86,6 +92,8 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
     protected EntityTypeManager $entityTypeManager,
     protected ModuleExtensionList $extensionList,
     protected ConfigFactoryInterface $configFactory,
+    protected LoggerChannelFactoryInterface $loggerChannelFactory,
+    protected MessengerInterface $messenger,
   ) {
     // Set the default converter settings.
     $this->converter->getConfig()->setOption('strip_tags', TRUE);
@@ -144,6 +152,8 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
       $container->get('entity_type.manager'),
       $container->get('extension.list.module'),
       $container->get('config.factory'),
+      $container->get('logger.factory'),
+      $container->get('messenger'),
     );
   }
 

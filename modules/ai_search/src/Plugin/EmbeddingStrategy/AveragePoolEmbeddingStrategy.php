@@ -38,19 +38,21 @@ class AveragePoolEmbeddingStrategy extends EmbeddingBase {
     $chunks = $this->getChunks($title, $main_content, $contextual_content);
 
     // Embed and average.
-    $raw_embeddings = $this->getRawEmbeddings($chunks);
-    $embedding = $this->averagePooling($raw_embeddings);
-    $content = $title . $main_content . $contextual_content;
-    $metadata = $this->buildBaseMetadata($fields, $index);
-    $metadata = $this->addContentToMetadata($metadata, $content, $index);
+    if ($raw_embeddings = $this->getRawEmbeddings($chunks)) {
+      $embedding = $this->averagePooling($raw_embeddings);
+      $content = $title . $main_content . $contextual_content;
+      $metadata = $this->buildBaseMetadata($fields, $index);
+      $metadata = $this->addContentToMetadata($metadata, $content, $index);
 
-    // Build the result, optionally adding metadata.
-    $results = [
-      'id' => $search_api_item->getId() . ':0',
-      'values' => $embedding,
-      'metadata' => $metadata,
-    ];
-    return [$results];
+      // Build the result, optionally adding metadata.
+      $results = [
+        'id' => $search_api_item->getId() . ':0',
+        'values' => $embedding,
+        'metadata' => $metadata,
+      ];
+      return [$results];
+    }
+    return [];
   }
 
   /**

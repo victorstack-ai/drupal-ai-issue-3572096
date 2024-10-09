@@ -4,6 +4,7 @@ namespace Drupal\vdb_provider_pinecone;
 
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Probots\Pinecone\Client as PineconeClient;
@@ -28,10 +29,13 @@ class Pinecone {
    *   The default cache bin.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
+   *   The logger factory.
    */
   public function __construct(
     protected CacheBackendInterface $cache,
     protected MessengerInterface $messenger,
+    protected LoggerChannelFactoryInterface $loggerChannelFactory,
   ) {
   }
 
@@ -166,14 +170,25 @@ class Pinecone {
       }
     }
 
-    $this->getClientForIndex($index_name)->data()->vectors()->upsert(
-      vectors: [
-        'id' => $data['drupal_long_id'],
-        'values' => $data['vector'],
-        'metadata' => $metadata,
-      ],
-      namespace: $namespace,
-    );
+    try {
+      $this->getClientForIndex($index_name)->data()->vectors()->upsert(
+        vectors: [
+          'id' => $data['drupal_long_id'],
+          'values' => $data['vector'],
+          'metadata' => $metadata,
+        ],
+        namespace: $namespace,
+      );
+    }
+    catch (\Exception $exception) {
+      $this->messenger->addWarning($this->t('An exception occurred while attempting to insert or update data in Pinecone: @exception', [
+        '@exception' => $exception->getMessage(),
+      ]));
+      $logger = $this->loggerChannelFactory->get('ai_search');
+      $logger->warning('An exception occurred while attempting to insert or update data in Pinecone: @exception', [
+        '@exception' => $exception->getMessage(),
+      ]);
+    }
   }
 
   /**

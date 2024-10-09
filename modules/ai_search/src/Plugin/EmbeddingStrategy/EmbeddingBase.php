@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_search\Plugin\EmbeddingStrategy;
 
+use Drupal\Component\Utility\Unicode;
 use Drupal\ai\AiVdbProviderInterface;
 use Drupal\ai\Enum\EmbeddingStrategyCapability;
 use Drupal\ai\Enum\EmbeddingStrategyIndexingOptions;
@@ -46,6 +47,9 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
     $raw_embeddings = $this->getRawEmbeddings($chunks);
     $embeddings = [];
     foreach ($chunks as $key => $chunk) {
+      if (!isset($raw_embeddings[$key])) {
+        continue;
+      }
       $metadata = $this->addContentToMetadata($metadata, $chunk, $index);
       $embedding = [
         'id' => $search_api_item->getId() . ':' . $key,
@@ -73,13 +77,51 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
     /** @var \Drupal\ai\OperationType\Embeddings\EmbeddingsInterface $embedding_llm */
     $embedding_llm = $this->embeddingLlm;
     foreach ($chunks as $chunk) {
-      $raw_embeddings[] = $embedding_llm->embeddings(
-        $chunk,
-        $this->modelId,
-        ['ai_search'],
-      )->getNormalized();
+      // If not already UTF8, attempt to convert.
+      if (!Unicode::validateUtf8($chunk)) {
+        if ($encoding = Unicode::encodingFromBOM($chunk)) {
+          $utf8_chunk = Unicode::convertToUtf8($chunk, $encoding);
+          if ($utf8_chunk === FALSE) {
+
+            // Failed to convert, continue to next embedding but add warning
+            // to the logs.
+            $this->messenger->addWarning($this->t('Failed to convert chunk to UTF8: @chunk'), [
+              '@chunk' => $chunk,
+            ]);
+            $logger = $this->loggerChannelFactory->get('ai_search');
+            $logger->warning('Failed to convert chunk to UTF8: @chunk', [
+              '@chunk' => $chunk,
+            ]);
+            continue;
+          }
+          else {
+            $chunk = $utf8_chunk;
+          }
+        }
+        else {
+
+          // Failed to determine encoding to convert from.
+          $this->messenger->addWarning($this->t('Failed to determine non-UTF8 encoding to attempt to auto-convert chunk: @chunk'), [
+            '@chunk' => $chunk,
+          ]);
+          $logger = $this->loggerChannelFactory->get('ai_search');
+          $logger->warning('Failed to determine non-UTF8 encoding to attempt to auto-convert chunk: @chunk', [
+            '@chunk' => $chunk,
+          ]);
+          continue;
+        }
+      }
+
+      // Only proceed if we have a valid chunk.
+      if ($chunk) {
+        $raw_embeddings[] = $embedding_llm->embeddings(
+          $chunk,
+          $this->modelId,
+          ['ai_search'],
+        )->getNormalized();
+      }
     }
-    return $raw_embeddings;
+    return array_filter($raw_embeddings);
   }
 
   /**
