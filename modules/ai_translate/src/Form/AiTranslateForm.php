@@ -108,7 +108,7 @@ class AiTranslateForm extends FormBase {
       $option = array_shift($overview['#rows']);
 
       if ($lang_from !== $langcode && !$entity->hasTranslation($langcode)) {
-        $model = $config->get($langcode . '_model');
+        $model = $config->get($langcode . '_model') ?? '';
         $parts = explode('__', $model);
         if (empty($parts[0])) {
           $default_model = $this->providerManager->getSimpleDefaultProviderOptions('chat');
