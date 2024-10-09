@@ -163,8 +163,8 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
     if ($data_sources = $this->entity->getDatasources()) {
       $form['checker'] = [
         '#type' => 'details',
-        '#title' => $this->t('Check configured chunking'),
-        '#description' => $this->t('Resave your configuration then use this form to check the chunking of a specific item.'),
+        '#title' => $this->t('Preview content to be vectorized'),
+        '#description' => $this->t('After saving your configuration, without needing to index, this form can be used to check what will get vectorized from a specific item (i.e., the "Main Content" and "Contextual Content" output will be shown), as well as what metadata will be available from "Filterable Attributes".'),
         '#open' => FALSE,
         '#attributes' => ['id' => 'checker-wrapper'],
       ];
