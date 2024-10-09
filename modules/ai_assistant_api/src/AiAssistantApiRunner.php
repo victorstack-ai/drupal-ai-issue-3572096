@@ -384,8 +384,9 @@ class AiAssistantApiRunner {
       $pre_prompt = $this->assistant->get('pre_action_prompt');
       if ($pre_prompt) {
         $return = $this->prePrompt();
+
         // If its a normal response, we just return it.
-        if ($return instanceof ChatOutput || $return instanceof StreamedChatMessageIteratorInterface) {
+        if ($return instanceof ChatOutput) {
           return $return;
         }
 
@@ -572,6 +573,7 @@ class AiAssistantApiRunner {
     $values = $response->getNormalized();
 
     $response = $this->promptJsonDecoder->decode($values, 20);
+
     if (is_array($response)) {
       return $response;
     }

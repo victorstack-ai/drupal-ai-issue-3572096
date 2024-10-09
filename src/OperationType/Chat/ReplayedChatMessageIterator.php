@@ -26,6 +26,14 @@ class ReplayedChatMessageIterator extends StreamedChatMessageIterator {
         $data->getMetadata() ?? []
       );
     }
+    // If its still empty we will return the first message.
+    if ($i === 0) {
+      yield new StreamedChatMessage(
+        'assistant',
+        $this->firstMessage,
+        []
+      );
+    }
   }
 
   /**
