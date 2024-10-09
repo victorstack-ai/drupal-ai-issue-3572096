@@ -34,6 +34,6 @@ nav:
     - AI Translate: modules/ai_translate/index.md
     - AI Eca: modules/ai_eca/index.md
     - AI Search: modules/ai_search/index.md
-
+  - Providers: providers/matris.md
 docs_dir: docs
 site_dir: site
