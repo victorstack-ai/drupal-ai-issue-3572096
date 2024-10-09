@@ -105,6 +105,7 @@ class AiSettingsForm extends ConfigFormBase {
 
     // Add the hardcoded selections of filtered types.
     $operation_types = array_merge($operation_types, $this->hardcodedSelections);
+
     foreach ($operation_types as $operation_type) {
       // Get all providers that allows for a specific operation type.
       $options = [
@@ -146,7 +147,7 @@ class AiSettingsForm extends ConfigFormBase {
       if ($default_provider && !empty($providers[$default_provider])) {
         $models = [];
         try {
-          if ($providers[$default_provider]->isUsable()) {
+          if ($providers[$default_provider]->isUsable($operation_type['actual_type'] ?? $operation_type['id'])) {
             $models = $providers[$default_provider]->getConfiguredModels($operation_type['actual_type'] ?? $operation_type['id'], $filters);
           }
           else {
