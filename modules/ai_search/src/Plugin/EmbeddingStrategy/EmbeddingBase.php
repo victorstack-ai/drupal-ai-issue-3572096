@@ -140,7 +140,7 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
     $contextual_content = '';
     $main_content = '';
     $index_config = $this->configFactory->get('ai_search.index.' . $index->id())->getRawData();
-    $indexing_options = $index_config['indexing_options'];
+    $indexing_options = $index_config['indexing_options'] ?? [];
     $allowed_options = [
       EmbeddingStrategyIndexingOptions::MAIN_CONTENT->getKey(),
       EmbeddingStrategyIndexingOptions::CONTEXTUAL_CONTENT->getKey(),
