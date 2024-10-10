@@ -14,6 +14,7 @@ use Drupal\ai\AiProviderInterface;
 use Drupal\ai\Enum\AiModelCapability;
 use Drupal\ai\Exception\AiSetupFailureException;
 use Drupal\ai\OperationType\Chat\ChatModelForm;
+use Drupal\ai\OperationType\Embeddings\EmbeddingsModelForm;
 use Drupal\ai\OperationType\GenericType\AbstractModelFormBase;
 use Drupal\ai\Traits\OperationType\ChatTrait;
 use Drupal\ai\Utility\CastUtility;
@@ -414,6 +415,9 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
     switch ($operation_type) {
       case 'chat':
         return ChatModelForm::form($form, $form_state, $config, $operation_type);
+
+      case 'embeddings':
+        return EmbeddingsModelForm::form($form, $form_state, $config, $operation_type);
 
       default:
         return AbstractModelFormBase::form($form, $form_state, $config, $operation_type);
