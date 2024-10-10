@@ -2,6 +2,24 @@
     "name": "drupal/ai",
     "description": "AI module for Drupal",
     "type": "drupal-module",
+    "repositories": [
+        {
+            "type": "package",
+            "package": {
+                "name": "probots-io/pinecone-php",
+                "version": "1.0.2",
+                "dist": {
+                    "url": "https://github.com/scotteuser/pinecone-php/archive/refs/tags/1.0.2.zip",
+                    "type": "zip"
+                },
+                "autoload": {
+                    "psr-4": {
+                        "Probots\\Pinecone\\": "src/"
+                    }
+                }
+            }
+        }
+    ],
     "require": {
         "openai-php/client": ">=v0.10.1",
         "wpai-inc/anthropic-sdk-php": ">=0.1.0",
@@ -10,7 +28,7 @@
         "league/html-to-markdown": "^5.1",
         "yethee/tiktoken": "^0.5.1",
         "hkulekci/qdrant": "^0.5.5",
-        "probots-io/pinecone-php": "^1.0"
+        "probots-io/pinecone-php": "1.0.2"
     },
     "require-dev": {
         "drupal/eca": "^2.0",
