@@ -22,6 +22,7 @@ nav:
     - Develop a third-party module: developers/develop_third_party_module.md
     - Contribute to the AI module: developers/contribute.md
     - Events: developers/events.md
+    - DDEV: developers/ddev.md
   - Modules:
     - AI Providers:
       - Ollama: modules/providers/provider_ollama/index.md
