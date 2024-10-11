@@ -31,10 +31,10 @@ use Drupal\ai_assistant_api\AiAssistantInterface;
  *   config_prefix = "ai_assistant",
  *   admin_permission = "administer ai_assistant",
  *   links = {
- *     "collection" = "/admin/structure/ai-assistant",
- *     "add-form" = "/admin/structure/ai-assistant/add",
- *     "edit-form" = "/admin/structure/ai-assistant/{ai_assistant}",
- *     "delete-form" = "/admin/structure/ai-assistant/{ai_assistant}/delete",
+ *     "collection" = "/admin/config/ai/ai-assistant",
+ *     "add-form" = "/admin/config/ai/ai-assistant/add",
+ *     "edit-form" = "//admin/config/ai/ai-assistant/{ai_assistant}",
+ *     "delete-form" = "/admin/config/ai/ai-assistant/{ai_assistant}/delete",
  *   },
  *   entity_keys = {
  *     "id" = "id",
