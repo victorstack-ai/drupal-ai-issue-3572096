@@ -306,7 +306,14 @@ class OpenAiProvider extends AiProviderClientBase implements
       'messages' => $chat_input,
     ] + $this->configuration;
     try {
-      $response = $this->client->chat()->create($payload)->toArray();
+      if ($this->streamed) {
+        $response = $this->client->chat()->createStreamed($payload);
+        $message = new OpenAiChatMessageIterator($response);
+      }
+      else {
+        $response = $this->client->chat()->create($payload)->toArray();
+        $message = new ChatMessage($response['choices'][0]['message']['role'], $response['choices'][0]['message']['content']);
+      }
     }
     catch (\Exception $e) {
       // Try to figure out rate limit issues.
@@ -320,15 +327,6 @@ class OpenAiProvider extends AiProviderClientBase implements
       else {
         throw $e;
       }
-    }
-
-    if ($this->streamed) {
-      $response = $this->client->chat()->createStreamed($payload);
-      $message = new OpenAiChatMessageIterator($response);
-    }
-    else {
-      $response = $this->client->chat()->create($payload)->toArray();
-      $message = new ChatMessage($response['choices'][0]['message']['role'], $response['choices'][0]['message']['content']);
     }
 
     return new ChatOutput($message, $response, []);

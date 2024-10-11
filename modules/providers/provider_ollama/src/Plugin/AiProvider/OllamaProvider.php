@@ -237,7 +237,6 @@ class OllamaProvider extends AiProviderClientBase implements
       'model' => $model_id,
       'messages' => $chat_input,
     ] + $this->configuration;
-    $response = $this->client->chat()->create($payload);
 
     if ($this->streamed) {
       $response = $this->client->chat()->createStreamed($payload);
