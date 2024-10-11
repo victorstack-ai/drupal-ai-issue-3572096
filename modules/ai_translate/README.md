@@ -25,3 +25,17 @@ Navigate to the node.
 Click on the translate menu.
 Click on the translate link to start the translating of the node.
 SUCCESS!
+
+## Async translations & paragraphs
+If you are using async translations you should also use the module https://www.drupal.org/project/ai_translate_paragraph_asymetric. This fixes some things. Tt is better to keep that apart (dependencies on paragraphs and async things). 
+
+## Layout builder
+We are working on having layout builder support in https://www.drupal.org/project/ai/issues/3467075. 
+
+
+## Similar modules
+
+- https://www.drupal.org/project/ai_tmgmt Ai Translation management tools (use tmgmt with the ai module as a translation provider)
+- https://www.drupal.org/project/auto_translation The Auto translate module is very similar to this one. 
+- https://www.drupal.org/project/ai_translate_textfield Translate textfield also uses AI but the interface is substantially different. You have to translate on a per field basis. The approach is different.
+- 
