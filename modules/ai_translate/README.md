@@ -27,7 +27,7 @@ Click on the translate link to start the translating of the node.
 SUCCESS!
 
 ## Async translations & paragraphs
-If you are using async translations you should also use the module https://www.drupal.org/project/ai_translate_paragraph_asymetric. This fixes some things. Tt is better to keep that apart (dependencies on paragraphs and async things). 
+If you are using async translations you should also use the module https://www.drupal.org/project/ai_translate_paragraph_asymetric. This fixes some things. It is better to keep that apart (dependencies on paragraphs and async things). 
 
 ## Layout builder
 We are working on having layout builder support in https://www.drupal.org/project/ai/issues/3467075. 
