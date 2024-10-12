@@ -227,6 +227,17 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
         }
       }
     }
+
+    if (
+      isset($described['code'])
+      && $described['code'] !== 200
+      && isset($described['message'])
+    ) {
+      $form_state->setErrorByName('backend_config][database_name', $this->t('When validating that the database details for Milvus are correct, the following error code and message were received instead: @code, Message: @message', [
+        '@code' => $described['code'],
+        '@message' => $described['message'],
+      ]));
+    }
   }
 
   /**
@@ -249,6 +260,20 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
       database_name: $database_settings['database_name'],
       collection_name: $database_settings['collection'],
     );
+    if (
+      isset($described['code'])
+      && $described['code'] !== 200
+      && isset($described['message'])
+    ) {
+      $results['code_message'] = [
+        'label' => $this->t('Error'),
+        'info' => $this->t('Code: @code, Message: @message', [
+          '@code' => $described['code'],
+          '@message' => $described['message'],
+        ]),
+        'status' => 'error',
+      ];
+    }
     if (!empty($described['data'])) {
       if (!empty($described['data']['autoId'])) {
         $results['auto_id'] = [
@@ -309,14 +334,15 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
           ];
         }
       }
-      if (getenv('IS_DDEV_PROJECT') == 'true' && !$this->getClient()->isZilliz()) {
-        $results['ddev_ui'] = [
-          'label' => $this->t('Milvus DDEV UI'),
-          'info' => $this->t('<a href="@milvus" target="_blank">Milvus DDEV UI</a>', [
-            '@milvus' => 'https://' . $this->request->getHost() . ':8521',
-          ]),
-        ];
-      }
+    }
+
+    if (getenv('IS_DDEV_PROJECT') == 'true' && !$this->getClient()->isZilliz()) {
+      $results['ddev_ui'] = [
+        'label' => $this->t('Milvus DDEV UI'),
+        'info' => $this->t('<a href="@milvus" target="_blank">Milvus DDEV UI</a>', [
+          '@milvus' => 'https://' . $this->request->getHost() . ':8521',
+        ]),
+      ];
     }
 
     return $results;
