@@ -358,6 +358,7 @@ abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, AiVdbP
     $this->createCollection(
       collection_name: $configuration['database_settings']['collection'],
       dimension: $configuration['embeddings_engine_configuration']['dimensions'],
+      metric_type: VdbSimilarityMetrics::from($configuration['database_settings']['metric']),
       database: $configuration['database_settings']['database_name'],
     );
   }
