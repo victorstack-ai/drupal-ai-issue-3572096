@@ -116,6 +116,13 @@ class EchoProvider extends AiProviderClientBase implements
   /**
    * {@inheritdoc}
    */
+  public function embeddingsVectorSize(string $model_id): int {
+    return 1;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function maxEmbeddingsInput($model_id = ''): int {
     return 1024;
   }

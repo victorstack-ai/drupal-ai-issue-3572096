@@ -264,6 +264,19 @@ class OllamaProvider extends AiProviderClientBase implements
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function embeddingsVectorSize(string $model_id): int {
+    $this->loadClient();
+    $data = $this->controlApi->embeddingsVectorSize($model_id);
+    if ($data) {
+      return $data;
+    }
+    // Fallback to parent method.
+    return parent::embeddingsVectorSize($model_id);
+  }
+
+  /**
    * Gets the base host.
    *
    * @return string
@@ -281,8 +294,8 @@ class OllamaProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function maxEmbeddingsInput($model_id = ''): int {
-    // @todo this is playing safe. Ideally, we should provide real number per model.
-    return 1024;
+    $this->loadClient();
+    return $this->controlApi->embeddingsContextSize($model_id);
   }
 
 }

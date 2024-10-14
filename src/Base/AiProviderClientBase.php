@@ -17,6 +17,7 @@ use Drupal\ai\OperationType\Chat\ChatModelForm;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsModelForm;
 use Drupal\ai\OperationType\GenericType\AbstractModelFormBase;
 use Drupal\ai\Traits\OperationType\ChatTrait;
+use Drupal\ai\Traits\OperationType\EmbeddingsTrait;
 use Drupal\ai\Utility\CastUtility;
 use Drupal\key\KeyRepositoryInterface;
 use Psr\Http\Client\ClientInterface;
@@ -29,6 +30,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 abstract class AiProviderClientBase implements AiProviderInterface, ContainerFactoryPluginInterface {
 
   use ChatTrait;
+  use EmbeddingsTrait;
 
   /**
    * Logger factory.

@@ -96,7 +96,6 @@ class GroqProvider extends AiProviderClientBase implements
   public function getSupportedOperationTypes(): array {
     return [
       'chat',
-      'embeddings',
     ];
   }
 

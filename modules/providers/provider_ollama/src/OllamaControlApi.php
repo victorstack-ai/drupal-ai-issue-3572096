@@ -51,7 +51,7 @@ class OllamaControlApi {
   }
 
   /**
-   * Embeddings is not in the OpenAI Client.
+   * Get embeddings vector for a string.
    *
    * @param string $text
    *   The text.
@@ -67,6 +67,43 @@ class OllamaControlApi {
       'model' => $model,
     ]), TRUE);
     return $result;
+  }
+
+  /**
+   * Embeddings vector size.
+   *
+   * @param string $model
+   *   The model.
+   *
+   * @return int
+   *   Embeddings vector size for the model.
+   */
+  public function embeddingsVectorSize(string $model): int {
+    $data = json_decode($this->makeRequest("api/show", [], 'POST', [
+      'model' => $model,
+    ]), TRUE);
+    foreach ($data['model_info'] as $key => $value) {
+      if (str_ends_with($key, 'embedding_length') && is_numeric($value)) {
+        return $data['model_info'][$key];
+      }
+    }
+
+    return 0;
+  }
+
+  /**
+   * Embeddings context size.
+   *
+   * @param string $model
+   *   The model.
+   *
+   * @return int
+   *   Input context max size.
+   */
+  public function embeddingsContextSize(string $model): int {
+    return json_decode($this->makeRequest("api/show", [], 'POST', [
+      'model' => $model,
+    ]), TRUE)['model_info']['llama.context_length'];
   }
 
   /**

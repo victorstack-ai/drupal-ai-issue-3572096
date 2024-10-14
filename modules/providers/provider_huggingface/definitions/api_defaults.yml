@@ -17,12 +17,7 @@ embeddings:
     type: 'string'
     default: 'Once upon a time in London.'
     required: true
-  configuration:
-    dimensions:
-      label: 'Vector Dimension'
-      type: 'integer'
-      default: 1024
-      required: false
+  configuration: []
 image_classification:
   input:
     description: 'Binary of image to classify.'

@@ -201,9 +201,4 @@ embeddings:
     type: 'string'
     default: ''
     required: true
-  configuration:
-    dimensions:
-      label: 'Vector Dimension'
-      type: 'integer'
-      default: 1536
-      required: false
+  configuration: []

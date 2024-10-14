@@ -510,6 +510,17 @@ class OpenAiProvider extends AiProviderClientBase implements
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function embeddingsVectorSize(string $model_id): int {
+    return match($model_id) {
+      'text-embedding-ada-002', 'text-embedding-3-small' => 1536,
+      'text-embedding-3-large' => 3072,
+      default => 0,
+    };
+  }
+
+  /**
    * Moderation endpoints to run before the normal call.
    *
    * @throws \Drupal\ai\Exception\AiUnsafePromptException

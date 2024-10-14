@@ -59,9 +59,4 @@ embeddings:
     type: 'string'
     default: 'Once upon a time in London.'
     required: true
-  configuration:
-    dimensions:
-      label: 'Vector Dimension'
-      type: 'integer'
-      default: 768
-      required: false
+  configuration: []

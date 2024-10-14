@@ -21,3 +21,9 @@ services:
     class: Drupal\ai\Breadcrumb\AiModelSettingsBreadcrumbBuilder
     tags:
       - { name: breadcrumb_builder, priority: 100 }
+  cache.ai:
+    class: Drupal\Core\Cache\CacheBackendInterface
+    arguments: ['ai']
+    factory: cache_factory:get
+    tags:
+      - { name: cache.bin }

@@ -242,6 +242,15 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    * {@inheritdoc}
    */
   public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
+    $values = $form_state->getValues();
+    if (
+      !empty($values['embeddings_engine'])
+      && isset($values['embeddings_engine_configuration']['dimensions'])
+      && $values['embeddings_engine_configuration']['dimensions'] <= 0
+    ) {
+      $form_state->setErrorByName('embeddings_engine_configuration][dimensions', $this->t('Embeddings engine configuration "dimensions" must be provided and must be greater than 0'));
+    }
+
     if (!empty($form_state->getValue('database'))) {
       try {
         $vdb_client = $this->vdbProviderManager->createInstance($form_state->getValue('database'));
