@@ -304,7 +304,7 @@ class AiAutomatorFieldConfig {
       ];
 
       $placeholderText = "";
-      foreach ($rule->tokens() as $key => $text) {
+      foreach ($rule->tokens($entity) as $key => $text) {
         $placeholderText .= "<strong>{{ $key }}</strong> - " . $text . "<br>";
       }
       $form['automator_container']['normal_prompt']['automator_prompt_placeholders']['placeholders'] = [

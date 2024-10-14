@@ -95,7 +95,7 @@ class AiAutomatorRule extends ActionBase implements ConfigurableInterface, Plugi
 
     $value = $entity->get($fieldDefinition->getName())->getValue();
     // Rule if overwrite is on or if empty.
-    if ($this->configuration['overwrite'] || empty($rule->checkIfEmpty($value))) {
+    if ($this->configuration['overwrite'] || empty($rule->checkIfEmpty($value, $automatorConfig))) {
       // Run the rule.
       $this->ruleRunner->generateResponse($entity, $fieldDefinition, $automatorConfig);
     }

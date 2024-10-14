@@ -175,6 +175,7 @@ class AiChainForm extends FormBase {
       'source_type' => $this->t('Source Type'),
       'inputs' => $this->t('Source Field(s)'),
       'weight' => $this->t('Weight'),
+      'operations' => $this->t('Operations'),
     ];
 
     $form['items'] = [
@@ -225,6 +226,20 @@ class AiChainForm extends FormBase {
         '#title' => $this->t('Weight for @label', ['@label' => $definition->label()]),
         '#title_display' => 'invisible',
         '#attributes' => ['class' => ['item-order-weight']],
+      ];
+
+      $form['items'][$definition->id()]['operations'] = [
+        '#type' => 'operations',
+        '#links' => [
+          'edit' => [
+            'title' => $this->t('Edit'),
+            'url' => $definition->toUrl('edit-form'),
+          ],
+          'delete' => [
+            'title' => $this->t('Delete'),
+            'url' => $definition->toUrl('delete-form'),
+          ],
+        ],
       ];
     }
 
@@ -304,7 +319,8 @@ class AiChainForm extends FormBase {
    */
   protected function fieldNameToLabel($field_name) {
     // Load the field name from the entity type.
-    return $this->entityFieldManager->getFieldDefinitions($this->entityType, $this->bundle)[$field_name]->getLabel() ?? '';
+    $field_data = $this->entityFieldManager->getFieldDefinitions($this->entityType, $this->bundle);
+    return isset($field_data[$field_name]) ? $field_data[$field_name]->getLabel() : 'Unknown Field';
   }
 
   /**

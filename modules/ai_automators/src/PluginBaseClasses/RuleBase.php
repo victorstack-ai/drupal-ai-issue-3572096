@@ -11,6 +11,7 @@ use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\Enum\AiModelCapability;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface;
 use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface;
@@ -103,7 +104,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
   /**
    * {@inheritDoc}
    */
-  public function checkIfEmpty($value) {
+  public function checkIfEmpty(array $value, array $automatorConfig = []) {
     return $value;
   }
 
@@ -144,7 +145,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
   /**
    * {@inheritDoc}
    */
-  public function tokens() {
+  public function tokens(ContentEntityInterface $entity) {
     return [
       'context' => 'The cleaned text from the base field.',
       'raw_context' => 'The raw text from the base field. Can include HTML',
@@ -525,7 +526,12 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     $text = $this->runRawChatMessage($prompt, $automatorConfig, $instance, $entity);
 
     // Normalize the response.
-    return $this->decodeValueArray($this->promptJsonDecoder->decode($text));
+    $json = $this->promptJsonDecoder->decode($text);
+    // If its still a chat message or stream, we throw an exception.
+    if ($json instanceof ChatMessage || $json instanceof StreamedChatMessageIteratorInterface) {
+      throw new \RuntimeException('The response for the Automator was not a JSON response: ' . $json->getText());
+    }
+    return $this->decodeValueArray($json);
   }
 
   /**
