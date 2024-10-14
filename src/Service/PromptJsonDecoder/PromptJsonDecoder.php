@@ -104,8 +104,6 @@ class PromptJsonDecoder implements PromptJsonDecoderInterface {
    *   The decoded JSON payload or NULL if the payload is not valid JSON.
    */
   public function decodePayload(string $payload): ?array {
-    // Unescape the payload if its escaped.
-    $payload = stripcslashes($payload);
     // Regex to find most patterns.
     $pattern = '/\{(?:[^{}]|(?R))*\}|\[(?:[^\[\]]|(?R))*\]/';
     preg_match_all($pattern, $payload, $matches);
