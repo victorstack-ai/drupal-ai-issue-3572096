@@ -6,6 +6,5 @@ core_version_requirement: ^10.3 || ^11
 lifecycle: experimental
 dependencies:
   - ai:ai
-  - ai:ai_automator
   - drupal:file
   - eca:eca
