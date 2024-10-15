@@ -230,13 +230,14 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
 
     /** @var \Drupal\Core\Entity\EntityFormInterface */
     $form_object = $form_state->getFormObject();
-    // To check if its a create or edit.
+    // To check if it is a create or edit.
     $entity = $form_object->getEntity();
 
+    // Success code is '0'.
     if (
       isset($described['code'])
-      && $described['code'] !== 200
-      && isset($described['message'])
+      && (int) $described['code'] !== 0
+      && !empty($described['message'])
       && !$entity->isNew()
     ) {
       $form_state->setErrorByName('backend_config][database_name', $this->t('When validating that the database details for Milvus are correct, the following error code and message were received instead: @code, Message: @message', [
