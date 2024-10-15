@@ -59,7 +59,12 @@
   }
 
   function renderBotChatMessage(form) {
-    let converter = new showdown.Converter();
+    let converter = new showdown.Converter({
+      disableForced4SpacesIndentedSublists: true,
+      tables: true,
+      smoothLivePreview: true,
+      parseImgDimensions: true
+    });
     $.ajax({
       url: drupalSettings.path.baseUrl + 'ajax/chatbot/message-skeleton'
     })
