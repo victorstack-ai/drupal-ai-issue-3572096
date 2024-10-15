@@ -6,6 +6,7 @@ use Drupal\Component\Utility\Unicode;
 use Drupal\ai\AiVdbProviderInterface;
 use Drupal\ai\Enum\EmbeddingStrategyCapability;
 use Drupal\ai\Enum\EmbeddingStrategyIndexingOptions;
+use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 use Drupal\ai_search\Base\EmbeddingStrategyPluginBase;
 use Drupal\ai_search\EmbeddingStrategyInterface;
 use Drupal\search_api\IndexInterface;
@@ -114,8 +115,10 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
 
       // Only proceed if we have a valid chunk.
       if ($chunk) {
+        // Normalize the chunk before embedding it.
+        $input = new EmbeddingsInput($chunk);
         $raw_embeddings[] = $embedding_llm->embeddings(
-          $chunk,
+          $input,
           $this->modelId,
           ['ai_search'],
         )->getNormalized();

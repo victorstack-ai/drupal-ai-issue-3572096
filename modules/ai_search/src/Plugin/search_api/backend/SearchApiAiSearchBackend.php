@@ -11,6 +11,7 @@ use Drupal\Core\Link;
 use Drupal\Core\Plugin\PluginFormInterface;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\AiVdbProviderPluginManager;
+use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 use Drupal\ai\Utility\TokenizerInterface;
 use Drupal\ai_search\Backend\AiSearchBackendPluginBase;
 use Drupal\ai_search\EmbeddingStrategyPluginManager;
@@ -459,7 +460,8 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
           }
           $search_words = implode(' ', $search_words);
         }
-        $params['vector_input'] = $embedding_llm->embeddings($search_words, $model_id)->getNormalized();
+        $input = new EmbeddingsInput($search_words);
+        $params['vector_input'] = $embedding_llm->embeddings($input, $model_id)->getNormalized();
       }
       $response = $this->getClient()->vectorSearch(...$params);
     }
