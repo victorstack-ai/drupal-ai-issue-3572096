@@ -106,6 +106,14 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
       // Add the header row for target type.
       if (!empty($field_group['#header'])) {
         $operations_header = array_pop($field_group['#header']);
+
+        // Remove boost from header as it is not applicable to vector
+        // databases.
+        $boost_index = array_search($this->t('Boost'), $field_group['#header']);
+        if ($boost_index) {
+          $field_group['#header'][$boost_index] = '';
+        }
+
         $field_group['#header'][] = $this->t('Indexing option');
         if (isset($ai_search_index_config['control_field_max_length']) && $ai_search_index_config['control_field_max_length']) {
           $field_group['#header'][] = $this->t('Maximum length');
@@ -118,6 +126,16 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
             $field_id = (string) $field_id;
             $edit_row = array_pop($row);
             $remove_row = array_pop($row);
+
+            // Remove boost from row as it is not applicable to vector
+            // databases.
+            if (isset($row['boost'])) {
+              $row['boost']['#type'] = 'hidden';
+              if (isset($row['boost']['#states'])) {
+                unset($row['boost']['#states']);
+              }
+            }
+
             $row['indexing_option'] = [
               '#type' => 'select',
               '#options' => $this->buildSelectIndexingOptions(),
