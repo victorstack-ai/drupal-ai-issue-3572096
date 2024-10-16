@@ -402,21 +402,41 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
       $values = $form_state->getValues();
 
       // Determine the selected indexing options by looping through all fields.
-      $count = 0;
+      $count_main_contents = 0;
       if (!empty($values['fields'])) {
-        $message = $this->t('Only one "Main Content" field is supported by the Embedding Strategy selected in the Search API Server configuration.');
+        $one_main_message = $this->t('Only one "Main Content" field is supported by the Embedding Strategy selected in the Search API Server configuration.');
+
         foreach ($values['fields'] as $id => $field) {
-          if (!isset($field['indexing_option'])) {
+
+          // Skip internal fields.
+          if (in_array($id, ['node_grants'])) {
+            continue;
+          }
+
+          // Ensure that an indexing option is selected for each field.
+          if (empty($field['indexing_option'])) {
+            $option_required_message = $this->t('For "@field", you must select an indexing option. Select "Ignore" if you do not wish to do anything with this field for now.', [
+              '@field' => $field['title'] ?? $id,
+            ]);
+            $form_state->setErrorByName('fields[' . $id . '][indexing_option', $option_required_message);
             continue;
           }
 
           // If there is more than one, set a validation error.
           if ($field['indexing_option'] === EmbeddingStrategyIndexingOptions::MAIN_CONTENT->getKey()) {
-            $count++;
+            $count_main_contents++;
           }
-          if ($count > 1) {
-            $form_state->setErrorByName('fields[' . $id . '][indexing_option', $message);
+          if ($count_main_contents > 1) {
+            $form_state->setErrorByName('fields[' . $id . '][indexing_option', $one_main_message);
           }
+        }
+
+        // There must be at least one main content.
+        if ($count_main_contents < 1) {
+          $keys = array_keys($values['fields']);
+          $id = reset($keys);
+          $message = $this->t('At least one field should be set as "Main content" to generate the vector embeddings from.');
+          $form_state->setErrorByName('fields[' . $id . '][indexing_option', $message);
         }
       }
     }
