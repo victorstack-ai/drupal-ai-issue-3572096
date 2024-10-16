@@ -114,7 +114,10 @@ final class Summarize extends AiCKEditorPluginBase {
     $values = $form_state->getValues();
 
     try {
-      $prompt = 'Summarize the following text using the same language as the following text:\r\n"' . $values["plugin_config"]["selected_text"];
+      $prompt = 'Summarize the following text in the same language, ';
+      $prompt .= 'do not return the original text or restate it word-for-word.' . "\r\n\r\n";
+      $prompt .= 'Here is the original text:' . "\r\n";
+      $prompt .= '"' . $values["plugin_config"]["selected_text"] . '"';
       $response = new AjaxResponse();
       $values = $form_state->getValues();
       $response->addCommand(new AiRequestCommand($prompt, $values["editor_id"], $this->pluginDefinition['id'], 'ai-ckeditor-response'));
