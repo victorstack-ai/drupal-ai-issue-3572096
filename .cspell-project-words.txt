@@ -184,3 +184,4 @@ enablereuse
 tmgmt
 ized
 Nicefy
+fulltext
