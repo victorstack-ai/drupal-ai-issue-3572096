@@ -195,6 +195,23 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
   /**
    * {@inheritdoc}
    */
+  public function buildSettingsForm(
+    array $form,
+    FormStateInterface $form_state,
+    array $configuration,
+  ): array {
+    $form = parent::buildSettingsForm($form, $form_state, $configuration);
+
+    // Zilliz serverless does not need a database name.
+    if (isset($form['database_name']) && $this->getClient()->isZilliz()) {
+      $form['database_name']['#description'] = $this->t('Zilliz Cloud serverless does not need a database name. Set this to anything, like "default". Your database name is automatically determined during indexing and retrieval when Zilliz is used and this field is ignored.');
+    }
+    return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function validateSettingsForm(array &$form, FormStateInterface $form_state): void {
     parent::validateSettingsForm($form, $form_state);
 
@@ -284,7 +301,7 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
     );
     if (
       isset($described['code'])
-      && $described['code'] !== 200
+      && $described['code'] !== 0
       && isset($described['message'])
     ) {
       $results['code_message'] = [
@@ -295,6 +312,13 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
         ]),
         'status' => 'error',
       ];
+      if ((int) $described['code'] === 100) {
+        $results['code_message'] = [
+          'label' => $this->t('Error advice:'),
+          'info' => $this->t('A 100 error code typically means the Collection no longer exists. Resave this Search API Server configuration to attempt to recreate the Collection.'),
+          'status' => 'error',
+        ];
+      }
     }
     if (!empty($described['data'])) {
       if (!empty($described['data']['autoId'])) {

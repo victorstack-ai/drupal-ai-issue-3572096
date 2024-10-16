@@ -34,7 +34,7 @@ function ai_search_query_search_api_db_search_alter(AlterableInterface $query) {
 function ai_search_search_api_index_delete(EntityInterface $entity) {
   if ($entity instanceof IndexInterface) {
     $config_factory = \Drupal::configFactory();
-    if ($config = $config_factory->get('ai_search.index.' . $entity->id())) {
+    if ($config = $config_factory->getEditable('ai_search.index.' . $entity->id())) {
       $config->delete();
     }
   }

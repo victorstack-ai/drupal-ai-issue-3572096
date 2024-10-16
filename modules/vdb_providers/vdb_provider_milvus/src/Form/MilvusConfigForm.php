@@ -81,14 +81,14 @@ class MilvusConfigForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Server'),
       '#required' => TRUE,
-      '#description' => $this->t('The server to connect to. If you use Zilliz Cloud, this can be found under Public Endpoint.'),
+      '#description' => $this->t('The server to connect to. If you use Zilliz Cloud, this can be found under "Public Endpoint" on your dashboard. If you installed Milvus locally within DDEV using the provided ddev docker compose, this is "http://milvus".'),
       '#default_value' => $config->get('server'),
     ];
 
     $form['port'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Port'),
-      '#description' => $this->t('The server port to connect to. If you use Zilliz Cloud, this is 443.'),
+      '#description' => $this->t('The server port to connect to. If you use Zilliz Cloud, this is "443". If you installed Milvus locally within DDEV using the provided ddev docker compose, this is "19530".'),
       '#default_value' => $config->get('port'),
     ];
 
