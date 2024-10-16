@@ -88,10 +88,7 @@ class VectorDbGenerationForm extends FormBase {
       }
     }
     catch (\Exception $e) {
-      $form['markup'] = [
-        'You need to install the AI Search module and setup a vector database provider and create an index before you can use this Explorer.',
-      ];
-      return $form;
+      return ['#markup' => 'You need to install the AI Search module and setup a vector database provider and create an index before you can use this Explorer.'];
     }
 
     $form['#attached']['library'][] = 'ai_api_explorer/explorer';
