@@ -233,6 +233,21 @@ class MilvusProvider extends AiVdbProviderClientBase implements ContainerFactory
     // To check if it is a create or edit.
     $entity = $form_object->getEntity();
 
+    // If error code is 100, we can attempt to fix that automatically.
+    if (!empty($described['code']) && (int) $described['code'] === 100) {
+      $database_settings = $form_state->getValue('database_settings');
+      $this->createCollection(
+        collection_name: $database_settings['collection'],
+        dimension: $form_state->getValue('embeddings_engine_configuration')['dimensions'],
+        metric_type: VdbSimilarityMetrics::from($database_settings['metric']),
+        database: $database_settings['database_name'],
+      );
+      $described = $this->getClient()->describeCollection(
+        database_name: $database_settings['database_name'],
+        collection_name: $database_settings['collection'],
+      );
+    }
+
     // Success code is '0'.
     if (
       isset($described['code'])
