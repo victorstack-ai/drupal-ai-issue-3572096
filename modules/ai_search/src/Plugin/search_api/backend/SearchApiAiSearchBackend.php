@@ -120,6 +120,24 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
   /**
    * {@inheritdoc}
    */
+  public function getDiscouragedProcessors(): array {
+    return [
+      // We convert to markdown which LLMs understand.
+      'html_filter',
+      // Boosting does not apply here.
+      'number_field_boost',
+      // There is no point, vectors inherently do not need this.
+      'stemmer',
+      // We use our own more advanced embedding strategies.
+      'tokenizer',
+      // Boosting does not apply here.
+      'type_boost',
+    ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function defaultConfiguration(): array {
     $config = parent::defaultConfiguration();
     if (!isset($config['database'])) {
