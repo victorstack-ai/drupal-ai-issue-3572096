@@ -11,11 +11,11 @@ use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\Enum\AiModelCapability;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
-use Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface;
 use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface;
 use Drupal\ai\Utility\CastUtility;
+use Drupal\ai_automators\Exceptions\AiAutomatorResponseErrorException;
 use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\ai_automators\Traits\GeneralHelperTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -527,11 +527,10 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
 
     // Normalize the response.
     $json = $this->promptJsonDecoder->decode($text);
-    // If its still a chat message or stream, we throw an exception.
-    if ($json instanceof ChatMessage || $json instanceof StreamedChatMessageIteratorInterface) {
-      throw new \RuntimeException('The response for the Automator was not a JSON response: ' . $json->getText());
+    if (!is_array($json)) {
+      throw new AiAutomatorResponseErrorException('The response was not a valid JSON response. The response was: ' . $text->getText());
     }
-    return $this->decodeValueArray($json);
+    return $this->decodeValueArray($this->promptJsonDecoder->decode($text));
   }
 
   /**

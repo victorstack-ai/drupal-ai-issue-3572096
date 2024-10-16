@@ -108,7 +108,16 @@ class AiCKEditorDialogForm extends FormBase {
     if (!empty($query_parameters['plugin_id'])) {
       /** @var \Drupal\ai_ckeditor\PluginInterfaces\AiCKEditorPluginInterface $instance */
       try {
-        $instance = $this->aiCKEditorPluginManager->createInstance($query_parameters['plugin_id'], $instance_config['plugins'][$query_parameters['plugin_id']] ?? []);
+        $plugin_id = $query_parameters['plugin_id'];
+        $config_id = $query_parameters['plugin_id'];
+
+        // Check if its a multi instance plugin.
+        if (strpos($query_parameters['plugin_id'], '__') !== FALSE) {
+          $parts = explode('__', $query_parameters['plugin_id']);
+          $plugin_id = $parts[0];
+          $config_id = $parts[1];
+        }
+        $instance = $this->aiCKEditorPluginManager->createInstance($plugin_id, $instance_config['plugins'][$config_id] ?? []);
         $subform = $form['plugin_config'] ?? [];
         $subform_state = SubformState::createForSubform($subform, $form, $form_state);
 
@@ -116,7 +125,11 @@ class AiCKEditorDialogForm extends FormBase {
           $subform_state->setStorage(['selected_text' => $query_parameters['selected_text']]);
         }
 
-        $form['plugin_config'] = $instance->buildCkEditorModalForm([], $subform_state);
+        $form['plugin_config'] = $instance->buildCkEditorModalForm([], $subform_state, [
+          'config_id' => $config_id,
+          'editor_id' => $query_parameters['editor_id'],
+          'plugin_id' => $plugin_id,
+        ]);
         $form['plugin_config']['#tree'] = TRUE;
         $form['editor_id'] = [
           '#type' => 'hidden',

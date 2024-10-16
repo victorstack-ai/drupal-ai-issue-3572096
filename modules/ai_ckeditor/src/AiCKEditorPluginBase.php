@@ -148,7 +148,7 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
   /**
    * {@inheritdoc}
    */
-  public function buildCkEditorModalForm(array $form, FormStateInterface $form_state) {
+  public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []) {
     $form['description'] = [
       '#markup' => '<p>' . $this->pluginDefinition['description'] . '</p>',
       '#weight' => -9999,
@@ -183,7 +183,7 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
   /**
    * {@inheritdoc}
    */
-  public function validateCkEditorModalForm(array $form, FormStateInterface $form_state): array {
+  public function validateCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []): array {
     return [];
   }
 
@@ -204,6 +204,15 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
 
     $response->addCommand(new CloseModalDialogCommand());
     return $response;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function availableEditors() {
+    return [
+      $this->pluginId  => $this->label(),
+    ];
   }
 
 }

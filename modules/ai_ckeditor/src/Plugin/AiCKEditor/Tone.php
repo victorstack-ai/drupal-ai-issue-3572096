@@ -107,7 +107,7 @@ final class Tone extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function buildCkEditorModalForm(array $form, FormStateInterface $form_state) {
+  public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []) {
     $storage = $form_state->getStorage();
     $editor_id = $this->requestStack->getParentRequest()->get('editor_id');
 
