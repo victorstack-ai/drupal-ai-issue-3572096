@@ -23,6 +23,8 @@ nav:
     - Contribute to the AI module: developers/contribute.md
     - Events: developers/events.md
     - DDEV: developers/ddev.md
+    - Develop for submodules:
+        - AI CKEditor: developers/ck_editor_plugin.md
   - Modules:
     - AI Providers:
       - Ollama: modules/providers/provider_ollama/index.md
