@@ -27,7 +27,7 @@ class DatabaseBoostByAiSearch extends BoostByAiSearchBase {
    * {@inheritdoc}
    */
   public static function supportsIndex(IndexInterface $index): bool {
-    if ($index->getServerInstance()->getBackendId() == 'search_api_database') {
+    if ($index->getServerInstance()->getBackendId() == 'search_api_db') {
       return TRUE;
     }
     return FALSE;
@@ -60,10 +60,56 @@ class DatabaseBoostByAiSearch extends BoostByAiSearchBase {
     if ($query_string_keys = $query->getKeys()) {
       $ai_results = $this->getAiSearchResults($query_string_keys);
       if ($ai_results) {
+        if ($languages = $query->getLanguages()) {
+          $ai_results = $this->normalizeLanguage($ai_results, $languages);
+        }
         $query->addTag('database_boost_by_ai_search');
         $query->addTag('ai_search_ids:' . implode(',', array_keys($ai_results)));
       }
     }
+  }
+
+  /**
+   * The vector database AI search results may be in any language.
+   *
+   * These need to be normalized to allowed languages. This happens because the
+   * semantic meaning of the words are the same roughly the same regardless of
+   * which language they are said in.
+   *
+   * @param array $ai_results
+   *   The AI results to be updated.
+   * @param array $allowed_languages
+   *   Get any language restrictions on the query.
+   *
+   * @return array
+   *   The updated results.
+   */
+  protected function normalizeLanguage(array $ai_results, array $allowed_languages): array {
+    $updated_results = [];
+
+    // If there is no match, determine what language to default to.
+    $default_language = 'en';
+    if (!in_array('en', $allowed_languages)) {
+      $default_language = reset($allowed_languages);
+    }
+    foreach ($ai_results as $key => $result) {
+
+      // We expect results like "entity:node/1:es".
+      $parts = explode(':', $key);
+      if (count($parts) !== 3) {
+        $updated_results[$key] = $result;
+        continue;
+      }
+
+      // Only use results in the allowed languages.
+      $result_language = $parts[2];
+      if (!in_array($result_language, $allowed_languages)) {
+        $parts[2] = $default_language;
+      }
+      $key = implode(':', $parts);
+      $updated_results[$key] = $result;
+    }
+    return $updated_results;
   }
 
   /**
@@ -100,7 +146,7 @@ class DatabaseBoostByAiSearch extends BoostByAiSearchBase {
       }
 
       // If we have entity IDs, alter the query.
-      if ($item_ids && $query instanceof SelectInterface) {
+      if ($item_ids) {
 
         // Update conditions of the base query.
         self::updateConditions($query, $item_ids);
@@ -121,6 +167,22 @@ class DatabaseBoostByAiSearch extends BoostByAiSearchBase {
             $table['alias'],
           );
         }
+
+        // Having conditions do not support nested OR in the Select Interface,
+        // but as far as can be seen, there is always only one, so we can just
+        // add it in. If there are no conditions, just skip this.
+        $having_conditions = &$query->havingConditions();
+        if (count($having_conditions) >= 2) {
+          $having_conditions['#conjunction'] = 'OR';
+          $query->having('t.item_id IN (:item_ids[])', [
+            ':item_ids[]' => $item_ids,
+          ]);
+        }
+
+        // The updated query conditions can lead to multiple rows returned per
+        // item ID. E.g. if we have 10 results for a single ID and only 10
+        // results are allowed, we would get a single result without this.
+        $query->groupBy('t.item_id');
 
         // Add an expression to boost AI result entity IDs.
         // Ensure the entity IDs are all integers.
