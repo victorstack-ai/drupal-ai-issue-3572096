@@ -11,7 +11,7 @@
 function provider_huggingface_update_10200() {
   $config = \Drupal::configFactory()->getEditable('provider_huggingface.settings');
   $models = $config->get('models');
-  $global_config = \Drupal::configFactory()->getEditable('ai_models.settings');
+  $global_config = \Drupal::configFactory()->getEditable('ai.settings');
   $global_models = $global_config->get('models');
   foreach ($models as $operation_type => $model_ids) {
     foreach ($model_ids as $model_id) {

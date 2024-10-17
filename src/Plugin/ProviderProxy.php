@@ -241,7 +241,7 @@ class ProviderProxy {
    */
   public function resetConfiguredModels(array $models, array $arguments): array {
     // Load all the extra models.
-    $config = $this->plugin->getModelsConfig()->get('models') ?? [];
+    $config = $this->plugin->getModelsConfig();
     $plugin_id = $this->plugin->getPluginId();
     if (empty($arguments[0]) || empty($config) || empty($config[$plugin_id]) || empty($config[$plugin_id][$arguments[0]])) {
       return $models;

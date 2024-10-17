@@ -71,7 +71,7 @@ class ImageClassificationInterfaceTest extends KernelTestBase {
       ->save();
 
     \Drupal::configFactory()
-      ->getEditable('ai_models.settings')
+      ->getEditable('ai.settings')
       ->set('models', [
         'huggingface' => [
           'image_classification' => [

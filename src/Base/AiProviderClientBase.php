@@ -470,7 +470,7 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    */
   public function loadModelConfig(string $operation_type, string|NULL $model_id): array {
     if ($model_id) {
-      $configs = $this->getModelsConfig()->get('models');
+      $configs = $this->getModelsConfig();
       if (isset($configs[$this->getPluginId()][$operation_type][$model_id])) {
         $config = $configs[$this->getPluginId()][$operation_type][$model_id];
       }
@@ -541,11 +541,11 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   /**
    * Get the models configuration.
    *
-   * @return \Drupal\Core\Config\ImmutableConfig
+   * @return array
    *   The models configuration.
    */
-  public function getModelsConfig(): ImmutableConfig {
-    return $this->configFactory->get('ai_models.settings');
+  public function getModelsConfig(): array {
+    return $this->configFactory->get('ai.settings')?->get('models') ?? [];
   }
 
   /**
@@ -561,7 +561,7 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    */
   public function getModelInfo(string $operation_type, string $model_id): array {
     // Check first override.
-    $models = $this->getModelsConfig()->get('models');
+    $models = $this->getModelsConfig();
     if (isset($models[$this->getPluginId()][$operation_type][$model_id])) {
       return $models[$this->getPluginId()][$operation_type][$model_id];
     }
@@ -573,7 +573,7 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
         'label' => $models[$model_id],
       ];
     }
-    return NULL;
+    return [];
   }
 
 }

@@ -39,3 +39,17 @@ function ai_requirements($phase) {
 
   return $requirements;
 }
+
+/**
+ * Update hook to update the custom models.
+ */
+function ai_update_10300() {
+  $old_config = \Drupal::configFactory()->get('ai_models.settings');
+  if ($old_config->get('models')) {
+    $models = $old_config->get('models');
+    $config = \Drupal::configFactory()->getEditable('ai.settings');
+    $config->set('models', $models)->save();
+    // Remove the old config.
+    \Drupal::configFactory()->getEditable('ai_models.settings')->delete();
+  }
+}

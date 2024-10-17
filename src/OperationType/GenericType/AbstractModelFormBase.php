@@ -77,7 +77,7 @@ abstract class AbstractModelFormBase implements ModelFormInterface {
 
     $form['actions']['submit'] = [
       '#type' => 'submit',
-      '#value' => $config['new_model'] ? t('Create Model') : t('Edit Model'),
+      '#value' => $config['new_model'] ? t('Create Model') : t('Save Model'),
       '#weight' => 50,
       '#disabled' => !empty($config['has_predefined_models']) && empty($config['has_overriden_settings']),
       '#attributes' => [
