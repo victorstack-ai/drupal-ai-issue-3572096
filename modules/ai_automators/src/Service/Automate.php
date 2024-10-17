@@ -90,11 +90,13 @@ class Automate {
    *
    * @param string $type
    *   The type of the automator chain.
+   * @param array $field_types
+   *   The types of the field to filter on (optional).
    *
    * @return array
    *   The fields that has automators on them.
    */
-  public function getAutomatedFields(string $type) {
+  public function getAutomatedFields(string $type, ?array $field_types = []) {
     $field_names = $this->fieldManager->getFieldDefinitions('automator_chain', $type);
     $fields = $this->entityTypeManager->getStorage('ai_automator')->loadByProperties([
       'entity_type' => 'automator_chain',
@@ -103,7 +105,9 @@ class Automate {
     $output_fields = [];
     /** @var \Drupal\field\Entity\FieldConfig */
     foreach ($fields as $field) {
-      $output_fields[$field->get('field_name')] = $field_names[$field->get('field_name')]->getLabel();
+      if (in_array($field_names[$field->get('field_name')]->getType(), $field_types)) {
+        $output_fields[$field->get('field_name')] = $field_names[$field->get('field_name')]->getLabel();
+      }
     }
     return $output_fields;
   }
@@ -131,6 +135,8 @@ class Automate {
 
     // Check so there is output fields.
     $output_fields = $this->getAutomatedFields($type);
+    // Load field types.
+    $field_names = $this->fieldManager->getFieldDefinitions('automator_chain', $type);
 
     /** @var \Drupal\ai_automators\Entity\AutomatorChain */
     $automator = $this->entityTypeManager->getStorage('automator_chain')->create([

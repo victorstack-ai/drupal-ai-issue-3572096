@@ -6,6 +6,7 @@ use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\InvokeCommand;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Entity\EntityFormBuilderInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileUrlGeneratorInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -58,6 +59,13 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
   protected $fileUrlGenerator;
 
   /**
+   * The entity form builder.
+   *
+   * @var \Drupal\Core\Entity\EntityFormBuilderInterface
+   */
+  protected $entityFormBuilder;
+
+  /**
    * {@inheritdoc}
    */
   public function __construct(
@@ -73,12 +81,14 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
     ConfigFactoryInterface $config_factory,
     EntityFieldManagerInterface $field_manager,
     FileUrlGeneratorInterface $file_url_generator,
+    EntityFormBuilderInterface $entity_form_builder,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $ai_provider_manager, $entity_type_manager, $account, $requestStack, $logger_factory);
     $this->automate = $automate;
     $this->configFactory = $config_factory;
     $this->fieldManager = $field_manager;
     $this->fileUrlGenerator = $file_url_generator;
+    $this->entityFormBuilder = $entity_form_builder;
   }
 
   /**
@@ -98,6 +108,7 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
       $container->get('config.factory'),
       $container->get('entity_field.manager'),
       $container->get('file_url_generator'),
+      $container->get('entity.form_builder'),
     );
   }
 
@@ -116,12 +127,6 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     // Create checkboxes.
     foreach ($this->automate->getWorkflows() as $workflow_id => $workflow_label) {
-      $form[$workflow_id] = [
-        '#type' => 'checkbox',
-        '#title' => $workflow_label,
-        '#default_value' => $this->configuration['workflows'][$workflow_id]['enabled'] ?? FALSE,
-      ];
-
       $form[$workflow_id . '_advanced'] = [
         '#type' => 'details',
         '#title' => $this->t('%label Settings', [
@@ -135,6 +140,14 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
         ],
       ];
 
+      $form[$workflow_id . '_advanced'][$workflow_id] = [
+        '#type' => 'checkbox',
+        '#title' => $this->t('Enable %workflow', [
+          '%workflow' => $workflow_label,
+        ]),
+        '#default_value' => $this->configuration['workflows'][$workflow_id]['enabled'] ?? FALSE,
+      ];
+
       $form[$workflow_id . '_advanced']['inputs'] = [
         '#type' => 'checkboxes',
         '#title' => $this->t('Inputs'),
@@ -143,11 +156,42 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
         '#default_value' => $this->configuration['workflows'][$workflow_id]['inputs'] ?? [],
       ];
 
+      $form[$workflow_id . '_advanced']['selected_input'] = [
+        '#type' => 'select',
+        '#title' => $this->t('Text Selection Input'),
+        '#description' => $this->t('If the users marks text in the parent input, this field will be automatically filled in. If its a file field, a file has to be in the marked text.'),
+        '#options' => $this->automate->getRequiredFields($workflow_id),
+        '#empty_option' => $this->t('None'),
+        '#default_value' => $this->configuration['workflows'][$workflow_id]['selected_input'] ?? '',
+      ];
+
+      $form[$workflow_id . '_advanced']['require_selection'] = [
+        '#type' => 'checkbox',
+        '#title' => $this->t('Require Selection'),
+        '#description' => $this->t('If the user has to select text in the parent editor to use this workflow.'),
+        '#default_value' => $this->configuration['workflows'][$workflow_id]['require_selection'] ?? FALSE,
+      ];
+
+      $form[$workflow_id . '_advanced']['write_mode'] = [
+        '#type' => 'select',
+        '#title' => $this->t('Write Mode'),
+        '#description' => $this->t('Select the write mode for this workflow.'),
+        '#options' => [
+          'append' => $this->t('Append'),
+          'prepend' => $this->t('Prepend'),
+          'replace' => $this->t('Replace'),
+        ],
+        '#default_value' => $this->configuration['workflows'][$workflow_id]['write_mode'] ?? 'replace',
+      ];
+
       $form[$workflow_id . '_advanced']['output'] = [
         '#type' => 'select',
         '#title' => $this->t('Output'),
         '#description' => $this->t('Select the output to use for this workflow that will fill out the content.'),
-        '#options' => $this->automate->getAutomatedFields($workflow_id),
+        '#options' => $this->automate->getAutomatedFields($workflow_id, [
+          'text_long',
+          'image',
+        ]),
         '#default_value' => $this->configuration['workflows'][$workflow_id]['output'] ?? '',
       ];
     }
@@ -166,9 +210,12 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     foreach ($this->automate->getWorkflows() as $workflow_id => $workflow_label) {
-      $this->configuration['workflows'][$workflow_id]['enabled'] = $form_state->getValue($workflow_id);
+      $this->configuration['workflows'][$workflow_id]['enabled'] = $form_state->getValue($workflow_id . '_advanced')[$workflow_id];
       $this->configuration['workflows'][$workflow_id]['inputs'] = $form_state->getValue($workflow_id . '_advanced')['inputs'];
       $this->configuration['workflows'][$workflow_id]['output'] = $form_state->getValue($workflow_id . '_advanced')['output'];
+      $this->configuration['workflows'][$workflow_id]['selected_input'] = $form_state->getValue($workflow_id . '_advanced')['selected_input'];
+      $this->configuration['workflows'][$workflow_id]['require_selection'] = $form_state->getValue($workflow_id . '_advanced')['require_selection'];
+      $this->configuration['workflows'][$workflow_id]['write_mode'] = $form_state->getValue($workflow_id . '_advanced')['write_mode'];
     }
   }
 
@@ -176,6 +223,7 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
    * {@inheritdoc}
    */
   public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []) {
+    $form_state->setCached(FALSE);
     $storage = $form_state->getStorage();
     $form = parent::buildCkEditorModalForm($form, $form_state);
 
@@ -214,6 +262,12 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
     // Get the configuration.
     $plugin_config = $instance_config['plugins'][$settings['plugin_id']]['workflows'][$settings['config_id']];
 
+    // If selection is required, make sure that there is a selection.
+    if ($plugin_config['require_selection'] && empty($storage['selected_text'])) {
+      return [
+        '#markup' => '<p>' . $this->t('Please select text in the editor before using this assistant.') . '</p>',
+      ];
+    }
     // Get the fields.
     try {
       $fields = $this->fieldManager->getFieldDefinitions('automator_chain', $settings['config_id']);
@@ -233,31 +287,65 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
       '#type' => 'value',
       '#value' => $plugin_config['output'],
     ];
+    $form['automator_storage'] = [
+      '#type' => 'value',
+      '#value' => $storage['selected_text'],
+    ];
+    $form['automator_write_mode'] = [
+      '#type' => 'value',
+      '#value' => $plugin_config['write_mode'],
+    ];
+
+    // Generate the entity form.
+    $entity = $this->entityTypeManager->getStorage('automator_chain')->create([
+      'bundle' => $settings['config_id'],
+    ]);
+    $entity_form = $this->entityFormBuilder->getForm($entity, 'add');
 
     // Get the inputs.
     foreach ($plugin_config['inputs'] as $input) {
-      // Make sure the field exists.
-      if (isset($fields[$input])) {
-        switch ($fields[$input]->getType()) {
-          case 'image':
-            $form[$input] = [
-              '#type' => 'file',
-              '#title' => $fields[$input]->getLabel(),
-              '#description' => $fields[$input]->getDescription(),
-              '#required' => $fields[$input]->isRequired(),
-            ];
-            break;
+      // Use the entity field.
+      if (isset($fields[$input]) && in_array($fields[$input]->getType(), [
+        'image',
+        'file',
+      ])) {
+        $form[$input] = [
+          '#type' => 'managed_file',
+          '#title' => t('Upload a file'),
+          '#description' => t('Allowed types: jpg, jpeg, png.'),
+          '#upload_location' => 'public://uploads/',
+        ];
+      }
+      elseif (isset($fields[$input])) {
+        $form[$input] = [
+          '#type' => 'textarea',
+          '#title' => $fields[$input]->getLabel(),
+          '#description' => $fields[$input]->getDescription(),
+        ];
+      }
+    }
 
-          default:
-            $form[$input] = [
-              '#type' => 'textarea',
-              '#title' => $fields[$input]->getLabel(),
-              '#description' => $fields[$input]->getDescription(),
-              '#required' => $fields[$input]->isRequired(),
-              '#default_value' => $storage['selected_text'],
-            ];
-            break;
-        }
+    if (!empty($plugin_config['selected_input']) && !empty($storage['selected_text'])) {
+      $file_storage = $this->entityTypeManager->getStorage('file');
+      switch ($fields[$plugin_config['selected_input']]->getType()) {
+        case 'image':
+        case 'file':
+          // Try to extract the uuid from from the tag.
+          $matches = [];
+          preg_match('/data-entity-uuid="([^"]+)"/', $storage['selected_text'], $matches);
+          if (!empty($matches[1])) {
+            $file = $file_storage->loadByProperties(['uuid' => $matches[1]]);
+            if (!empty($file)) {
+              $file = reset($file);
+              $form[$plugin_config['selected_input']]['#default_value'] = [$file->id()];
+            }
+          }
+          break;
+
+        default:
+          $form[$plugin_config['selected_input']]['#value'] = $storage['selected_text'];
+          $form[$plugin_config['selected_input']]['#default_value'] = $storage['selected_text'];
+          break;
       }
     }
 
@@ -288,6 +376,7 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
     $form_state->setValue('response_text', '<p>test</p>');
     // Generate the response.
     $values = $form_state->getValue('plugin_config');
+
     // Make sure that the automator chain exists.
     if (empty($values['automator_chain'])) {
       throw new \InvalidArgumentException('The automator chain is missing.');
@@ -302,8 +391,18 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
         'response_text',
         'automator_chain',
         'automator_output',
+        'automator_storage',
+        'automator_write_mode',
       ])) {
-        $inputs[$key] = $value;
+        if (in_array($fields[$key]->getType(), [
+          'image',
+          'file',
+        ])) {
+          $inputs[$key] = $value[0] ?? '';
+        }
+        else {
+          $inputs[$key] = $value;
+        }
       }
     }
     $output = $this->automate->run($values['automator_chain'], $inputs);
@@ -321,6 +420,13 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
       default:
         $result = $output[$values['automator_output']][0]['value'];
         break;
+    }
+
+    if ($values['automator_write_mode'] == 'append') {
+      $result = $result . $values['automator_storage'];
+    }
+    elseif ($values['automator_write_mode'] == 'prepend') {
+      $result = $values['automator_storage'] . $result;
     }
 
     $response->addCommand(new InvokeCommand(
