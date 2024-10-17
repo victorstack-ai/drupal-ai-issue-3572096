@@ -102,6 +102,26 @@ class DatabaseBoostByAiSearch extends BoostByAiSearchBase {
       // If we have entity IDs, alter the query.
       if ($item_ids && $query instanceof SelectInterface) {
 
+        // Update conditions of the base query.
+        self::updateConditions($query, $item_ids);
+
+        // Update conditions of the joined queries if existing.
+        $tables = &$query->getTables();
+        foreach ($tables as &$table) {
+          if (
+            !is_array($table)
+            || !isset($table['table'])
+            || !$table['table'] instanceof SelectInterface
+          ) {
+            continue;
+          }
+          $table['table'] = self::updateConditions(
+            $table['table'],
+            $item_ids,
+            $table['alias'],
+          );
+        }
+
         // Add an expression to boost AI result entity IDs.
         // Ensure the entity IDs are all integers.
         $placeholders = [];
@@ -121,6 +141,63 @@ class DatabaseBoostByAiSearch extends BoostByAiSearchBase {
         $order_by_parts = $new_order;
       }
     }
+  }
+
+  /**
+   * Update conditions (or nested conditions) for vector database results.
+   *
+   * By default, only content where the searched terms exist in the results
+   * will be returned, but we also want results that have similar terms, not
+   * just exact terms, so we allow results that either are in the vector
+   * database returned IDs OR have the keywords entered.
+   *
+   * @param \Drupal\Core\Database\Query\SelectInterface $query
+   *   The query to check for keywords and update as appropriate.
+   * @param array $item_ids
+   *   The search API item IDs returned by the vector database.
+   * @param string $alias
+   *   The alias of the table being checked.
+   */
+  protected static function updateConditions(
+    SelectInterface $query,
+    array $item_ids,
+    string $alias = 't',
+  ): SelectInterface {
+    $conditions = &$query->conditions();
+    $keyword_condition = FALSE;
+    foreach ($conditions as $key => $condition) {
+
+      // Get the full keyword search condition.
+      if (
+        is_array($condition)
+        && isset($condition['field'])
+        && $condition['field'] === $alias . '.word'
+        && isset($condition['value'])
+        && isset($condition['operator'])
+      ) {
+        $keyword_condition = $condition;
+        unset($conditions[$key]);
+      }
+    }
+    if ($keyword_condition) {
+
+      // Add the condition group back in, but also add the IDs which
+      // may not have the same keywords since vector search finds words
+      // with similar meanings.
+      $condition_group = $query->orConditionGroup();
+      $condition_group->condition(
+        $keyword_condition['field'],
+        $keyword_condition['value'],
+        $keyword_condition['operator'],
+      );
+      $condition_group->condition(
+        $alias . '.item_id',
+        $item_ids,
+        'IN',
+      );
+      $query->condition($condition_group);
+    }
+    return $query;
   }
 
 }
