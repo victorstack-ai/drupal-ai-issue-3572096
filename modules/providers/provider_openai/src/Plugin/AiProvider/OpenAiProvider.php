@@ -430,7 +430,6 @@ class OpenAiProvider extends AiProviderClientBase implements
         throw $e;
       }
     }
-    $response = $this->client->audio()->speech($payload);
     $output = new AudioFile($response, 'audio/mpeg', 'openai.mp3');
 
     // Return a normalized response.
