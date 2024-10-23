@@ -54,7 +54,9 @@ via a VDB Provider (Vector Database Provider).
 1. Enable the AI Search module
 2. Enable at least one Vector Database Provider (VDB Provider)
 3. Create a Search API Server & Index with AI Search as the back-end (follow
-   the instructions during the configuration process)
+   the instructions during the configuration process). It is recommended to 
+   index the URL of the content to give your LLM access to this information:
+   otherwise it may make unexpected decisions about what the URL to display is
 4. Index your content
 
 ### Use in Views

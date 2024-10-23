@@ -140,7 +140,7 @@ final class AiAssistantForm extends EntityForm {
       '#required' => TRUE,
       '#attributes' => [
         'rows' => 2,
-        'placeholder' => $this->t('You are an assistant helping people find old articles in the archive using natural language. Answer in a professional and neutral tone. Be short and concise. Answer in markdown. Link to the article in question using its title.'),
+        'placeholder' => $this->t('You are an assistant helping people find old articles in the archive using natural language. Answer in a professional and neutral tone. Be short and concise. Answer in markdown.'),
       ],
     ];
 
