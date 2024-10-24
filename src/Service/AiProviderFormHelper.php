@@ -152,30 +152,36 @@ class AiProviderFormHelper {
     }
 
     if ($provider && $provider != '__default__') {
-      $llmInstance = $this->aiProviderPluginManager->createInstance($provider);
-      $model = $form_state->getValue($prefix . 'ai_model');
-      if (!$model && !empty($defaults['model_id'])) {
-        $model = $defaults['model_id'];
-      }
-      $form[$prefix . 'ajax_prefix'][$prefix . 'ai_model'] = [
-        '#type' => 'select',
-        '#title' => $this->t('Model'),
-        // Only get chat models.
-        '#options' => $llmInstance->getConfiguredModels($operation_type),
-        '#default_value' => $model,
-        '#required' => TRUE,
-        '#ajax' => [
-          'callback' => '\Drupal\ai\Service\AiProviderFormHelper::loadModelsAjaxCallback',
-          'wrapper' => $prefix . 'ajax_wrapper',
-          'data-prefix' => $prefix,
-          'event' => 'change',
-        ],
-      ];
+      try {
+        $llmInstance = $this->aiProviderPluginManager->createInstance($provider);
+        $model = $form_state->getValue($prefix . 'ai_model');
+        if (!$model && !empty($defaults['model_id'])) {
+          $model = $defaults['model_id'];
+        }
+        $form[$prefix . 'ajax_prefix'][$prefix . 'ai_model'] = [
+          '#type' => 'select',
+          '#title' => $this->t('Model'),
+          // Only get chat models.
+          '#options' => $llmInstance->getConfiguredModels($operation_type),
+          '#default_value' => $model,
+          '#required' => TRUE,
+          '#ajax' => [
+            'callback' => '\Drupal\ai\Service\AiProviderFormHelper::loadModelsAjaxCallback',
+            'wrapper' => $prefix . 'ajax_wrapper',
+            'data-prefix' => $prefix,
+            'event' => 'change',
+          ],
+        ];
 
-      if ($model) {
-        $configuration = $llmInstance->getAvailableConfiguration($operation_type, $model);
-        $this->generateFormElements($prefix . 'ajax_prefix', $form, $config_level, $configuration);
+        if ($model) {
+          $configuration = $llmInstance->getAvailableConfiguration($operation_type, $model);
+          $this->generateFormElements($prefix . 'ajax_prefix', $form, $config_level, $configuration);
+        }
       }
+      catch (\Exception $e) {
+
+      }
+
     }
     return $form;
   }

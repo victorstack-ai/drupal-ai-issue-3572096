@@ -122,7 +122,6 @@ class ChatForm extends FormBase {
     if ($this->getRequest()->isXmlHttpRequest()) {
       try {
         $http_response = new StreamedResponse();
-        $this->aiAssistantClient->streamedOutput(TRUE);
         // Process.
         $response = $this->aiAssistantClient->process();
         // If its a failure, the variable is a string, just output;.

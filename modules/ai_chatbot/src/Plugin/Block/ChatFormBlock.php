@@ -84,6 +84,8 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
       'use_avatar' => TRUE,
       'default_avatar' => '/core/misc/favicon.ico',
       'first_message' => 'Hello! How can I help you today?',
+      'stream' => TRUE,
+      'toggle_state' => 'remember',
     ];
   }
 
@@ -160,6 +162,25 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
       '#default_value' => $this->configuration['first_message'],
     ];
 
+    $form['stream'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Stream'),
+      '#description' => $this->t('Stream the messages in real-time.'),
+      '#default_value' => $this->configuration['stream'],
+    ];
+
+    $form['toggle_state'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Toggle state'),
+      '#description' => $this->t('The state of the toggle button.'),
+      '#options' => [
+        'remember' => $this->t('Remember'),
+        'open' => $this->t('Opened'),
+        'close' => $this->t('Closed'),
+      ],
+      '#default_value' => $this->configuration['toggle_state'],
+    ];
+
     return $form;
   }
 
@@ -175,6 +196,8 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
     $this->configuration['use_avatar'] = $form_state->getValue('use_avatar');
     $this->configuration['default_avatar'] = $form_state->getValue('default_avatar');
     $this->configuration['first_message'] = $form_state->getValue('first_message');
+    $this->configuration['stream'] = $form_state->getValue('stream');
+    $this->configuration['toggle_state'] = $form_state->getValue('toggle_state');
   }
 
   /**
@@ -185,6 +208,7 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
     if (!$this->aiAssistantRunner->isSetup()) {
       return [];
     }
+    $this->aiAssistantRunner->streamedOutput($this->configuration['stream']);
     $block = [];
     $form_state = new FormState();
     $form_state
@@ -211,6 +235,7 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
     $block['#attached']['drupalSettings']['ai_chatbot']['bot_image'] = $this->configuration['bot_image'];
     $block['#attached']['drupalSettings']['ai_chatbot']['default_username'] = $this->configuration['default_username'];
     $block['#attached']['drupalSettings']['ai_chatbot']['default_avatar'] = $this->configuration['default_avatar'];
+    $block['#attached']['drupalSettings']['ai_chatbot']['toggle_state'] = $this->configuration['toggle_state'];
     $user = $this->currentUser->getAccount();
     // Override username if the user is authenticated and configured.
     if ($user->isAuthenticated() && $this->configuration['use_username']) {

@@ -107,7 +107,14 @@
 
   // Logic for minimizing the chatbot.
   $(document).ready(() => {
-    const chatStatus = localStorage.getItem("livechat.closed");
+
+    let chatStatus = 'true';
+    if (drupalSettings.ai_chatbot.toggle_state == 'remember') {
+      chatStatus = localStorage.getItem("livechat.closed");
+    }
+    else if (drupalSettings.ai_chatbot.toggle_state == 'open') {
+      chatStatus = 'false';
+    }
     if (chatStatus == 'false') {
       $('#live-chat .chat').show();
     }
