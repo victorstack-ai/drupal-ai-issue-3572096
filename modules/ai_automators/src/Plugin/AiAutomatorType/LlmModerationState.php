@@ -143,14 +143,9 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
     $form['automator_trigger_lookup'] = [
       '#type' => 'checkboxes',
       '#title' => $this->t('Lookup for these states'),
-      '#description' => $this->t('Select the moderation states that you should look for in your lookup.'),
+      '#description' => $this->t('Select the moderation states that you should look for in your lookup. This is required.'),
       '#options' => $options,
       '#default_value' => $defaultValues['automator_trigger_lookup'] ?? [],
-      '#states' => [
-        'visible' => [
-          ':input[name="automator_use_simple_model"]' => ['checked' => TRUE],
-        ],
-      ],
     ];
 
     $textFields = $this->getGeneralHelper()->getFieldsOfType($entity, 'string_long');
@@ -169,6 +164,33 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
+  public function validateConfigValues($form, FormStateInterface $formState) {
+    // Make sure that if this was enabled that the lookup is set.
+    $found = FALSE;
+    foreach ($formState->getValue('automator_trigger_lookup') as $value) {
+      if ($value) {
+        $found = TRUE;
+      }
+    }
+    if (!$found) {
+      $formState->setErrorByName('automator_trigger_lookup', $this->t('You must select at least one lookup state.'));
+    }
+
+    $found = FALSE;
+    foreach ($formState->getValue('automator_trigger_states') as $value) {
+      if ($value) {
+        $found = TRUE;
+      }
+    }
+    if (!$found) {
+      $formState->setErrorByName('automator_trigger_states', $this->t('You must select at least one trigger state.'));
+    }
+
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   public function generate(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     // Generate the real prompt if needed.
     $prompts = parent::generate($entity, $fieldDefinition, $automatorConfig);
@@ -180,7 +202,7 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
           $prompt .= "\n\nAlso provide a 1 to 4 sentence reason for choosing the moderation state. Do not include any explanations outside of the reasoning, only provide a RFC8259 compliant JSON response following this format without deviation.\n[{\"value\": {\"state\": \"the state name\", \"reasoning\": \"the reasoning for your choice\"}}]\n";
         }
         else {
-          $prompt .= "\n\nDo not include any explanations, only provide a RFC8259 compliant JSON response following this format without deviation.\n[{\"value\": \"requested value\"}]\n";
+          $prompt .= "\n\nDo not include any explanations, only provide a RFC8259 compliant JSON response following this format without deviation.\n[{\"value\": {\"state\": \"the state name\"}}]\n";
         }
       }
       $prompts[$key] = $prompt;
@@ -210,7 +232,7 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
     if (is_string($value) && !empty($value)) {
       return TRUE;
     }
-    if (is_array($value) && $value['reasoning'] && $value['state']) {
+    if (is_array($value) && $value['state']) {
       return TRUE;
     }
     return FALSE;
@@ -225,31 +247,38 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
         if ($automatorConfig['use_simple_model']) {
           $entity->set($automatorConfig['store_explanation'], $value);
         }
-        else {
+        elseif (isset($value['reasoning'])) {
           $entity->set($automatorConfig['store_explanation'], $value['reasoning']);
-          $entity->set($fieldDefinition->getName(), $value['state']);
+        }
+      }
+
+      $allowed = [];
+      foreach ($automatorConfig['trigger_lookup'] as $state => $lookup) {
+        if ($lookup) {
+          $allowed[] = $state;
+        }
+      }
+
+      // If its simple values.
+      if ($automatorConfig['use_simple_model']) {
+        // Look for the trigger words - full words.
+        foreach ($automatorConfig['trigger_lookup'] as $state) {
+          // Just do full words, not partials.
+          $word = strtok($value, " \n\t");
+          // Look to find a word.
+          while ($word !== FALSE) {
+            // No dots.
+            if (str_replace('.', '', $word) == $state) {
+              $entity->set($fieldDefinition->getName(), $state);
+              break;
+            }
+            $word = strtok(" \n\t");
+          }
         }
       }
       else {
-        if ($automatorConfig['use_simple_model']) {
-          // Look for the trigger words - full words.
-          foreach ($automatorConfig['trigger_lookup'] as $state) {
-            // Just do full words, not partials.
-            $word = strtok($value, " \n\t");
-            // Look to find a word.
-            while ($word !== FALSE) {
-              // No dots.
-              if (str_replace('.', '', $word) == $state) {
-                $entity->set($fieldDefinition->getName(), $state);
-                break;
-              }
-              $word = strtok(" \n\t");
-            }
-          }
-          $entity->set($fieldDefinition->getName(), $value);
-        }
-        else {
-          $entity->set($fieldDefinition->getName(), $value);
+        if (isset($value['state']) && in_array($value['state'], $allowed)) {
+          $entity->set($fieldDefinition->getName(), $value['state']);
         }
       }
     }

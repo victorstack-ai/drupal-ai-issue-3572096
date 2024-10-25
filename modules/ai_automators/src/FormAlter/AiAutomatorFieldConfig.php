@@ -438,7 +438,7 @@ class AiAutomatorFieldConfig {
     if ($formState->getValue('automator_enabled')) {
       $values = $formState->getValues();
       foreach ($values as $key => $val) {
-        if (strpos($key, 'automator_rule_') === 0) {
+        if (strpos($key, 'automator_') === 0) {
           // Find the rule. If not found don't do anything.
           $rule = $this->fieldRules->findRule($formState->getValue('automator_rule'));
 
