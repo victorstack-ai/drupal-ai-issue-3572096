@@ -105,7 +105,7 @@ class Automate {
     $output_fields = [];
     /** @var \Drupal\field\Entity\FieldConfig */
     foreach ($fields as $field) {
-      if (in_array($field_names[$field->get('field_name')]->getType(), $field_types)) {
+      if (empty($field_types) || in_array($field_names[$field->get('field_name')]->getType(), $field_types)) {
         $output_fields[$field->get('field_name')] = $field_names[$field->get('field_name')]->getLabel();
       }
     }

@@ -291,6 +291,44 @@ final class AiProviderPluginManager extends DefaultPluginManager {
   }
 
   /**
+   * Get operation type.
+   *
+   * @param string $operation_type
+   *   The operation type.
+   * @param bool $check_has_default
+   *   Check if the operation type has a default value.
+   *
+   * @return array|null
+   *   The id and label or nothing.
+   */
+  public function getOperationType(string $operation_type, bool $check_has_default = FALSE): array {
+    $operation_types = $this->getOperationTypes();
+    foreach ($operation_types as $operation) {
+      if ($operation['id'] === $operation_type) {
+        if (!$check_has_default || $this->operationTypeHasDefault($operation_type)) {
+          return $operation;
+        }
+      }
+    }
+    // Didn't find it.
+    return NULL;
+  }
+
+  /**
+   * Operation type has default.
+   *
+   * @param string $operation_type
+   *   The operation type.
+   *
+   * @return bool
+   *   If the operation type has a default.
+   */
+  public function operationTypeHasDefault(string $operation_type): bool {
+    $config = $this->configFactory->get('ai.settings');
+    return !empty($config->get('default_providers.' . $operation_type));
+  }
+
+  /**
    * A helper setting for provider to allow them to be default on setup.
    *
    * @param string $operation_type

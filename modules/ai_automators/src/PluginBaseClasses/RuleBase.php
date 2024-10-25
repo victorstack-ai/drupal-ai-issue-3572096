@@ -164,14 +164,25 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
    * {@inheritDoc}
    */
   public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
-
     // Load the AI models.
     $providers = $this->formHelper->getAiProvidersOptions($this->llmType);
     // Add to the start of the array.
-    $providers = [
-      'default_json' => $this->t('Default Advanced JSON model'),
-      'default_vision' => $this->t('Default Vision model'),
-    ] + $providers;
+    if ($this->llmType == 'chat') {
+      $providers = [
+        'default_json' => $this->t('Default Advanced JSON model'),
+        'default_vision' => $this->t('Default Vision model'),
+      ] + $providers;
+    }
+    else {
+      $defaultOperationType = $this->aiPluginManager->getOperationType($this->llmType, TRUE);
+      if ($defaultOperationType) {
+        $providers = [
+          'default' => $this->t('Default %llm_type model', [
+            '%llm_type' => $defaultOperationType['label'],
+          ]),
+        ] + $providers;
+      }
+    }
     $defaults = $this->aiPluginManager->getDefaultProviderForOperationType($this->llmType);
     $provider = $formState->getValue('automator_ai_provider');
     if (!$provider) {
@@ -209,7 +220,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
 
     $llmInstance = NULL;
     $model = NULL;
-    if ($provider && $provider !== 'default_json' && $provider !== 'default_vision') {
+    if ($provider && $provider !== 'default_json' && $provider !== 'default_vision' && $provider !== 'default') {
       $llmInstance = $this->aiPluginManager->createInstance($provider);
       $model = $formState->getValue('automator_ai_model');
       $models = $llmInstance->getConfiguredModels($this->llmType);
@@ -591,6 +602,9 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     elseif ($automatorConfig['ai_provider'] == 'default_vision') {
       $automatorConfig['ai_provider'] = $this->aiPluginManager->getDefaultProviderForOperationType('chat_with_image_vision')['provider_id'];
     }
+    elseif ($automatorConfig['ai_provider'] == 'default') {
+      $automatorConfig['ai_provider'] = $this->aiPluginManager->getDefaultProviderForOperationType($this->llmType)['provider_id'];
+    }
     return $automatorConfig['ai_provider'];
   }
 
@@ -609,6 +623,9 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     }
     elseif ($automatorConfig['ai_provider'] == 'default_vision') {
       $automatorConfig['ai_model'] = $this->aiPluginManager->getDefaultProviderForOperationType('chat_with_image_vision')['model_id'];
+    }
+    elseif ($automatorConfig['ai_provider'] == 'default') {
+      $automatorConfig['ai_model'] = $this->aiPluginManager->getDefaultProviderForOperationType($this->llmType)['model_id'];
     }
     return $automatorConfig['ai_model'];
   }
