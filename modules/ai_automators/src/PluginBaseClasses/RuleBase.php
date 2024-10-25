@@ -164,6 +164,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
    * {@inheritDoc}
    */
   public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
+
     // Load the AI models.
     $providers = $this->formHelper->getAiProvidersOptions($this->llmType);
     // Add to the start of the array.
@@ -175,11 +176,11 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     $provider = $formState->getValue('automator_ai_provider');
     if (!$provider) {
       $provider = $defaultValues['automator_ai_provider'] ?? NULL;
-      if (empty($defaults['provider_id'])) {
-        $provider = $defaults['provider_id'];
-      }
       if (empty($provider)) {
         $provider = key($providers);
+      }
+      if (empty($provider) && !empty($defaults['provider_id'])) {
+        $provider = $defaults['provider_id'];
       }
     }
     $form['automator_ai_provider'] = [
