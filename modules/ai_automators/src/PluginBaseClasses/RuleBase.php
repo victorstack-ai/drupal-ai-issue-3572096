@@ -83,7 +83,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     return new static(
       $container->get('ai.provider'),
       $container->get('ai.form_helper'),
-      $container->get('ai.prompt_json_decode'),
+      $container->get('ai.prompt_json_decode')
     );
   }
 

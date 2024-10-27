@@ -10,6 +10,7 @@ use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Utility\Token;
+use Drupal\ai\Service\PromptCodeBlockExtractor\PromptCodeBlockExtractorInterface;
 use Drupal\ai_automators\FormAlter\AiAutomatorFieldConfig;
 use Drupal\file\FileInterface;
 use Drupal\token\TreeBuilder;
@@ -71,6 +72,13 @@ class GeneralHelper {
   protected $tokenTreeBuilder;
 
   /**
+   * Prompt code block extractor.
+   *
+   * @var \Drupal\ai\PromptCodeBlockExtractor\PromptCodeBlockExtractor
+   */
+  protected $promptCodeBlockExtractor;
+
+  /**
    * Constructor for the class.
    *
    * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entityFieldManager
@@ -87,6 +95,8 @@ class GeneralHelper {
    *   The entity type manager.
    * @param \Drupal\token\TreeBuilder $tokenTreeBuilder
    *   The token tree builder.
+   * @param \Drupal\ai\PromptCodeBlockExtractor\PromptCodeBlockExtractor $promptCodeBlockExtractor
+   *   The prompt code block extractor.
    */
   public function __construct(
     EntityFieldManagerInterface $entityFieldManager,
@@ -96,6 +106,7 @@ class GeneralHelper {
     AccountProxyInterface $currentUser,
     EntityTypeManagerInterface $entityTypeManager,
     TreeBuilder $tokenTreeBuilder,
+    PromptCodeBlockExtractorInterface $promptCodeBlockExtractor,
   ) {
     $this->entityFieldManager = $entityFieldManager;
     $this->moduleHandler = $moduleHandler;
@@ -104,6 +115,7 @@ class GeneralHelper {
     $this->currentUser = $currentUser;
     $this->entityTypeManager = $entityTypeManager;
     $this->tokenTreeBuilder = $tokenTreeBuilder;
+    $this->promptCodeBlockExtractor = $promptCodeBlockExtractor;
   }
 
   /**
@@ -480,12 +492,23 @@ class GeneralHelper {
    */
   public function getTextFormat(FieldDefinitionInterface $fieldDefinition) {
     $allFormats = $this->entityTypeManager->getStorage('filter_format')->loadMultiple();
-    // Maybe no formats are set.
+    // Maybe no formats are available.
     if (empty($allFormats)) {
       return NULL;
     }
-    $format = $fieldDefinition->getSetting('allowed_formats');
-    return $format[0] ?? key($allFormats);
+    $formatsAllowed = $fieldDefinition->getSetting('allowed_formats');
+    // All formats are allowed.
+    if (!count($formatsAllowed)) {
+      $formatsAllowed = array_keys($allFormats);
+    }
+    foreach ($formatsAllowed as $format) {
+      // Check if the user has access to the format.
+      if (isset($allFormats[$format]) && $allFormats[$format]->access('use')) {
+        return $format;
+      }
+    }
+    // User does not have access to any format.
+    return NULL;
   }
 
   /**
@@ -511,6 +534,16 @@ class GeneralHelper {
       $imageStylesOptions[$imageStyle->id()] = $imageStyle->label();
     }
     return $imageStylesOptions;
+  }
+
+  /**
+   * Get the prompt code block extractor.
+   *
+   * @return \Drupal\ai\Service\PromptCodeBlockExtractor\PromptCodeBlockExtractorInterface
+   *   The prompt code block extractor.
+   */
+  public function getPromptCodeBlockExtractor() {
+    return $this->promptCodeBlockExtractor;
   }
 
   /**

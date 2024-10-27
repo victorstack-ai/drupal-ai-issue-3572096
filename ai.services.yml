@@ -8,6 +8,8 @@ services:
     arguments: ['@ai.provider', '@path.current']
   ai.prompt_json_decode:
     class: Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoder
+  ai.prompt_code_block_extractor:
+    class: Drupal\ai\Service\PromptCodeBlockExtractor\PromptCodeBlockExtractor
   ai.vdb_provider:
     class: Drupal\ai\AiVdbProviderPluginManager
     parent: default_plugin_manager
