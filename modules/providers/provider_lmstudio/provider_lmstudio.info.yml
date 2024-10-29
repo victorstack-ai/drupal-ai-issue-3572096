@@ -3,7 +3,8 @@ description: This enables the use of LM Studio for the AI module.
 package: AI Providers
 type: module
 core_version_requirement: ^10.2 || ^11
-configure: provider_lmstudio.settings_form
+lifecycle: deprecated
+lifecycle_link: "https://www.drupal.org/project/ai/issues/3483356"
 
 dependencies:
   - ai:ai

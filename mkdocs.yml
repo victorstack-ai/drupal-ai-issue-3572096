@@ -39,7 +39,6 @@ nav:
       - Ollama: modules/providers/provider_ollama/index.md
     - VDB Providers:
       - Milvus: modules/vdb_providers/vdb_provider_milvus/index.md
-      - Pinecone: modules/vdb_providers/vdb_provider_pinecone/index.md
   - Providers: providers/matris.md
 docs_dir: docs
 site_dir: site

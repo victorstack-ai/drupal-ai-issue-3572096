@@ -3,8 +3,8 @@ description: This enables the use of Milvus (local) or Zilliz (cloud) Vector Dat
 package: AI Vector Database Providers (Experimental)
 type: module
 core_version_requirement: ^10.2 || ^11
-configure: vdb_provider_milvus.settings_form
-lifecycle: experimental
+lifecycle: deprecated
+lifecycle_link: "https://www.drupal.org/project/ai/issues/3483356"
 
 dependencies:
   - ai:ai

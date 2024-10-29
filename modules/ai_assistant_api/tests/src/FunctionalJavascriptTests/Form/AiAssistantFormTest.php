@@ -20,7 +20,7 @@ class AiAssistantFormTest extends WebDriverTestBase {
    */
   protected static $modules = [
     'ai',
-    'provider_openai',
+    'ai_test',
     'key',
     'ai_assistant_api',
     'file',
@@ -37,35 +37,6 @@ class AiAssistantFormTest extends WebDriverTestBase {
   protected $defaultTheme = 'claro';
 
   /**
-   * Setup the test.
-   */
-  protected function setUp(): void {
-    parent::setUp();
-
-    // Create an OpenAI mockup key.
-    /** @var \Drupal\key\Entity\Key */
-    $key = \Drupal::entityTypeManager()
-      ->getStorage('key')
-      ->create([
-        'id' => 'mockup_openai',
-        'label' => 'Mockup OpenAI',
-        'key_provider' => 'config',
-      ]);
-    $key->setKeyValue('abc123');
-    $key->save();
-
-    // DDEV or local.
-    $host = getenv('DDEV_PROJECT') ? 'http://mockoon:3010/v1' : 'http://localhost:3010/v1';
-
-    // Setup OpenAI as the provider.
-    \Drupal::configFactory()
-      ->getEditable('provider_openai.settings')
-      ->set('host', $host)
-      ->set('api_key', 'mockup_openai')
-      ->save();
-  }
-
-  /**
    * Test the Ajax form interaction.
    */
   public function testAjaxForm() {
@@ -80,7 +51,7 @@ class AiAssistantFormTest extends WebDriverTestBase {
       $this->assertSession()->fieldExists('llm_ai_provider');
 
       // Choose the OpenAI provider from the select field.
-      $this->getSession()->getPage()->selectFieldOption('llm_ai_provider', 'openai');
+      $this->getSession()->getPage()->selectFieldOption('llm_ai_provider', 'echoai');
 
       // Wait for the Ajax request to complete.
       $this->assertSession()->assertWaitOnAjaxRequest();
@@ -89,7 +60,7 @@ class AiAssistantFormTest extends WebDriverTestBase {
       $this->assertSession()->fieldExists('llm_ai_model');
 
       // Choose GPT 3.5 from the select field.
-      $this->getSession()->getPage()->selectFieldOption('llm_ai_model', 'gpt-3.5-turbo');
+      $this->getSession()->getPage()->selectFieldOption('llm_ai_model', 'gpt-test');
 
       // Wait for the Ajax request to complete.
       $this->assertSession()->assertWaitOnAjaxRequest();
