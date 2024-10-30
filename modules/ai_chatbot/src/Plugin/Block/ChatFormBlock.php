@@ -204,8 +204,10 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
    * {@inheritdoc}
    */
   public function build() {
-    $this->aiAssistantRunner->setAssistant($this->entityTypeManager->getStorage('ai_assistant')->load($this->configuration['ai_assistant']));
-    if (!$this->aiAssistantRunner->isSetup()) {
+    $assistant = $this->entityTypeManager->getStorage('ai_assistant')->load($this->configuration['ai_assistant']);
+    $this->aiAssistantRunner->setAssistant($assistant);
+    // Check if the assistant is setup and that the user has access to it.
+    if (!$this->aiAssistantRunner->isSetup() || !$this->aiAssistantRunner->userHasAccess()) {
       return [];
     }
     $this->aiAssistantRunner->streamedOutput($this->configuration['stream']);

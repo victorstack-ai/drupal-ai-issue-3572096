@@ -60,4 +60,11 @@ ai_assistant_api.ai_assistant.*:
       required: false
       sequence:
         type: ignore
+    roles:
+      type: sequence
+      label: Roles
+      required: false
+      sequence:
+        type: ignore
+
 

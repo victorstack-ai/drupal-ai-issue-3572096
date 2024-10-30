@@ -55,6 +55,7 @@ use Drupal\ai_assistant_api\AiAssistantInterface;
  *     "llm_provider",
  *     "llm_model",
  *     "llm_configuration",
+ *     "roles",
  *   },
  * )
  */
@@ -124,5 +125,10 @@ final class AiAssistant extends ConfigEntityBase implements AiAssistantInterface
    * The LLM configuration.
    */
   protected array $llm_configuration;
+
+  /**
+   * The roles that can run this assistant.
+   */
+  protected array $roles = [];
 
 }

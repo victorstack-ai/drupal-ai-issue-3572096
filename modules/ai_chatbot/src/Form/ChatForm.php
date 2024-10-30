@@ -146,9 +146,8 @@ class ChatForm extends FormBase {
         }
       }
       catch (\Exception $exception) {
-        $this->messenger()
-          ->addError("Chat exception: {$exception->getMessage()}");
-        return;
+        $http_response = new Response('Error: ' . $exception->getMessage());
+        $form_state->setResponse($http_response);
       }
     }
     else {

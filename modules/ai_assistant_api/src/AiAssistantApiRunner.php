@@ -373,12 +373,8 @@ class AiAssistantApiRunner {
    * Start processing the assistant synchronously.
    */
   public function process() {
-    if (!$this->assistant) {
-      throw new \Exception('Assistant is required to process.');
-    }
-    if (!$this->userMessage) {
-      throw new \Exception('Message is required to process.');
-    }
+    // Validate that we can run.
+    $this->validateAssistant();
 
     try {
       $pre_prompt = $this->assistant->get('pre_action_prompt');
@@ -417,6 +413,60 @@ class AiAssistantApiRunner {
 
     // Run the response to the final assistants message.
     return $this->assistantMessage();
+  }
+
+  /**
+   * Validate that its possible to run the assistant.
+   */
+  protected function validateAssistant() {
+    // Check if the assistant is set.
+    if (!$this->assistant) {
+      throw new \Exception('Assistant is required to process.');
+    }
+    // Check if the user message is set.
+    if (!$this->userMessage) {
+      throw new \Exception('Message is required to process.');
+    }
+    // Check permissions.
+    if (!$this->userHasAccess()) {
+      throw new \Exception('User does not have the required role to run the assistant.');
+    }
+  }
+
+  /**
+   * Check if the user has the required role to run the assistant.
+   *
+   * @return bool
+   *   If the user has the required role.
+   */
+  public function userHasAccess() {
+    if ($this->currentUser->id() == 1) {
+      return TRUE;
+    }
+    $roles = $this->assistant->get('roles');
+    $chosen_roles = [];
+    foreach ($roles as $role => $value) {
+      if ($value) {
+        $chosen_roles[] = $role;
+      }
+    }
+    // Check if they have values.
+    if (count($chosen_roles)) {
+      if ($this->currentUser->isAnonymous() && $roles['anonymous']) {
+        return TRUE;
+      }
+      else {
+        /** @var \Drupal\user\UserInterface */
+        $account = $this->currentUser->getAccount();
+        foreach ($roles as $role => $value) {
+          if ($value && $account->hasRole($role)) {
+            return TRUE;
+          }
+        }
+      }
+      return FALSE;
+    }
+    return TRUE;
   }
 
   /**

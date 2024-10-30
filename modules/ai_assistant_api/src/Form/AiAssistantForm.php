@@ -14,6 +14,7 @@ use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai\Utility\CastUtility;
 use Drupal\ai_assistant_api\AiAssistantActionPluginManager;
 use Drupal\ai_assistant_api\Entity\AiAssistant;
+use Drupal\user\Entity\Role;
 
 /**
  * AI Assistant form.
@@ -249,6 +250,20 @@ final class AiAssistantForm extends EntityForm {
       '#type' => 'details',
       '#title' => $this->t('Advanced settings'),
       '#open' => FALSE,
+    ];
+
+    $options = [];
+    foreach (Role::loadMultiple() as $role) {
+      $options[$role->id()] = $role->label();
+    }
+
+    $form['advanced']['roles'] = [
+      '#type' => 'checkboxes',
+      '#title' => $this->t('Permission Roles'),
+      '#default_value' => $entity->get('roles') ?? [],
+      '#description' => $this->t('The roles that are allowed to run this AI Assistant. If no roles are selected, all roles are allowed. User 1 is always allowed.'),
+      '#options' => $options,
+      '#multiple' => TRUE,
     ];
 
     $form['advanced']['pre_action_prompt'] = [
