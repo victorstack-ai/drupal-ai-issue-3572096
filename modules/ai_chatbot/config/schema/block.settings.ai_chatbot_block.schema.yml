@@ -26,3 +26,9 @@ block.settings.ai_chatbot_block:
     first_message:
       type: string
       label: First Message
+    stream:
+      type: integer
+      label: Stream
+    toggle_state:
+      type: string
+      label: Toggle State
