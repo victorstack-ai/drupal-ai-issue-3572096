@@ -479,11 +479,12 @@ class AiContentForm {
       // Get the default provider.
       $default_provider = $this->aiProvider->getDefaultProviderForOperationType($operation_type);
       if (empty($default_provider['provider_id'])) {
-        $this->messenger->addError($this->t('No AI provider is set for chat. Please configure one in the %ai_content_settings_link or setup a default Chat model in the %ai_settings_link.', [
+        $this->messenger->addError($this->t('No AI provider is set for %operation_type. Please configure one in the %ai_content_settings_link or setup a default %operation_type model in the %ai_settings_link.', [
           '%ai_content_settings_link' => Link::createFromRoute($this->t('AI Content settings'), 'ai_content.settings_form')->toString(),
           '%ai_settings_link' => Link::createFromRoute($this->t('AI settings'), 'ai.settings_form')->toString(),
+          '%operation_type' => $operation_type,
         ]));
-        throw new \exception('No AI provider is set for chat. Please configure one in the AI default settings or in the ai_content settings form.');
+        throw new \exception("No AI provider is set for $operation_type. Please configure one in the AI default settings or in the ai_content settings form.");
       }
       $provider = $this->aiProvider->createInstance($default_provider['provider_id']);
       $model = $default_provider['model_id'];
