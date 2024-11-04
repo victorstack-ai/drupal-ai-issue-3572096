@@ -35,8 +35,9 @@ class LlmTextWithSummary extends ComplexTextChat implements AiAutomatorTypeInter
     $form['automator_use_text_format'] = [
       '#type' => 'select',
       '#title' => $this->t('Use text format'),
-      '#description' => $this->t('If you want to use a specific text format, select it here. Otherwise a text format will be used based on rights. Always pick one for cron jobs.'),
+      '#description' => $this->t('If you want to use a specific text format, select it here. Otherwise a text format will be used based on user rights. Always pick one for cron jobs since the cron job runs anonymous.'),
       '#options' => $this->getGeneralHelper()->getTextFormatsOptions(),
+      '#default_value' => $defaultValues['automator_use_text_format'] ?? NULL,
     ];
 
     return $form;
