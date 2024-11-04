@@ -489,7 +489,10 @@ class GeneralHelper {
    */
   public function getTextFormatsOptions() {
     $formats = $this->entityTypeManager->getStorage('filter_format')->loadMultiple();
-    $options = [];
+    $options = [
+      '' => $this->t('-- None/User Based --'),
+    ];
+
     foreach ($formats as $format) {
       $options[$format->id()] = $format->label();
     }
