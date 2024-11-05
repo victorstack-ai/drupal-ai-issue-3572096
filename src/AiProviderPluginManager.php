@@ -301,7 +301,7 @@ final class AiProviderPluginManager extends DefaultPluginManager {
    * @return array|null
    *   The id and label or nothing.
    */
-  public function getOperationType(string $operation_type, bool $check_has_default = FALSE): array {
+  public function getOperationType(string $operation_type, bool $check_has_default = FALSE): array|null {
     $operation_types = $this->getOperationTypes();
     foreach ($operation_types as $operation) {
       if ($operation['id'] === $operation_type) {
