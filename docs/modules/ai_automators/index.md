@@ -1,7 +1,7 @@
 # AI Automators
-## What is the AI Automator module?
+## What is the AI Automators module?
 This module offers the possibility for any field to be generated via AI from
-another field. It's setup so you can use prompt engineering or none-AI tools to
+another field. It's setup so you can use prompt engineering or non-AI tools to
 automate into your entities.
 
 The module uses a plugin system so anyone can develop modules to extend which
@@ -23,6 +23,5 @@ generation.
 6. Your field with the field config you choose should be autopopulated.
 
 ## Developer documentation
-
-### Writing a plugin
-TBD
+Check the [developers guide](developers/developer_information.md) for
+information on how to develop using the AI module.

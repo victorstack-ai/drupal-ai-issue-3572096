@@ -22,8 +22,6 @@ variables:
 
 pages:
   stage: .post
-  before_script:
-    - python docs/build-docs.py
 
 cspell:
   allow_failure: false
@@ -35,4 +33,3 @@ phpstan:
   allow_failure: false
   before_script:
     - composer require --dev drush/drush
-

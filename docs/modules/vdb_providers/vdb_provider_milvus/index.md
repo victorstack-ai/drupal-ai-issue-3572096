@@ -1,24 +1,24 @@
 # Milvus Vector Database Provider
-
-## Overview
-
+## What is the Milvus Vector Database Provider?
 This Drupal module provides integration with Milvus (local) and Zilliz (managed
-cloud). It includes features for inserting, deleting, and managing vector data.
+cloud). It includes features for inserting, deleting, and managing vector data
+for use with the AI Core module and its sub-modules. For more information about
+Milvus, please see [their website](https://milvus.io/).
 
-## Requirements
+## Dependencies
+1. An enabled and configured AI Core module
+2. A correctly set up Milvus local or Zilliz cloud
 
-- Milvus local or Zilliz cloud
+This Provider is primarily for use with the [AI Search module](https://project.pages.drupalcode.org/ai/modules/ai_search/),
+so once it has been configured you may need to follow the configuration guide
+for that module if you are using it.
 
 ## Installation
-
 1. Enable the module.
-2. Configure the API connection to Pine via Admin > Configuration > Vector
-   Database Providers > Milvus.
-4. Create a new Search API Server using Milvus/Zilliz as the backend.
-5. Set up AI Search as desired (see AI Search documentation).
+2. Configure the connection to the database at /admin/config/ai/vdb_providers/milvus
+3. Configure your AI-related modules to use the provider as required.
 
 ### Using with DDEV.
-
 1. Copy the `ddev-example.docker-compose.milvus.yaml` to your `.ddev` folder.
    1. Assuming your project uses the `web` docroot, you can use the below 
       command: 
@@ -27,35 +27,6 @@ cloud). It includes features for inserting, deleting, and managing vector data.
       ```
 2. Run `ddev restart` 
 3. Access your Milvus UI at `https://{project}.ddev.site:8521`
-3. Set up your Milvus Vector Database Plugin configuration to use:
+4. Set up your Milvus Vector Database Plugin configuration to use:
    1. Host: `http://milvus`
    2. Port: `19530`
-
-### Connecting to a hosted Milvus instance.
-
-You can use Zilliz Cloud for example at https://zilliz.com/cloud. To get 
-started:
-1. Sign up for a free trial if you do not already have a plan
-2. Use the credentials provided
-
-## Contributing to the Milvus PHP library dependency.
-
-This provider depends on https://github.com/HelgeSverre/milvus. For developers
-wishing to contribute to it:
-
-1. Fork the github repository
-2. DDEV config an empty PHP setup
-2. Make your code changes
-3. Copy the `.env.example` to `.env`
-4. Set up the .env with just this:
-   ```
-   MILVUS_USERNAME="root"
-   MILVUS_PASSWORD=""
-   MILVUS_HOST=http://milvus
-   MILVUS_PORT=19530
-   ```
-5. Run `ddev exec ./vendor/bin/pest` to run the tests.
-6. Make your pull request via the original repository
-
-Note that until https://github.com/HelgeSverre/milvus/pull/5 is merged, the
-code changes in that PR are also needed so the tests run.

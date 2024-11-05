@@ -1,4 +1,4 @@
-# AI Search (RAG)
+# AI Search
 ## What is the AI Search module?
 This module leverages the popular Drupal Search API contrib module create
 and manage vector databases of your for highly relevant and accurate retrieval
@@ -48,9 +48,7 @@ content via an AI Provider that supports embeddings, then run a Vector Search
 via a VDB Provider (Vector Database Provider).
 
 ## Installation and configuration
-
 ### General setup
-
 1. Enable the AI Search module
 2. Enable at least one Vector Database Provider (VDB Provider)
 3. Create a Search API Server & Index with AI Search as the back-end (follow
@@ -60,19 +58,16 @@ via a VDB Provider (Vector Database Provider).
 4. Index your content
 
 ### Use in Views
-
 1. Create a View with your new Search API Index as the content source
 2. Add a full text search field
 3. Optionally expose the filter (or instead of exposing provide a value to 
    search)
 
 ### Use as an AI Assistant
-
 1. Follow the instructions in the AI Assistants documentation
 2. Enable the RAG Action
 
 ### Use Programmatically
-
 1. Load your LLM, e.g. into `$llm`.
 2. Get the vectors of the content you want to search with `$vector_input = $llm->embeddings($search_words, $model_id)->getNormalized();`.
 3. Load your VDB Provider, e.g. into `$vdb`.

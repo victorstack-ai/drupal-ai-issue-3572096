@@ -185,3 +185,5 @@ tmgmt
 ized
 Nicefy
 fulltext
+analysed
+Asymetric

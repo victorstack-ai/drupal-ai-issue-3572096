@@ -1,5 +1,8 @@
-# Finegrained configuration.
+# AI Content Editing Tools
+## What is the AI Content Editing Tools module?
+This module assistants content editors obtain feedback from a configured LLM
+about the node they are editing.
 
-If you want to toggle only a few of the editorial helpers on and off,
-
-you can do that via the admin screen /admin/config/ai/ai_content
+## Using the module
+Check the [AI Content Editing Tools module guide](https://project.pages.drupalcode.org/ai/modules/ai_content/index.md) for
+information on using the module.
