@@ -186,7 +186,7 @@ interface AiProviderInterface extends PluginInspectionInterface {
    * @return array
    *   The form array.
    */
-  public function loadModelsForm(array $form, $form_state, string $operation_type, string|NULL $model_id = NULL): array;
+  public function loadModelsForm(array $form, $form_state, string $operation_type, string|null $model_id = NULL): array;
 
   /**
    * Validate the models form for the provider.

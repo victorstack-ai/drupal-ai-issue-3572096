@@ -412,7 +412,7 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   /**
    * {@inheritdoc}
    */
-  public function loadModelsForm(array $form, $form_state, string $operation_type, string|NULL $model_id = NULL): array {
+  public function loadModelsForm(array $form, $form_state, string $operation_type, string|null $model_id = NULL): array {
     $config = $this->loadModelConfig($operation_type, $model_id);
     switch ($operation_type) {
       case 'chat':
