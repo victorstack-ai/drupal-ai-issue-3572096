@@ -410,6 +410,13 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   }
 
   /**
+   * Reset the tags.
+   */
+  public function resetTags(): void {
+    $this->tags = [];
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function loadModelsForm(array $form, $form_state, string $operation_type, string|null $model_id = NULL): array {

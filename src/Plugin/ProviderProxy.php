@@ -132,6 +132,7 @@ class ProviderProxy {
     $this->plugin->configuration = $this->plugin->normalizeConfiguration($operation_type, $arguments[1]);
 
     // Set some default tags.
+    $this->plugin->resetTags();
     $this->plugin->setTag($operation_type);
     foreach ($arguments[2] as $tag) {
       $this->plugin->setTag($tag);
