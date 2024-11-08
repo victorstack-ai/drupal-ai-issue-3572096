@@ -4,7 +4,7 @@ ai_translate.settings_form:
     _form: '\Drupal\ai_translate\Form\AiTranslateSettingsForm'
     _title: 'AI Translate Settings'
   requirements:
-    _permission: 'administer ai'
+    _permission: 'manage ai translation prompts'
 
 ai_translate.translate_content:
   path: '/ai_translate/translate/{entity_type}/{entity_id}/{lang_from}/{lang_to}'
