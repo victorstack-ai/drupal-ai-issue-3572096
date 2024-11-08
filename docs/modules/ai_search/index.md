@@ -56,6 +56,8 @@ via a VDB Provider (Vector Database Provider).
    index the URL of the content to give your LLM access to this information:
    otherwise it may make unexpected decisions about what the URL to display is
 4. Index your content
+5. Optionally set a minimum score threshold using the 'Score Threshold' Search
+   API processor plugin.
 
 ### Use in Views
 1. Create a View with your new Search API Index as the content source
