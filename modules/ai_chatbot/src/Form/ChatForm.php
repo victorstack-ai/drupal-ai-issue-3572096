@@ -14,6 +14,7 @@ use Drupal\ai_assistant_api\Data\UserMessage;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * Provides a chat bot.
@@ -126,12 +127,20 @@ class ChatForm extends FormBase {
         $response = $this->aiAssistantClient->process();
         // If its a failure, the variable is a string, just output;.
         if ($response->getNormalized() instanceof ChatMessage) {
-          $http_response = new Response($response->getNormalized()->getText());
+          $output = $response->getNormalized()->getText();
+          // Show structured results if wanted.
+          if ($this->getChatConfig($form_state)['show_structured_results']) {
+            $structured = $this->aiAssistantClient->getStructuredResults();
+            if ($structured) {
+              $output .= "<details>\n\n```\n" . Yaml::dump($structured, 10) . "\n```\n\n</details>";
+            }
+          }
+          $http_response = new Response($output);
           $this->aiAssistantClient->setAssistantMessage($response->getNormalized()->getText());
           $form_state->setResponse($http_response);
         }
         else {
-          $http_response->setCallback(function () use ($response) {
+          $http_response->setCallback(function () use ($response, $form_state) {
             $full_response = "";
             foreach ($response->getNormalized() as $message) {
               echo $message->getText();
@@ -139,7 +148,13 @@ class ChatForm extends FormBase {
               ob_flush();
               flush();
             }
-
+            // Show structured results if wanted.
+            if ($this->getChatConfig($form_state)['show_structured_results']) {
+              $structured = $this->aiAssistantClient->getStructuredResults();
+              if ($structured) {
+                $full_response .= "<details>\n\n```\n" . Yaml::dump($structured, 10) . "\n```\n\n</details>";
+              }
+            }
             $this->aiAssistantClient->setAssistantMessage($full_response);
           });
           $form_state->setResponse($http_response);

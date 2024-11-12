@@ -231,4 +231,22 @@ abstract class AiAssistantActionBase implements AiAssistantActionInterface, Cont
     $this->getTempStore()->set($this->threadId, $session);
   }
 
+  /**
+   * Set output structure results.
+   *
+   * @param string $key
+   *   The key to set the context to.
+   * @param array $context
+   *   The context.
+   */
+  public function setStructuredResults(string $key, array $context) {
+    $session = $this->getTempStore()->get($this->threadId);
+    if (!isset($session['structured_results'][$key]) || !is_array($session['structured_results'][$key])) {
+      $session['structured_results'][$key] = [];
+    }
+    $session['structured_results'][$key][] = $context;
+
+    $this->getTempStore()->set($this->threadId, $session);
+  }
+
 }

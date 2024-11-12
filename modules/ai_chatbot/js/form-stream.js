@@ -77,7 +77,7 @@
       $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
       let postData = form.serializeArray();
       // Check while creating if its HTML or not.
-      let isHtml = false;
+      let isHtml = drupalSettings.ai_chatbot.output_type == 'html';
       $('.chat-form-query').val('');
       $.ajax({
         url: form.attr('action'),
@@ -85,18 +85,10 @@
         data: postData,
         xhrFields: {
           onprogress: function (event) {
-            // Actual HTML test.
-            if (!isHtml && /<\/?[a-z][\s\S]*>/i.test(event.currentTarget.response)) {
-              isHtml = true;
-            }
             responseField.html(isHtml ? event.currentTarget.response : converter.makeHtml(event.currentTarget.response));
             $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
           },
           onended: function (event) {
-            // Also add on the last event.
-            if (!isHtml && /<\/?[a-z][\s\S]*>/i.test(event.currentTarget.response)) {
-              isHtml = true;
-            }
             responseField.html(isHtml ? event.currentTarget.response : converter.makeHtml(event.currentTarget.response));
             $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
           }

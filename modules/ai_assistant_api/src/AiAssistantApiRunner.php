@@ -545,6 +545,16 @@ class AiAssistantApiRunner {
   }
 
   /**
+   * Gets the output data structure.
+   *
+   * @return array
+   *   The output structured results.
+   */
+  public function getStructuredResults() {
+    return $this->getTempStore()->get($this->thread_id)['structured_results'] ?? [];
+  }
+
+  /**
    * Gets the message history.
    *
    * @return array

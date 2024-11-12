@@ -32,3 +32,9 @@ block.settings.ai_chatbot_block:
     toggle_state:
       type: string
       label: Toggle State
+    output_type:
+      type: string
+      label: Output Type
+    show_structured_results:
+      type: boolean
+      label: Show Structured Results

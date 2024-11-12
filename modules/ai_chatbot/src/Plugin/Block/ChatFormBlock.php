@@ -85,6 +85,8 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
       'default_avatar' => '/core/misc/favicon.ico',
       'first_message' => 'Hello! How can I help you today?',
       'stream' => TRUE,
+      'show_structured_results' => FALSE,
+      'output_type' => 'markdown',
       'toggle_state' => 'remember',
     ];
   }
@@ -169,6 +171,24 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
       '#default_value' => $this->configuration['stream'],
     ];
 
+    $form['show_structured_results'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Show Structured Results'),
+      '#description' => $this->t('The different actions might provide structured results, this will show it under each chat message.'),
+      '#default_value' => $this->configuration['show_structured_results'],
+    ];
+
+    $form['output_type'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Message Output Type'),
+      '#description' => $this->t('The message type the response comes in'),
+      '#options' => [
+        'markdown' => $this->t('Markdown'),
+        'html' => $this->t('HTML'),
+      ],
+      '#default_value' => $this->configuration['output_type'],
+    ];
+
     $form['toggle_state'] = [
       '#type' => 'select',
       '#title' => $this->t('Toggle state'),
@@ -198,6 +218,8 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
     $this->configuration['first_message'] = $form_state->getValue('first_message');
     $this->configuration['stream'] = $form_state->getValue('stream');
     $this->configuration['toggle_state'] = $form_state->getValue('toggle_state');
+    $this->configuration['show_structured_results'] = $form_state->getValue('show_structured_results');
+    $this->configuration['output_type'] = $form_state->getValue('output_type');
   }
 
   /**
@@ -238,6 +260,7 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
     $block['#attached']['drupalSettings']['ai_chatbot']['default_username'] = $this->configuration['default_username'];
     $block['#attached']['drupalSettings']['ai_chatbot']['default_avatar'] = $this->configuration['default_avatar'];
     $block['#attached']['drupalSettings']['ai_chatbot']['toggle_state'] = $this->configuration['toggle_state'];
+    $block['#attached']['drupalSettings']['ai_chatbot']['output_type'] = $this->configuration['output_type'];
     $user = $this->currentUser->getAccount();
     // Override username if the user is authenticated and configured.
     if ($user->isAuthenticated() && $this->configuration['use_username']) {
