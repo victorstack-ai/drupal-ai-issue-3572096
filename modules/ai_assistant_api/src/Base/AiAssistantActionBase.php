@@ -232,6 +232,15 @@ abstract class AiAssistantActionBase implements AiAssistantActionInterface, Cont
   }
 
   /**
+   * Reset the out structure.
+   */
+  public function resetStructuredResults() {
+    $session = $this->getTempStore()->get($this->threadId);
+    $session['structured_results'] = [];
+    $this->getTempStore()->set($this->threadId, $session);
+  }
+
+  /**
    * Set output structure results.
    *
    * @param string $key

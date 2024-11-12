@@ -132,7 +132,7 @@ class ChatForm extends FormBase {
           if ($this->getChatConfig($form_state)['show_structured_results']) {
             $structured = $this->aiAssistantClient->getStructuredResults();
             if ($structured) {
-              $output .= "<details>\n\n```\n" . Yaml::dump($structured, 10) . "\n```\n\n</details>";
+              $output .= "\n\n<details>\n\n```\n" . Yaml::dump($structured, 10) . "\n```\n\n</details>";
             }
           }
           $http_response = new Response($output);
@@ -152,7 +152,10 @@ class ChatForm extends FormBase {
             if ($this->getChatConfig($form_state)['show_structured_results']) {
               $structured = $this->aiAssistantClient->getStructuredResults();
               if ($structured) {
-                $full_response .= "<details>\n\n```\n" . Yaml::dump($structured, 10) . "\n```\n\n</details>";
+                echo "\n\n<details>\n\n```\n" . Yaml::dump($structured, 10) . "\n```\n\n</details>";
+                ob_flush();
+                flush();
+                $full_response .= "\n<details>\n\n```\n" . Yaml::dump($structured, 10) . "\n```\n\n</details>";
               }
             }
             $this->aiAssistantClient->setAssistantMessage($full_response);
