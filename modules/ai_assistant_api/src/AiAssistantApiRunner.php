@@ -386,8 +386,10 @@ class AiAssistantApiRunner {
           return $return;
         }
 
-        // Currently for debugging.
         $defaults = $this->getProviderAndModel();
+        // Reset the action before running them.
+        $this->resetStructuredResults();
+
         foreach ($return['actions'] as $action) {
           $this->using_action = TRUE;
           $instance = $this->actions->createInstance($action['plugin'], $this->assistant->get('actions_enabled')[$action['plugin']] ?? []);
@@ -552,6 +554,15 @@ class AiAssistantApiRunner {
    */
   public function getStructuredResults() {
     return $this->getTempStore()->get($this->thread_id)['structured_results'] ?? [];
+  }
+
+  /**
+   * Resets the output data structure.
+   */
+  public function resetStructuredResults() {
+    $session = $this->getTempStore()->get($this->thread_id);
+    $session['structured_results'] = [];
+    $this->getTempStore()->set($this->thread_id, $session);
   }
 
   /**
