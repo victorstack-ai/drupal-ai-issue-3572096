@@ -6,7 +6,6 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\Enum\AiModelCapability;
-use Drupal\ai\Exception\AiSetupFailureException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -157,7 +156,7 @@ class AiSettingsForm extends ConfigFormBase {
             ]));
           }
         }
-        catch (AiSetupFailureException $e) {
+        catch (\Exception $e) {
           // Don't crash if the provider is not fully configured.
           $this->messenger()->addError($e->getMessage());
         }
