@@ -31,8 +31,8 @@ nav:
     - AI Assistant API: modules/ai_assistant_api/index.md
     - AI Automators: modules/ai_automators/index.md
     - AI Chatbot: modules/ai_assistant_api/#ai-chatbot-module
-    - AI Content: modules/ai_content/index.md
     - AI Ckeditor: modules/ai_ckeditor/index.md
+    - AI Content Suggestions: modules/ai_content_suggestions/index.md
     - AI ECA: modules/ai_eca/index.md
     - AI Search: modules/ai_search/index.md
     - AI Translate: modules/ai_translate/index.md

@@ -9,6 +9,7 @@ Gufw
 Elevenlabs
 elevenlabs
 deepl
+devs
 dropai
 Drupals
 dport

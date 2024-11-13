@@ -1,5 +1,5 @@
-# AI Content Editing Tools
-## What is the AI Content Editing Tools module?
+# AI Content Suggestions
+## What is the AI Content Suggestions module?
 This module assistants content editors obtain feedback from a configured LLM
 about the node they are editing.
 
