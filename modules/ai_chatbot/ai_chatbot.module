@@ -23,6 +23,8 @@ function ai_chatbot_theme() {
         'username' => 'Chatbot',
         'timestamp' => '',
         'bot_image' => '',
+        'assistant_id' => NULL,
+        'thread_id' => NULL,
       ],
     ],
   ];

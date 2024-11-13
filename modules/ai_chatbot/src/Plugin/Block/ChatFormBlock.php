@@ -247,6 +247,8 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
       '#bot_image' => $this->configuration['bot_image'],
       '#timestamp' => date('H:i:s'),
       '#message' => $this->configuration['first_message'],
+      '#assistant_id' => $assistant->id(),
+      '#thread_id' => $this->aiAssistantRunner->getThreadsKey(),
     ];
 
     $block['#theme'] = 'ai_chatbot';

@@ -40,13 +40,13 @@
     let converter = new showdown.Converter();
     return new Promise((resolve, reject) => {
       $.ajax({
-        url: drupalSettings.path.baseUrl + 'ajax/chatbot/message-skeleton'
+        url: drupalSettings.path.baseUrl + 'ajax/chatbot/message-skeleton/' + drupalSettings.ai_chatbot.assistant_id + '/' + drupalSettings.ai_chatbot.thread_id
       })
       .done((data) => {
         let skeleton = data.skeleton;
         $('.chat-history').append(skeleton);
         $('.chat-history .chat-message:last h5').html(drupalSettings.ai_chatbot.default_username);
-        $('.chat-history .chat-message:last img').attr('src', drupalSettings.ai_chatbot.default_avatar);
+        $('.chat-history .chat-message:last > img').attr('src', drupalSettings.ai_chatbot.default_avatar);
         let responseField = $('.chat-history .chat-message:last');
         responseField.find('.chat-message-message').html(converter.makeHtml(message));
         $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
@@ -66,15 +66,19 @@
       parseImgDimensions: true
     });
     $.ajax({
-      url: drupalSettings.path.baseUrl + 'ajax/chatbot/message-skeleton'
+      url: drupalSettings.path.baseUrl + 'ajax/chatbot/message-skeleton/' + drupalSettings.ai_chatbot.assistant_id + '/' + drupalSettings.ai_chatbot.thread_id
     })
     .done((data) => {
       let skeleton = data.skeleton;
-      $('.chat-history').append(skeleton);
-      $('.chat-history .chat-message:last h5').html(drupalSettings.ai_chatbot.bot_name);
-      $('.chat-history .chat-message:last img').attr('src', drupalSettings.ai_chatbot.bot_image);
-      let responseField = $('.chat-history .chat-message:last .chat-message-message');
-      $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
+      let chatHistory = $('.chat-history');
+      chatHistory.append(skeleton);
+      Drupal.attachBehaviors(chatHistory);
+
+      chatHistory.find('.chat-message:last h5').html(drupalSettings.ai_chatbot.bot_name);
+      chatHistory.find('.chat-message:last > img').attr('src', drupalSettings.ai_chatbot.bot_image);
+      let responseField = chatHistory.find('.chat-message:last .chat-message-message');
+      chatHistory.scrollTop(chatHistory[0].scrollHeight);
+
       let postData = form.serializeArray();
       // Check while creating if its HTML or not.
       let isHtml = drupalSettings.ai_chatbot.output_type == 'html';
@@ -130,5 +134,3 @@
   }
 
 })(jQuery, Drupal, drupalSettings);
-
-

@@ -45,13 +45,20 @@ class GetSkeleton extends ControllerBase {
    * loaded over AJAX, but we could put it in the Drupal settings and load it
    * with the page load.
    *
+   * @param string $assistant_id
+   *   The ID of the Assistant the message skeleton should be created for.
+   * @param string $thread_id
+   *   The ID of the thread the message skeleton should be created for.
+   *
    * @return \Drupal\Core\Cache\CacheableJsonResponse
    *   Return the message skeleton.
    */
-  public function messageSkeleton() {
+  public function messageSkeleton(string $assistant_id, string $thread_id) {
     $theme = [
       '#theme' => 'ai_chatbot_message',
       '#timestamp' => date('H:i:s'),
+      '#assistant_id' => $assistant_id,
+      '#thread_id' => $thread_id,
     ];
     return new JsonResponse([
       'skeleton' => $this->renderer->render($theme),

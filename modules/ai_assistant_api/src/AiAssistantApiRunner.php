@@ -334,6 +334,8 @@ class AiAssistantApiRunner {
         return $key;
       }
       // If its over 10, we start removing them from 0.
+      // This is a temporary solution for sessions so we don't have too many.
+      // We should add garbage collection here later.
       if ($i > 10) {
         $this->getTempStore()->delete('assistant_thread_' . ($i - 5));
       }

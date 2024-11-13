@@ -72,7 +72,8 @@ class ChatForm extends FormBase {
 
     if (!$this->getRequest()->isXmlHttpRequest()) {
       // Set the assistant id if its the page load.
-      $form['#attached']['drupalSettings']['ai_chatbot']['assistant_id'] = $this->aiAssistantClient->getThreadsKey();
+      $form['#attached']['drupalSettings']['ai_chatbot']['assistant_id'] = $this->aiAssistantClient->getAssistant()->id();
+      $form['#attached']['drupalSettings']['ai_chatbot']['thread_id'] = $this->aiAssistantClient->getThreadsKey();
     }
 
     $response_id = Html::getId($form_state->getBuildInfo()['block_id'] . '-response');
@@ -114,8 +115,6 @@ class ChatForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    // Set the assistant id.
-    $this->aiAssistantClient->setThreadsKey($form_state->getValue('assistant_id'));
     // Set the user message.
     $this->aiAssistantClient->setUserMessage(new UserMessage($form_state->getValue('query')));
 
