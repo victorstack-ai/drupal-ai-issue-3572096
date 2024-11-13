@@ -40,7 +40,7 @@
     let converter = new showdown.Converter();
     return new Promise((resolve, reject) => {
       $.ajax({
-        url: drupalSettings.path.baseUrl + 'ajax/chatbot/message-skeleton/' + drupalSettings.ai_chatbot.assistant_id + '/' + drupalSettings.ai_chatbot.thread_id
+        url: drupalSettings.path.baseUrl + 'ajax/chatbot/message-skeleton/' + drupalSettings.ai_chatbot.assistant_id + '/' + drupalSettings.ai_chatbot.thread_id + '/user'
       })
       .done((data) => {
         let skeleton = data.skeleton;
@@ -66,7 +66,7 @@
       parseImgDimensions: true
     });
     $.ajax({
-      url: drupalSettings.path.baseUrl + 'ajax/chatbot/message-skeleton/' + drupalSettings.ai_chatbot.assistant_id + '/' + drupalSettings.ai_chatbot.thread_id
+      url: drupalSettings.path.baseUrl + 'ajax/chatbot/message-skeleton/' + drupalSettings.ai_chatbot.assistant_id + '/' + drupalSettings.ai_chatbot.thread_id + '/assistant'
     })
     .done((data) => {
       let skeleton = data.skeleton;

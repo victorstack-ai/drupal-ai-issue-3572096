@@ -49,16 +49,19 @@ class GetSkeleton extends ControllerBase {
    *   The ID of the Assistant the message skeleton should be created for.
    * @param string $thread_id
    *   The ID of the thread the message skeleton should be created for.
+   * @param string $user
+   *   The user the message skeleton should be created for.
    *
    * @return \Drupal\Core\Cache\CacheableJsonResponse
    *   Return the message skeleton.
    */
-  public function messageSkeleton(string $assistant_id, string $thread_id) {
+  public function messageSkeleton(string $assistant_id, string $thread_id, string $user = '') {
     $theme = [
       '#theme' => 'ai_chatbot_message',
       '#timestamp' => date('H:i:s'),
       '#assistant_id' => $assistant_id,
       '#thread_id' => $thread_id,
+      '#user' => $user,
     ];
     return new JsonResponse([
       'skeleton' => $this->renderer->render($theme),
