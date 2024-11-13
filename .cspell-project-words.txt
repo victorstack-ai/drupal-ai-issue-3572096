@@ -190,3 +190,5 @@ Nicefy
 fulltext
 analysed
 Asymetric
+Automator
+automator
