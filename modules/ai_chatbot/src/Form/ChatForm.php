@@ -28,14 +28,14 @@ class ChatForm extends FormBase {
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity type manager.
-   * @param \Drupal\ai_assistant_api\AiAssistantApiRunner $aiAssistantClient
+   * @param \Drupal\ai_assistant_api\AiAssistantApiRunner $aiAssistantRunner
    *   The AI Assistant API client.
    * @param \Drupal\Core\Routing\RouteMatchInterface $routeMatcher
    *   The route match.
    */
   public function __construct(
     private readonly EntityTypeManagerInterface $entityTypeManager,
-    private readonly AiAssistantApiRunner $aiAssistantClient,
+    private readonly AiAssistantApiRunner $aiAssistantRunner,
     private readonly RouteMatchInterface $routeMatcher,
   ) {
   }
@@ -68,12 +68,12 @@ class ChatForm extends FormBase {
       $context[$key] = $this->routeMatcher->getParameter($key);
     }
     // Setup the assistant.
-    $this->aiAssistantClient->setContext($context);
+    $this->aiAssistantRunner->setContext($context);
 
     if (!$this->getRequest()->isXmlHttpRequest()) {
       // Set the assistant id if its the page load.
-      $form['#attached']['drupalSettings']['ai_chatbot']['assistant_id'] = $this->aiAssistantClient->getAssistant()->id();
-      $form['#attached']['drupalSettings']['ai_chatbot']['thread_id'] = $this->aiAssistantClient->getThreadsKey();
+      $form['#attached']['drupalSettings']['ai_chatbot']['assistant_id'] = $this->aiAssistantRunner->getAssistant()->id();
+      $form['#attached']['drupalSettings']['ai_chatbot']['thread_id'] = $this->aiAssistantRunner->getThreadsKey();
     }
 
     $response_id = Html::getId($form_state->getBuildInfo()['block_id'] . '-response');
@@ -89,11 +89,11 @@ class ChatForm extends FormBase {
       '#rows' => 1,
     ];
 
-    $form['assistant_id'] = [
+    $form['thread_id'] = [
       '#type' => 'hidden',
       '#default_value' => '',
       '#attributes' => [
-        'class' => ['chat-form-assistant-id'],
+        'class' => ['chat-form-thread-id'],
       ],
     ];
 
@@ -115,27 +115,28 @@ class ChatForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    $this->aiAssistantRunner->setThreadsKey($form_state->getValue('thread_id'));
     // Set the user message.
-    $this->aiAssistantClient->setUserMessage(new UserMessage($form_state->getValue('query')));
+    $this->aiAssistantRunner->setUserMessage(new UserMessage($form_state->getValue('query')));
 
     // Send the query to OpenAI.
     if ($this->getRequest()->isXmlHttpRequest()) {
       try {
         $http_response = new StreamedResponse();
         // Process.
-        $response = $this->aiAssistantClient->process();
+        $response = $this->aiAssistantRunner->process();
         // If its a failure, the variable is a string, just output;.
         if ($response->getNormalized() instanceof ChatMessage) {
           $output = $response->getNormalized()->getText();
           // Show structured results if wanted.
           if ($this->getChatConfig($form_state)['show_structured_results']) {
-            $structured = $this->aiAssistantClient->getStructuredResults();
+            $structured = $this->aiAssistantRunner->getStructuredResults();
             if ($structured) {
               $output .= "\n\n<details>\n\n```\n" . Yaml::dump($structured, 10) . "\n```\n\n</details>";
             }
           }
           $http_response = new Response($output);
-          $this->aiAssistantClient->setAssistantMessage($response->getNormalized()->getText());
+          $this->aiAssistantRunner->setAssistantMessage($response->getNormalized()->getText());
           $form_state->setResponse($http_response);
         }
         else {
@@ -149,7 +150,7 @@ class ChatForm extends FormBase {
             }
             // Show structured results if wanted.
             if ($this->getChatConfig($form_state)['show_structured_results']) {
-              $structured = $this->aiAssistantClient->getStructuredResults();
+              $structured = $this->aiAssistantRunner->getStructuredResults();
               if ($structured) {
                 echo "\n\n<details>\n\n```\n" . Yaml::dump($structured, 10) . "\n```\n\n</details>";
                 ob_flush();
@@ -157,7 +158,7 @@ class ChatForm extends FormBase {
                 $full_response .= "\n<details>\n\n```\n" . Yaml::dump($structured, 10) . "\n```\n\n</details>";
               }
             }
-            $this->aiAssistantClient->setAssistantMessage($full_response);
+            $this->aiAssistantRunner->setAssistantMessage($full_response);
           });
           $form_state->setResponse($http_response);
         }
@@ -168,10 +169,10 @@ class ChatForm extends FormBase {
       }
     }
     else {
-      $response = $this->aiAssistantClient->process();
+      $response = $this->aiAssistantRunner->process();
       $form_state->setRebuild();
       $form_state->set('response', $response->getNormalized()->getText());
-      $this->aiAssistantClient->setAssistantMessage($response->getNormalized()->getText());
+      $this->aiAssistantRunner->setAssistantMessage($response->getNormalized()->getText());
     }
   }
 

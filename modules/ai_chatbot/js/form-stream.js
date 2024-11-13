@@ -4,7 +4,7 @@
   Drupal.behaviors.searchApiAiStream = {
     attach: (context) => {
       // Set the assistant id.
-      $('.chat-form-assistant-id').val(drupalSettings.ai_chatbot.assistant_id);
+      $('.chat-form-thread-id').val(drupalSettings.ai_chatbot.thread_id);
       let streamElements = $('[data-ai-ajax]', context);
       // @todo: Move away from once() since its not in core?
       once('data-streamed', streamElements).forEach((item) => {

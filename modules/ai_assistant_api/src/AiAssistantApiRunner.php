@@ -399,6 +399,9 @@ class AiAssistantApiRunner {
           $instance->setThreadId($this->thread_id);
           $instance->setAiProvider($this->aiProvider->createInstance($defaults['provider_id']));
           $instance->setMessages($this->getMessageHistory());
+          // Pass the assistant and the thread id so it can be tagged.
+          $action['ai_assistant_api'] = $this->assistant->id();
+          $action['thread_id'] = $this->thread_id;
           $instance->triggerAction($action['action'], $action);
         }
       }
