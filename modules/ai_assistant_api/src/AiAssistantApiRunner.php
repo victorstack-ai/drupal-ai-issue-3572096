@@ -327,7 +327,8 @@ class AiAssistantApiRunner {
     // Iterate over the keys until a new one is found.
     $i = 0;
     while (TRUE) {
-      $key = 'assistant_thread_' . $i;
+      $uid = $this->currentUser->id();
+      $key = "assistant_thread_{$uid}_{$i}";
       $thread = $this->getTempStore()->get($key);
       // If its old, we reuse it.
       if (isset($thread['created']) && (time() - $thread['created']) > 86400) {
@@ -337,7 +338,7 @@ class AiAssistantApiRunner {
       // This is a temporary solution for sessions so we don't have too many.
       // We should add garbage collection here later.
       if ($i > 10) {
-        $this->getTempStore()->delete('assistant_thread_' . ($i - 5));
+        $this->getTempStore()->delete("assistant_thread_{$uid}_" . ($i - 5));
       }
       // If its not set, we use it.
       if (!$thread) {
