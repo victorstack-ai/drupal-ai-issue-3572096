@@ -46,6 +46,7 @@ use Drupal\ai_assistant_api\AiAssistantInterface;
  *     "label",
  *     "description",
  *     "allow_history",
+ *     "history_context_length",
  *     "pre_action_prompt",
  *     "preprompt_instructions",
  *     "system_role",
@@ -80,6 +81,11 @@ final class AiAssistant extends ConfigEntityBase implements AiAssistantInterface
    * Allow history.
    */
   protected string $allow_history;
+
+  /**
+   * History context length.
+   */
+  protected string $history_context_length;
 
   /**
    * The system role.

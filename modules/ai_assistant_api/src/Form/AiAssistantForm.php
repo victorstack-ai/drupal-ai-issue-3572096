@@ -133,6 +133,19 @@ final class AiAssistantForm extends EntityForm {
       ],
     ];
 
+    $form['history_context_length'] = [
+      '#type' => 'number',
+      '#title' => $this->t('History context length'),
+      '#default_value' => $entity->get('history_context_length') ?? 2,
+      '#description' => $this->t('The number of user and system messages pair to send from last set of messages, excluding the last message from the user.'),
+      '#states' => [
+        'invisible' => [
+          ':input[name="allow_history"]' => ['value' => 'none'],
+        ],
+      ],
+      '#min' => 0,
+    ];
+
     $form['system_role'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Pre-prompt System role'),

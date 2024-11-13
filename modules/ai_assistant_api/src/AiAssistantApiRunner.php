@@ -575,7 +575,14 @@ class AiAssistantApiRunner {
    */
   public function getMessageHistory() {
     if ($this->assistant->get('allow_history') == 'session') {
-      return $this->getTempStore()->get($this->thread_id)['messages'] ?? [];
+      $history = $this->getTempStore()->get($this->thread_id)['messages'] ?? [];
+      if ($history) {
+        // Send the last message + n pairs of user and system messages (where
+        // n=config value for history context length).
+        $messages_to_send = (int) $this->assistant->get('history_context_length') * 2 + 1;
+        $history = array_slice($history, -($messages_to_send), $messages_to_send);
+      }
+      return $history;
     }
     // Otherwise just return the last message.
     return [

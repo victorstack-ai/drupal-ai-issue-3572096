@@ -22,6 +22,9 @@ ai_assistant_api.ai_assistant.*:
     allow_history:
       type: string
       label: Allow History
+    history_context_length:
+      type: integer
+      label: History context length
     preprompt_instructions:
       type: string
       label: Pre-prompt Instructions
@@ -66,5 +69,3 @@ ai_assistant_api.ai_assistant.*:
       required: false
       sequence:
         type: ignore
-
-
