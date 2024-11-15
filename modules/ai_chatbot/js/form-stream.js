@@ -91,10 +91,12 @@
           onprogress: function (event) {
             responseField.html(isHtml ? event.currentTarget.response : converter.makeHtml(event.currentTarget.response));
             $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
+            responseField.parentsUntil('chat-message').parent().addClass('chat-message--complete');
           },
           onended: function (event) {
             responseField.html(isHtml ? event.currentTarget.response : converter.makeHtml(event.currentTarget.response));
             $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
+            responseField.parentsUntil('chat-message').parent().addClass('chat-message--complete');
           }
         }
       });
