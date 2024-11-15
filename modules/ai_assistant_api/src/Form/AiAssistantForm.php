@@ -130,6 +130,7 @@ final class AiAssistantForm extends EntityForm {
       '#options' => [
         'none' => $this->t('None'),
         'session' => $this->t('Session'),
+        'session_one_thread' => $this->t('Session (Same thread on reload)'),
       ],
     ];
 

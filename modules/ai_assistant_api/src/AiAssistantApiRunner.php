@@ -263,9 +263,13 @@ class AiAssistantApiRunner {
   public function setAssistant(AiAssistant $assistant) {
     $this->assistant = $assistant;
 
-    // Set the thread id.
+    // Generate the thread id.
     if ($this->assistant->get('allow_history') == 'session' && !$this->thread_id) {
       $this->thread_id = $this->generateUniqueKey();
+    }
+    // Set the thread id.
+    if ($this->assistant->get('allow_history') == 'session_one_thread' && !$this->thread_id) {
+      $this->thread_id = 'assistant_thread_' . $this->currentUser->id();
     }
   }
 
@@ -300,7 +304,10 @@ class AiAssistantApiRunner {
     $this->tokens['question'] = $userMessage->getMessage();
 
     // If session is set, we store the user message.
-    if ($this->assistant->get('allow_history') == 'session') {
+    if (in_array($this->assistant->get('allow_history'), [
+      'session',
+      'session_one_thread',
+    ])) {
       $this->addMessageToSession('user', $this->userMessage->getMessage());
     }
   }
@@ -313,7 +320,10 @@ class AiAssistantApiRunner {
    */
   public function setAssistantMessage($message) {
     // If session is set, we store the assistant message.
-    if ($this->assistant->get('allow_history') == 'session') {
+    if (in_array($this->assistant->get('allow_history'), [
+      'session',
+      'session_one_thread',
+    ])) {
       $this->addMessageToSession('assistant', $message);
     }
   }
@@ -324,6 +334,10 @@ class AiAssistantApiRunner {
    * @return string
    */
   public function generateUniqueKey($type = 'session') {
+    // One thread does not have its unique key.
+    if ($type == 'session_one_thread') {
+      return 'assistant_thread_' . $this->currentUser->id();
+    }
     // Iterate over the keys until a new one is found.
     $i = 0;
     while (TRUE) {
@@ -578,7 +592,10 @@ class AiAssistantApiRunner {
    *   The message history.
    */
   public function getMessageHistory() {
-    if ($this->assistant->get('allow_history') == 'session') {
+    if (in_array($this->assistant->get('allow_history'), [
+      'session',
+      'session_one_thread',
+    ])) {
       $history = $this->getTempStore()->get($this->thread_id)['messages'] ?? [];
       if ($history) {
         // Send the last message + n pairs of user and system messages (where
@@ -595,6 +612,15 @@ class AiAssistantApiRunner {
   }
 
   /**
+   * Reset the message history.
+   */
+  public function resetMessageHistory() {
+    $session = $this->getTempStore()->get($this->thread_id);
+    $session['messages'] = [];
+    $this->getTempStore()->set($this->thread_id, $session);
+  }
+
+  /**
    * Helper function to add a message to the session.
    *
    * @param string $role
@@ -607,6 +633,7 @@ class AiAssistantApiRunner {
     $session['messages'][] = [
       'role' => $role,
       'message' => $message,
+      'timestamp' => time(),
     ];
     $this->getTempStore()->set($this->thread_id, $session);
   }

@@ -89,6 +89,17 @@ class ChatForm extends FormBase {
       '#rows' => 1,
     ];
 
+    // Make it possible to clear history.
+    if ($this->aiAssistantRunner->getAssistant()->get('allow_history') == 'session_one_thread') {
+      $form['clear_history'] = [
+        '#type' => 'submit',
+        '#value' => $this->t('Clear History'),
+        '#attributes' => [
+          'class' => ['chat-form-clear-history'],
+        ],
+      ];
+    }
+
     $form['thread_id'] = [
       '#type' => 'hidden',
       '#default_value' => '',
@@ -136,7 +147,7 @@ class ChatForm extends FormBase {
             }
           }
           $http_response = new Response($output);
-          $this->aiAssistantRunner->setAssistantMessage($response->getNormalized()->getText());
+          $this->aiAssistantRunner->setAssistantMessage($output);
           $form_state->setResponse($http_response);
         }
         else {
@@ -153,9 +164,9 @@ class ChatForm extends FormBase {
               $structured = $this->aiAssistantRunner->getStructuredResults();
               if ($structured) {
                 echo "\n\n<details>\n\n```\n" . Yaml::dump($structured, 10) . "\n```\n\n</details>";
+                $full_response .= "\n\n<details>\n\n```\n" . Yaml::dump($structured, 10) . "\n```\n\n</details>";
                 ob_flush();
                 flush();
-                $full_response .= "\n<details>\n\n```\n" . Yaml::dump($structured, 10) . "\n```\n\n</details>";
               }
             }
             $this->aiAssistantRunner->setAssistantMessage($full_response);

@@ -24,12 +24,11 @@
           event.preventDefault();
 
           const clickedElement = $(event.currentTarget);
-          const clickedBlock = clickedElement.attr('data-ai-ajax');
           // Get the message from the textarea.
           let message = form.find('.chat-form-query').val();
           renderUserChatMessage(message)
           .then(() => {
-            renderBotChatMessage(form);
+            renderBotChatMessage(form, '');
           });
         });
       });
@@ -58,7 +57,7 @@
     });
   }
 
-  function renderBotChatMessage(form) {
+  function renderBotChatMessage(form, sendMessage = '') {
     let converter = new showdown.Converter({
       disableForced4SpacesIndentedSublists: true,
       tables: true,
@@ -79,33 +78,36 @@
       let responseField = chatHistory.find('.chat-message:last .chat-message-message');
       chatHistory.scrollTop(chatHistory[0].scrollHeight);
 
-      let postData = form.serializeArray();
-      // Check while creating if its HTML or not.
-      let isHtml = drupalSettings.ai_chatbot.output_type == 'html';
-      $('.chat-form-query').val('');
-      $.ajax({
-        url: form.attr('action'),
-        method: 'POST',
-        data: postData,
-        xhrFields: {
-          onprogress: function (event) {
-            responseField.html(isHtml ? event.currentTarget.response : converter.makeHtml(event.currentTarget.response));
-            $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
-            responseField.parentsUntil('chat-message').parent().addClass('chat-message--complete');
-          },
-          onended: function (event) {
-            responseField.html(isHtml ? event.currentTarget.response : converter.makeHtml(event.currentTarget.response));
-            $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
-            responseField.parentsUntil('chat-message').parent().addClass('chat-message--complete');
+      if (sendMessage === '') {
+        let postData = form.serializeArray();
+        // Check while creating if its HTML or not.
+        let isHtml = drupalSettings.ai_chatbot.output_type == 'html';
+        $('.chat-form-query').val('');
+        $.ajax({
+          url: form.attr('action'),
+          method: 'POST',
+          data: postData,
+          xhrFields: {
+            onprogress: function (event) {
+              responseField.html(isHtml ? event.currentTarget.response : converter.makeHtml(event.currentTarget.response));
+              $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
+              showHasHistory();
+            },
+            onended: function (event) {
+              responseField.html(isHtml ? event.currentTarget.response : converter.makeHtml(event.currentTarget.response));
+              $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
+            }
           }
-        }
-      });
+        });
+      }
+      else {
+        $('.chat-message-message').html(converter.makeHtml(sendMessage));
+      }
     });
   }
 
   // Logic for minimizing the chatbot.
   $(document).ready(() => {
-
     let chatStatus = 'true';
     if (drupalSettings.ai_chatbot.toggle_state == 'remember') {
       chatStatus = localStorage.getItem("livechat.closed");
@@ -116,16 +118,41 @@
     if (chatStatus == 'false') {
       $('#live-chat .chat').show();
     }
+    // If its open.
+    $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
     $('#live-chat header').click(function() {
       $('.chat').toggle(function () {
         localStorage.setItem("livechat.closed", localStorage.getItem("livechat.closed") == 'true' ? 'false' : 'true');
         $(this).animate({
           display: 'block',
-        }, 100);
+        }, 100, () => {
+          // Go to the bottom of the chat history.
+          $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
+        });
       })
     });
+
+    $('.chat-form-clear-history').click((event) => {
+      event.preventDefault();
+      clearHistory();
+    });
+
+    drupalSettings.ai_chatbot.has_history ? showHasHistory() : hideHasHistory();
+
     expandTextarea('edit-query');
   });
+
+  function clearHistory() {
+    $.ajax({
+      url: drupalSettings.path.baseUrl + 'ajax/chatbot/reset-session/' + drupalSettings.ai_chatbot.assistant_id + '/' + drupalSettings.ai_chatbot.thread_id,
+      method: 'POST',
+      success: () => {
+        $('.chat-history').html('');
+        renderBotChatMessage($('.chat-history').closest('form'), drupalSettings.ai_chatbot.first_message);
+      }
+    })
+    hideHasHistory();
+  }
 
   function expandTextarea(id) {
     document.getElementById(id).addEventListener('keyup', function () {
@@ -133,6 +160,14 @@
       this.style.height = 0;
       this.style.height = this.scrollHeight + 'px';
     }, false);
+  }
+
+  function hideHasHistory() {
+    $('.chat-form-clear-history').css('visibility', 'hidden');
+  }
+
+  function showHasHistory() {
+    $('.chat-form-clear-history').css('visibility', 'visible');
   }
 
 })(jQuery, Drupal, drupalSettings);

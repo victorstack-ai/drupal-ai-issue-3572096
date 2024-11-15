@@ -226,6 +226,7 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
    * {@inheritdoc}
    */
   public function build() {
+    /** @var \Drupal\ai_assistant_api\Entity\AiAssistant */
     $assistant = $this->entityTypeManager->getStorage('ai_assistant')->load($this->configuration['ai_assistant']);
     $this->aiAssistantRunner->setAssistant($assistant);
     // Check if the assistant is setup and that the user has access to it.
@@ -241,7 +242,8 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
 
     $form = $this->formBuilder->buildForm(ChatForm::class, $form_state);
 
-    $message = [
+    // Just say hello.
+    $messages[] = [
       '#theme' => 'ai_chatbot_message',
       '#username' => $this->configuration['bot_name'],
       '#bot_image' => $this->configuration['bot_image'],
@@ -251,30 +253,57 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
       '#thread_id' => $this->aiAssistantRunner->getThreadsKey(),
     ];
 
+    // Figure out username and avatar based on settings.
+    $user = $this->currentUser->getAccount();
+    $username = $this->configuration['default_username'];
+    if ($user->isAuthenticated() && $this->configuration['use_username']) {
+      $username = $user->getDisplayName();
+    }
+
+    $avatar = $this->configuration['default_avatar'];
+    if ($user->isAuthenticated() && $this->configuration['use_avatar']) {
+      $userEntity = $this->entityTypeManager->getStorage('user')->load($user->id());
+      if (!empty($userEntity->user_picture->entity)) {
+        $avatar = $this->fileUrlGenerator->generateAbsoluteString($userEntity->user_picture->entity->getFileUri());
+      }
+    }
+
+    $has_history = FALSE;
+    if ($assistant->get('allow_history') == 'session_one_thread') {
+      $session_messages = $this->aiAssistantRunner->getMessageHistory();
+      $has_history = count($session_messages) > 0;
+      foreach ($session_messages as $message) {
+        // Only show messages newer then 1 day and not finished messages.
+        if (isset($message['timestamp']) && $message['timestamp'] > strtotime('-1 day') && (!empty($message['message']) &&
+          !str_contains($message['message'], '<div class="loader"></div>'))) {
+          $messages[] = [
+            '#theme' => 'ai_chatbot_message',
+            '#username' => $message['role'] == 'user' ? $username : $this->configuration['bot_name'],
+            '#bot_image' => $message['role'] == 'user' ? $avatar : $this->configuration['bot_image'],
+            '#timestamp' => date('H:i:s', $message['timestamp']),
+            '#message' => $message['message'],
+            '#assistant_id' => $assistant->id(),
+            '#thread_id' => $this->aiAssistantRunner->getThreadsKey(),
+          ];
+        }
+      }
+    }
+
     $block['#theme'] = 'ai_chatbot';
     $block['#attached']['library'][] = 'ai_chatbot/chat';
     $block['#header'] = $this->configuration['label'];
     $block['#rendered_form'] = $form;
-    $block['#messages'] = [$message];
+    $block['#messages'] = $messages;
 
+    // Set the settings first, since they are needed to render the message.
     $block['#attached']['drupalSettings']['ai_chatbot']['bot_name'] = $this->configuration['bot_name'];
     $block['#attached']['drupalSettings']['ai_chatbot']['bot_image'] = $this->configuration['bot_image'];
-    $block['#attached']['drupalSettings']['ai_chatbot']['default_username'] = $this->configuration['default_username'];
-    $block['#attached']['drupalSettings']['ai_chatbot']['default_avatar'] = $this->configuration['default_avatar'];
+    $block['#attached']['drupalSettings']['ai_chatbot']['default_username'] = $username;
+    $block['#attached']['drupalSettings']['ai_chatbot']['default_avatar'] = $avatar;
     $block['#attached']['drupalSettings']['ai_chatbot']['toggle_state'] = $this->configuration['toggle_state'];
     $block['#attached']['drupalSettings']['ai_chatbot']['output_type'] = $this->configuration['output_type'];
-    $user = $this->currentUser->getAccount();
-    // Override username if the user is authenticated and configured.
-    if ($user->isAuthenticated() && $this->configuration['use_username']) {
-      $block['#attached']['drupalSettings']['ai_chatbot']['default_username'] = $user->getDisplayName();
-    }
-    // Override avatar if the user is authenticated and configured and exist.
-    if ($user->isAuthenticated() && $this->configuration['use_avatar']) {
-      $userEntity = $this->entityTypeManager->getStorage('user')->load($user->id());
-      if (!empty($userEntity->user_picture->entity)) {
-        $block['#attached']['drupalSettings']['ai_chatbot']['default_avatar'] = $this->fileUrlGenerator->generateAbsoluteString($userEntity->user_picture->entity->getFileUri());
-      }
-    }
+    $block['#attached']['drupalSettings']['ai_chatbot']['first_message'] = $this->configuration['first_message'];
+    $block['#attached']['drupalSettings']['ai_chatbot']['has_history'] = $has_history;
 
     return $block;
   }
