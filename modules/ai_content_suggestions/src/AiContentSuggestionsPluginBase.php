@@ -134,7 +134,6 @@ abstract class AiContentSuggestionsPluginBase extends PluginBase implements AiCo
       '#tree' => TRUE,
       'target_field' => [
         '#type' => 'select',
-        '#title' => $this->t('Choose field'),
         '#description' => $this->t('Select the field you wish to send to the LLM'),
         '#options' => $fields,
         '#weight' => 0,
@@ -152,8 +151,8 @@ abstract class AiContentSuggestionsPluginBase extends PluginBase implements AiCo
             'response' => [
               'heading' => [
                 '#type' => 'html_tag',
-                '#tag' => 'h3',
-                '#value' => 'The LLM response will appear here.',
+                '#tag' => 'i',
+                '#value' => '',
               ],
             ],
           ],
