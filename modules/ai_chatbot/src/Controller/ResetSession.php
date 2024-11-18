@@ -49,11 +49,11 @@ class ResetSession extends ControllerBase {
       ]);
     }
     $this->aiAssistantApiRunner->setAssistant($assistant);
-    $this->aiAssistantApiRunner->setThreadsKey($thread_id);
-    $this->aiAssistantApiRunner->resetMessageHistory();
+    $new_thread_id = $this->aiAssistantApiRunner->resetThread($thread_id);
 
     return new JsonResponse([
       'success' => TRUE,
+      'thread_id' => $new_thread_id,
     ]);
   }
 

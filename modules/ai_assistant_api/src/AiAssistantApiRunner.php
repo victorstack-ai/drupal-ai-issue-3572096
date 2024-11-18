@@ -11,6 +11,7 @@ use Drupal\ai_assistant_api\Data\UserMessage;
 use Drupal\ai_assistant_api\Entity\AiAssistant;
 use Drupal\ai_assistant_api\Event\AiAssistantSystemRoleEvent;
 use Drupal\ai_assistant_api\Event\PrepromptSystemRoleEvent;
+use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\TitleResolverInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
@@ -262,12 +263,11 @@ class AiAssistantApiRunner {
     $this->assistant = $assistant;
 
     // Generate the thread id.
-    if ($this->assistant->get('allow_history') == 'session' && !$this->thread_id) {
+    if (in_array($this->assistant->get('allow_history'), [
+      'sessions',
+      'session_one_thread',
+    ]) && !$this->thread_id) {
       $this->thread_id = $this->generateUniqueKey();
-    }
-    // Set the thread id.
-    if ($this->assistant->get('allow_history') == 'session_one_thread' && !$this->thread_id) {
-      $this->thread_id = 'assistant_thread_' . $this->currentUser->id();
     }
   }
 
@@ -331,10 +331,16 @@ class AiAssistantApiRunner {
    *
    * @return string
    */
-  public function generateUniqueKey($type = 'session') {
+  public function generateUniqueKey() {
+    $type = $this->assistant->get('allow_history');
     // One thread does not have its unique key.
     if ($type == 'session_one_thread') {
-      return 'assistant_thread_' . $this->currentUser->id();
+      if ($this->getCurrentThreadsKey()) {
+        return $this->getCurrentThreadsKey();
+      }
+      $current = $this->generateUniqueHash();
+      $this->setCurrentThreadsKey($current);
+      return $current;
     }
     // Iterate over the keys until a new one is found.
     $i = 0;
@@ -382,6 +388,13 @@ class AiAssistantApiRunner {
    */
   public function setThreadsKey($key) {
     $this->thread_id = $key;
+  }
+
+  /**
+   * Unset the thread key.
+   */
+  public function unsetThreadsKey() {
+    $this->thread_id = '';
   }
 
   /**
@@ -551,6 +564,7 @@ class AiAssistantApiRunner {
       'ai_assistant_api',
       'ai_assistant_api_assistant_message',
       'ai_assistant_api_assistant_message_' . $this->assistant->id(),
+      'ai_assistant_thread_' . $this->thread_id,
     ]);
 
     return $response;
@@ -630,6 +644,50 @@ class AiAssistantApiRunner {
   }
 
   /**
+   * Reset a whole thread and get a new thread id.
+   *
+   * @param string $thread_id
+   *   The thread id to reset.
+   *
+   * @return string
+   *   The new thread id.
+   */
+  public function resetThread($thread_id) {
+    $this->setThreadsKey($thread_id);
+    $this->getTempStore()->delete($thread_id);
+    $this->removeCurrentThreadsKey();
+    $this->unsetThreadsKey();
+    return $this->getThreadsKey();
+  }
+
+  /**
+   * Get the current thread id.
+   *
+   * @return string
+   *   The current thread id.
+   */
+  public function getCurrentThreadsKey() {
+    return $this->getTempStore()->get('current_thread_id');
+  }
+
+  /**
+   * Set the current thread id.
+   *
+   * @param string $thread_id
+   *   The thread id to set.
+   */
+  public function setCurrentThreadsKey($thread_id) {
+    $this->getTempStore()->set('current_thread_id', $thread_id);
+  }
+
+  /**
+   * Remove the current thread id.
+   */
+  public function removeCurrentThreadsKey() {
+    $this->getTempStore()->delete('current_thread_id');
+  }
+
+  /**
    * Helper function to add a message to the session.
    *
    * @param string $role
@@ -689,6 +747,7 @@ class AiAssistantApiRunner {
       'ai_assistant_api',
       'ai_assistant_api_preprompt',
       'ai_assistant_api_preprompt_' . $this->assistant->id(),
+      'ai_assistant_thread_' . $this->thread_id,
     ]);
     $values = $response->getNormalized();
 
@@ -767,6 +826,16 @@ class AiAssistantApiRunner {
       }
     }
     return "";
+  }
+
+  /**
+   * Generate a unique hash.
+   *
+   * @return string
+   *   The unique hash.
+   */
+  public function generateUniqueHash() {
+    return Crypt::hashBase64(uniqid('ai-assistant', TRUE) . microtime(TRUE));
   }
 
   /**

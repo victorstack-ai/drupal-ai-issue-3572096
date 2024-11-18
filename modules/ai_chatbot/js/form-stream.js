@@ -146,7 +146,9 @@
     $.ajax({
       url: drupalSettings.path.baseUrl + 'ajax/chatbot/reset-session/' + drupalSettings.ai_chatbot.assistant_id + '/' + drupalSettings.ai_chatbot.thread_id,
       method: 'POST',
-      success: () => {
+      success: (response) => {
+        // Set a new thread id.
+        drupalSettings.ai_chatbot.thread_id = response.thread_id;
         $('.chat-history').html('');
         renderBotChatMessage($('.chat-history').closest('form'), drupalSettings.ai_chatbot.first_message);
       }
