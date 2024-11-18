@@ -6,9 +6,7 @@ use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\ChatOutput;
-use Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface;
 use Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface;
-use Drupal\ai_assistant_api\Data\AssistantStreamIterator;
 use Drupal\ai_assistant_api\Data\UserMessage;
 use Drupal\ai_assistant_api\Entity\AiAssistant;
 use Drupal\ai_assistant_api\Event\AiAssistantSystemRoleEvent;
@@ -393,6 +391,9 @@ class AiAssistantApiRunner {
     // Validate that we can run.
     $this->validateAssistant();
 
+    // Reset everything before running.
+    $this->resetStructuredResults();
+    $this->resetOutputContexts();
     try {
       $pre_prompt = $this->assistant->get('pre_action_prompt');
       if ($pre_prompt) {
@@ -405,7 +406,6 @@ class AiAssistantApiRunner {
 
         $defaults = $this->getProviderAndModel();
         // Reset the action before running them.
-        $this->resetStructuredResults();
 
         foreach ($return['actions'] as $action) {
           $this->using_action = TRUE;
@@ -564,6 +564,15 @@ class AiAssistantApiRunner {
    */
   public function getOutputContexts() {
     return $this->getTempStore()->get($this->thread_id)['output_contexts'] ?? [];
+  }
+
+  /**
+   * Reset the output contexts.
+   */
+  public function resetOutputContexts() {
+    $session = $this->getTempStore()->get($this->thread_id);
+    $session['output_contexts'] = [];
+    $this->getTempStore()->set($this->thread_id, $session);
   }
 
   /**
