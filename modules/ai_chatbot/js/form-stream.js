@@ -71,7 +71,7 @@
       let skeleton = data.skeleton;
       let chatHistory = $('.chat-history');
       chatHistory.append(skeleton);
-      Drupal.attachBehaviors(chatHistory);
+      Drupal.attachBehaviors(chatHistory[0]);
 
       chatHistory.find('.chat-message:last h5').html(drupalSettings.ai_chatbot.bot_name);
       chatHistory.find('.chat-message:last > img').attr('src', drupalSettings.ai_chatbot.bot_image);
@@ -91,11 +91,13 @@
             onprogress: function (event) {
               responseField.html(isHtml ? event.currentTarget.response : converter.makeHtml(event.currentTarget.response));
               $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
+              responseField.parentsUntil('chat-message').parent().addClass('chat-message--complete');
               showHasHistory();
             },
             onended: function (event) {
               responseField.html(isHtml ? event.currentTarget.response : converter.makeHtml(event.currentTarget.response));
               $('.chat-history').scrollTop($('.chat-history')[0].scrollHeight);
+              responseField.parentsUntil('chat-message').parent().addClass('chat-message--complete');
             }
           }
         });
