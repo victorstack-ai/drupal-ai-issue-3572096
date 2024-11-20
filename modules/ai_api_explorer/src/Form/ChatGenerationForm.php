@@ -51,6 +51,13 @@ class ChatGenerationForm extends FormBase {
   protected $requestStack;
 
   /**
+   * Check if its calling.
+   *
+   * @var bool
+   */
+  protected $isCalling = FALSE;
+
+  /**
    * {@inheritdoc}
    */
   public function getFormId() {
@@ -190,6 +197,11 @@ class ChatGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function getResponse(array &$form, FormStateInterface $form_state) {
+    // Don't run if its the same run.
+    if ($this->isCalling) {
+      $this->isCalling = FALSE;
+      return;
+    }
     // This runs on streamed.
     $provider = $this->aiProviderHelper->generateAiProviderFromFormSubmit($form, $form_state, 'chat', 'chat');
     $values = $form_state->getValues();
@@ -275,7 +287,8 @@ class ChatGenerationForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    // This runs on normal submit.
+    $this->isCalling = TRUE;
+    // This runs on streamed submit, but should not run on normal submit.
     $provider = $this->aiProviderHelper->generateAiProviderFromFormSubmit($form, $form_state, 'chat', 'chat');
     $values = $form_state->getValues();
     // Get the messages.
