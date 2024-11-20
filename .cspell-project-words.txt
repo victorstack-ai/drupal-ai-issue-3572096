@@ -83,6 +83,7 @@ ffprobe
 Finegrained
 flac
 fleur
+flesch
 fuelpump
 grey
 guardswoman
