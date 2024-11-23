@@ -589,4 +589,66 @@ class GeneralHelper {
     return $file;
   }
 
+  /**
+   * Get or generate taxonomy in vocabulary.
+   *
+   * @param string $vocabulary
+   *   The vocabulary.
+   * @param string $label
+   *   The label.
+   *
+   * @return \Drupal\taxonomy\Entity\Term
+   *   The term.
+   */
+  public function getOrGenerateTaxonomyTerm($vocabulary, $label) {
+    $termStorage = $this->entityTypeManager->getStorage('taxonomy_term');
+    $terms = $termStorage->loadByProperties([
+      'name' => $label,
+      'vid' => $vocabulary,
+    ]);
+    if ($terms) {
+      return reset($terms);
+    }
+    $term = $termStorage->create([
+      'name' => $label,
+      'vid' => $vocabulary,
+    ]);
+    $term->save();
+    return $term;
+  }
+
+  /**
+   * Get vocabularies for a entity reference field.
+   *
+   * @param string $entityType
+   *   The entity type.
+   * @param string $bundle
+   *   The bundle.
+   * @param string $fieldName
+   *   The field name.
+   *
+   * @return array
+   *   The vocabularies.
+   */
+  public function getVocabulariesFromField($entityType, $bundle, $fieldName) {
+    $fieldStorage = $this->entityFieldManager->getFieldDefinitions($entityType, $bundle)[$fieldName];
+    $vocabularies = [];
+    foreach ($fieldStorage->getSetting('handler_settings')['target_bundles'] as $vocabulary) {
+      if ($vocabulary) {
+        $vocabularies[] = $vocabulary;
+      }
+    }
+    return $vocabularies;
+  }
+
+  /**
+   * Get the entity type manager.
+   *
+   * @return \Drupal\Core\Entity\EntityTypeManagerInterface
+   *   The entity type manager.
+   */
+  public function entityTypeManager() {
+    return $this->entityTypeManager;
+  }
+
 }
