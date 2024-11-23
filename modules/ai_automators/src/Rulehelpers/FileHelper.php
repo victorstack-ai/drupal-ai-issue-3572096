@@ -89,7 +89,7 @@ class FileHelper {
   public function createFilePathFromFieldConfig($fileName, FieldDefinitionInterface $fieldDefinition, ContentEntityInterface $entity) {
     $config = $fieldDefinition->getConfig($entity->bundle())->getSettings();
     $path = $this->token->replace($config['uri_scheme'] . '://' . rtrim($config['file_directory'], '/'));
-    $this->fileSystem->prepareDirectory($path);
+    $this->fileSystem->prepareDirectory($path, FileSystemInterface::CREATE_DIRECTORY);
     return $path . '/' . $fileName;
   }
 
