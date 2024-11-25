@@ -13,12 +13,15 @@ ai_assistant_api.ai_assistant.*:
     description:
       type: string
       label: Description
+    system_prompt:
+      type: string
+      label: System Prompt
     pre_action_prompt:
       type: string
       label: Pre Action Prompt
     instructions:
       type: string
-      label: Pre-prompt Instructions
+      label: Instructions
     allow_history:
       type: string
       label: Allow History

@@ -264,9 +264,9 @@ class AiAssistantApiRunner {
 
     // Generate the thread id.
     if (in_array($this->assistant->get('allow_history'), [
-      'sessions',
-      'session_one_thread',
-    ]) && !$this->thread_id) {
+        'sessions',
+        'session_one_thread',
+      ]) && !$this->thread_id) {
       $this->thread_id = $this->generateUniqueKey();
     }
   }
@@ -408,7 +408,7 @@ class AiAssistantApiRunner {
     $this->resetStructuredResults();
     $this->resetOutputContexts();
     try {
-      $pre_prompt = $this->assistant->get('pre_action_prompt');
+      $pre_prompt = $this->assistant->get('system_prompt');
       if ($pre_prompt) {
         $return = $this->prePrompt();
 
@@ -514,15 +514,22 @@ class AiAssistantApiRunner {
     $connect = $this->getProviderAndModel();
     $provider = $this->aiProvider->createInstance($connect['provider_id']);
     // Set the provider role.
-    $assistant_message = $this->assistant->get('assistant_message');
-    // Replace the tokens.
-    foreach ($this->tokens as $key => $value) {
-      $assistant_message = str_replace('[' . $key . ']', $value, $assistant_message);
-    }
+    $assistant_message = $this->assistant->get('system_prompt');
     if ($this->using_action) {
       // Add the information that search is done.
       $assistant_message .= "\n\n Start the message with the following information: \nThank you for your question. I am looking up the answer.\n\n";
     }
+    $assistant_message = str_replace([
+      '[instructions]',
+      '[pre_action_prompt]',
+    ], [
+      $this->assistant->get('instructions'),
+      '',
+    ], $assistant_message);
+    foreach ($this->getPrePromptDrupalContext() as $key => $replace) {
+      $assistant_message = str_replace('[' . $key . ']', $replace, $assistant_message);
+    }
+
     // Let other modules change the system role.
     $event = new AiAssistantSystemRoleEvent($assistant_message);
     $this->eventDispatcher->dispatch($event, AiAssistantSystemRoleEvent::EVENT_NAME);
@@ -709,19 +716,18 @@ class AiAssistantApiRunner {
    * Runs the pre prompt to figure out what to do.
    */
   protected function prePrompt() {
-    $pre_prompt = $this->assistant->get('pre_action_prompt');
+    $system_prompt = $this->assistant->get('system_prompt');
+    $system_prompt = str_replace('[pre_action_prompt]', $this->assistant->get('pre_action_prompt'), $system_prompt);
     $actions = $this->getPreparedActions();
     $pre_prompt = str_replace([
       '[learning_examples]',
       '[list_of_actions]',
-      '[pre_prompt]',
-      '[system_role]',
+      '[instructions]',
     ], [
       $this->getFewShotExamples(),
       $actions,
-      $this->assistant->get('preprompt_instructions'),
-      $this->assistant->get('system_role'),
-    ], $pre_prompt);
+      $this->assistant->get('instructions'),
+    ], $system_prompt);
 
     foreach ($this->getPrePromptDrupalContext() as $key => $replace) {
       $pre_prompt = str_replace('[' . $key . ']', $replace, $pre_prompt);
@@ -901,9 +907,7 @@ class AiAssistantApiRunner {
     $context = [];
     $current_request = $this->requestStack->getCurrentRequest();
     $context['is_logged_in'] = $this->currentUser->isAuthenticated() ? 'is logged in' : 'is not logged in';
-    $context['user_name'] = $this->currentUser->getAccountName();
     $context['user_roles'] = implode(', ', $this->currentUser->getRoles());
-    $context['user_email'] = $this->currentUser->getEmail();
     $context['user_id'] = $this->currentUser->id();
     $context['user_language'] = $this->currentUser->getPreferredLangcode();
     $context['user_timezone'] = $this->currentUser->getTimeZone();

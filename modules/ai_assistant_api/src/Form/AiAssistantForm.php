@@ -111,62 +111,25 @@ final class AiAssistantForm extends EntityForm {
       '#default_value' => $entity->status(),
     ];
 
-    $form['description'] = [
+    $form['instructions'] = [
       '#type' => 'textarea',
-      '#title' => $this->t('Description'),
-      '#default_value' => $entity->get('description'),
-      '#description' => $this->t('A 1-2 sentence description of the AI assistant and what it does.'),
-      '#attributes' => [
-        'rows' => 2,
-        'placeholder' => $this->t('An assistant that can find old articles and also publish and unpublish them.'),
-      ],
-    ];
+      '#title' => $this->t('Instructions'),
+      '#default_value' => $entity->get('instructions') ?? 'If the user asked about added functionality to the site, you can suggest the following recipes outside of your Drupal knowledge and that they can find them under /admin/modules/browse:
+* Advanced SEO recipe.
+* Multilingual recipe
+* Accessibility tools recipe
+You do not have the ability to add this for them. Ask them if they need help and direct them to how to install modules on a Drupal site calling it the project browser.
 
-    $form['allow_history'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Allow History'),
-      '#default_value' => $entity->get('allow_history') ?? 'session',
-      '#description' => $this->t('If enabled, the AI Assistant will try store the questions and answers in history during a session. This makes it possible to ask follow-up questions to the Assistant. Note that this raises the price and size of AI calls, and might not be needed for all assistants. Sessions means that it will be stored in the session until the page is reloaded. (coming) Database means that it will be stored in the database with an ID and can be continued later in multiple threads.'),
-      '#options' => [
-        'none' => $this->t('None'),
-        'session' => $this->t('Session'),
-        'session_one_thread' => $this->t('Session (Same thread on reload)'),
-      ],
-    ];
-
-    $form['history_context_length'] = [
-      '#type' => 'number',
-      '#title' => $this->t('History context length'),
-      '#default_value' => $entity->get('history_context_length') ?? 2,
-      '#description' => $this->t('The number of user and system messages pair to send from last set of messages, excluding the last message from the user.'),
-      '#states' => [
-        'invisible' => [
-          ':input[name="allow_history"]' => ['value' => 'none'],
-        ],
-      ],
-      '#min' => 0,
-    ];
-
-    $form['system_role'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('Pre-prompt System role'),
-      '#default_value' => $entity->get('system_role'),
-      '#description' => $this->t('The pre-prompt system role that this AI assistant should have for the prompt. This is used to determine how and with what the AI Assistant should act.'),
-      '#required' => TRUE,
-      '#attributes' => [
-        'rows' => 2,
-        'placeholder' => $this->t('You are an assistant helping people find old articles in the archive using natural language. Answer in a professional and neutral tone. Be short and concise. Answer in markdown.'),
-      ],
-    ];
-
-    $form['preprompt_instructions'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('Pre-prompt Instructions'),
-      '#default_value' => $entity->get('preprompt_instructions'),
-      '#description' => $this->t('Extra instruction to the pre-prompt. This can be used to control the content of the pre-prompt.'),
+If a user asked you to Categorize something. Assume you will need to use a taxonomy in Drupal.
+If they ask you to create a category or taxonomy, assume they will also want you to create a field that uses that taxonomy on an entity they have been talking about. If you are unsure ask, before you create a taxonomy without attaching it to an entity.
+ALWAYS try and add any newly created taxonomy vocabularies to an entity using the entity reference field so that they can select the taxonomy in the edit form. If you are unable to ALWAYS ask.
+You are allowed to suggest taxonomy terms for the vocabulary, if the user asks to generate based on your knowledge.
+If they ask you to create a report, page or list, assume in Drupal they mean Views.
+If they ask you to change an edit form assume they want you to change the fields on a content type.',
+      '#description' => $this->t('What does this Assistant do? How does it behave? What should it avoid doing? These instructions are sent to the AI alongside any user messages to help it know how it is supposed to respond. It is good to start by telling it a role such as "You are a Drupal assistant helping users understand how to use Drupal"'),
       '#required' => FALSE,
       '#attributes' => [
-        'rows' => 2,
+        'rows' => 15,
         'placeholder' => $this->t('If the user asks questions about unpublished articles, make sure to add status unpublished somewhere in the lookup.'),
       ],
     ];
@@ -216,28 +179,40 @@ final class AiAssistantForm extends EntityForm {
       $form['action_plugin_' . $definition['id']]['#tree'] = TRUE;
     }
 
-    $assistant_message = file_get_contents($this->extensionPathResolver->getPath('module', 'ai_assistant_api') . '/resources/assistant_message.txt');
-
-    $form['assistant_message'] = [
+    $form['description'] = [
       '#type' => 'textarea',
-      '#title' => $this->t('Assistant message'),
-      '#description' => $this->t('The assistant message is the system role for responses created by the LLM after an action like RAG lookup or agent actions are taken, they will get contexts from the different action providers like RAG and the chat history if session is enabled.'),
-      '#default_value' => $entity->get('assistant_message') ?? $assistant_message,
+      '#title' => $this->t('Administrative Description'),
+      '#default_value' => $entity->get('description'),
+      '#description' => $this->t('Add a short 1-2 sentence description of what this AI Assistant does. This is not used in the prompt at all and is primarily for site admins. If for any reason the assistant is called by an AI this description may be used to help another AI agent understand this Assistant.'),
       '#attributes' => [
-        'placeholder' => $assistant_message,
-        'rows' => 15,
+        'rows' => 2,
+        'placeholder' => $this->t('An assistant that can find old articles and also publish and unpublish them.'),
       ],
     ];
 
-    $form['error_message'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('Error message'),
-      '#description' => $this->t('This is the answer if we run into any error on the way. You may use the token [error_message] to get the error message from the backend in your message, but it might be a security concern to show this to none escalated users.'),
-      '#default_value' => $entity->get('error_message') ?? $this->t('I am sorry, something went terribly wrong. Please try to ask me again.'),
-      '#attributes' => [
-        'placeholder' => $this->t('I am sorry, something went terribly wrong. Please try to ask me again.'),
-        'rows' => 2,
+    $form['allow_history'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Allow History'),
+      '#default_value' => $entity->get('allow_history') ?? 'session',
+      '#description' => $this->t('If enabled, the AI Assistant will try store the questions and answers in history during a session. This makes it possible to ask follow-up questions to the Assistant. Note that this raises the price and size of AI calls, and might not be needed for all assistants. Sessions means that it will be stored in the session until the page is reloaded. (coming) Database means that it will be stored in the database with an ID and can be continued later in multiple threads. History includes all the user messages and the assistant replies. It does not include the system prompt (this changes), the messages made by the agents themselves. It does not include all the context provided alongside a user prompt.'),
+      '#options' => [
+        'none' => $this->t('None'),
+        'session' => $this->t('Session'),
+        'session_one_thread' => $this->t('Session (Same thread on reload)'),
       ],
+    ];
+
+    $form['history_context_length'] = [
+      '#type' => 'number',
+      '#title' => $this->t('History context length'),
+      '#default_value' => $entity->get('history_context_length') ?? 2,
+      '#description' => $this->t('The number of user and system messages pair to send from last set of messages, excluding the last message from the user.'),
+      '#states' => [
+        'invisible' => [
+          ':input[name="allow_history"]' => ['value' => 'none'],
+        ],
+      ],
+      '#min' => 0,
     ];
 
     // Set form state if empty.
@@ -248,7 +223,7 @@ final class AiAssistantForm extends EntityForm {
       $form_state->setValue('llm_ai_model', $entity->get('llm_model'));
     }
 
-    $this->formHelper->generateAiProvidersForm($form, $form_state, 'chat', 'llm', AiProviderFormHelper::FORM_CONFIGURATION_FULL, 0, '', $this->t('Advanced LLM'), $this->t('The AI Provider to use for the advanced interactions.'), TRUE);
+    $this->formHelper->generateAiProvidersForm($form, $form_state, 'chat', 'llm', AiProviderFormHelper::FORM_CONFIGURATION_FULL, 0, '', $this->t('AI Provider'), $this->t('The provider of the AI models used by this assistant. You will only be able to select the advanced models that are capable of providing the responses the Assistant needs.'), TRUE);
 
     // Set default values.
     $llm_configs = $entity->get('llm_configuration');
@@ -257,7 +232,6 @@ final class AiAssistantForm extends EntityForm {
         $form['llm_ajax_prefix']['llm_ajax_prefix_configuration_' . $key]['#default_value'] = $value;
       }
     }
-    // phpcs:ignore
     $pre_action_prompt = file_get_contents($this->extensionPathResolver->getPath('module', 'ai_assistant_api') . '/resources/pre_action_prompt.txt');
 
     $form['advanced'] = [
@@ -280,18 +254,39 @@ final class AiAssistantForm extends EntityForm {
       '#multiple' => TRUE,
     ];
 
+    $form['advanced']['error_message'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Error message'),
+      '#description' => $this->t('This is the answer if we run into any error on the way. You may use the token [error_message] to get the error message from the backend in your message, but it might be a security concern to show this to none escalated users.'),
+      '#default_value' => $entity->get('error_message') ?? $this->t('I am sorry, something went terribly wrong. Please try to ask me again.'),
+      '#attributes' => [
+        'placeholder' => $this->t('I am sorry, something went terribly wrong. Please try to ask me again.'),
+        'rows' => 2,
+      ],
+    ];
+
     $form['advanced']['pre_action_prompt'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Pre Action Prompt'),
-      '#default_value' => $entity->get('pre_action_prompt') ?? $pre_action_prompt,
+      '#default_value' => $entity->get('pre_action_prompt'),
+      '#description' => $this->t("This field provides instructions to the LLM prior to running an action.<br><br><strong>The following placesholders can be used:</strong><br>
+      <em>[learning_example]</em> - The learning examples for the list of actions the Assistant can take.<br>
+      <em>[list_of_actions]</em> - The list of actions that the Assistant can take.<br>"),
+      '#disabled' => !Settings::get('ai_assistant_advanced_mode_enabled', FALSE),
+      '#attributes' => [
+        'rows' => 30,
+      ],
+    ];
+    $form['advanced']['system_prompt'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('System Prompt'),
+      '#default_value' => $entity->get('system_prompt') ?? $pre_action_prompt,
       '#description' => $this->t("This field can be enabled by adding <strong>\$settings['ai_assistant_advanced_mode_enabled'] = TRUE;</strong> in settings.php. The pre prompts gets a list of actions that it can take, including RAG databases and either gives back actions that the Assistant can take or an outputted answer. You may use [list_of_actions] to list the actions that the Assistant can take. You can only change this via manual config change. DO NOT CHANGE THIS UNLESS YOU KNOW WHAT YOU ARE DOING. <br><br><strong>The following placesholders can be used:</strong><br>
-      <em>[list_of_actions]</em> - The list of actions that the Assistant can take.<br>
-      <em>[pre_prompt]</em> - The setup pre_prompt.<br>
-      <em>[system_role]</em> - The system role of the Assistant.<br>
+      <em>[instructions]</em> - The instructions for the assistant.<br>
+      <em>[pre_action_prompt]</em> - The value of the preprompt field above.<br>
       <em>[is_logged_in]</em> - A message if the person is logged in or not.<br>
       <em>[user_name]</em> - The username of the user.<br>
       <em>[user_roles]</em> - The roles of the user.<br>
-      <em>[user_email]</em> - The email of the user.<br>
       <em>[user_id]</em> - The user id of the user.<br>
       <em>[user_language]</em> - The language of the user.<br>
       <em>[user_timezone]</em> - The timezone of the user.<br>
@@ -303,7 +298,7 @@ final class AiAssistantForm extends EntityForm {
       '#required' => TRUE,
       '#disabled' => !Settings::get('ai_assistant_advanced_mode_enabled', FALSE),
       '#attributes' => [
-        'rows' => 75,
+        'rows' => 30,
       ],
     ];
 
