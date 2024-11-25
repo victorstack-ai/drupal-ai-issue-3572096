@@ -110,6 +110,10 @@
 
   // Logic for minimizing the chatbot.
   $(document).ready(() => {
+    if (drupalSettings.ai_chatbot.output_type === 'markdown') {
+      rerenderChatMessages();
+    }
+
     let chatStatus = 'true';
     if (drupalSettings.ai_chatbot.toggle_state == 'remember') {
       chatStatus = localStorage.getItem("livechat.closed");
@@ -172,6 +176,15 @@
 
   function showHasHistory() {
     $('.chat-form-clear-history').css('visibility', 'visible');
+  }
+
+  function rerenderChatMessages() {
+    let converter = new showdown.Converter();
+    let responses = $('.chat-history .chat-message-message');
+    responses.each(function () {
+      let message = this.textContent.trim();
+      this.innerHTML = converter.makeHtml(message);
+    });
   }
 
 })(jQuery, Drupal, drupalSettings);
