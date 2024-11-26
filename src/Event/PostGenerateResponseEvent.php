@@ -69,6 +69,13 @@ class PostGenerateResponseEvent extends Event {
   protected $debugData = [];
 
   /**
+   * The metadata to store for the request.
+   *
+   * @var array
+   */
+  protected array $metadata;
+
+  /**
    * Constructs the object.
    *
    * @param string $provider_id
@@ -87,8 +94,10 @@ class PostGenerateResponseEvent extends Event {
    *   The tags for the request.
    * @param array $debug_data
    *   The debug data for the request.
+   * @param array $metadata
+   *   The metadata to store for the request.
    */
-  public function __construct(string $provider_id, string $operation_type, array $configuration, mixed $input, string $model_id, mixed $output, array $tags = [], array $debug_data = []) {
+  public function __construct(string $provider_id, string $operation_type, array $configuration, mixed $input, string $model_id, mixed $output, array $tags = [], array $debug_data = [], array $metadata = []) {
     $this->providerId = $provider_id;
     $this->configuration = $configuration;
     $this->operationType = $operation_type;
@@ -97,6 +106,7 @@ class PostGenerateResponseEvent extends Event {
     $this->output = $output;
     $this->tags = $tags;
     $this->debugData = $debug_data;
+    $this->metadata = $metadata;
   }
 
   /**
@@ -209,6 +219,51 @@ class PostGenerateResponseEvent extends Event {
    */
   public function setOutput(mixed $output) {
     $this->output = $output;
+  }
+
+  /**
+   * Get all the metadata.
+   *
+   * @return array
+   *   All the metadata.
+   */
+  public function getAllMetadata(): array {
+    return $this->metadata;
+  }
+
+  /**
+   * Set all metadata replacing existing contents.
+   *
+   * @param array $metadata
+   *   All the metadata.
+   */
+  public function setAllMetadata(array $metadata): void {
+    $this->metadata = $metadata;
+  }
+
+  /**
+   * Get specific metadata by key.
+   *
+   * @param string $metadata_key
+   *   The key of the metadata to return.
+   *
+   * @return mixed
+   *   The metadata for the provided key.
+   */
+  public function getMetadata(string $metadata_key): mixed {
+    return $this->metadata[$metadata_key];
+  }
+
+  /**
+   * Add to the metadata by key.
+   *
+   * @param string $key
+   *   The key.
+   * @param mixed $value
+   *   The value.
+   */
+  public function setMetadata(string $key, mixed $value): void {
+    $this->metadata[$key] = $value;
   }
 
 }
