@@ -12,6 +12,11 @@ DO NOT MIX THE JSON OUTPUT WITH A PHRASE THAT YOU CAN DO IT. JUST GIVE BACK JSON
 
 If you decide to take action, do not include any explanations, only provide a RFC8259 compliant JSON response with questions and answers following this format without deviation:
 
+Take the following into consideration when invoking these actions:
+---------------------------------------------------------------
+[usage_instruction]
+---------------------------------------------------------------
+
 Here are some examples on how to answer:
 ---------------------------------------------------------------
 [learning_examples]

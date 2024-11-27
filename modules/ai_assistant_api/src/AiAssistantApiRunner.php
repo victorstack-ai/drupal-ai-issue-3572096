@@ -719,14 +719,17 @@ class AiAssistantApiRunner {
     $system_prompt = $this->assistant->get('system_prompt');
     $system_prompt = str_replace('[pre_action_prompt]', $this->assistant->get('pre_action_prompt'), $system_prompt);
     $actions = $this->getPreparedActions();
+    $usage_instructions = $this->getUsageInstructions();
     $pre_prompt = str_replace([
       '[learning_examples]',
       '[list_of_actions]',
       '[instructions]',
+      '[usage_instructions]',
     ], [
       $this->getFewShotExamples(),
       $actions,
       $this->assistant->get('instructions'),
+      $usage_instructions,
     ], $system_prompt);
 
     foreach ($this->getPrePromptDrupalContext() as $key => $replace) {
@@ -866,6 +869,16 @@ class AiAssistantApiRunner {
       'provider_id' => $provider_id,
       'model_id' => $model_id,
     ];
+  }
+
+  /**
+   * Get a list of usage instructions.
+   *
+   * @return string
+   *   A string representation of the usage instructions.
+   */
+  public function getUsageInstructions() {
+    return implode("\n", $this->actions->listAllUsageInstructions($this->assistant->get('actions_enabled')));
   }
 
   /**

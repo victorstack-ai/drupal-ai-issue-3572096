@@ -59,6 +59,17 @@ interface AiAssistantActionInterface extends PluginFormInterface, ConfigurableIn
   public function listContexts(): array;
 
   /**
+   * List of usage instructions to give back.
+   *
+   * This is used to give back a list of usage instructions to the assistant
+   * so that it can be provided in the system prompt for best usages.
+   *
+   * @return array
+   *   List of usage instructions.
+   */
+  public function listUsageInstructions(): array;
+
+  /**
    * Triggers some action.
    *
    * @param string $action_id

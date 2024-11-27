@@ -119,6 +119,13 @@ abstract class AiAssistantActionBase implements AiAssistantActionInterface, Cont
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function listUsageInstructions(): array {
+    return [];
+  }
+
+  /**
    * Get the private tempstore for AI Assistant.
    *
    * @return \Drupal\Core\TempStore\PrivateTempStore

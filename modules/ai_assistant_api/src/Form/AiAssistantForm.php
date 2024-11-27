@@ -269,8 +269,10 @@ If they ask you to change an edit form assume they want you to change the fields
       '#type' => 'textarea',
       '#title' => $this->t('Pre Action Prompt'),
       '#default_value' => $entity->get('pre_action_prompt'),
-      '#description' => $this->t("This field provides instructions to the LLM prior to running an action.<br><br><strong>The following placesholders can be used:</strong><br>
+      '#description' => $this->t(
+      "This field provides instructions to the LLM prior to running an action.<br><br><strong>The following placesholders can be used:</strong><br>
       <em>[learning_example]</em> - The learning examples for the list of actions the Assistant can take.<br>
+      <em>[usage_instructions]</em> - The list of usage instructions given back from the action plugins.<br>
       <em>[list_of_actions]</em> - The list of actions that the Assistant can take.<br>"),
       '#disabled' => !Settings::get('ai_assistant_advanced_mode_enabled', FALSE),
       '#attributes' => [
