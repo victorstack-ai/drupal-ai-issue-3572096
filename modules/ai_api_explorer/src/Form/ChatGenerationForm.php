@@ -83,7 +83,8 @@ class ChatGenerationForm extends FormBase {
     // If no provider is installed we can't do anything.
     if (!$this->providerManager->hasProvidersForOperationType('chat')) {
       $form['markup'] = [
-        '#markup' => '<div class="ai-error">' . $this->t('No AI providers are installed for Chat calls, please %install and %configure one first.', [
+        '#markup' => '<div class="ai-error">' . $this->t('No AI providers are installed for Chat calls. Choose a provider from the <a href="@ai">AI module homepage</a>, add it to your project, then %install and %configure it first.', [
+          '%ai' => 'https://www.drupal.org/project/ai',
           '%install' => Link::createFromRoute($this->t('install'), 'system.modules_list')->toString(),
           '%configure' => Link::createFromRoute($this->t('configure'), 'ai.admin_providers')->toString(),
         ]) . '</div>',
