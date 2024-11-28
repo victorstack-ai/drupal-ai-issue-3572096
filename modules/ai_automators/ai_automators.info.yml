@@ -1,5 +1,5 @@
 name: AI Automators
-description: Automate anything and everything using AI.
+description: Allows AI and other tools and services to automatically generate field values on content creation.
 package: AI (Experimental)
 type: module
 core_version_requirement: ^10.2 || ^11
