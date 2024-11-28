@@ -45,7 +45,7 @@ class AiAssistantFormTest extends WebDriverTestBase {
       $this->drupalLogin($this->createUser(['administer ai_assistant']));
 
       // Visit the page where the form is displayed.
-      $this->drupalGet('/admin/config/ai/ai_assistant/add');
+      $this->drupalGet('/admin/config/ai/ai-assistant/add');
 
       // Assert the select form elements are present.
       $this->assertSession()->fieldExists('llm_ai_provider');
