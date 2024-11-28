@@ -353,11 +353,7 @@ final class AiProviderPluginManager extends DefaultPluginManager {
       'model_id' => $model_id,
     ];
     // Set a message to the user.
-    $this->messenger->addMessage($this->t('Default provider %provider_id with model %model set for operation type %operation_type.', [
-      '%operation_type' => $operation_type,
-      '%provider_id' => $provider_id,
-      '%model' => $model_id,
-    ]));
+    $this->loggerFactory->get('ai')->notice("Default provider $provider_id with model $model_id set for operation type $operation_type.");
     $config->set('default_providers', $default_providers)->save();
     return TRUE;
   }
