@@ -6,6 +6,7 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\Enum\AiModelCapability;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -161,6 +162,13 @@ class AiSettingsForm extends ConfigFormBase {
         catch (\Exception $e) {
           // Don't crash if the provider is not fully configured.
           $this->messenger()->addError($e->getMessage());
+          // In case the exception is related to authentication.
+          if ($e->getCode() == 401 || method_exists($e, 'getStatusCode') && $e->getStatusCode() == 401) {
+            $api_key = $providers[$default_provider]->getConfig()->get('api_key');
+            if (!empty($api_key)) {
+              $this->messenger()->addError($this->t('You can update or add the API Key <a href="@url" target="_blank">here</a>', ['@url' => Url::fromRoute('entity.key.edit_form', ['key' => $api_key])->toString()]));
+            }
+          }
         }
         $form['default_providers'][$operation_type['id']]['model']['model__' . $operation_type['id']] = [
           '#type' => 'select',
