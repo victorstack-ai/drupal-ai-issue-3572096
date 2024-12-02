@@ -18,6 +18,7 @@ nav:
       - Speech-To-Speech Call: developers/call_speech_to_speech.md
       - Image Classification Call: developers/call_image_classification.md
       - Translate Text Call: developers/call_translate_text.md
+    - Develop an AI API Explorer plugin: developers/ai_api_explorer.md
     - Develop an AI Provider: developers/writing_an_ai_provider.md
     - Develop an AI Automators plugin: docs/developers/writing_an_au_automators_plugin.md
     - Develop a third-party module: developers/develop_third_party_module.md
@@ -28,6 +29,7 @@ nav:
         - AI Assistant API Action: developers/develop_api_assistant_action.md
         - AI CKEditor: developers/ck_editor_plugin.md
   - Modules:
+    - AI API Explorer: modules/ai_api_explorer/index.md
     - AI Assistant API: modules/ai_assistant_api/index.md
     - AI Automators: modules/ai_automators/index.md
     - AI Chatbot: modules/ai_assistant_api/#ai-chatbot-module

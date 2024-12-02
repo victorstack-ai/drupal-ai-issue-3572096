@@ -1,0 +1,37 @@
+<?php
+
+/**
+ * @file
+ * Hooks and custom functions for the AI API Explorer module.
+ */
+
+/**
+ * Implements hook_menu_links_discovered_alter().
+ */
+function ai_api_explorer_menu_links_discovered_alter(&$links): void {
+  $database = \Drupal::database();
+  $query = $database->query('SELECT name FROM {router} WHERE name LIKE :name', [':name' => 'ai_api_explorer.form.%']);
+  foreach ($query->fetchAll() as $result) {
+    $route = \Drupal::service('router.route_provider')->getRouteByName($result->name);
+
+    /** @var \Drupal\ai_api_explorer\AiApiExplorerPluginManager $plugin_manager */
+    $plugin_manager = \Drupal::service('plugin.manager.ai_api_explorer');
+
+    /** @var \Drupal\ai_api_explorer\AiApiExplorerInterface $plugin */
+    $plugin_id = $route->getDefault('plugin_id');
+    $definition = $plugin_manager->getDefinition($plugin_id);
+
+    /** @var \Drupal\ai_api_explorer\AiApiExplorerInterface $plugin */
+    $plugin = $plugin_manager->createInstance($plugin_id, $definition);
+
+    $links['ai_api_explorer.form.' . $plugin_id] = [
+      'title' => $plugin->getLabel(),
+      'description' => $plugin->getDescription(),
+      'parent' => 'ai_api_explorer.main',
+      'route_name' => $result->name,
+      'weight' => 0,
+      'provider' => 'ai_api_explorer',
+      'id' => $result->name,
+    ];
+  }
+}

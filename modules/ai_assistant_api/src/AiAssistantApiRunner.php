@@ -269,6 +269,10 @@ class AiAssistantApiRunner {
       ]) && !$this->thread_id) {
       $this->thread_id = $this->generateUniqueKey();
     }
+    // Set the thread id.
+    if ($this->assistant->get('allow_history') == 'session_one_thread' && !$this->thread_id) {
+      $this->thread_id = 'assistant_thread_' . $this->currentUser->id();
+    }
   }
 
   /**
