@@ -26,7 +26,7 @@ ai_assistant_api.ai_assistant.*:
       type: string
       label: Allow History
     history_context_length:
-      type: integer
+      type: string
       label: History context length
     preprompt_instructions:
       type: string
