@@ -101,12 +101,12 @@ final class AiAssistant extends ConfigEntityBase implements AiAssistantInterface
    *
    * @var string
    */
-  protected string $system_prompt;
+  protected ?string $system_prompt;
 
   /**
    * The instructions for the LLM.
    */
-  protected string $instructions;
+  protected ?string $instructions;
 
   /**
    * The instructions for the pre action prompt.
