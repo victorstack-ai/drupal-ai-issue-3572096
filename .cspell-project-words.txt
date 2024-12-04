@@ -193,3 +193,5 @@ analysed
 Asymetric
 Automator
 automator
+fireworksai
+Fireworksai
