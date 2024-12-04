@@ -6,7 +6,7 @@ namespace Drupal\ai_api_explorer\Plugin\AiApiExplorer;
 
 use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
-use Drupal\Core\File\FileUrlGenerator;
+use Drupal\Core\File\FileUrlGeneratorInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\AiProviderPluginManager;
@@ -45,12 +45,12 @@ final class ImageAndAudioToVideoGenerator extends AiApiExplorerPluginBase {
    *   The Explorer helper.
    * @param \Drupal\ai\AiProviderPluginManager $providerManager
    *   The Provider Manager.
-   * @param \Drupal\Core\File\FileUrlGenerator $fileUrlGenerator
+   * @param \Drupal\Core\File\FileUrlGeneratorInterface $fileUrlGenerator
    *   The File Url Generator.
    * @param \Drupal\Core\File\FileSystemInterface $fileSystem
    *   The File System.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, RequestStack $requestStack, AiProviderFormHelper $aiProviderHelper, ExplorerHelper $explorerHelper, AiProviderPluginManager $providerManager, protected FileUrlGenerator $fileUrlGenerator, protected FileSystemInterface $fileSystem) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, RequestStack $requestStack, AiProviderFormHelper $aiProviderHelper, ExplorerHelper $explorerHelper, AiProviderPluginManager $providerManager, protected FileUrlGeneratorInterface $fileUrlGenerator, protected FileSystemInterface $fileSystem) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $requestStack, $aiProviderHelper, $explorerHelper, $providerManager);
   }
 
