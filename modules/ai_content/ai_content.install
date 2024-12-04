@@ -16,6 +16,23 @@ function ai_content_update_9100(): void {
 
   $values = [];
 
+  // Unset all permissions from the old configuration.
+  $target_permission = 'access ai content tools';
+  /** @var \Drupal\user\Entity\Role $role_storage */
+  $role_storage = \Drupal::entityTypeManager()->getStorage('user_role');
+  $roles = $role_storage->loadMultiple();
+  foreach ($roles as $role_id => $role) {
+    if ($role->hasPermission($target_permission)) {
+      $role->revokePermission($target_permission);
+      $role->save();
+
+      \Drupal::logger('ai')->notice('Removed permission "@permission" from role: @role.', [
+        '@permission' => $target_permission,
+        '@role' => $role->label(),
+      ]);
+    }
+  }
+
   foreach ($config_names as $old_config_name) {
     // Generate the new configuration name.
     $new_config_name = str_replace('ai_content.', 'ai_content_suggestions.', $old_config_name);
