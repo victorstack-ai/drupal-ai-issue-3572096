@@ -11,6 +11,7 @@ use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\ai_automators\Entity\AiAutomator;
 use Drupal\ai_automators\PluginManager\AiAutomatorTypeManager;
 use Drupal\ai_automators\Traits\AutomatorInstructionTrait;
+use Drupal\Core\Url;
 use Drupal\token\TokenEntityMapperInterface;
 use Drupal\token\TreeBuilder;
 use Http\Discovery\Exception\NotFoundException;
@@ -203,24 +204,42 @@ class AiChainForm extends FormBase {
         '#attributes' => ['class' => ['item-order-weight']],
       ];
 
+      $links = [];
+
+      if ($this->moduleHandler->moduleExists('field_ui')) {
+        $field_config = [
+          'entity_type' => $entity_type,
+          'bundle' => $bundle,
+          'field' => $definition->get('field_name'),
+        ];
+
+        $route_params = $parameters;
+        $route_params['field_config'] = implode('.', $field_config);
+
+        $links['edit'] = [
+          'title' => $this->t('Edit'),
+          'url' => Url::fromRoute('entity.field_config.' . $entity_type . '_field_edit_form', $route_params, [
+            'query' => [
+              'destination' => Url::fromRoute('<current>')->toString(),
+            ],
+          ]),
+        ];
+      }
+
+      $links['delete'] = [
+        'title' => $this->t('Delete'),
+        'url' => $definition->toUrl('delete-form'),
+      ];
+
       $form['items'][$definition->id()]['operations'] = [
         '#type' => 'operations',
-        '#links' => [
-          'edit' => [
-            'title' => $this->t('Edit'),
-            'url' => $definition->toUrl('edit-form'),
-          ],
-          'delete' => [
-            'title' => $this->t('Delete'),
-            'url' => $definition->toUrl('delete-form'),
-          ],
-        ],
+        '#links' => $links,
       ];
     }
 
     $form['submit'] = [
       '#type' => 'submit',
-      '#value' => $this->t('Resort'),
+      '#value' => $this->t('Re-sort'),
     ];
 
     return $form;
