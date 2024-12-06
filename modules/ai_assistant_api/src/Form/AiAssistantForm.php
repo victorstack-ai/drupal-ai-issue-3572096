@@ -114,19 +114,7 @@ final class AiAssistantForm extends EntityForm {
     $form['instructions'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Instructions'),
-      '#default_value' => $entity->get('instructions') ?? 'If the user asked about added functionality to the site, you can suggest the following recipes outside of your Drupal knowledge and that they can find them under /admin/modules/browse:
-* Advanced SEO recipe.
-* Multilingual recipe
-* Accessibility tools recipe
-You do not have the ability to add this for them. Ask them if they need help and direct them to how to install modules on a Drupal site calling it the project browser.
-
-If a user asked you to Categorize something. Assume you will need to use a taxonomy in Drupal.
-If they ask you to create a category or taxonomy, assume they will also want you to create a field that uses that taxonomy on an entity they have been talking about. If you are unsure ask, before you create a taxonomy without attaching it to an entity.
-ALWAYS try and add any newly created taxonomy vocabularies to an entity using the entity reference field so that they can select the taxonomy in the edit form. If you are unable to ALWAYS ask.
-You are allowed to suggest taxonomy terms for the vocabulary, if the user asks to generate based on your knowledge.
-If they ask you to create a report, page or list, assume in Drupal they mean Views.
-If they ask you to change an edit form assume they want you to change the fields on a content type.',
-      '#description' => $this->t('What does this Assistant do? How does it behave? What should it avoid doing? These instructions are sent to the AI alongside any user messages to help it know how it is supposed to respond. It is good to start by telling it a role such as "You are a Drupal assistant helping users understand how to use Drupal"'),
+      '#default_value' => $entity->get('instructions') ?? '',
       '#required' => FALSE,
       '#attributes' => [
         'rows' => 15,
@@ -233,6 +221,7 @@ If they ask you to change an edit form assume they want you to change the fields
       }
     }
     $pre_action_prompt = file_get_contents($this->extensionPathResolver->getPath('module', 'ai_assistant_api') . '/resources/pre_action_prompt.txt');
+    $system_prompt = file_get_contents($this->extensionPathResolver->getPath('module', 'ai_assistant_api') . '/resources/system_prompt.txt');
 
     $form['advanced'] = [
       '#type' => 'details',
@@ -268,11 +257,11 @@ If they ask you to change an edit form assume they want you to change the fields
     $form['advanced']['pre_action_prompt'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Pre Action Prompt'),
-      '#default_value' => $entity->get('pre_action_prompt'),
+      '#default_value' => $entity->get('pre_action_prompt') ?? $pre_action_prompt,
       '#description' => $this->t(
       "This field provides instructions to the LLM prior to running an action.<br><br><strong>The following placesholders can be used:</strong><br>
       <em>[learning_example]</em> - The learning examples for the list of actions the Assistant can take.<br>
-      <em>[usage_instructions]</em> - The list of usage instructions given back from the action plugins.<br>
+      <em>[usage_instruction]</em> - The list of usage instructions given back from the action plugins.<br>
       <em>[list_of_actions]</em> - The list of actions that the Assistant can take.<br>"),
       '#disabled' => !Settings::get('ai_assistant_advanced_mode_enabled', FALSE),
       '#attributes' => [
@@ -282,7 +271,7 @@ If they ask you to change an edit form assume they want you to change the fields
     $form['advanced']['system_prompt'] = [
       '#type' => 'textarea',
       '#title' => $this->t('System Prompt'),
-      '#default_value' => $entity->get('system_prompt') ?? $pre_action_prompt,
+      '#default_value' => $entity->get('system_prompt') ?? $system_prompt,
       '#description' => $this->t("This field can be enabled by adding <strong>\$settings['ai_assistant_advanced_mode_enabled'] = TRUE;</strong> in settings.php. The pre prompts gets a list of actions that it can take, including RAG databases and either gives back actions that the Assistant can take or an outputted answer. You may use [list_of_actions] to list the actions that the Assistant can take. You can only change this via manual config change. DO NOT CHANGE THIS UNLESS YOU KNOW WHAT YOU ARE DOING. <br><br><strong>The following placesholders can be used:</strong><br>
       <em>[instructions]</em> - The instructions for the assistant.<br>
       <em>[pre_action_prompt]</em> - The value of the preprompt field above.<br>

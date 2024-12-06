@@ -414,7 +414,7 @@ class AiAssistantApiRunner {
     try {
       $pre_prompt = $this->assistant->get('system_prompt');
       if ($pre_prompt) {
-        $return = $this->prePrompt();
+        $return = $this->assistantMessage(TRUE);
 
         // If its a normal response, we just return it.
         if ($return instanceof ChatOutput) {
@@ -511,10 +511,13 @@ class AiAssistantApiRunner {
   /**
    * Run the final assistants message.
    *
+   * @param bool $pre_prompt
+   *   If the pre prompt should be run.
+   *
    * @return \Drupal\ai\OperationType\Chat\ChatOutput
    *   The response from the assistant.
    */
-  protected function assistantMessage() {
+  protected function assistantMessage($pre_prompt = FALSE) {
     $connect = $this->getProviderAndModel();
     $provider = $this->aiProvider->createInstance($connect['provider_id']);
     // Set the provider role.
@@ -528,7 +531,7 @@ class AiAssistantApiRunner {
       '[pre_action_prompt]',
     ], [
       $this->assistant->get('instructions'),
-      '',
+      $pre_prompt ? $this->prePrompt() : '',
     ], $assistant_message);
     foreach ($this->getPrePromptDrupalContext() as $key => $replace) {
       $assistant_message = str_replace('[' . $key . ']', $replace, $assistant_message);
@@ -571,14 +574,26 @@ class AiAssistantApiRunner {
     }
     $input = new ChatInput($messages);
 
-    $response = $provider->chat($input, $connect['model_id'], [
+    $tags = [
       'ai_assistant_api',
       'ai_assistant_api_assistant_message',
       'ai_assistant_api_assistant_message_' . $this->assistant->id(),
       'ai_assistant_thread_' . $this->thread_id,
-    ]);
+    ];
 
-    return $response;
+    if ($pre_prompt) {
+      $tags[] = 'ai_assistant_api_pre_prompt';
+    }
+
+    $response = $provider->chat($input, $connect['model_id'], $tags);
+    $values = $response->getNormalized();
+
+    $response = $this->promptJsonDecoder->decode($values, 20);
+
+    if (is_array($response)) {
+      return $response;
+    }
+    return new ChatOutput($response, $values, []);
   }
 
   /**
@@ -728,7 +743,7 @@ class AiAssistantApiRunner {
       '[learning_examples]',
       '[list_of_actions]',
       '[instructions]',
-      '[usage_instructions]',
+      '[usage_instruction]',
     ], [
       $this->getFewShotExamples(),
       $actions,
@@ -743,33 +758,7 @@ class AiAssistantApiRunner {
     $event = new PrepromptSystemRoleEvent($pre_prompt);
     $this->eventDispatcher->dispatch($event, PrepromptSystemRoleEvent::EVENT_NAME);
     $pre_prompt = $event->getSystemPrompt();
-
-    $connect = $this->getProviderAndModel();
-    $provider = $this->aiProvider->createInstance($connect['provider_id']);
-    $provider->setChatSystemRole($pre_prompt);
-    if ($this->streaming) {
-      $provider->streamedOutput(TRUE);
-    }
-    $messages = [];
-    $history = $this->getMessageHistory();
-    foreach ($history as $message) {
-      $messages[] = new ChatMessage($message['role'], $message['message']);
-    }
-    $input = new ChatInput($messages);
-    $response = $provider->chat($input, $connect['model_id'], [
-      'ai_assistant_api',
-      'ai_assistant_api_preprompt',
-      'ai_assistant_api_preprompt_' . $this->assistant->id(),
-      'ai_assistant_thread_' . $this->thread_id,
-    ]);
-    $values = $response->getNormalized();
-
-    $response = $this->promptJsonDecoder->decode($values, 20);
-
-    if (is_array($response)) {
-      return $response;
-    }
-    return new ChatOutput($response, $values, []);
+    return $pre_prompt;
   }
 
   /**
@@ -926,6 +915,7 @@ class AiAssistantApiRunner {
     $context['is_logged_in'] = $this->currentUser->isAuthenticated() ? 'is logged in' : 'is not logged in';
     $context['user_roles'] = implode(', ', $this->currentUser->getRoles());
     $context['user_id'] = $this->currentUser->id();
+    $context['user_name'] = $this->currentUser->getDisplayName();
     $context['user_language'] = $this->currentUser->getPreferredLangcode();
     $context['user_timezone'] = $this->currentUser->getTimeZone();
     $context['page_title'] = (string) $this->titleResolver->getTitle($current_request, $current_request->attributes->get('_route_object'));
