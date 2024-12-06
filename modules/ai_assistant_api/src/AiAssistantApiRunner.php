@@ -271,7 +271,7 @@ class AiAssistantApiRunner {
     }
     // Set the thread id.
     if ($this->assistant->get('allow_history') == 'session_one_thread' && !$this->thread_id) {
-      $this->thread_id = 'assistant_thread_' . $this->currentUser->id();
+      $this->thread_id = 'assistant_thread_' . $this->assistant->id() . '_' . $this->currentUser->id();
     }
   }
 
@@ -693,7 +693,7 @@ class AiAssistantApiRunner {
    *   The current thread id.
    */
   public function getCurrentThreadsKey() {
-    return $this->getTempStore()->get('current_thread_id');
+    return $this->getTempStore()->get('current_thread_id_'. $this->assistant->id());
   }
 
   /**
@@ -703,14 +703,14 @@ class AiAssistantApiRunner {
    *   The thread id to set.
    */
   public function setCurrentThreadsKey($thread_id) {
-    $this->getTempStore()->set('current_thread_id', $thread_id);
+    $this->getTempStore()->set('current_thread_id_' . $this->assistant->id(), $thread_id);
   }
 
   /**
    * Remove the current thread id.
    */
   public function removeCurrentThreadsKey() {
-    $this->getTempStore()->delete('current_thread_id');
+    $this->getTempStore()->delete('current_thread_id_'. $this->assistant->id());
   }
 
   /**
