@@ -156,7 +156,7 @@ final class TextToImageGenerator extends AiApiExplorerPluginBase {
         $key++;
 
         if ($form_state->getValue('save_as_media')) {
-          if ($media = $image->getAsMediaEntity($form_state->getValue('save_as_media'), 'public://', 'image.png')) {
+          if ($media = $image->getAsMediaEntity($form_state->getValue('save_as_media'), '', 'image.png')) {
             $media->save();
           }
         }
@@ -209,7 +209,7 @@ final class TextToImageGenerator extends AiApiExplorerPluginBase {
     $code['code']['#value'] .= "// Examples Possibility #2 - get as base 64 encoded string from the first image.<br>";
     $code['code']['#value'] .= '$base64 = $normalized[0]->getAsBase64EncodedString();<br>';
     $code['code']['#value'] .= "// Examples Possibility #3 - get as generated media from the first image.<br>";
-    $code['code']['#value'] .= '$media = $normalized[0]->getAsMediaEntity("image", "public://", "image.png");<br>';
+    $code['code']['#value'] .= '$media = $normalized[0]->getAsMediaEntity("image", "", "image.png");<br>';
     $code['code']['#value'] .= "// Examples Possibility #4 - get as image file entity from the first image.<br>";
     $code['code']['#value'] .= '$file = $normalized[0]->getAsImageEntity("public://", "image.png");<br><br>';
     $code['code']['#value'] .= "// Another possibility is to get the raw response from the provider.<br>";

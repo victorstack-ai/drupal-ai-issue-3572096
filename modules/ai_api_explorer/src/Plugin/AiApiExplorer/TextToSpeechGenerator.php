@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\ai_api_explorer\Plugin\AiApiExplorer;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\File\FileExists;
@@ -57,8 +58,10 @@ final class TextToSpeechGenerator extends AiApiExplorerPluginBase {
    *   The module handler.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The Entity Type Manager.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config
+   *   Config factory.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, RequestStack $requestStack, AiProviderFormHelper $aiProviderHelper, ExplorerHelper $explorerHelper, AiProviderPluginManager $providerManager, protected FileUrlGeneratorInterface $fileUrlGenerator, protected FileSystemInterface $fileSystem, protected ModuleHandlerInterface $moduleHandler, protected EntityTypeManagerInterface $entityTypeManager) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, RequestStack $requestStack, AiProviderFormHelper $aiProviderHelper, ExplorerHelper $explorerHelper, AiProviderPluginManager $providerManager, protected FileUrlGeneratorInterface $fileUrlGenerator, protected FileSystemInterface $fileSystem, protected ModuleHandlerInterface $moduleHandler, protected EntityTypeManagerInterface $entityTypeManager, protected ConfigFactoryInterface $config) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $requestStack, $aiProviderHelper, $explorerHelper, $providerManager);
   }
 
@@ -78,6 +81,7 @@ final class TextToSpeechGenerator extends AiApiExplorerPluginBase {
       $container->get('file_system'),
       $container->get('module_handler'),
       $container->get('entity_type.manager'),
+      $container->get('config.factory'),
     );
   }
 
@@ -159,8 +163,10 @@ final class TextToSpeechGenerator extends AiApiExplorerPluginBase {
         }
       }
       $audio_normalized = $audio[0]->getAsBinary();
+
       // Save the binary data to a file.
-      $file_url = $this->fileSystem->saveData($audio_normalized, 'public://text-to-speech-test.mp3', FileExists::Replace);
+      $destination = $this->config->get('system.file')->get('default_scheme') . '://text-to-speech-test.mp3';
+      $file_url = $this->fileSystem->saveData($audio_normalized, $destination, FileExists::Replace);
       $form['right']['response']['#context']['ai_response']['response'] = [
         '#type' => 'inline_template',
         '#template' => '{{ player|raw }}',
@@ -212,7 +218,7 @@ final class TextToSpeechGenerator extends AiApiExplorerPluginBase {
     $code['code']['#value'] .= "// Examples Possibility #2 - get as base 64 encoded string from the first audio.<br>";
     $code['code']['#value'] .= '$base64 = $normalized[0]->getAsBase64EncodedString();<br>';
     $code['code']['#value'] .= "// Examples Possibility #3 - get as generated media from the first audio.<br>";
-    $code['code']['#value'] .= '$media = $normalized[0]->getAsMediaEntity("audio", "public://", "audio.mp3");<br>';
+    $code['code']['#value'] .= '$media = $normalized[0]->getAsMediaEntity("audio", "", "audio.mp3");<br>';
     $code['code']['#value'] .= "// Examples Possibility #4 - get as file entity from the first audio.<br>";
     $code['code']['#value'] .= '$file = $normalized[0]->getAsFileEntity("public://", "audio.mp3");<br><br>';
     $code['code']['#value'] .= "// Another possibility is to get the raw response from the provider.<br>";

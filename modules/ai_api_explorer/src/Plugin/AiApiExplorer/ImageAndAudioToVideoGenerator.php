@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Plugin\AiApiExplorer;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\File\FileUrlGeneratorInterface;
@@ -49,8 +50,10 @@ final class ImageAndAudioToVideoGenerator extends AiApiExplorerPluginBase {
    *   The File Url Generator.
    * @param \Drupal\Core\File\FileSystemInterface $fileSystem
    *   The File System.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config
+   *   Config factory.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, RequestStack $requestStack, AiProviderFormHelper $aiProviderHelper, ExplorerHelper $explorerHelper, AiProviderPluginManager $providerManager, protected FileUrlGeneratorInterface $fileUrlGenerator, protected FileSystemInterface $fileSystem) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, RequestStack $requestStack, AiProviderFormHelper $aiProviderHelper, ExplorerHelper $explorerHelper, AiProviderPluginManager $providerManager, protected FileUrlGeneratorInterface $fileUrlGenerator, protected FileSystemInterface $fileSystem, protected ConfigFactoryInterface $config) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $requestStack, $aiProviderHelper, $explorerHelper, $providerManager);
   }
 
@@ -68,6 +71,7 @@ final class ImageAndAudioToVideoGenerator extends AiApiExplorerPluginBase {
       $container->get('ai.provider'),
       $container->get('file_url_generator'),
       $container->get('file_system'),
+      $container->get('config.factory'),
     );
   }
 
@@ -155,9 +159,11 @@ final class ImageAndAudioToVideoGenerator extends AiApiExplorerPluginBase {
         return $form['right'];
       }
 
-      // Save the binary data to a file.
       if ($video_normalized) {
-        $file_url = $this->fileSystem->saveData($video_normalized->getBinary(), 'public://image-and-audio-to-video-test.mp4', FileExists::Replace);
+
+        // Save the binary data to a file in default storage.
+        $destination = $this->config->get('system.file')->get('default_scheme') . '://image-and-audio-to-video-test.mp4';
+        $file_url = $this->fileSystem->saveData($video_normalized->getBinary(), $destination, FileExists::Replace);
         $form['right']['response']['#context']['ai_response']['response'] = [
           '#type' => 'inline_template',
           '#template' => '{{ player|raw }}',

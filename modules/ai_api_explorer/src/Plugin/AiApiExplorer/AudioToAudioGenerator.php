@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Plugin\AiApiExplorer;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\File\FileUrlGeneratorInterface;
@@ -51,8 +52,10 @@ final class AudioToAudioGenerator extends AiApiExplorerPluginBase {
    *   The File Url Generator.
    * @param \Drupal\Core\File\FileSystemInterface $fileSystem
    *   The File System.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config
+   *   Config factory.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, RequestStack $requestStack, AiProviderFormHelper $aiProviderHelper, ExplorerHelper $explorerHelper, AiProviderPluginManager $providerManager, protected FileUrlGeneratorInterface $fileUrlGenerator, protected FileSystemInterface $fileSystem) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, RequestStack $requestStack, AiProviderFormHelper $aiProviderHelper, ExplorerHelper $explorerHelper, AiProviderPluginManager $providerManager, protected FileUrlGeneratorInterface $fileUrlGenerator, protected FileSystemInterface $fileSystem, protected ConfigFactoryInterface $config) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $requestStack, $aiProviderHelper, $explorerHelper, $providerManager);
   }
 
@@ -70,6 +73,7 @@ final class AudioToAudioGenerator extends AiApiExplorerPluginBase {
       $container->get('ai.provider'),
       $container->get('file_url_generator'),
       $container->get('file_system'),
+      $container->get('config.factory'),
     );
   }
 
@@ -143,8 +147,9 @@ final class AudioToAudioGenerator extends AiApiExplorerPluginBase {
         return $form['right'];
       }
 
-      // Save the binary data to a file.
-      $file_url = $this->fileSystem->saveData($audio_normalized[0]->getBinary(), 'public://audio-to-audio-test.mp3', FileExists::Replace);
+      // Save the binary data to a file in default storage.
+      $destination = $this->config->get('system.file')->get('default_scheme') . '://audio-to-audio-test.mp3';
+      $file_url = $this->fileSystem->saveData($audio_normalized[0]->getBinary(), $destination, FileExists::Replace);
       $form['right']['response']['#context']['ai_response']['response'] = [
         '#type' => 'inline_template',
         '#template' => '{{ player|raw }}',
@@ -194,7 +199,7 @@ final class AudioToAudioGenerator extends AiApiExplorerPluginBase {
     $code['code']['#value'] .= "// Examples Possibility #2 - get as base 64 encoded string from the first audio.<br>";
     $code['code']['#value'] .= '$base64 = $normalized[0]->getAsBase64EncodedString();<br>';
     $code['code']['#value'] .= "// Examples Possibility #3 - get as generated media from the first audio.<br>";
-    $code['code']['#value'] .= '$media = $normalized[0]->getAsMediaEntity("audio", "public://", "audio.mp3");<br>';
+    $code['code']['#value'] .= '$media = $normalized[0]->getAsMediaEntity("audio", "", "audio.mp3");<br>';
     $code['code']['#value'] .= "// Examples Possibility #4 - get as file entity from the first audio.<br>";
     $code['code']['#value'] .= '$file = $normalized[0]->getAsFileEntity("public://", "audio.mp3");<br><br>';
     $code['code']['#value'] .= "// Another possibility is to get the raw response from the provider.<br>";
