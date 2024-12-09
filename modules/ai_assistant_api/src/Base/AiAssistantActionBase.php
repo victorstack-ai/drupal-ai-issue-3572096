@@ -126,6 +126,11 @@ abstract class AiAssistantActionBase implements AiAssistantActionInterface, Cont
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function triggerRollback(): void {}
+
+  /**
    * Get the private tempstore for AI Assistant.
    *
    * @return \Drupal\Core\TempStore\PrivateTempStore

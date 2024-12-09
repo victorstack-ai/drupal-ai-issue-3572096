@@ -91,4 +91,12 @@ interface AiAssistantActionInterface extends PluginFormInterface, ConfigurableIn
    */
   public function provideFewShotLearningExample(): array;
 
+  /**
+   * Triggers a rollback.
+   *
+   * This is used to trigger a rollback of the action, for actions that actually
+   * change the state of the system.
+   */
+  public function triggerRollback(): void;
+
 }

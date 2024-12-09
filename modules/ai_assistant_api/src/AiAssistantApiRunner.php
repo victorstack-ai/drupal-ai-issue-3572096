@@ -411,6 +411,7 @@ class AiAssistantApiRunner {
     // Reset everything before running.
     $this->resetStructuredResults();
     $this->resetOutputContexts();
+    $instance = NULL;
     try {
       $pre_prompt = $this->assistant->get('system_prompt');
       if ($pre_prompt) {
@@ -442,6 +443,9 @@ class AiAssistantApiRunner {
       // Log the error.
       $this->loggerChannelFactory->get('ai_assistant_api')->error($e->getMessage());
       $error_message = str_replace('[error_message]', $e->getMessage(), $this->assistant->get('error_message'));
+      if (!is_null($instance)) {
+        $instance->triggerRollback();
+      }
       // Return the error message.
       return new ChatOutput(
         new ChatMessage('assistant', $error_message),
