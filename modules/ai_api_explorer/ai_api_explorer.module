@@ -5,6 +5,8 @@
  * Hooks and custom functions for the AI API Explorer module.
  */
 
+use Drupal\Core\StreamWrapper\StreamWrapperManager;
+
 /**
  * Implements hook_menu_links_discovered_alter().
  */
@@ -34,4 +36,25 @@ function ai_api_explorer_menu_links_discovered_alter(&$links): void {
       'id' => $result->name,
     ];
   }
+}
+
+/**
+ * Allows access to files in temporary://ai-explorers/.
+ *
+ * @param string $uri
+ *   The URI being accessed.
+ *
+ * @return string[]|null
+ *   A file header if the file is in the correct folder. NULL if not.
+ */
+function ai_api_explorer_file_download(string $uri): ?array {
+  if (StreamWrapperManager::getScheme($uri) == 'temporary') {
+    if (str_starts_with(StreamWrapperManager::getTarget($uri), 'ai-explorers')) {
+      return [
+        'Content-disposition' => 'inline; filename="' . basename($uri) . '"',
+      ];
+    }
+  }
+
+  return NULL;
 }

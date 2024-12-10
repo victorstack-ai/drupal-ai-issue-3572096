@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace Drupal\ai_api_explorer\Plugin\AiApiExplorer;
 
 use Drupal\Component\Serialization\Json;
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
-use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\File\FileUrlGeneratorInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\Url;
 use Drupal\ai\AiProviderInterface;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\Plugin\ProviderProxy;
@@ -58,10 +57,8 @@ final class TextToSpeechGenerator extends AiApiExplorerPluginBase {
    *   The module handler.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The Entity Type Manager.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config
-   *   Config factory.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, RequestStack $requestStack, AiProviderFormHelper $aiProviderHelper, ExplorerHelper $explorerHelper, AiProviderPluginManager $providerManager, protected FileUrlGeneratorInterface $fileUrlGenerator, protected FileSystemInterface $fileSystem, protected ModuleHandlerInterface $moduleHandler, protected EntityTypeManagerInterface $entityTypeManager, protected ConfigFactoryInterface $config) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, RequestStack $requestStack, AiProviderFormHelper $aiProviderHelper, ExplorerHelper $explorerHelper, AiProviderPluginManager $providerManager, protected FileUrlGeneratorInterface $fileUrlGenerator, protected FileSystemInterface $fileSystem, protected ModuleHandlerInterface $moduleHandler, protected EntityTypeManagerInterface $entityTypeManager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $requestStack, $aiProviderHelper, $explorerHelper, $providerManager);
   }
 
@@ -81,7 +78,6 @@ final class TextToSpeechGenerator extends AiApiExplorerPluginBase {
       $container->get('file_system'),
       $container->get('module_handler'),
       $container->get('entity_type.manager'),
-      $container->get('config.factory'),
     );
   }
 
@@ -165,13 +161,17 @@ final class TextToSpeechGenerator extends AiApiExplorerPluginBase {
       $audio_normalized = $audio[0]->getAsBinary();
 
       // Save the binary data to a file.
-      $destination = $this->config->get('system.file')->get('default_scheme') . '://text-to-speech-test.mp3';
-      $file_url = $this->fileSystem->saveData($audio_normalized, $destination, FileExists::Replace);
+      $destination = 'temporary://ai-explorers/';
+      $this->fileSystem->prepareDirectory($destination, FileSystemInterface::CREATE_DIRECTORY);
+      $random = (string) rand();
+      $file_url = $this->fileSystem->saveData($audio_normalized, $destination . '/' . md5($random) . '.mp3');
+      $file_name = basename($file_url);
+      $url = Url::fromRoute('system.temporary', [], ['query' => ['file' => 'ai-explorers/' . $file_name]]);
       $form['right']['response']['#context']['ai_response']['response'] = [
         '#type' => 'inline_template',
         '#template' => '{{ player|raw }}',
         '#context' => [
-          'player' => '<audio controls><source src="' . $this->fileUrlGenerator->generateAbsoluteString($file_url) . '" type="audio/mpeg"></audio>',
+          'player' => '<audio controls><source src="' . $url->toString() . '" type="audio/mpeg"></audio>',
         ],
       ];
 

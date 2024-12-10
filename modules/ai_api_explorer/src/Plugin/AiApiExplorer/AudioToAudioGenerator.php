@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Plugin\AiApiExplorer;
 
-use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\File\FileUrlGeneratorInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\Url;
 use Drupal\ai\AiProviderInterface;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\OperationType\AudioToAudio\AudioToAudioInput;
@@ -52,10 +51,8 @@ final class AudioToAudioGenerator extends AiApiExplorerPluginBase {
    *   The File Url Generator.
    * @param \Drupal\Core\File\FileSystemInterface $fileSystem
    *   The File System.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config
-   *   Config factory.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, RequestStack $requestStack, AiProviderFormHelper $aiProviderHelper, ExplorerHelper $explorerHelper, AiProviderPluginManager $providerManager, protected FileUrlGeneratorInterface $fileUrlGenerator, protected FileSystemInterface $fileSystem, protected ConfigFactoryInterface $config) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, RequestStack $requestStack, AiProviderFormHelper $aiProviderHelper, ExplorerHelper $explorerHelper, AiProviderPluginManager $providerManager, protected FileUrlGeneratorInterface $fileUrlGenerator, protected FileSystemInterface $fileSystem) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $requestStack, $aiProviderHelper, $explorerHelper, $providerManager);
   }
 
@@ -73,7 +70,6 @@ final class AudioToAudioGenerator extends AiApiExplorerPluginBase {
       $container->get('ai.provider'),
       $container->get('file_url_generator'),
       $container->get('file_system'),
-      $container->get('config.factory'),
     );
   }
 
@@ -147,14 +143,18 @@ final class AudioToAudioGenerator extends AiApiExplorerPluginBase {
         return $form['right'];
       }
 
-      // Save the binary data to a file in default storage.
-      $destination = $this->config->get('system.file')->get('default_scheme') . '://audio-to-audio-test.mp3';
-      $file_url = $this->fileSystem->saveData($audio_normalized[0]->getBinary(), $destination, FileExists::Replace);
+      // Save the binary data to a file.
+      $destination = 'temporary://ai-explorers/';
+      $this->fileSystem->prepareDirectory($destination, FileSystemInterface::CREATE_DIRECTORY);
+      $random = (string) rand();
+      $file_url = $this->fileSystem->saveData($audio_normalized, $destination . '/' . md5($random) . '.mp3');
+      $file_name = basename($file_url);
+      $url = Url::fromRoute('system.temporary', [], ['query' => ['file' => 'ai-explorers/' . $file_name]]);
       $form['right']['response']['#context']['ai_response']['response'] = [
         '#type' => 'inline_template',
         '#template' => '{{ player|raw }}',
         '#context' => [
-          'player' => '<audio controls><source src="' . $this->fileUrlGenerator->generateAbsoluteString($file_url) . '" type="audio/mpeg"></audio>',
+          'player' => '<audio controls><source src="' . $url->toString() . '" type="audio/mpeg"></audio>',
         ],
       ];
 

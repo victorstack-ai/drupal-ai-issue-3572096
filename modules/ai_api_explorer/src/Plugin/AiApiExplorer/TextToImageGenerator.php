@@ -6,6 +6,7 @@ namespace Drupal\ai_api_explorer\Plugin\AiApiExplorer;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\AiProviderInterface;
@@ -15,6 +16,7 @@ use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai_api_explorer\AiApiExplorerPluginBase;
 use Drupal\ai_api_explorer\Attribute\AiApiExplorer;
 use Drupal\ai_api_explorer\ExplorerHelper;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -49,8 +51,10 @@ final class TextToImageGenerator extends AiApiExplorerPluginBase {
    *   The module handler.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The Entity Type Manager.
+   * @param \Drupal\Core\File\FileSystemInterface $fileSystem
+   *   The File System.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, RequestStack $requestStack, AiProviderFormHelper $aiProviderHelper, ExplorerHelper $explorerHelper, AiProviderPluginManager $providerManager, protected ModuleHandlerInterface $moduleHandler, protected EntityTypeManagerInterface $entityTypeManager) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, RequestStack $requestStack, AiProviderFormHelper $aiProviderHelper, ExplorerHelper $explorerHelper, AiProviderPluginManager $providerManager, protected ModuleHandlerInterface $moduleHandler, protected EntityTypeManagerInterface $entityTypeManager, protected FileSystemInterface $fileSystem) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $requestStack, $aiProviderHelper, $explorerHelper, $providerManager);
   }
 
@@ -68,6 +72,7 @@ final class TextToImageGenerator extends AiApiExplorerPluginBase {
       $container->get('ai.provider'),
       $container->get('module_handler'),
       $container->get('entity_type.manager'),
+      $container->get('file_system'),
     );
   }
 
@@ -148,9 +153,18 @@ final class TextToImageGenerator extends AiApiExplorerPluginBase {
 
       /** @var \Drupal\ai\OperationType\GenericType\ImageFile $image */
       foreach ($images as $image) {
+
+        // Save the binary data to a file to prevent browsers caching multiple
+        // generated images.
+        $destination = 'temporary://ai-explorers/';
+        $this->fileSystem->prepareDirectory($destination, FileSystemInterface::CREATE_DIRECTORY);
+        $random = (string) rand();
+        $file_url = $this->fileSystem->saveData($image->getBinary(), $destination . '/' . md5($random) . '.png');
+        $file_name = basename($file_url);
+        $url = Url::fromRoute('system.temporary', [], ['query' => ['file' => 'ai-explorers/' . $file_name]]);
         $form['right']['response']['#context']['ai_response']['image_' . $key] = [
           '#theme' => 'image',
-          '#uri' => $image->getAsBase64EncodedString(),
+          '#uri' => $url->toString(),
         ];
 
         $key++;
