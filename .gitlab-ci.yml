@@ -18,7 +18,7 @@ variables:
   _PHPUNIT_CONCURRENT: 1
   SKIP_ESLINT: 1
   # showdown.js is full of emoji words.
-  _CSPELL_IGNORE_PATHS: "'modules/ai_chatbot/js', '.cspell-project-words.txt'"
+  _CSPELL_IGNORE_PATHS: "'modules/ai_chatbot/js', 'modules/ai_chatbot/deepchat', 'modules/ai_chatbot/css', '.cspell-project-words.txt'"
 
 pages:
   stage: .post

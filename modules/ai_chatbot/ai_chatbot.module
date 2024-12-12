@@ -28,6 +28,16 @@ function ai_chatbot_theme() {
         'thread_id' => NULL,
       ],
     ],
+    'ai_deepchat' => [
+      'variables' => [
+        'settings' => [
+          'width' => '400px',
+          'height' => '500px',
+        ],
+        'deepchat_settings' => [],
+        'current_theme' => '',
+      ],
+    ],
   ];
 }
 

@@ -101,6 +101,15 @@ class ChatFormBlock extends BlockBase implements ContainerFactoryPluginInterface
       $assistants[$id] = $ai_assistant->label();
     }
 
+    $form['notice'] = [
+      '#theme' => 'status_messages',
+      '#message_list' => [
+        'warning' => [
+          $this->t('This code type will be replace with the AI Deepchat Chatbot, we recommend to use that instead.'),
+        ],
+      ],
+    ];
+
     $form['ai_assistant'] = [
       '#type' => 'select',
       '#title' => $this->t('AI Assistant'),

@@ -175,14 +175,21 @@ class AiAssistantApiRunner {
    *
    * @var string
    */
-  protected string $thread_id = '';
+  protected string $threadId = '';
 
   /**
    * Let the system know if an action is being used.
    *
    * @var bool
    */
-  protected bool $using_action = FALSE;
+  protected bool $usingAction = FALSE;
+
+  /**
+   * If it should throw exception on errors.
+   *
+   * @var bool
+   */
+  protected bool $throwException = FALSE;
 
   /**
    * Constructor.
@@ -266,12 +273,12 @@ class AiAssistantApiRunner {
     if (in_array($this->assistant->get('allow_history'), [
         'sessions',
         'session_one_thread',
-      ]) && !$this->thread_id) {
-      $this->thread_id = $this->generateUniqueKey();
+      ]) && !$this->threadId) {
+      $this->threadId = $this->generateUniqueKey();
     }
     // Set the thread id.
-    if ($this->assistant->get('allow_history') == 'session_one_thread' && !$this->thread_id) {
-      $this->thread_id = 'assistant_thread_' . $this->assistant->id() . '_' . $this->currentUser->id();
+    if ($this->assistant->get('allow_history') == 'session_one_thread' && !$this->threadId) {
+      $this->threadId = 'assistant_thread_' . $this->assistant->id() . '_' . $this->currentUser->id();
     }
   }
 
@@ -378,10 +385,10 @@ class AiAssistantApiRunner {
    *   The thread id.
    */
   public function getThreadsKey() {
-    if (!$this->thread_id) {
-      $this->thread_id = $this->generateUniqueKey();
+    if (!$this->threadId) {
+      $this->threadId = $this->generateUniqueKey();
     }
-    return $this->thread_id;
+    return $this->threadId;
   }
 
   /**
@@ -391,14 +398,14 @@ class AiAssistantApiRunner {
    *   The key to set.
    */
   public function setThreadsKey($key) {
-    $this->thread_id = $key;
+    $this->threadId = $key;
   }
 
   /**
    * Unset the thread key.
    */
   public function unsetThreadsKey() {
-    $this->thread_id = '';
+    $this->threadId = '';
   }
 
   /**
@@ -426,15 +433,15 @@ class AiAssistantApiRunner {
         // Reset the action before running them.
 
         foreach ($return['actions'] as $action) {
-          $this->using_action = TRUE;
+          $this->usingAction = TRUE;
           $instance = $this->actions->createInstance($action['plugin'], $this->assistant->get('actions_enabled')[$action['plugin']] ?? []);
           $instance->setAssistant($this->assistant);
-          $instance->setThreadId($this->thread_id);
+          $instance->setThreadId($this->threadId);
           $instance->setAiProvider($this->aiProvider->createInstance($defaults['provider_id']));
           $instance->setMessages($this->getMessageHistory());
           // Pass the assistant and the thread id so it can be tagged.
           $action['ai_assistant_api'] = $this->assistant->id();
-          $action['thread_id'] = $this->thread_id;
+          $action['thread_id'] = $this->threadId;
           $instance->triggerAction($action['action'], $action);
         }
       }
@@ -445,6 +452,9 @@ class AiAssistantApiRunner {
       $error_message = str_replace('[error_message]', $e->getMessage(), $this->assistant->get('error_message'));
       if (!is_null($instance)) {
         $instance->triggerRollback();
+      }
+      if ($this->throwException) {
+        throw new \Exception($error_message);
       }
       // Return the error message.
       return new ChatOutput(
@@ -526,7 +536,7 @@ class AiAssistantApiRunner {
     $provider = $this->aiProvider->createInstance($connect['provider_id']);
     // Set the provider role.
     $assistant_message = $this->assistant->get('system_prompt');
-    if ($this->using_action) {
+    if ($this->usingAction) {
       // Add the information that search is done.
       $assistant_message .= "\n\n Start the message with the following information: \nThank you for your question. I am looking up the answer.\n\n";
     }
@@ -582,7 +592,7 @@ class AiAssistantApiRunner {
       'ai_assistant_api',
       'ai_assistant_api_assistant_message',
       'ai_assistant_api_assistant_message_' . $this->assistant->id(),
-      'ai_assistant_thread_' . $this->thread_id,
+      'ai_assistant_thread_' . $this->threadId,
     ];
 
     if ($pre_prompt) {
@@ -607,16 +617,16 @@ class AiAssistantApiRunner {
    *   The output contexts.
    */
   public function getOutputContexts() {
-    return $this->getTempStore()->get($this->thread_id)['output_contexts'] ?? [];
+    return $this->getTempStore()->get($this->threadId)['output_contexts'] ?? [];
   }
 
   /**
    * Reset the output contexts.
    */
   public function resetOutputContexts() {
-    $session = $this->getTempStore()->get($this->thread_id);
+    $session = $this->getTempStore()->get($this->threadId);
     $session['output_contexts'] = [];
-    $this->getTempStore()->set($this->thread_id, $session);
+    $this->getTempStore()->set($this->threadId, $session);
   }
 
   /**
@@ -626,16 +636,16 @@ class AiAssistantApiRunner {
    *   The output structured results.
    */
   public function getStructuredResults() {
-    return $this->getTempStore()->get($this->thread_id)['structured_results'] ?? [];
+    return $this->getTempStore()->get($this->threadId)['structured_results'] ?? [];
   }
 
   /**
    * Resets the output data structure.
    */
   public function resetStructuredResults() {
-    $session = $this->getTempStore()->get($this->thread_id);
+    $session = $this->getTempStore()->get($this->threadId);
     $session['structured_results'] = [];
-    $this->getTempStore()->set($this->thread_id, $session);
+    $this->getTempStore()->set($this->threadId, $session);
   }
 
   /**
@@ -649,7 +659,7 @@ class AiAssistantApiRunner {
       'session',
       'session_one_thread',
     ])) {
-      $history = $this->getTempStore()->get($this->thread_id)['messages'] ?? [];
+      $history = $this->getTempStore()->get($this->threadId)['messages'] ?? [];
       if ($history) {
         // Send the last message + n pairs of user and system messages (where
         // n=config value for history context length).
@@ -668,9 +678,9 @@ class AiAssistantApiRunner {
    * Reset the message history.
    */
   public function resetMessageHistory() {
-    $session = $this->getTempStore()->get($this->thread_id);
+    $session = $this->getTempStore()->get($this->threadId);
     $session['messages'] = [];
-    $this->getTempStore()->set($this->thread_id, $session);
+    $this->getTempStore()->set($this->threadId, $session);
   }
 
   /**
@@ -718,6 +728,16 @@ class AiAssistantApiRunner {
   }
 
   /**
+   * Sets if it should throw exception on errors.
+   *
+   * @param bool $throw
+   *   If it should throw exception on errors.
+   */
+  public function setThrowException(bool $throw) {
+    $this->throwException = $throw;
+  }
+
+  /**
    * Helper function to add a message to the session.
    *
    * @param string $role
@@ -726,13 +746,13 @@ class AiAssistantApiRunner {
    *   The message to add.
    */
   protected function addMessageToSession($role, $message) {
-    $session = $this->getTempStore()->get($this->thread_id);
+    $session = $this->getTempStore()->get($this->threadId);
     $session['messages'][] = [
       'role' => $role,
       'message' => $message,
       'timestamp' => time(),
     ];
-    $this->getTempStore()->set($this->thread_id, $session);
+    $this->getTempStore()->set($this->threadId, $session);
   }
 
   /**
@@ -895,7 +915,7 @@ class AiAssistantApiRunner {
       $prepared .= "* action: " . $action['id'] . ", label: " . $action['label'] . ", description: " . $action['description'] . ", plugin: " . $action['plugin'] . "\n";
     }
 
-    $contexts = $this->actions->listAllContexts($this->assistant, $this->thread_id, $this->assistant->get('actions_enabled'));
+    $contexts = $this->actions->listAllContexts($this->assistant, $this->threadId, $this->assistant->get('actions_enabled'));
     if (count($contexts)) {
       $prepared .= "\n";
       $prepared .= "The following are contexts for the actions:\n\n";
