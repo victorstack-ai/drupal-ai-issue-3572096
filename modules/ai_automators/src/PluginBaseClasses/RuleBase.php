@@ -499,7 +499,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
    * @return \Drupal\ai\Plugin\ProviderProxy
    *   The LLM instance.
    */
-  public function prepareLlmInstance($operationType, array $automatorConfig) {
+  public function prepareLlmInstance($operationType, array &$automatorConfig) {
     $provider = $this->getProvider($automatorConfig);
     $model = $this->getModel($automatorConfig);
     $instance = $this->aiPluginManager->createInstance($provider);
@@ -595,7 +595,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
    * @return string
    *   The provider.
    */
-  protected function getProvider(array $automatorConfig) {
+  protected function getProvider(array $automatorConfig): string {
     if ($automatorConfig['ai_provider'] == 'default_json') {
       $automatorConfig['ai_provider'] = $this->aiPluginManager->getDefaultProviderForOperationType('chat_with_complex_json')['provider_id'];
     }
@@ -617,7 +617,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
    * @return string
    *   The model.
    */
-  protected function getModel(array $automatorConfig) {
+  protected function getModel(array &$automatorConfig): string {
     if ($automatorConfig['ai_provider'] == 'default_json') {
       $automatorConfig['ai_model'] = $this->aiPluginManager->getDefaultProviderForOperationType('chat_with_complex_json')['model_id'];
     }
