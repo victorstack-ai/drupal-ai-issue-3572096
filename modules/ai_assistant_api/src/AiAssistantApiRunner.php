@@ -10,13 +10,10 @@ use Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface;
 use Drupal\ai_assistant_api\Data\UserMessage;
 use Drupal\ai_assistant_api\Entity\AiAssistant;
 use Drupal\ai_assistant_api\Event\AiAssistantSystemRoleEvent;
-use Drupal\ai_assistant_api\Event\PrepromptSystemRoleEvent;
+use Drupal\ai_assistant_api\Service\AssistantMessageBuilder;
 use Drupal\Component\Utility\Crypt;
-use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Controller\TitleResolverInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Render\Renderer;
 use Drupal\Core\Render\RendererInterface;
@@ -31,13 +28,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
 class AiAssistantApiRunner {
 
   /**
-   * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected EntityTypeManagerInterface $entityTypeManager;
-
-  /**
    * The assistant.
    *
    * @var \Drupal\ai_assistant_api\Entity\AiAssistant|null
@@ -45,95 +35,11 @@ class AiAssistantApiRunner {
   protected AiAssistant|NULL $assistant = NULL;
 
   /**
-   * The AI provider service.
-   *
-   * @var \Drupal\ai\AiProviderPluginManager
-   */
-  protected AiProviderPluginManager $aiProvider;
-
-  /**
    * The message to send to the assistant.
    *
    * @var \Drupal\ai_assistant_api\Data\UserMessage|null
    */
   protected UserMessage|NULL $userMessage;
-
-  /**
-   * The Drupal renderer.
-   *
-   * @var \Drupal\Core\Render\Renderer
-   */
-  protected RendererInterface $renderer;
-
-  /**
-   * The private temp store.
-   *
-   * @var \Drupal\user\PrivateTempStoreFactory
-   */
-  protected PrivateTempStoreFactory $tempStore;
-
-  /**
-   * The AI Assistant Action Plugin Manager.
-   *
-   * @var \Drupal\ai_assistant_api\AiAssistantActionPluginManager
-   */
-  protected AiAssistantActionPluginManager $actions;
-
-  /**
-   * The event dispatcher.
-   *
-   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
-   */
-  protected EventDispatcherInterface $eventDispatcher;
-
-  /**
-   * Get the current user.
-   *
-   * @var \Drupal\Core\Session\AccountProxyInterface
-   */
-  protected AccountProxyInterface $currentUser;
-
-  /**
-   * The request stack.
-   *
-   * @var \Symfony\Component\HttpFoundation\RequestStack
-   */
-  protected RequestStack $requestStack;
-
-  /**
-   * The title resolver.
-   *
-   * @var \Drupal\Core\TitleResolverInterface
-   */
-  protected TitleResolverInterface $titleResolver;
-
-  /**
-   * The language manager.
-   *
-   * @var \Drupal\Core\Language\LanguageManagerInterface
-   */
-  protected LanguageManagerInterface $languageManager;
-
-  /**
-   * The configuration factory.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected ConfigFactoryInterface $configFactory;
-
-  /**
-   * The logger channel factory.
-   *
-   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
-   */
-  protected LoggerChannelFactoryInterface $loggerChannelFactory;
-
-  /**
-   * The message to json service.
-   *
-   * @var \Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface
-   */
-  protected PromptJsonDecoderInterface $promptJsonDecoder;
 
   /**
    * If it should be a streaming result.
@@ -208,47 +114,24 @@ class AiAssistantApiRunner {
    *   The event dispatcher.
    * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
    *   The current user.
-   * @param \Symfony\Component\HttpFoundation\RequestStack $requestStack
-   *   The request stack.
-   * @param \Drupal\Core\Controller\TitleResolverInterface $titleResolver
-   *   The title resolver.
-   * @param \Drupal\Core\Language\LanguageManagerInterface $languageManager
-   *   The language manager.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
-   *   The configuration factory.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
    *   The logger channel factory.
    * @param \Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface $promptJsonDecoder
    *   The message to json service.
+   * @param \Drupal\ai_assistant_api\Service\AssistantMessageBuilder $assistantMessageBuilder
    */
   public function __construct(
-    EntityTypeManagerInterface $entityTypeManager,
-    AiProviderPluginManager $aiProvider,
-    Renderer $renderer,
-    PrivateTempStoreFactory $tempStore,
-    AiAssistantActionPluginManager $actions,
-    EventDispatcherInterface $eventDispatcher,
-    AccountProxyInterface $currentUser,
-    RequestStack $requestStack,
-    TitleResolverInterface $titleResolver,
-    LanguageManagerInterface $languageManager,
-    ConfigFactoryInterface $configFactory,
-    LoggerChannelFactoryInterface $loggerChannelFactory,
-    PromptJsonDecoderInterface $promptJsonDecoder,
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected AiProviderPluginManager $aiProvider,
+    protected Renderer $renderer,
+    protected PrivateTempStoreFactory $tempStore,
+    protected AiAssistantActionPluginManager $actions,
+    protected EventDispatcherInterface $eventDispatcher,
+    protected AccountProxyInterface $currentUser,
+    protected LoggerChannelFactoryInterface $loggerChannelFactory,
+    protected PromptJsonDecoderInterface $promptJsonDecoder,
+    protected AssistantMessageBuilder $assistantMessageBuilder,
   ) {
-    $this->entityTypeManager = $entityTypeManager;
-    $this->aiProvider = $aiProvider;
-    $this->renderer = $renderer;
-    $this->tempStore = $tempStore;
-    $this->actions = $actions;
-    $this->eventDispatcher = $eventDispatcher;
-    $this->currentUser = $currentUser;
-    $this->requestStack = $requestStack;
-    $this->titleResolver = $titleResolver;
-    $this->languageManager = $languageManager;
-    $this->configFactory = $configFactory;
-    $this->loggerChannelFactory = $loggerChannelFactory;
-    $this->promptJsonDecoder = $promptJsonDecoder;
   }
 
   /**
@@ -534,23 +417,7 @@ class AiAssistantApiRunner {
   protected function assistantMessage($pre_prompt = FALSE) {
     $connect = $this->getProviderAndModel();
     $provider = $this->aiProvider->createInstance($connect['provider_id']);
-    // Set the provider role.
-    $assistant_message = $this->assistant->get('system_prompt');
-    if ($this->usingAction) {
-      // Add the information that search is done.
-      $assistant_message .= "\n\n Start the message with the following information: \nThank you for your question. I am looking up the answer.\n\n";
-    }
-    $assistant_message = str_replace([
-      '[instructions]',
-      '[pre_action_prompt]',
-    ], [
-      $this->assistant->get('instructions'),
-      $pre_prompt ? $this->prePrompt() : '',
-    ], $assistant_message);
-    foreach ($this->getPrePromptDrupalContext() as $key => $replace) {
-      $assistant_message = str_replace('[' . $key . ']', $replace, $assistant_message);
-    }
-
+    $assistant_message = $this->assistantMessageBuilder->buildMessage($this->assistant, $this->threadId, $pre_prompt);
     // Let other modules change the system role.
     $event = new AiAssistantSystemRoleEvent($assistant_message);
     $this->eventDispatcher->dispatch($event, AiAssistantSystemRoleEvent::EVENT_NAME);
@@ -756,56 +623,6 @@ class AiAssistantApiRunner {
   }
 
   /**
-   * Runs the pre prompt to figure out what to do.
-   */
-  protected function prePrompt() {
-    $system_prompt = $this->assistant->get('system_prompt');
-    $system_prompt = str_replace('[pre_action_prompt]', $this->assistant->get('pre_action_prompt'), $system_prompt);
-    $actions = $this->getPreparedActions();
-    $usage_instructions = $this->getUsageInstructions();
-    $pre_prompt = str_replace([
-      '[learning_examples]',
-      '[list_of_actions]',
-      '[instructions]',
-      '[usage_instruction]',
-    ], [
-      $this->getFewShotExamples(),
-      $actions,
-      $this->assistant->get('instructions'),
-      $usage_instructions,
-    ], $system_prompt);
-
-    foreach ($this->getPrePromptDrupalContext() as $key => $replace) {
-      $pre_prompt = str_replace('[' . $key . ']', $replace, $pre_prompt);
-    }
-
-    $event = new PrepromptSystemRoleEvent($pre_prompt);
-    $this->eventDispatcher->dispatch($event, PrepromptSystemRoleEvent::EVENT_NAME);
-    $pre_prompt = $event->getSystemPrompt();
-    return $pre_prompt;
-  }
-
-  /**
-   * Gets all the few shot examples of the installed actions.
-   *
-   * @return string
-   *   The few shot examples string.
-   */
-  public function getFewShotExamples() {
-    $enabled_actions = $this->assistant->get('actions_enabled');
-    $text = '';
-    foreach ($enabled_actions as $action => $config) {
-      $instance = $this->actions->createInstance($action, $config);
-      $examples = $instance->provideFewShotLearningExample();
-      foreach ($examples as $example) {
-        $text .= $example['description'] . "\n";
-        $text .= json_encode($example['schema']) . "\n\n";
-      }
-    }
-    return $text;
-  }
-
-  /**
    * Get the private tempstore for AI Assistant.
    *
    * @return \Drupal\Core\TempStore\PrivateTempStore
@@ -886,68 +703,6 @@ class AiAssistantApiRunner {
       'provider_id' => $provider_id,
       'model_id' => $model_id,
     ];
-  }
-
-  /**
-   * Get a list of usage instructions.
-   *
-   * @return string
-   *   A string representation of the usage instructions.
-   */
-  public function getUsageInstructions() {
-    return implode("\n", $this->actions->listAllUsageInstructions($this->assistant->get('actions_enabled')));
-  }
-
-  /**
-   * Get a list of prepared actions.
-   *
-   * @return string
-   *   A string representation of the actions for AI prompts.
-   */
-  public function getPreparedActions() {
-    $actions = $this->actions->listAllActions($this->assistant->get('actions_enabled'));
-    $enabled = array_keys($this->assistant->get('actions_enabled'));
-    $prepared = '';
-    foreach ($actions as $action) {
-      if (!in_array($action['plugin'], $enabled)) {
-        continue;
-      }
-      $prepared .= "* action: " . $action['id'] . ", label: " . $action['label'] . ", description: " . $action['description'] . ", plugin: " . $action['plugin'] . "\n";
-    }
-
-    $contexts = $this->actions->listAllContexts($this->assistant, $this->threadId, $this->assistant->get('actions_enabled'));
-    if (count($contexts)) {
-      $prepared .= "\n";
-      $prepared .= "The following are contexts for the actions:\n\n";
-      foreach ($contexts as $context) {
-        $prepared .= $context['title'] . "\n";
-        $prepared .= '* ' . implode("\n* ", $context['description']) . "\n\n";
-      }
-    }
-    return $prepared;
-  }
-
-  /**
-   * Get preprompt Drupal context.
-   *
-   * @return string[]
-   *   This is the Drupal context that you can add to the pre prompt.
-   */
-  public function getPrePromptDrupalContext() {
-    $context = [];
-    $current_request = $this->requestStack->getCurrentRequest();
-    $context['is_logged_in'] = $this->currentUser->isAuthenticated() ? 'is logged in' : 'is not logged in';
-    $context['user_roles'] = implode(', ', $this->currentUser->getRoles());
-    $context['user_id'] = $this->currentUser->id();
-    $context['user_name'] = $this->currentUser->getDisplayName();
-    $context['user_language'] = $this->currentUser->getPreferredLangcode();
-    $context['user_timezone'] = $this->currentUser->getTimeZone();
-    $context['page_title'] = (string) $this->titleResolver->getTitle($current_request, $current_request->attributes->get('_route_object'));
-    $context['page_path'] = $current_request->getRequestUri();
-    $context['page_language'] = $this->languageManager->getCurrentLanguage()->getId();
-    $context['site_name'] = $this->configFactory->get('system.site')->get('name');
-
-    return $context;
   }
 
 }
