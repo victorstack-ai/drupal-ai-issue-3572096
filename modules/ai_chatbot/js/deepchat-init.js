@@ -8,10 +8,15 @@
       if (Drupal.behaviors.deepChatToggle.initialized) {
         return;
       }
-      Drupal.behaviors.deepChatToggle.initialized = true;
       // Select all chat containers within the current context
       const chatContainers = context.querySelectorAll('.chat-container');
       const dropDownMenu = context.querySelector('.chat-dropdown');
+      // If its not found, return.
+      if (!dropDownMenu) {
+        return;
+      }
+      // Mark as initialized to prevent re-processing
+      Drupal.behaviors.deepChatToggle.initialized = true;
       const chevron = context.querySelector('.chevron-icon');
       const menuButton = dropDownMenu.querySelector('.chat-dropdown-button');
       const clearHistory = dropDownMenu.querySelector('.clear-history');
