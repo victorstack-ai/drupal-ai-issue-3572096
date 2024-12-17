@@ -61,22 +61,35 @@ installed and configured (see [How to configure the AI Assistant API module](#ho
 
 ### How to configure the AI Chatbot module
 1. Enable and configure the AI Assistant API module (see [How to configure the AI Assistant API module](#how_to_configure_the_ai_assistant_api_module)).
-2. Enable the AI Chatbot module.
+2. Enable the AI Deepchat Chatbot module.
 3. Visit /admin/structure/block
 4. Choose a region of your theme template and click the "place" button.
 5. Select the AI Chatbot block and press the place button.
 6. Configure the block:
     1. Give it an admin name and user-facing label
-    2. Select which AI Assistant to use.
-    3. Provide an initial statement to use shown to the user.
+    2. Make sure to not show the label.
+    3. Select which AI Assistant to use.
+    4. Provide an initial statement to use shown to the user.
 
 ### How to use the AI Chatbot
 When an AI Chatbot block is placed on a page, it will display its label to the
 user. If the user clicks it, it will open a form to allow the user to pass
 messages via the AI Assistant API and see the responses.
 
-The message history will be retained inside the block until the page is reloaded
-or the user navigates away.
+The message history can be retained inside the block until the page is reloaded
+or the user navigates away, depending on settings in the AI Assistant.
+
+
+### Customize the Chatbot.
+The Chatbot is based on [Deepchat](https://deepchat.dev/) by OvidijusParsiunas
+and can be customized both in look and feel. The designing of the chatbot is
+done via attributes, see the [documentation on deepchat.dev](https://deepchat.dev/examples/design), but we
+have abstracted it away into [yaml files](https://git.drupalcode.org/project/ai/-/blob/1.0.x/modules/ai_chatbot/deepchat_styles/bard.yml?ref_type=heads).
+
+You can in your active theme add a folder called deepchat_styles and load your
+own custom themes to use.
+
+There is also a hook called [hook_deepchat_settings](https://git.drupalcode.org/project/ai/-/blob/1.0.x/modules/ai_chatbot/ai_chatbot.api.php?ref_type=heads) where you can change the attributes on the fly.
 
 ## AI Assistant Actions
 AI Assistant Actions implement Drupal's inbuilt [Plugin API](https://www.drupal.org/docs/drupal-apis/plugin-api/plugin-api-overview)
