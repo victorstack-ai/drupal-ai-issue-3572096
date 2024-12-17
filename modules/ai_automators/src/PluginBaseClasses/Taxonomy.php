@@ -323,7 +323,7 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
     foreach ($config['handler_settings']['target_bundles'] as $vid) {
       $terms = $storage->loadTree($vid);
       foreach ($terms as $term) {
-        $returnTerms[$term->tid] = $withDescriptions ? $term->name . ' - ' . $term->description->value : $term->name;
+        $returnTerms[$term->tid] = $withDescriptions && isset($term->description) ? $term->name . ' - ' . $term->description->value : $term->name;
       }
     }
     return $returnTerms;
