@@ -1,6 +1,6 @@
 name: ChatGPT
 parameters:
-  style: "border-radius: 10px"
+  style: "border-radius: 10px; font-family: Verdana, sans-serif;"
   messageStyles:
     default:
       shared:

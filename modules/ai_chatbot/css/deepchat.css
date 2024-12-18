@@ -145,7 +145,6 @@
     transform 0.3s ease-in-out,
     opacity 0.3s ease-in-out;
   opacity: 1;
-  background-color: #f9f9f9;
 }
 
 .chat-dropdown {
