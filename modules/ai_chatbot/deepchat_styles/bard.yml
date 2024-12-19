@@ -1,6 +1,6 @@
 name: Bard
 parameters:
-  style: "border-color: #dcdcdc; background-color: #f3f6fc; padding: 10px; font-family: Verdana, sans-serif;"
+  style: "border-color: #dcdcdc; background-color: #f3f6fc; padding: 10px; font-family: system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", sans-serif;"
   textInput:
     styles:
       container:

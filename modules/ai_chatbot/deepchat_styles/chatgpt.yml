@@ -1,6 +1,6 @@
 name: ChatGPT
 parameters:
-  style: "border-radius: 10px; font-family: Verdana, sans-serif;"
+  style: "border-radius: 10px; font-family: system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", sans-serif;"
   messageStyles:
     default:
       shared:
