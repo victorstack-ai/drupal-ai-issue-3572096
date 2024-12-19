@@ -40,13 +40,6 @@ class MessagesButtons {
    *   The rendered assistant buttons.
    */
   public function getRenderedButtons(array $buttons, $assistant_id, $thread_id, $replay = FALSE): string {
-    $buttons[] = [
-      'svg' => $this->moduleHandler->getModule('ai_chatbot')->getPath() . '/assets/copy-icon.svg',
-      'class' => ['copy'],
-      'alt' => $this->t('Copy message'),
-      'title' => $this->t('Copy message'),
-      'weight' => 0,
-    ];
     $info = [
       'assistant_id' => $assistant_id,
       'thread_id' => $thread_id,
@@ -57,6 +50,11 @@ class MessagesButtons {
     usort($buttons, function ($a, $b) {
       return $a['weight'] <=> $b['weight'];
     });
+
+    if (empty($buttons)) {
+      return '';
+    }
+
     $buttons_output = '<div class="chat-buttons">';
     foreach ($buttons as $button) {
       $classes = ['chat-button'];

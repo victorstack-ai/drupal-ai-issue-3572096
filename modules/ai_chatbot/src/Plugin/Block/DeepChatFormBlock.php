@@ -125,6 +125,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
       'show_structured_results' => FALSE,
       'collapse_minimal' => FALSE,
       'style_file' => 'bard.yml',
+      'show_copy_icon' => TRUE,
     ];
   }
 
@@ -268,6 +269,12 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
       '#description' => $this->t('Show a minimal toggle button when minimized.'),
       '#default_value' => $this->configuration['collapse_minimal'],
     ];
+    $form['styling']['show_copy_icon'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Add copy icon'),
+      '#description' => $this->t('Adds a copy icon below each text so you can easily copy paste it.'),
+      '#default_value' => $this->configuration['show_copy_icon'],
+    ];
 
     $form['advanced'] = [
       '#type' => 'details',
@@ -321,6 +328,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $this->configuration['height'] = $form_state->getValue('styling')['height'];
     $this->configuration['placement'] = $form_state->getValue('styling')['placement'];
     $this->configuration['collapse_minimal'] = $form_state->getValue('styling')['collapse_minimal'];
+    $this->configuration['show_copy_icon'] = $form_state->getValue('styling')['show_copy_icon'];
     $this->configuration['stream'] = $form_state->getValue('advanced')['stream'];
     $this->configuration['show_structured_results'] = $form_state->getValue('advanced')['show_structured_results'];
     $this->configuration['toggle_state'] = $form_state->getValue('advanced')['toggle_state'];
@@ -364,6 +372,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $block['#attached']['drupalSettings']['ai_deepchat']['placement'] = $this->configuration['placement'];
     $block['#attached']['drupalSettings']['ai_deepchat']['show_structured_results'] = $this->configuration['show_structured_results'];
     $block['#attached']['drupalSettings']['ai_deepchat']['collapse_minimal'] = $this->configuration['collapse_minimal'];
+    $block['#attached']['drupalSettings']['ai_deepchat']['show_copy_icon'] = $this->configuration['show_copy_icon'];
     $block['#attached']['drupalSettings']['ai_deepchat']['messages'] = $this->historicalMessages();
 
     return $block;
@@ -575,8 +584,18 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
           'html' => $converter ? $converter->convert($message['message'])->__toString() : $message['message'],
         ];
         // Add the buttons.
+        $buttons = [];
         if ($message['role'] == 'assistant') {
-          $new_message['html'] .= $this->messagesButton->getRenderedButtons([], $this->configuration['ai_assistant'], $this->aiAssistantRunner->getThreadsKey(), TRUE);
+          if ($this->configuration['show_copy_icon']) {
+            $buttons[] = [
+              'svg' => $this->moduleHandler->getModule('ai_chatbot')->getPath() . '/assets/copy-icon.svg',
+              'class' => ['copy'],
+              'alt' => $this->t('Copy message'),
+              'title' => $this->t('Copy message'),
+              'weight' => 0,
+            ];
+          }
+          $new_message['html'] .= $this->messagesButton->getRenderedButtons($buttons, $this->configuration['ai_assistant'], $this->aiAssistantRunner->getThreadsKey(), TRUE);
         }
         $messages[] = $new_message;
       }
