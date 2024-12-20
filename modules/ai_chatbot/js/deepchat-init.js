@@ -88,7 +88,7 @@
           header.classList.remove('active');
           header.setAttribute('aria-expanded', 'false');
           if (toggleIcon) updateToggleIcon(false);
-          localStorage.setItem(`deepChatState_${chatId}`, 'collapsed');
+          localStorage.removeItem(`deepChatState_${chatId}`);
         };
 
         // Function to clear messages
