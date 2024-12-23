@@ -252,7 +252,7 @@ abstract class EntityReference extends RuleBase {
     $target = $automatorConfig['entity_reference_bundle'] ?? '';
     $baseFields = $this->getBaseFields($entity->getEntityTypeId());
     $storage = $this->entityTypeManager->getStorage($entity->getEntityTypeId());
-    $textFormat = $this->getGeneralHelper()->getTextFormat($fieldDefinition);
+    $textFormat = $this->getGeneralHelper()->calculateTextFormat($fieldDefinition);
 
     $targets = [];
     foreach ($values as $parts) {
