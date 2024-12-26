@@ -276,9 +276,9 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     }
 
     // Add vision if it is available or default vision.
-    if (($llmInstance && in_array($model, $llmInstance->getConfiguredModels('chat', [AiModelCapability::ChatWithImageVision]))) || $provider == 'default_vision') {
+    if (($llmInstance && in_array($model, array_keys($llmInstance->getConfiguredModels('chat', [AiModelCapability::ChatWithImageVision])))) || $provider == 'default_vision') {
       // Add the image field to use.
-      $form['automator_configuration_image_field'] = [
+      $form['ajax_prefix']['automator_configuration_image_field'] = [
         '#type' => 'select',
         '#title' => $this->t('Image Field'),
         '#options' => $this->getGeneralHelper()->getFieldsOfType($entity, 'image'),
@@ -288,7 +288,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
       ];
 
       // Also add the possibility to add an image style.
-      $form['automator_configuration_image_style'] = [
+      $form['ajax_prefix']['automator_configuration_image_style'] = [
         '#type' => 'select',
         '#title' => $this->t('Image Style'),
         '#description' => $this->t('Use an optional image style to lower costs and increase speed.'),
