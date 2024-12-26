@@ -410,6 +410,13 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function getSetupData(): array {
+    return [];
+  }
+
+  /**
    * Reset the tags.
    */
   public function resetTags(): void {

@@ -208,4 +208,18 @@ interface AiProviderInterface extends PluginInspectionInterface {
    */
   public function hasPredefinedModels(): bool;
 
+  /**
+   * Returns an array of setup data for the provider.
+   *
+   * The data should be an array of arrays with the following keys:
+   * - key_config_name: The key for setting an api key via key module. Can be
+   *   empty. If empty, its not setup.
+   * - default_models: An assoc array of operation type and model id, for
+   *   setting the default models.
+   *
+   * @return array
+   *   The setup data.
+   */
+  public function getSetupData(): array;
+
 }
