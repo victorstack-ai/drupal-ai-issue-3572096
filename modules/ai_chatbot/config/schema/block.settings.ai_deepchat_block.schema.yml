@@ -44,6 +44,9 @@ block.settings.ai_deepchat_block:
     show_structured_results:
       type: boolean
       label: Show Structured Results
+    show_copy_icon:
+      type: boolean
+      label: Show Copy Icon
     collapse_minimal:
       type: boolean
       label: Collapse Minimal
