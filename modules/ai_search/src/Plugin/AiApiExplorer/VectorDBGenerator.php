@@ -74,19 +74,13 @@ final class VectorDBGenerator extends AiApiExplorerPluginBase {
     $return = FALSE;
     try {
       if ($indexes = $this->entityTypeManager->getStorage('search_api_index')->loadMultiple()) {
-        $key = 0;
-
-        while (!$return && array_key_exists($key, $indexes)) {
-          /** @var \Drupal\search_api\IndexInterface $index */
-          $index = $indexes[$key];
-
+        /** @var \Drupal\search_api\IndexInterface $index */
+        foreach ($indexes as $index_key => $index) {
           $backend = $index->hasValidServer() ? $index->getServerInstance()->getBackendId() : NULL;
-
-          if ($backend == 'search_api_ai_search') {
+          if ($backend === 'search_api_ai_search') {
             $return = TRUE;
+            break;
           }
-
-          $key++;
         }
       }
     }
