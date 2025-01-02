@@ -560,6 +560,7 @@ class AiAssistantApiRunner {
    *   The new thread id.
    */
   public function resetThread($thread_id) {
+    $this->resetMessageHistory();
     $this->setThreadsKey($thread_id);
     $this->getTempStore()->delete($thread_id);
     $this->removeCurrentThreadsKey();
