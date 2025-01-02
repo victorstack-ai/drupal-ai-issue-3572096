@@ -453,6 +453,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
         'assistant_id' => $this->configuration['ai_assistant'],
         'stream' => $this->configuration['stream'],
         'structured_results' => $this->configuration['show_structured_results'],
+        'show_copy_icon' => $this->configuration['show_copy_icon'],
       ],
     ];
 

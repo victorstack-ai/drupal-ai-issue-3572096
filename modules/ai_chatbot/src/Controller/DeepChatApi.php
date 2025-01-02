@@ -133,6 +133,17 @@ final class DeepChatApi extends ControllerBase {
       // Set the structured result data.
       $this->showStructuredResults = isset($data['structured_results']) && $data['structured_results'];
 
+      // Set the copy button if wanted.
+      if (isset($data['show_copy_icon']) && $data['show_copy_icon']) {
+        $this->buttons[] = [
+          'svg' => $this->moduleHandler()->getModule('ai_chatbot')->getPath() . '/assets/copy-icon.svg',
+          'weight' => 1,
+          'class' => ['copy'],
+          'alt' => $this->t('Copy message'),
+          'title' => $this->t('Copy message'),
+        ];
+      }
+
       // Process the user's message.
       try {
         $response = $this->aiAssistantClient->process();
