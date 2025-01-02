@@ -317,7 +317,7 @@ class AiProviderFormHelper {
   public static function loadModelsAjaxCallback(array &$form, FormStateInterface $form_state) {
     $prefix = $form_state->getTriggeringElement()['#ajax']['data-prefix'];
     $form_state->setRebuild();
-    return $form[$prefix . 'ajax_prefix'];
+    return $form[$prefix . 'ajax_prefix'] ?? $form['left'][$prefix . 'ajax_prefix'] ?? $form['right'][$prefix . 'ajax_prefix'];
   }
 
   /**
