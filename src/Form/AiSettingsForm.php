@@ -91,8 +91,9 @@ class AiSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Default Providers'),
       '#open' => TRUE,
       '#weight' => 10,
-      '#description' => $this->t('These are default providers for each operation type that external modules can use or show on their configurations pages. Choose a provider from the <a href="@ai">AI module homepage</a>, add it to your project, then %install and %configure it first.', [
-        '%ai' => 'https://www.drupal.org/project/ai',
+      '#description' => $this->t('These are default providers for each operation type that external modules can use or show on their configurations pages. Choose a provider from the <a href="@ai">AI module homepage</a>, add it to your project, then install and <a href="@configure">configure</a> it first.', [
+        '@ai' => 'https://www.drupal.org/project/ai',
+        '@configure' => Url::fromRoute('ai.admin_providers')->toString(),
       ]),
     ];
 
