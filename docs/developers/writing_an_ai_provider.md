@@ -135,8 +135,15 @@ final class DropAiConfigForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
-    // Here we set the default providers per the operation for our provider.
-    $this->aiProviderManager->defaultIfNone('chat', 'dropai', 'drop-ai-text-model-1');
+    // Do a check if its getting setup or disabled.
+    if ($form_state->getValue('api_key')) {
+      // Here we set the default providers per the operation for our provider.
+      $this->aiProviderManager->defaultIfNone('chat', 'dropai', 'drop-ai-text-model-1');
+    }
+    else {
+      // We notify 3rd party modules that it has been disabled.
+      $this->aiProviderManager->providerDisabled('dropai');
+    }
 
     $this->config('dropai_provider.settings')
       ->set('api_key', $form_state->getValue('api_key'))

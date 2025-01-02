@@ -88,6 +88,13 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
   protected $cache;
 
   /**
+   * The logger.
+   *
+   * @var \Psr\Log\LoggerInterface
+   */
+  protected $logger;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
@@ -101,6 +108,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $plugin->themeManager = $container->get('theme.manager');
     $plugin->messagesButton = $container->get('ai_chatbot.buttons');
     $plugin->cache = $container->get('cache.default');
+    $plugin->logger = $container->get('logger.factory')->get('ai_chatbot');
     return $plugin;
   }
 
@@ -344,6 +352,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $this->aiAssistantRunner->setAssistant($assistant);
     // Check if the assistant is setup and that the user has access to it.
     if (!$this->aiAssistantRunner->isSetup() || !$this->aiAssistantRunner->userHasAccess()) {
+      $this->logger->warning('The AI Assistants AI provider is not setup or you are exposing it to a user that does not have access to it.');
       return [];
     }
     $this->aiAssistantRunner->streamedOutput($this->configuration['stream'] ?? FALSE);

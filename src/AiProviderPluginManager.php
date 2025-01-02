@@ -11,6 +11,7 @@ use Drupal\Core\Plugin\DefaultPluginManager;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Attribute\OperationType;
+use Drupal\ai\Event\ProviderDisabledEvent;
 use Drupal\ai\OperationType\OperationTypeInterface;
 use Drupal\ai\Plugin\ProviderProxy;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -408,6 +409,32 @@ final class AiProviderPluginManager extends DefaultPluginManager {
     }
 
     return FALSE;
+  }
+
+  /**
+   * Gives notice that a provider is disabled.
+   *
+   * @param string $provider_id
+   *   The provider ID.
+   */
+  public function providerDisabled(string $provider_id) {
+    // Get AI settings as editable.
+    $defaults = $this->configFactory->getEditable('ai.settings')->get('default_providers');
+    $changed = FALSE;
+    foreach ($defaults as $key => $value) {
+      if ($value['provider_id'] == $provider_id) {
+        // Remove the provider from the default providers.
+        unset($defaults[$key]);
+        // Set that we need to change the config.
+        $changed = TRUE;
+      }
+    }
+    if ($changed) {
+      // Save the updated default providers, if needed.
+      $this->configFactory->getEditable('ai.settings')->set('default_providers', $defaults)->save();
+    }
+    // Notify other modules that a provider was disabled.
+    $this->eventDispatcher->dispatch(new ProviderDisabledEvent($provider_id), ProviderDisabledEvent::EVENT_NAME);
   }
 
 }

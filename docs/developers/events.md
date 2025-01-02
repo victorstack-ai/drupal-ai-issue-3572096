@@ -4,6 +4,8 @@ There are two important events that are currently available in the AI module. On
 
 These two makes it possible to change prompts, change responses, log, find bugs etc.
 
+There is also an event that is triggered when an AI provider gets uninstalled/disabled. This is good for 3rd party modules that might rely on a specific provider existing due to 3rd party provider settings.
+
 ## Example #1: Pre request.
 
 You have a module where you want to make sure to filter out certain words that are important for your IP, so they don't get sent to OpenAI when using the AI API Explorer.
@@ -62,7 +64,7 @@ class IpCheckSubscriber implements EventSubscriberInterface {
 
 ```
 
-## Example #1: Post request.
+## Example #2: Post request.
 
 You have a module where you want to log how many images you created in total.
 
@@ -103,6 +105,55 @@ class CountImagesSubscriber implements EventSubscriberInterface {
     // Only do AI API Explorer.
     if ($event->getOperationType() == 'text-to-image') {
       $pseudoCounter->countOneMore();
+    }
+  }
+
+}
+
+```
+
+## Example #3: Provider Disabled.
+
+You have a third party module that is dependent on a provider called dropai.
+
+You need to make changes to your settings when that provider is being uninstalled.
+
+
+```php
+<?php
+
+namespace Drupal\ai_logging\EventSubscriber;
+
+use Drupal\ai\Event\ProviderDisabledEvent;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+
+/**
+ * Sets new provider when picked provider is disabled.
+ */
+class SetNewProvider implements EventSubscriberInterface {
+
+  /**
+   * {@inheritdoc}
+   *
+   * @return array
+   *   The ProviderDisabledEvent event.
+   */
+  public static function getSubscribedEvents(): array {
+    return [
+      ProviderDisabledEvent::EVENT_NAME => 'countImages',
+    ];
+  }
+
+  /**
+   * Change setting when the provider you have is disabled..
+   *
+   * @param \Drupal\ai\Event\ProviderDisabledEvent $event
+   *   The event disabled.
+   */
+  public function countImages(ProviderDisabledEvent $event) {
+    if ($event->getProviderId() == 'dropai') {
+      // Whatever custom code you need here, just example code.
+      $myconfig->provider = 'default';
     }
   }
 
