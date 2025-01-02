@@ -39,7 +39,7 @@ final class SetupAiProvider implements ConfigActionPluginInterface, ContainerFac
     return new static(
       $container->get('plugin.manager.config_action')->createInstance('simpleConfigUpdate'),
       $container->get(EntityTypeManagerInterface::class),
-      $container->get(AiProviderPluginManager::class),
+      $container->get('ai.provider'),
     );
   }
 
