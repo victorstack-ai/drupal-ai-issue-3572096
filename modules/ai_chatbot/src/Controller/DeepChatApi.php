@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Drupal\ai_chatbot\Controller;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai\OperationType\Chat\StreamedChatMessageIterator;
 use Drupal\ai_assistant_api\AiAssistantApiRunner;
 use Drupal\ai_assistant_api\Data\UserMessage;
 use Drupal\ai_assistant_api\Entity\AiAssistant;
-use Drupal\ai\OperationType\Chat\ChatMessage;
-use Drupal\ai\OperationType\Chat\StreamedChatMessageIterator;
 use Drupal\ai_chatbot\Service\MessagesButtons;
-use Drupal\Component\Serialization\Json;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -129,6 +129,9 @@ final class DeepChatApi extends ControllerBase {
       $latestUserMessage = end($conversation);
       $this->aiAssistantClient->setUserMessage($latestUserMessage);
       $this->aiAssistantClient->setThrowException(TRUE);
+
+      // Set the structured result data.
+      $this->showStructuredResults = isset($data['structured_results']) && $data['structured_results'];
 
       // Process the user's message.
       try {
@@ -278,7 +281,7 @@ final class DeepChatApi extends ControllerBase {
    */
   public function renderStructuredResults(): string {
     $results = '';
-    if (TRUE) {
+    if ($this->showStructuredResults) {
       $structured = $this->aiAssistantClient->getStructuredResults();
       if ($structured) {
         // Add the button.
