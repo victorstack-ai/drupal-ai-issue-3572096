@@ -96,13 +96,6 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   protected FileSystemInterface $fileSystem;
 
   /**
-   * The API definition.
-   *
-   * @var array
-   */
-  protected array $apiDefinition = [];
-
-  /**
    * The configuration to add to the call.
    *
    * @var array
@@ -204,7 +197,6 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
     $this->loggerFactory = $logger_factory;
     $this->moduleHandler = $module_handler;
     $this->config = $this->getConfig();
-    $this->apiDefinition = $this->getApiDefinition();
     $this->cacheBackend = $cache_backend;
     $this->keyRepository = $key_repository;
     $this->eventDispatcher = $event_dispatcher;

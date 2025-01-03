@@ -112,7 +112,7 @@ final class AiProviderPluginManager extends DefaultPluginManager {
    */
   public function createInstance($plugin_id, array $configuration = []): ProviderProxy {
     $plugin = parent::createInstance($plugin_id, $configuration);
-    return new ProviderProxy($plugin, $this->eventDispatcher, $this->loggerFactory, $this->uuid);
+    return new ProviderProxy($plugin, $this->eventDispatcher, $this->loggerFactory, $this->uuid, $this->cacheBackend);
   }
 
   /**

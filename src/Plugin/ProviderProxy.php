@@ -3,6 +3,7 @@
 namespace Drupal\ai\Plugin;
 
 use Drupal\Component\Uuid\UuidInterface;
+use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\ai\Base\AiProviderClientBase;
 use Drupal\ai\Event\PostGenerateResponseEvent;
@@ -46,6 +47,13 @@ class ProviderProxy {
   protected $loggerFactory;
 
   /**
+   * The cache backend.
+   *
+   * @var \Drupal\Core\Cache\CacheBackendInterface
+   */
+  protected $cacheBackend;
+
+  /**
    * The UUID service.
    *
    * @var \Drupal\Component\Uuid\UuidInterface
@@ -63,12 +71,15 @@ class ProviderProxy {
    *   The logger factory.
    * @param \Drupal\Component\Uuid\UuidInterface $uuid
    *   The UUID service.
+   * @param \Drupal\Core\Cache\CacheBackendInterface $cache_backend
+   *   The cache backend.
    */
-  public function __construct(AiProviderClientBase $plugin, EventDispatcherInterface $event_dispatcher, LoggerChannelFactoryInterface $logger_factory, UuidInterface $uuid) {
+  public function __construct(AiProviderClientBase $plugin, EventDispatcherInterface $event_dispatcher, LoggerChannelFactoryInterface $logger_factory, UuidInterface $uuid, CacheBackendInterface $cache_backend) {
     $this->plugin = $plugin;
     $this->eventDispatcher = $event_dispatcher;
     $this->loggerFactory = $logger_factory;
     $this->uuid = $uuid;
+    $this->cacheBackend = $cache_backend;
   }
 
   /**
@@ -116,9 +127,15 @@ class ProviderProxy {
     $operation_type = $this->camelToSnake($method->getName());
     // If the method is not a trigger method, just call it.
     if (!in_array($method->getName(), $proxiedMethods)) {
-      // Special add on for the configured models.
-      if ($method->getName() == 'getConfiguredModels') {
-        return $this->resetConfiguredModels($method->invokeArgs($this->plugin, $arguments), $arguments);
+      // Special cases.
+      switch ($method->getName()) {
+        // Special add on for the configured models.
+        case 'getConfiguredModels':
+          return $this->resetConfiguredModels($method->invokeArgs($this->plugin, $arguments), $arguments);
+
+        // Make sure to cache the api definition.
+        case 'getApiDefinition':
+          return $this->cacheApiDefinition($arguments);
       }
       return $method->invokeArgs($this->plugin, $arguments);
     }
@@ -247,6 +264,25 @@ class ProviderProxy {
    */
   public function __set($name, $value) {
     $this->plugin->$name = $value;
+  }
+
+  /**
+   * Cache the API definition.
+   *
+   * @param array $arguments
+   *   The arguments.
+   *
+   * @return array
+   *   The API definition.
+   */
+  public function cacheApiDefinition(array $arguments): array {
+    $cache_id = 'ai:api_definition:' . $this->plugin->getPluginId();
+    if ($cache = $this->cacheBackend->get($cache_id)) {
+      return $cache->data;
+    }
+    $defintion = $this->plugin->getApiDefinition($arguments);
+    $this->cacheBackend->set($cache_id, $defintion, CacheBackendInterface::CACHE_PERMANENT);
+    return $defintion;
   }
 
   /**
