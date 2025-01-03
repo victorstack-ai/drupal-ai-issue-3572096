@@ -94,9 +94,16 @@ final class SettingsForm extends ConfigFormBase {
 
     foreach ($this->pluginManager->getDefinitions() as $id => $definition) {
       $value = $form_state->getValue($id);
-
       if ($value[$id . '_enabled']) {
         $values[$id] = $value[$id . '_model'];
+      }
+      /** @var \Drupal\ai_content_suggestions\AiContentSuggestionsInterface $plugin */
+      if ($plugin = $this->pluginManager->createInstance($id, $definition)) {
+        if ($plugin->isAvailable()) {
+          if (method_exists($plugin, 'saveSettingsForm')) {
+            $plugin->saveSettingsForm($form, $form_state);
+          }
+        }
       }
     }
 
