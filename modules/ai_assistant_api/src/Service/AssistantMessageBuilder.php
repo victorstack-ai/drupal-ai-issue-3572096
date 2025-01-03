@@ -87,7 +87,7 @@ class AssistantMessageBuilder {
     // If the pre-prompt message should be included, replace it.
     $assistant_message = str_replace('[pre_action_prompt]', $include_pre_prompt ? $this->prePrompt() : '', $assistant_message);
     foreach ($this->getPrePromptDrupalContext() as $key => $replace) {
-      $assistant_message = str_replace('[' . $key . ']', $replace, $assistant_message);
+      $assistant_message = str_replace('[' . $key . ']', is_null($replace) ? '' : $replace, $assistant_message);
     }
 
     return $assistant_message;
@@ -111,7 +111,7 @@ class AssistantMessageBuilder {
     ], $preprompt);
 
     foreach ($this->getPrePromptDrupalContext() as $key => $replace) {
-      $pre_prompt = str_replace('[' . $key . ']', $replace, $pre_prompt);
+      $pre_prompt = str_replace('[' . $key . ']', is_null($replace) ? '' : $replace, $pre_prompt);
     }
 
     $event = new PrepromptSystemRoleEvent($pre_prompt);
