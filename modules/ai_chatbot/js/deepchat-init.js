@@ -59,6 +59,18 @@
         const deepchatElement = container.querySelector('.deepchat-element');
         Drupal.behaviors.deepChatToggle.chats.push(deepchatElement);
 
+        // Function to set thread_id.
+        const setThreadId = (thread_id) => {
+          let connect = JSON.parse(deepchatElement.getAttribute('connect'));
+          connect.additionalBodyProps.thread_id = thread_id;
+          deepchatElement.setAttribute('connect', JSON.stringify(connect));
+          // Reset thread_id in Drupal setting in case of rerendering.
+          drupalSettings.ai_deepchat.thread_id = thread_id;
+        }
+
+        // Assign thread_id to chat.
+        setThreadId(drupalSettings.ai_deepchat.thread_id);
+
         // Function to update toggle icon (optional)
         const updateToggleIcon = (isOpen) => {
           if (toggleIcon) {
@@ -110,7 +122,14 @@
             }
             return response.json();
           }).then(data => {
+            setThreadId(data.thread_id);
+            // Clear the messages from the drupal setting so they are not
+            // rerendered.
+            drupalSettings.ai_deepchat.messages = [];
             deepchatElement.clearMessages(false);
+            // Unset connection to force rerendering.
+            delete deepchatElement._activeService;
+            deepchatElement.onRender();
             deepchatElement.addMessage({
               role: 'assistant',
               text: drupalSettings.ai_deepchat.first_message,
