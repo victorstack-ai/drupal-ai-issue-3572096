@@ -2,6 +2,7 @@
 
 namespace Drupal\ai\Plugin;
 
+use Drupal\Component\Uuid\UuidInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\ai\Base\AiProviderClientBase;
 use Drupal\ai\Event\PostGenerateResponseEvent;
@@ -45,6 +46,13 @@ class ProviderProxy {
   protected $loggerFactory;
 
   /**
+   * The UUID service.
+   *
+   * @var \Drupal\Component\Uuid\UuidInterface
+   */
+  protected $uuid;
+
+  /**
    * PluginLoggingProxy constructor.
    *
    * @param \Drupal\ai\Base\AiProviderClientBase $plugin
@@ -53,11 +61,14 @@ class ProviderProxy {
    *   The event dispatcher.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
    *   The logger factory.
+   * @param \Drupal\Component\Uuid\UuidInterface $uuid
+   *   The UUID service.
    */
-  public function __construct(AiProviderClientBase $plugin, EventDispatcherInterface $event_dispatcher, LoggerChannelFactoryInterface $logger_factory) {
+  public function __construct(AiProviderClientBase $plugin, EventDispatcherInterface $event_dispatcher, LoggerChannelFactoryInterface $logger_factory, UuidInterface $uuid) {
     $this->plugin = $plugin;
     $this->eventDispatcher = $event_dispatcher;
     $this->loggerFactory = $logger_factory;
+    $this->uuid = $uuid;
   }
 
   /**
@@ -138,8 +149,11 @@ class ProviderProxy {
       $this->plugin->setTag($tag);
     }
 
+    // Create a unique event id.
+    $event_id = $this->uuid->generate();
+
     // Invoke the pre generate response event.
-    $pre_generate_event = new PreGenerateResponseEvent($this->plugin->getPluginId(), $operation_type, $this->plugin->configuration, $arguments[0], $arguments[1], $this->plugin->getTags(), $this->plugin->getDebugData());
+    $pre_generate_event = new PreGenerateResponseEvent($event_id, $this->plugin->getPluginId(), $operation_type, $this->plugin->configuration, $arguments[0], $arguments[1], $this->plugin->getTags(), $this->plugin->getDebugData());
 
     $this->eventDispatcher->dispatch($pre_generate_event, PreGenerateResponseEvent::EVENT_NAME);
     // Get the possible new auth, configuration and input from the event.
@@ -196,10 +210,15 @@ class ProviderProxy {
     }
 
     // Invoke the post generate response event.
-    $post_generate_event = new PostGenerateResponseEvent($this->plugin->getPluginId(), $operation_type, $this->plugin->configuration, $arguments[0], $arguments[1], $response, $this->plugin->getTags(), $this->plugin->getDebugData(), $pre_generate_event->getAllMetadata());
+    $post_generate_event = new PostGenerateResponseEvent($event_id, $this->plugin->getPluginId(), $operation_type, $this->plugin->configuration, $arguments[0], $arguments[1], $response, $this->plugin->getTags(), $this->plugin->getDebugData(), $pre_generate_event->getAllMetadata());
     $this->eventDispatcher->dispatch($post_generate_event, PostGenerateResponseEvent::EVENT_NAME);
     // Get a potential new response from the event.
     $response = $post_generate_event->getOutput();
+
+    // Since we need to attach events on streaming responses as well.
+    if ($response->getNormalized() instanceof \IteratorAggregate) {
+      $response->getNormalized()->setRequestThreadId($event_id);
+    }
 
     // Return the response.
     return $response;

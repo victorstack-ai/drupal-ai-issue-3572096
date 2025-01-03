@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\ai;
 
+use Drupal\Component\Uuid\UuidInterface;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -66,6 +67,13 @@ final class AiProviderPluginManager extends DefaultPluginManager {
   protected $messenger;
 
   /**
+   * The UUID service.
+   *
+   * @var \Drupal\Component\Uuid\UuidInterface
+   */
+  protected $uuid;
+
+  /**
    * Constructs the object.
    */
   public function __construct(
@@ -74,6 +82,7 @@ final class AiProviderPluginManager extends DefaultPluginManager {
     ModuleHandlerInterface $module_handler,
     ContainerInterface $container,
     MessengerInterface $messenger,
+    UuidInterface $uuid,
   ) {
     parent::__construct('Plugin/AiProvider', $namespaces, $module_handler, AiProviderInterface::class, AiProvider::class);
     $this->alterInfo('ai_provider_info');
@@ -84,6 +93,7 @@ final class AiProviderPluginManager extends DefaultPluginManager {
     $this->moduleHandler = $module_handler;
     $this->configFactory = $container->get('config.factory');
     $this->messenger = $messenger;
+    $this->uuid = $uuid;
   }
 
   /**
@@ -102,7 +112,7 @@ final class AiProviderPluginManager extends DefaultPluginManager {
    */
   public function createInstance($plugin_id, array $configuration = []): ProviderProxy {
     $plugin = parent::createInstance($plugin_id, $configuration);
-    return new ProviderProxy($plugin, $this->eventDispatcher, $this->loggerFactory);
+    return new ProviderProxy($plugin, $this->eventDispatcher, $this->loggerFactory, $this->uuid);
   }
 
   /**

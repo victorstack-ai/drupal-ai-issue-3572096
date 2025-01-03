@@ -13,6 +13,13 @@ class PreGenerateResponseEvent extends Event {
   const EVENT_NAME = 'ai.pre_generate_response';
 
   /**
+   * The request thread id.
+   *
+   * @var string
+   */
+  protected $requestThreadId;
+
+  /**
    * The provider to process.
    *
    * @var string
@@ -85,6 +92,8 @@ class PreGenerateResponseEvent extends Event {
   /**
    * Constructs the object.
    *
+   * @param string $request_thread_id
+   *   The unique request thread id.
    * @param string $provider_id
    *   The provider to process.
    * @param string $operation_type
@@ -102,7 +111,8 @@ class PreGenerateResponseEvent extends Event {
    * @param array $metadata
    *   The metadata to store for the request.
    */
-  public function __construct(string $provider_id, string $operation_type, array $configuration, mixed $input, string $model_id, array $tags = [], array $debug_data = [], array $metadata = []) {
+  public function __construct(string $request_thread_id, string $provider_id, string $operation_type, array $configuration, mixed $input, string $model_id, array $tags = [], array $debug_data = [], array $metadata = []) {
+    $this->requestThreadId = $request_thread_id;
     $this->providerId = $provider_id;
     $this->configuration = $configuration;
     $this->operationType = $operation_type;
@@ -111,6 +121,16 @@ class PreGenerateResponseEvent extends Event {
     $this->tags = $tags;
     $this->debugData = $debug_data;
     $this->metadata = $metadata;
+  }
+
+  /**
+   * Gets the request thread id.
+   *
+   * @return string
+   *   The request thread id.
+   */
+  public function getRequestThreadId() {
+    return $this->requestThreadId;
   }
 
   /**

@@ -1,8 +1,8 @@
 # Events
 
-There are two important events that are currently available in the AI module. One that is triggered before the request is being sent and one that is triggered before the response is given from the AI Provider plugin.
+There are three important events that are currently available in the AI module. One that is triggered before the request is being sent, one that is triggered before the response is given from the AI Provider plugin and one that is triggered after a streaming response is done.
 
-These two makes it possible to change prompts, change responses, log, find bugs etc.
+These three makes it possible to change prompts, change responses, log, find bugs etc.
 
 There is also an event that is triggered when an AI provider gets uninstalled/disabled. This is good for 3rd party modules that might rely on a specific provider existing due to 3rd party provider settings.
 
@@ -96,12 +96,12 @@ class CountImagesSubscriber implements EventSubscriberInterface {
   }
 
   /**
-   * Change IP after sending.
+   * Count the images.
    *
-   * @param \Drupal\ai\Event\PreGenerateResponseEvent $event
+   * @param \Drupal\ai\Event\PostGenerateResponseEvent $event
    *   The event to count.
    */
-  public function countImages(PreGenerateResponseEvent $event) {
+  public function countImages(PostGenerateResponseEvent $event) {
     // Only do AI API Explorer.
     if ($event->getOperationType() == 'text-to-image') {
       $pseudoCounter->countOneMore();
@@ -112,7 +112,78 @@ class CountImagesSubscriber implements EventSubscriberInterface {
 
 ```
 
-## Example #3: Provider Disabled.
+
+## Example #3: Stream finished.
+
+You have a module where you want to log the chat messages, but they happen
+to be streaming responses so you can't see it on the post request event.
+
+You do this by creating an event subscriber, something like this.
+
+```php
+<?php
+
+namespace Drupal\ai_logging\EventSubscriber;
+
+use Drupal\ai\Event\PostGenerateResponseEvent;
+use Drupal\ai\Event\PostStreamingResponseEvent;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+
+/**
+ * Counts images.
+ */
+class CountImagesSubscriber implements EventSubscriberInterface {
+
+  /**
+   * The state in between.
+   *
+   * @var array
+   */
+  private $state = [];
+
+  /**
+   * {@inheritdoc}
+   *
+   * @return array
+   *   The post generate response event.
+   */
+  public static function getSubscribedEvents(): array {
+    return [
+      PostGenerateResponseEvent::EVENT_NAME => 'storeInput',
+      PostStreamingResponseEvent::EVENT_NAME => 'storeOutput',
+    ];
+  }
+
+  /**
+   * Store the input first.
+   *
+   * @param \Drupal\ai\Event\PostGenerateResponseEvent $event
+   *   The event to store input.
+   */
+  public function storeInput(PostGenerateResponseEvent $event) {
+    // Only do AI API Explorer.
+    if ($event->getOperationType() == 'chat') {
+      // Store with the unique id of the events happening
+      $this->state[$event->getRequestThreadId()]['input'] = $event->getInput();
+    }
+  }
+
+  /**
+   * Connect the output.
+   *
+   * @param \Drupal\ai\Event\PostStreamingResponseEvent $event
+   *   The event to store output.
+   */
+  public function storeOutput(PreGenerateResponseEvent $event) {
+      // Store the output.
+      $this->state[$event->getRequestThreadId()]['output'] = $event->getOutput();
+  }
+
+}
+
+```
+
+## Example #4: Provider Disabled.
 
 You have a third party module that is dependent on a provider called dropai.
 
