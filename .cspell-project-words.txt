@@ -205,3 +205,6 @@ Parsiunas
 OvidijusParsiunas
 outro
 myconfig
+ai_ckeditor_spellfix
+interpunction
+Spellfix
