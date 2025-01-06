@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Drupal\ai_content_suggestions\Plugin\AiContentSuggestions;
 
-use Drupal\Core\Form\FormStateInterface;
+use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai_content_suggestions\AiContentSuggestionsPluginBase;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Form\FormStateInterface;
 
 /**
  * Plugin implementation of the ai_content_suggestions.
@@ -20,19 +22,11 @@ use Drupal\ai_content_suggestions\AiContentSuggestionsPluginBase;
 final class Readability extends AiContentSuggestionsPluginBase {
 
   /**
-   * {@inheritdoc}
+   * The Default prompt for this functionality.
+   *
+   * @var string
    */
-  public function alterForm(array &$form, FormStateInterface $form_state, array $fields): void {
-    $form[$this->getPluginId()] = $this->getAlterFormTemplate($fields);
-    $form[$this->getPluginId()][$this->getPluginId() . '_submit']['#value'] = $this->t('Score readability');
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function updateFormWithResponse(array &$form, FormStateInterface $form_state): void {
-    if ($value = $this->getTargetFieldValue($form_state)) {
-      $prompt = 'Provide a Flesch score of the following text as well as one sentence description of how that score should be interpreted.
+  private string $defaultPrompt = 'Provide a Flesch score of the following text as well as one sentence description of how that score should be interpreted.
       Afterward, provide a brief list of suggested improvements to enhance readability, focusing on sentence length, word complexity, and overall structure.
       Return it like so (in html), don\'t answer with other things than the score, the brief explanation and suggestions. no pleasantries or greetings.
       Always answer in the following output format:
@@ -46,9 +40,82 @@ final class Readability extends AiContentSuggestionsPluginBase {
 
     Apart form the formatted output, return nothing else.
 
-      The input text:
+      The input text:';
+
+  /**
+   * Configuration object for this plugin.
+   *
+   * @var \Drupal\Core\Config\Config
+   */
+  private $promptConfig;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __construct(
+    array $configuration,
+    $plugin_id,
+    $plugin_definition,
+    protected AiProviderPluginManager $providerPluginManager,
+    ConfigFactoryInterface $configFactory,
+  ) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition, $providerPluginManager, $configFactory);
+
+    $this->promptConfig = $configFactory->getEditable('ai_content_suggestions.prompts');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function alterForm(array &$form, FormStateInterface $form_state, array $fields): void {
+    $form[$this->getPluginId()] = $this->getAlterFormTemplate($fields);
+    $form[$this->getPluginId()][$this->getPluginId() . '_submit']['#value'] = $this->t('Score readability');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function buildSettingsForm(&$form): void {
+    parent::buildSettingsForm($form);
+    $prompt = $this->promptConfig->get($this->getPluginId());
+    $form[$this->getPluginId()][$this->getPluginId() . '_prompt'] = [
+      '#title' => $this->t('Evaluate readability prompt', []),
+      '#type' => 'textarea',
+      '#required' => TRUE,
+      '#default_value' => $prompt ?? $this->defaultPrompt . PHP_EOL,
+      '#parents' => [$this->getPluginId(), $this->getPluginId() . '_prompt'],
+      '#states' => [
+        'visible' => [
+          ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_enabled' . ']"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function saveSettingsForm(array &$form, FormStateInterface $form_state): void {
+    $value = $form_state->getValue($this->getPluginId());
+    $prompt = $value[$this->getPluginId() . '_prompt'];
+    $this->promptConfig->set($this->getPluginId(), $prompt)->save();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function updateFormWithResponse(array &$form, FormStateInterface $form_state): void {
+    if ($value = $this->getTargetFieldValue($form_state)) {
+      $readability_prompt = $this->promptConfig->get('readability');
+      if (!empty($readability_prompt)) {
+        $prompt = $readability_prompt;
+      }
+      else {
+        $prompt = $this->defaultPrompt . '
       :\r\n
       ';
+      }
+
       $output = $this->sendChat($prompt . $value . '"');
       $cleanedResult = trim(str_replace('````', "", trim($output)));
       $cleanedResult = trim(str_replace('```', "", trim($cleanedResult)));

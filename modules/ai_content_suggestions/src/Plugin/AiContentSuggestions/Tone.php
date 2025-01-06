@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Drupal\ai_content_suggestions\Plugin\AiContentSuggestions;
 
-use Drupal\ai\AiProviderPluginManager;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManager;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai_content_suggestions\AiContentSuggestionsPluginBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -45,6 +45,13 @@ final class Tone extends AiContentSuggestionsPluginBase {
   private $toneConfig;
 
   /**
+   * The Default prompt for this functionality.
+   *
+   * @var string
+   */
+  private string $defaultPrompt = 'Change the tone of the following text to be {{ tone }} using the same language as the following text:';
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): static {
@@ -57,6 +64,13 @@ final class Tone extends AiContentSuggestionsPluginBase {
       $container->get('entity_type.manager')
     );
   }
+
+  /**
+   * Configuration object for this plugin.
+   *
+   * @var \Drupal\Core\Config\Config
+   */
+  private $promptConfig;
 
   public function __construct(
     array $configuration,
@@ -71,6 +85,7 @@ final class Tone extends AiContentSuggestionsPluginBase {
     $this->providerManager = $providerPluginManager;
     $this->entityTypeManager = $entityTypeManager;
     $this->toneConfig = $configFactory->getEditable('ai_content_suggestions.tone');
+    $this->promptConfig = $configFactory->getEditable('ai_content_suggestions.prompts');
   }
 
   /**
@@ -103,18 +118,18 @@ final class Tone extends AiContentSuggestionsPluginBase {
   }
 
   /**
-   * Get the terms in a JSON format.
+   * Get the terms in array format.
    *
-   * @param mixed $source_vocabulary
+   * @param string $source_vocabulary
    *   The source vocabulary.
    *
-   * @return string|false
-   *   The JSON representation of the terms.
+   * @return array|false
+   *   The array of the terms.
    *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  public function getTerms(mixed $source_vocabulary):array {
+  public function getTerms(string $source_vocabulary):array {
 
     // Use the loadTree to avoid loading all the terms.
     /** @var \Drupal\taxonomy\TermStorage $terms_storage */
@@ -145,9 +160,18 @@ final class Tone extends AiContentSuggestionsPluginBase {
    * {@inheritdoc}
    */
   public function updateFormWithResponse(array &$form, FormStateInterface $form_state): void {
+    $tone_prompt = $this->promptConfig->get($this->getPluginId());
+    if (!empty($tone_prompt)) {
+      $prompt = $tone_prompt;
+    }
+    else {
+      $prompt = $this->defaultPrompt . '\r\n';
+    }
+
     if ($value = $this->getTargetFieldValue($form_state)) {
       if ($tone = $this->getFormFieldValue('tone', $form_state)) {
-        $message = $this->sendChat('Change the tone of the following text to be ' . $tone . ' using the same language as the following text:\r\n"' . $value . '"');
+        $prompt = str_replace('{{ tone }}', $tone, $prompt);
+        $message = $this->sendChat($prompt . $value . '"');
       }
       else {
         $message = $this->t('Please select a tone for the LLM to suggest.');
@@ -168,6 +192,21 @@ final class Tone extends AiContentSuggestionsPluginBase {
    */
   public function buildSettingsForm(array &$form): void {
     parent::buildSettingsForm($form);
+
+    $prompt = $this->promptConfig->get($this->getPluginId());
+    $form[$this->getPluginId()][$this->getPluginId() . '_prompt'] = [
+      '#title' => $this->t('Tone of voice prompt', []),
+      '#type' => 'textarea',
+      '#required' => TRUE,
+      '#default_value' => $prompt ?? $this->defaultPrompt . PHP_EOL,
+      '#parents' => [$this->getPluginId(), $this->getPluginId() . '_prompt'],
+      '#states' => [
+        'visible' => [
+          ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_enabled' . ']"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+
     $vocabularies = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->loadMultiple();
     $vocabulary_options = [];
     foreach ($vocabularies as $vocabulary) {
@@ -211,6 +250,8 @@ final class Tone extends AiContentSuggestionsPluginBase {
     $this->toneConfig->set($this->getPluginId() . '_taxonomy', $taxonomy)->save();
     $taxonomy_enabled = $value[$this->getPluginId() . '_taxonomy_enabled'];
     $this->toneConfig->set($this->getPluginId() . '_taxonomy_enabled', (bool) $taxonomy_enabled)->save();
+    $prompt = $value[$this->getPluginId() . '_prompt'];
+    $this->promptConfig->set($this->getPluginId(), $prompt)->save();
   }
 
 }

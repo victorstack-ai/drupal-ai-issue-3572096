@@ -27,6 +27,26 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 final class Taxonomy extends AiContentSuggestionsPluginBase {
 
   /**
+   * The Default prompt for this functionality.
+   *
+   * @var string
+   */
+  private string $defaultFromVocPrompt = 'Choose no more than five words to classify the following text using the same language as the input text:';
+  /**
+   * The Default prompt for this functionality.
+   *
+   * @var string
+   */
+  private string $defaultOpenPrompt = 'Suggest no more than five words to classify the following text using the same language as the input text. The words must be nouns or adjectives in a comma delimited list';
+
+  /**
+   * Configuration object for this plugin.
+   *
+   * @var \Drupal\Core\Config\Config
+   */
+  private $promptConfig;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): static {
@@ -41,6 +61,9 @@ final class Taxonomy extends AiContentSuggestionsPluginBase {
     );
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function __construct(
     array $configuration,
     $plugin_id,
@@ -51,6 +74,7 @@ final class Taxonomy extends AiContentSuggestionsPluginBase {
     protected EntityFieldManagerInterface $entityFieldManager,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $providerPluginManager, $configFactory);
+    $this->promptConfig = $configFactory->getEditable('ai_content_suggestions.prompts');
   }
 
   /**
@@ -102,6 +126,50 @@ final class Taxonomy extends AiContentSuggestionsPluginBase {
   /**
    * {@inheritdoc}
    */
+  public function buildSettingsForm(&$form): void {
+    parent::buildSettingsForm($form);
+    $prompt = $this->promptConfig->get($this->getPluginId() . '_open');
+    $form[$this->getPluginId()][$this->getPluginId() . '_prompt_open'] = [
+      '#title' => $this->t('Suggest taxonomy prompt (not limited to vocabulary)', []),
+      '#type' => 'textarea',
+      '#required' => TRUE,
+      '#default_value' => $prompt ?? $this->defaultOpenPrompt . PHP_EOL,
+      '#parents' => [$this->getPluginId(), $this->getPluginId() . '_prompt_open'],
+      '#states' => [
+        'visible' => [
+          ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_enabled' . ']"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+    $prompt = $this->promptConfig->get($this->getPluginId() . '_from_voc');
+    $form[$this->getPluginId()][$this->getPluginId() . '_prompt_from_voc'] = [
+      '#title' => $this->t('Suggest taxonomy prompt (limited to vocabulary)', []),
+      '#type' => 'textarea',
+      '#required' => TRUE,
+      '#default_value' => $prompt ?? $this->defaultFromVocPrompt . PHP_EOL,
+      '#parents' => [$this->getPluginId(), $this->getPluginId() . '_prompt_from_voc'],
+      '#states' => [
+        'visible' => [
+          ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_enabled' . ']"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function saveSettingsForm(array &$form, FormStateInterface $form_state): void {
+    $value = $form_state->getValue($this->getPluginId());
+    $prompt_open = $value[$this->getPluginId() . '_prompt_open'];
+    $this->promptConfig->set($this->getPluginId() . '_open', $prompt_open)->save();
+    $prompt_from_voc = $value[$this->getPluginId() . '_prompt_from_voc'];
+    $this->promptConfig->set($this->getPluginId() . '_from_voc', $prompt_from_voc)->save();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function updateFormWithResponse(array &$form, FormStateInterface $form_state): void {
     if ($value = $this->getTargetFieldValue($form_state)) {
 
@@ -113,7 +181,14 @@ final class Taxonomy extends AiContentSuggestionsPluginBase {
         $terms_json = $this->getTermsJson($source_vocabulary, $use_source_vocabulary_hierarchy);
 
         // Build our prompt.
-        $prompt = 'Choose no more than five words to classify the following text using the same language as the input text:\r\n"""' . $value . '"""\r\n\r\n';
+        $tax_prompt = $this->promptConfig->get($this->getPluginId() . '_from_voc');
+        if (!empty($tax_prompt)) {
+          $prompt = $tax_prompt;
+        }
+        else {
+          $prompt = $this->defaultFromVocPrompt;
+        }
+        $prompt = $prompt . '\r\n"""' . $value . '"""\r\n\r\n';
 
         if ($use_source_vocabulary_hierarchy) {
           $prompt .= 'The words must be relevant and selected from the leaf nodes of this json tree, they must take into account the full hierarchy. They must be returned in a multilevel html list, containing the whole chain of names, without the IDs:\r\n ' . $terms_json;
@@ -123,7 +198,15 @@ final class Taxonomy extends AiContentSuggestionsPluginBase {
         }
       }
       else {
-        $prompt = 'Suggest no more than five words to classify the following text using the same language as the input text. The words must be nouns or adjectives in a comma delimited list:\r\n"""' . $value . '"""';
+        $tax_prompt = $this->promptConfig->get($this->getPluginId() . '_open');
+        if (!empty($tax_prompt)) {
+          $prompt = $tax_prompt;
+        }
+        else {
+          $prompt = $this->defaultOpenPrompt . ':\r\n"""' . $value . '"""';
+        }
+        $prompt = $prompt . '\r\n"""' . $value . '"""';
+
       }
 
       $message = $this->sendChat($prompt);
