@@ -193,11 +193,22 @@ class AiSettingsForm extends ConfigFormBase {
     $values = $form_state->getValues();
     foreach ($this->providerManager->getOperationTypes() as $operation_type) {
 
-      // If a provider is selected, a model must also be selected.
-      if (
-        !empty($values['operation__' . $operation_type['id']])
-        && empty($values['model__' . $operation_type['id']])
-      ) {
+      // We only want to ensure a model is selected for each operation that
+      // has a default.
+      if (empty($values['operation__' . $operation_type['id']])) {
+        continue;
+      }
+
+      if (!isset($values['model__' . $operation_type['id']])) {
+
+        // In this scenario, the user has not yet been given the chance to
+        // select a model. This is typically because JavaScript is disabled.
+        $form_state->setRebuild();
+      }
+      elseif (empty($values['model__' . $operation_type['id']])) {
+
+        // The user has the option to select a model but has not, show a
+        // validation error.
         $message = $this->t('You have selected a provider for @operation but have not selected a model.', [
           '@operation' => $operation_type['label'],
         ]);
