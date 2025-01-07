@@ -179,9 +179,9 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     ];
 
     $form['messages']['first_message'] = [
-      '#type' => 'textfield',
+      '#type' => 'textarea',
       '#title' => $this->t('First Message'),
-      '#description' => $this->t('The first message to start things of.'),
+      '#description' => $this->t('The first message to start things of. Can take markdown.'),
       '#default_value' => $this->configuration['first_message'],
     ];
 
