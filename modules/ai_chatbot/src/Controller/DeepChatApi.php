@@ -186,6 +186,7 @@ final class DeepChatApi extends ControllerBase {
     ]);
 
     $converter = $this->getCommonMarkConverter();
+    $assistantResponseText = $this->rewriteMarkdownMessage($assistantResponseText);
     $assistantResponseText = $converter ? $converter->convert($assistantResponseText) : $assistantResponseText;
 
     $assistantResponseText .= $this->renderStructuredResults();
@@ -269,6 +270,32 @@ final class DeepChatApi extends ControllerBase {
   }
 
   /**
+   * Rewrite markdown message.
+   *
+   * @param string $message
+   *   The message to rewrite.
+   *
+   * @return string
+   *   The rewritten message.
+   */
+  public function rewriteMarkdownMessage(string $message): string {
+    // Find any link from a markdown message an iterate them.
+    $pattern = '/\[(.*?)\]\((.*?)\)/';
+    preg_match_all($pattern, $message, $matches, PREG_SET_ORDER);
+    foreach ($matches as $match) {
+      $link = $match[2];
+      $text = $match[1];
+      // If the link does not start with a protocol or slash, add the base URL.
+      if (!preg_match('/^(http|https|ftp|ftps|mailto|tel|\/)/', $link)) {
+        $link = base_path() . $link;
+      }
+      $message = str_replace($match[0], "[$text]($link)", $message);
+    }
+
+    return $message;
+  }
+
+  /**
    * Send SSE message.
    *
    * @param string $message
@@ -279,6 +306,7 @@ final class DeepChatApi extends ControllerBase {
    *   The type of message.
    */
   public function createSseMessage(string $message, bool $is_chunk = FALSE, string $type = 'html') {
+    $message = $this->rewriteMarkdownMessage($message);
     $converter = $this->getCommonMarkConverter();
     if ($is_chunk) {
       // Send the chunk.
