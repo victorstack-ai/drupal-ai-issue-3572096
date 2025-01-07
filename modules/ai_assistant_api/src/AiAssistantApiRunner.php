@@ -1,7 +1,15 @@
 <?php
-// phpcs:ignoreFile
+
 namespace Drupal\ai_assistant_api;
 
+use Drupal\Component\Utility\Crypt;
+use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Render\Renderer;
+use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\Session\SessionManagerInterface;
+use Drupal\Core\TempStore\PrivateTempStoreFactory;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
@@ -11,16 +19,7 @@ use Drupal\ai_assistant_api\Data\UserMessage;
 use Drupal\ai_assistant_api\Entity\AiAssistant;
 use Drupal\ai_assistant_api\Event\AiAssistantSystemRoleEvent;
 use Drupal\ai_assistant_api\Service\AssistantMessageBuilder;
-use Drupal\Component\Utility\Crypt;
-use Drupal\Core\Entity\ContentEntityInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Logger\LoggerChannelFactoryInterface;
-use Drupal\Core\Render\Renderer;
-use Drupal\Core\Render\RendererInterface;
-use Drupal\Core\Session\AccountProxyInterface;
-use Drupal\Core\TempStore\PrivateTempStoreFactory;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * The runner for the AI assistant.
@@ -119,6 +118,9 @@ class AiAssistantApiRunner {
    * @param \Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface $promptJsonDecoder
    *   The message to json service.
    * @param \Drupal\ai_assistant_api\Service\AssistantMessageBuilder $assistantMessageBuilder
+   *   The assistant message builder.
+   * @param \Drupal\Core\Session\SessionManagerInterface $sessionManager
+   *   The session manager.
    */
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
@@ -131,6 +133,7 @@ class AiAssistantApiRunner {
     protected LoggerChannelFactoryInterface $loggerChannelFactory,
     protected PromptJsonDecoderInterface $promptJsonDecoder,
     protected AssistantMessageBuilder $assistantMessageBuilder,
+    protected SessionManagerInterface $sessionManager,
   ) {
   }
 
@@ -138,6 +141,7 @@ class AiAssistantApiRunner {
    * Gets the assistant.
    *
    * @return \Drupal\ai_assistant_api\Entity\AiAssistant
+   *   The assistant.
    */
   public function getAssistant() {
     return $this->assistant;
@@ -153,10 +157,7 @@ class AiAssistantApiRunner {
     $this->assistant = $assistant;
 
     // Generate the thread id.
-    if (in_array($this->assistant->get('allow_history'), [
-        'sessions',
-        'session_one_thread',
-      ]) && !$this->threadId) {
+    if ($this->shouldStoreSession() && !$this->threadId) {
       $this->threadId = $this->generateUniqueKey();
     }
     // Set the thread id.
@@ -196,10 +197,7 @@ class AiAssistantApiRunner {
     $this->tokens['question'] = $userMessage->getMessage();
 
     // If session is set, we store the user message.
-    if (in_array($this->assistant->get('allow_history'), [
-      'session',
-      'session_one_thread',
-    ])) {
+    if ($this->shouldStoreSession()) {
       $this->addMessageToSession('user', $this->userMessage->getMessage());
     }
   }
@@ -212,10 +210,7 @@ class AiAssistantApiRunner {
    */
   public function setAssistantMessage($message) {
     // If session is set, we store the assistant message.
-    if (in_array($this->assistant->get('allow_history'), [
-      'session',
-      'session_one_thread',
-    ])) {
+    if ($this->shouldStoreSession()) {
       $this->addMessageToSession('assistant', $message);
     }
   }
@@ -224,6 +219,7 @@ class AiAssistantApiRunner {
    * Gets a unique storage key for the assistant.
    *
    * @return string
+   *   The unique key.
    */
   public function generateUniqueKey() {
     $type = $this->assistant->get('allow_history');
@@ -293,6 +289,9 @@ class AiAssistantApiRunner {
 
   /**
    * Start processing the assistant synchronously.
+   *
+   * @return \Drupal\ai\OperationType\Chat\ChatOutput
+   *   The response from the assistant or error.
    */
   public function process() {
     // Validate that we can run.
@@ -313,7 +312,6 @@ class AiAssistantApiRunner {
         }
 
         $defaults = $this->getProviderAndModel();
-        // Reset the action before running them.
 
         foreach ($return['actions'] as $action) {
           $this->usingAction = TRUE;
@@ -522,10 +520,7 @@ class AiAssistantApiRunner {
    *   The message history.
    */
   public function getMessageHistory() {
-    if (in_array($this->assistant->get('allow_history'), [
-      'session',
-      'session_one_thread',
-    ])) {
+    if ($this->shouldStoreSession()) {
       $history = $this->getTempStore()->get($this->threadId)['messages'] ?? [];
       if ($history) {
         // Send the last message + n pairs of user and system messages (where
@@ -574,7 +569,7 @@ class AiAssistantApiRunner {
    *   The current thread id.
    */
   public function getCurrentThreadsKey() {
-    return $this->getTempStore()->get('current_thread_id_'. $this->assistant->id());
+    return $this->getTempStore()->get('current_thread_id_' . $this->assistant->id());
   }
 
   /**
@@ -591,7 +586,7 @@ class AiAssistantApiRunner {
    * Remove the current thread id.
    */
   public function removeCurrentThreadsKey() {
-    $this->getTempStore()->delete('current_thread_id_'. $this->assistant->id());
+    $this->getTempStore()->delete('current_thread_id_' . $this->assistant->id());
   }
 
   /**
@@ -623,9 +618,32 @@ class AiAssistantApiRunner {
   }
 
   /**
+   * Start temporary storage for the assistant.
+   */
+  public function startSession() {
+    if ($this->shouldStoreSession()) {
+      $this->sessionManager->start();
+    }
+  }
+
+  /**
+   * Should store session.
+   *
+   * @return bool
+   *   If the session should be stored.
+   */
+  public function shouldStoreSession() {
+    return in_array($this->assistant->get('allow_history'), [
+      'session',
+      'session_one_thread',
+    ]);
+  }
+
+  /**
    * Get the private tempstore for AI Assistant.
    *
    * @return \Drupal\Core\TempStore\PrivateTempStore
+   *   The tempstore.
    */
   public function getTempStore() {
     return $this->tempStore->get('ai_assistant_api');
@@ -635,6 +653,7 @@ class AiAssistantApiRunner {
    * Is setup.
    *
    * @return bool
+   *   If the assistant is setup.
    */
   public function isSetup() {
     $connect = $this->getProviderAndModel();

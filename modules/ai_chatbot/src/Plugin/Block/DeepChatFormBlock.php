@@ -578,6 +578,9 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
    */
   public function historicalMessages() {
     $messages = [];
+    if ($this->aiAssistantRunner->getAssistant()->get('allow_history') == 'none') {
+      return $messages;
+    }
     $session_messages = $this->aiAssistantRunner->getMessageHistory();
     $converter = NULL;
     if (class_exists('League\CommonMark\CommonMarkConverter')) {

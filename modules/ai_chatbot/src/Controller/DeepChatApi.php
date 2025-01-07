@@ -213,7 +213,7 @@ final class DeepChatApi extends ControllerBase {
    * @return \Symfony\Component\HttpFoundation\StreamedResponse
    *   The streamed response.
    */
-  private function createStreamedResponse(StreamedChatMessageIterator $streamedMessages,): StreamedResponse {
+  private function createStreamedResponse(StreamedChatMessageIterator $streamedMessages): StreamedResponse {
     $response = new StreamedResponse();
 
     // Set headers for streaming.
@@ -223,6 +223,7 @@ final class DeepChatApi extends ControllerBase {
 
     $response->setCallback(function () use ($streamedMessages) {
       $saveMessage = '';
+
       // Disable PHP output buffering.
       while (ob_get_level() > 0) {
         ob_end_flush();
@@ -230,12 +231,19 @@ final class DeepChatApi extends ControllerBase {
 
       // Ensure implicit flush is enabled.
       ini_set('implicit_flush', '1');
-      ob_implicit_flush(TRUE);
+      ob_start();
+      // Make sure to start session.
+      $this->aiAssistantClient->startSession();
       foreach ($streamedMessages as $chunk) {
         $saveMessage .= $chunk->getText();
         // Send each chunk.
         $this->createSseMessage($saveMessage, TRUE);
+        ob_flush();
       }
+
+      $this->aiAssistantClient->setAssistantMessage($saveMessage);
+      ob_flush();
+
       $extra = $this->moduleHandler()->invokeAll('deepchat_prepend_message', [
         $saveMessage,
         'text',
@@ -251,8 +259,10 @@ final class DeepChatApi extends ControllerBase {
       $this->createSseMessage($this->renderStructuredResults());
       // Send the buttons.
       $this->createSseMessage($this->messagesButtons->getRenderedButtons($this->buttons, $this->aiAssistantClient->getAssistant()->id(), $this->aiAssistantClient->getThreadsKey()));
-      $this->aiAssistantClient->setAssistantMessage($saveMessage);
-      ob_end_flush();
+      // Check if the output buffer is empty.
+      while (ob_get_level() > 0) {
+        ob_end_flush();
+      }
     });
 
     return $response;

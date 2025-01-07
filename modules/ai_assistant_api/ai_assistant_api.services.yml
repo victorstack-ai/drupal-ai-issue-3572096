@@ -12,6 +12,7 @@ services:
       - '@logger.factory'
       - '@ai.prompt_json_decode'
       - '@ai_assistant_api.assistant_message_builder'
+      - '@session_manager'
   ai_assistant_api.action_plugin.manager:
     class: Drupal\ai_assistant_api\AiAssistantActionPluginManager
     parent: default_plugin_manager

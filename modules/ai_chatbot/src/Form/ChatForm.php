@@ -153,6 +153,7 @@ class ChatForm extends FormBase {
         else {
           $http_response->setCallback(function () use ($response, $form_state) {
             $full_response = "";
+            $this->aiAssistantRunner->startSession();
             foreach ($response->getNormalized() as $message) {
               echo $message->getText();
               $full_response .= $message->getText();
