@@ -286,7 +286,7 @@ final class DeepChatApi extends ControllerBase {
       $link = $match[2];
       $text = $match[1];
       // If the link does not start with a protocol or slash, add the base URL.
-      if (!preg_match('/^(http|https|ftp|ftps|mailto|tel|\/)/', $link)) {
+      if (strpos($link, '://') === FALSE && strpos($link, '/') !== 0) {
         $link = base_path() . $link;
       }
       $message = str_replace($match[0], "[$text]($link)", $message);
