@@ -149,7 +149,7 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
               if (
                 isset($row['type']['#default_value'])
                 && $row['type']['#default_value'] === 'string'
-                && $row['indexing_option']['#default_value'] === EmbeddingStrategyIndexingOptions::ATTRIBUTES->getKey()
+                && $row['indexing_option']['#default_value'] === EmbeddingStrategyIndexingOptions::Attributes->getKey()
               ) {
                 $row['max'] = [
                   '#type' => 'number',
@@ -464,7 +464,7 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
           }
 
           // If there is more than one, set a validation error.
-          if ($field['indexing_option'] === EmbeddingStrategyIndexingOptions::MAIN_CONTENT->getKey()) {
+          if ($field['indexing_option'] === EmbeddingStrategyIndexingOptions::MainContent->getKey()) {
             $count_main_contents++;
           }
           if ($count_main_contents > 1) {
