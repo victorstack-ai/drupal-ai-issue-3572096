@@ -3,7 +3,6 @@ type: module
 description: Adds decoupled AI Assistants for any frontend to work with.
 package: AI Tools
 core_version_requirement: ^10.2 || ^11
-lifecycle: experimental
 configure: entity.ai_assistant.collection
 
 dependencies:

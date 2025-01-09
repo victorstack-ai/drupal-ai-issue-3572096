@@ -3,7 +3,6 @@ description: Allows AI and other tools and services to automatically generate fi
 package: AI (Experimental)
 type: module
 core_version_requirement: ^10.2 || ^11
-lifecycle: experimental
 
 dependencies:
   - ai:ai
