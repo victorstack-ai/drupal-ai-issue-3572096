@@ -283,12 +283,17 @@ final class DeepChatApi extends ControllerBase {
     $pattern = '/\[(.*?)\]\((.*?)\)/';
     preg_match_all($pattern, $message, $matches, PREG_SET_ORDER);
     foreach ($matches as $match) {
-      $link = $match[2];
+      $link = trim($match[2]);
       $text = $match[1];
       // If the link does not start with a protocol or slash, add the base URL.
       if (strpos($link, '://') === FALSE && strpos($link, '/') !== 0) {
         $link = base_path() . $link;
       }
+      // Sometimes it adds double slashes at the start.
+      if (substr($link, 0, 2) === '//') {
+        $link = substr($link, 1);
+      }
+
       $message = str_replace($match[0], "[$text]($link)", $message);
     }
 
