@@ -16,6 +16,7 @@ use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface;
 use Drupal\ai\Utility\CastUtility;
 use Drupal\ai_automators\Exceptions\AiAutomatorResponseErrorException;
+use Drupal\ai_automators\Exceptions\AiAutomatorTypeNotRunnable;
 use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\ai_automators\Traits\GeneralHelperTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -596,6 +597,9 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
    *   The provider.
    */
   protected function getProvider(array $automatorConfig): string {
+    if (empty($automatorConfig['ai_provider'])) {
+      throw new AiAutomatorTypeNotRunnable('No provider set for the LLM type ' . $this->llmType);
+    }
     if ($automatorConfig['ai_provider'] == 'default_json') {
       $automatorConfig['ai_provider'] = $this->aiPluginManager->getDefaultProviderForOperationType('chat_with_complex_json')['provider_id'];
     }
