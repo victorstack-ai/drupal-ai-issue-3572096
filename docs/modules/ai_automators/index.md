@@ -35,7 +35,7 @@ Field UI module enabled**.
 1. Go to the "Manage Fields" tab of your entity type.
 2. Select the field you wish to add/configure the AI Automator on and click its
    "edit" operation.
-3. The standard field settings edit form will display. If there are AI 
+3. The standard field settings edit form will display. If there are AI
    Automators compatible with your field type, a "Enable AI Automator" checkbox
    will be towards the bottom of the form.
 4. When you click "Enable AI Automator", a sub form will open showing the
@@ -44,7 +44,7 @@ Field UI module enabled**.
    Automator Type" dropdown. Select the one you wish to add.
 5. The sub form for your selected AI Automator will appear below the dropdown.
    This form may contain different elements depending on the selected AI
-   Automator: follow the instructions in the forms to configure your choice. 
+   Automator: follow the instructions in the forms to configure your choice.
    Some settings are shared across multiple AI providers, such as:
    1. **Automator Input Mode**: A dropdown to select the method of applying the
       AI Automator. Basic allows you to specify a single field attached to the
@@ -67,7 +67,7 @@ Field UI module enabled**.
    7. **Automator Label**: The label that will display in the admin interface
       for this automator.
    8. **Automator Weight**: Controls the order multiple AI Automators on this
-      entity will be run in: lower weights will run before higher weights, 
+      entity will be run in: lower weights will run before higher weights,
       allowing you to generate a field value past on a previously generated
       value.
    9. **Automator Worker**: Control how the automator is run:
@@ -207,7 +207,7 @@ If you would like to see a video of this process, please [visit YouTube](https:/
    access to see and use the AI Automator Chain user interfaces. Once all chains
    have been created, the setting can be safely disabled again.
 2. Follow [the instructions for adding an AI Automator Chain](#add-an-ai-automator-chain).
-3. Implement your custom code to obtain an appropriate value, load the 
+3. Implement your custom code to obtain an appropriate value, load the
    ai_automator.automate service and use the ->run() method to obtain the
    generated outputs. You will then need to set the values against the
    appropriate fields.
@@ -240,5 +240,5 @@ own implementation.
 ```
 
 ## Developer documentation
-Check the [developers guide](developers/developer_information.md) for
-information on how to develop using the AI module.
+Check the [developers guide](../../developers/writing_an_ai_automators_plugin) for
+information on how to write a third party module using the AI module.
