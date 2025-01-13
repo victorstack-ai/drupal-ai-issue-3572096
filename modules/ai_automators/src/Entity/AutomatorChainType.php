@@ -40,9 +40,9 @@ use Drupal\Core\Config\Entity\ConfigEntityBundleBase;
  *   },
  *   links = {
  *     "add-form" = "/admin/config/ai/automator_chain_types/add",
- *     "edit-form" = "/admin/config/ai//automator_chain_types/manage/{automator_chain_type}",
- *     "delete-form" = "/admin/structure/ai/automator_chain_types/manage/{automator_chain_type}/delete",
- *     "collection" = "/admin/structure/ai/automator_chain_types",
+ *     "edit-form" = "/admin/config/ai/automator_chain_types/manage/{automator_chain_type}",
+ *     "delete-form" = "/admin/config/ai/automator_chain_types/manage/{automator_chain_type}/delete",
+ *     "collection" = "/admin/config/ai/automator_chain_types",
  *   },
  *   config_export = {
  *     "id",
