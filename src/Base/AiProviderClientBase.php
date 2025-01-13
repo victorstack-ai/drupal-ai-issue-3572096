@@ -207,10 +207,14 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    * Load from dependency injection container.
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    $client_options = $configuration['http_client_options'] ?? [];
+
     return new static(
       $plugin_id,
       $plugin_definition,
-      $container->get('http_client'),
+      $container->get('http_client_factory')->fromOptions($client_options + [
+        'timeout' => 60,
+      ]),
       $container->get('config.factory'),
       $container->get('logger.factory'),
       $container->get('cache.default'),
