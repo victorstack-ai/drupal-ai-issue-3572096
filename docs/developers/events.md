@@ -15,7 +15,7 @@ You do this by creating an event subscriber, something like this.
 ```php
 <?php
 
-namespace Drupal\ai_logging\EventSubscriber;
+namespace Drupal\ai_example\EventSubscriber;
 
 use Drupal\ai\Event\PreGenerateResponseEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -52,11 +52,11 @@ class IpCheckSubscriber implements EventSubscriberInterface {
         'my_secret_word',
         'do_not_send_this',
       ];
-      $messages = $this->getInput();
-      foreach ($messages as $key => $message) {
+      $messages = $event->getInput()->getMessages()
+      foreach ($messages as $key => &$message) {
+        // Remove all ips.
         $messages[$key]->setText(str_replace($ip, 'censored', $message->getText()));
       }
-      $event->setInput($messages);
     }
   }
 
