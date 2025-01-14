@@ -21,3 +21,4 @@ ai_chatbot.api:
   methods:  [POST]
   requirements:
     _permission: 'access deepchat api'
+    _csrf_token: 'TRUE'

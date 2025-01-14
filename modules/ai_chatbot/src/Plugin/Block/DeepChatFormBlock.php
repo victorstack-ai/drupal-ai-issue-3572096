@@ -10,6 +10,7 @@ use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Yaml\Yaml;
 
@@ -444,9 +445,14 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
 
     $deepchat['id'] = 'chat-element';
 
+    // Create the url.
+    $url = Url::fromRoute(
+      'ai_chatbot.api',
+    );
+
     // Fix the call.
     $deepchat['connect'] = [
-      'url' => '/api/deepchat',
+      'url' => $url->toString(),
       'method' => 'POST',
       'stream' => $this->configuration['stream'],
       'additionalBodyProps' => [
