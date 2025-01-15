@@ -310,7 +310,9 @@ abstract class AiContentSuggestionsPluginBase extends PluginBase implements AiCo
       $ai_provider->setChatSystemRole('You are helpful assistant.');
 
       /** @var \Drupal\ai\OperationType\Chat\ChatMessage $response */
-      $response = $ai_provider->chat($messages, $provider_config['model_id'], ['ai_content_suggestions'])->getNormalized();
+      $response = $ai_provider->chat($messages, $provider_config['model_id'], [
+        'ai_content_suggestions',
+      ])->getNormalized();
       $message = trim($response->getText()) ?? $this->t('No result could be generated.');
     }
     catch (\Exception $e) {

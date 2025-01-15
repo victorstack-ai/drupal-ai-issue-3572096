@@ -181,7 +181,7 @@ class AiTranslateController extends ControllerBase {
       $this->moduleHandler->alter('ai_translate_translation', $messages, $provider, $provider_config['model_id']);
 
       /** @var /Drupal\ai\OperationType\Chat\ChatOutput $message */
-      $message = $provider->chat($messages, $provider_config['model_id'])->getNormalized();
+      $message = $provider->chat($messages, $provider_config['model_id'], ['ai_translate'])->getNormalized();
     }
     catch (GuzzleException $exception) {
       // Error handling for the API call.

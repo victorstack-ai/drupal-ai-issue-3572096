@@ -157,7 +157,7 @@ class AiRequest implements ContainerInjectionInterface {
       $ai_provider->streamedOutput();
 
       /** @var \Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface $response */
-      $response = $ai_provider->chat($messages, $ai_model)->getNormalized();
+      $response = $ai_provider->chat($messages, $ai_model, ['ai_ckeditor'])->getNormalized();
 
       return new StreamedResponse(function () use ($response) {
         foreach ($response as $message) {

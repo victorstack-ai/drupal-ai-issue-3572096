@@ -108,6 +108,7 @@ libx
 livechat
 logprobs
 Longstockings
+mgmt
 midword
 milvusdb
 minidisc
