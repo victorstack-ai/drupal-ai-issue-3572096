@@ -198,7 +198,6 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       '#description' => $this->t('This is recommended to ensure the right number of tokens is calculated for the embeddings. Depending on the vector database and dimensions, the number of Tokens allowed per chunk of content differs. This service is used to count the number of tokens in your content as accurately as possible to better make use of the available space.'),
       '#default_value' => $this->configuration['chat_model'] ?? $default_model,
       '#options' => $this->tokenizer->getSupportedModels(),
-      '#required' => TRUE,
       '#weight' => 2,
     ];
 
@@ -491,6 +490,9 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     // Obtain results.
     $i = 0;
     foreach ($response as $match) {
+      if (is_object($match)) {
+        $match = (array) $match;
+      }
       $i++;
       // Do access checks.
       if (!$bypass_access && !$this->checkEntityAccess($match['drupal_entity_id'])) {
@@ -504,7 +506,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
         return [
           'real_offset' => $start_offset + ($iteration * $start_limit * 2) + $i,
           'reason' => 'limit',
-          'vector_score' => $match->distance ?? 0,
+          'vector_score' => $match['distance'] ?? 0,
         ];
       }
     }
@@ -514,7 +516,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       return [
         'real_offset' => $iteration * $start_limit * 2 + $i,
         'reason' => 'max_retries',
-        'vector_score' => $match->distance ?? 0,
+        'vector_score' => $match['distance'] ?? 0,
       ];
     }
     // If we got less then limit back, it reached the end.
@@ -522,7 +524,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       return [
         'real_offset' => $iteration * $start_limit * 2 + $i,
         'reason' => 'reached_end',
-        'vector_score' => $match->distance ?? 0,
+        'vector_score' => $match['distance'] ?? 0,
       ];
     }
     // Else we need to continue.

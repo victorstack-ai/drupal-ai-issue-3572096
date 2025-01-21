@@ -210,3 +210,8 @@ myconfig
 ai_ckeditor_spellfix
 interpunction
 Spellfix
+embedder
+Embedder
+UNHEX
+Rerank
+COSIM
