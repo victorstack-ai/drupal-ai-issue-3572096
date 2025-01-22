@@ -22,7 +22,7 @@ final class Completion extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state): array {
     $options = $this->aiProviderManager->getSimpleProviderModelOptions('chat');
     array_shift($options);
     array_splice($options, 0, 1);
@@ -57,7 +57,7 @@ final class Completion extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
+  public function submitConfigurationForm(array &$form, FormStateInterface $form_state): void {
     $this->configuration['provider'] = $form_state->getValue('provider');
     $newPrompt = $form_state->getValue('prompt');
     $prompts_config = $this->getConfigFactory()->getEditable('ai_ckeditor.settings');
@@ -67,7 +67,7 @@ final class Completion extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []) {
+  public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []): array {
     $form = parent::buildCkEditorModalForm($form, $form_state);
 
     $editor_id = $this->requestStack->getParentRequest()->get('editor_id');
@@ -88,6 +88,7 @@ final class Completion extends AiCKEditorPluginBase {
       '#default_value' => '',
       '#allowed_formats' => [$editor_id],
       '#format' => $editor_id,
+      '#ai_ckeditor_response' => TRUE,
     ];
 
     return $form;
