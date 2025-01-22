@@ -420,6 +420,22 @@ class AiAssistantApiRunner {
     $event = new AiAssistantSystemRoleEvent($assistant_message);
     $this->eventDispatcher->dispatch($event, AiAssistantSystemRoleEvent::EVENT_NAME);
     $assistant_message = $event->getSystemPrompt();
+
+    // Set context messages from the actions.
+    if (!empty($this->getOutputContexts())) {
+      $message = '';
+      foreach ($this->getOutputContexts() as $key => $data) {
+        $message .= "The following are the results the different actions from the $key action: \n";
+        foreach ($data as $item) {
+          $message .= $item . "\n";
+        }
+        $message .= "\n";
+      }
+    }
+    else {
+      $message = "No actions have been run, this means that you have done nothing since the last instruction.";
+    }
+    $assistant_message = $assistant_message . $message;
     $provider->setChatSystemRole($assistant_message);
 
     $messages = [];
@@ -438,18 +454,6 @@ class AiAssistantApiRunner {
     $history = $this->getMessageHistory();
     foreach ($history as $key => $message) {
       $messages[] = new ChatMessage($message['role'], $message['message']);
-    }
-    // Set context messages from the actions.
-    if (!empty($this->getOutputContexts())) {
-      $message = '';
-      foreach ($this->getOutputContexts() as $key => $data) {
-        $message .= "The following are the results the different actions from the $key action: \n";
-        foreach ($data as $item) {
-          $message .= $item . "\n";
-        }
-        $message .= "\n";
-      }
-      $messages[] = new ChatMessage('assistant', $message);
     }
     $input = new ChatInput($messages);
 
