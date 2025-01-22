@@ -16,6 +16,6 @@
         "allanpichardo/mysql-vector": "^2.0"
     },
     "suggest": {
-        "league/commonmark": "Allows previewing of chunked content when configuring the fields to be indexed in AI Search."
+        "league/commonmark": "Allows previewing of chunked content when configuring the fields to be indexed in AI Search, and formats messages in the AI Chatbot module."
     }
 }
