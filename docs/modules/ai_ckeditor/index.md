@@ -9,15 +9,12 @@ suggestions to text completion.
 The AI CKEditor integration requires the AI Core module to be installed and
 configured, and a valid AI Provider module to be enabled and configured.
 
-It also requires "Source" button to be enabled in the CKEditor toolbar.
-
 ## Installation & configuration
 1. Enable the module
 2. Navigate to the page where you configure text formats and editors (/admin/config/content/formats) and choose one (example Basic HTML - Click on Configure).
-3. Ensure that the "Source" widget is already in the Active toolbar or add it.
-4. Drag the AI Stars ✨ widget into the Active toolbar.
-5. Under "CKEditor 5 plugin settings" there is now "AI tools"
-6. Configure each tool to your liking (Enable/Disable , choose the right model for you).
+3. Drag the AI Stars ✨ widget into the Active toolbar.
+4. Under "CKEditor 5 plugin settings" there is now "AI tools"
+5. Configure each tool to your liking (Enable/Disable , choose the right model for you).
 
 ### Plugin configuration
 Some plugins require additional configuration to use.
