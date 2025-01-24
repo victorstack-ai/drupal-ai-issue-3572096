@@ -155,6 +155,10 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
       'fields[rendered_item][indexing_option]' => 'main_content',
       'fields[title][indexing_option]' => 'contextual_content',
     ], 'Save changes');
+
+    // Check indexing options have been configured.
+    $this->drupalGet('admin/config/search/search-api/index/test_mysql_vdb_index');
+    $this->assertSession()->pageTextContains('Indexing options have been configured.');
   }
 
   /**
