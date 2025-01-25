@@ -215,3 +215,4 @@ Embedder
 UNHEX
 Rerank
 COSIM
+subprompt
