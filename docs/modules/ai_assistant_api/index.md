@@ -12,7 +12,7 @@ to talk to a chosen LLM and ask it to perform tasks on the site.
 2. At least one Provider module must be enabled and configured.
 
 The default configuration for this module assumes that one or more modules
-providing AI Assistant Actions have also been enabled, such as the [AI search](../ai_search/index.md)
+providing AI Assistant Actions have also been enabled, such as the [AI search](../ai_search/)
 sub-module or the [AI Agents](https://www.drupal.org/project/ai_agents) module.
 Without any available actions, the AI Assistant will be limited to what the
 chosen LLM can do, and will have no information about the site the module is
