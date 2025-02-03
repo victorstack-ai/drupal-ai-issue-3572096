@@ -77,6 +77,8 @@ final class SetupAiProvider implements ConfigActionPluginInterface, ContainerFac
         }
       }
     }
+    // Run the post setup.
+    $provider->postSetup();
   }
 
   /**
