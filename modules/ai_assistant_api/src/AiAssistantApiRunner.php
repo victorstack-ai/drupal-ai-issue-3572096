@@ -349,7 +349,8 @@ class AiAssistantApiRunner {
         $instance->triggerRollback();
       }
       if ($this->throwException) {
-        throw new \Exception($error_message);
+        // Throw the existing exception to maintain the type.
+        throw $e;
       }
       // Return the error message.
       return new ChatOutput(

@@ -440,6 +440,12 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $deepchat['htmlClassUtilities']['chat-button']['styles']['default']['display'] = 'inline';
     $deepchat['htmlClassUtilities']['chat-button']['styles']['default']['float'] = 'none';
 
+    // Enable displayServiceErrorMessages by default so that we can display
+    // specific error messages.
+    $deepchat['errorMessages'] = [
+      'displayServiceErrorMessages' => TRUE,
+    ];
+
     // Let people run hooks to change this.
     $this->moduleHandler->invokeAll('deepchat_settings', [&$deepchat]);
 
