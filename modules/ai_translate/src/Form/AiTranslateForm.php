@@ -134,7 +134,7 @@ class AiTranslateForm extends FormBase {
         $model = $config->get($langcode . '_model') ?? '';
         $parts = explode('__', $model);
         if ($model == "" || empty($parts[0])) {
-          $default_model = $this->providerManager->getSimpleDefaultProviderOptions('chat');
+          $default_model = $this->providerManager->getSimpleDefaultProviderOptions('translate_text');
           if ($default_model == "") {
           }
           else {
@@ -197,7 +197,7 @@ class AiTranslateForm extends FormBase {
    * Function to call the translate API and get the result.
    */
   public function aiTranslateResult(array &$form, FormStateInterface $form_state) {
-
+    return [];
   }
 
 }
