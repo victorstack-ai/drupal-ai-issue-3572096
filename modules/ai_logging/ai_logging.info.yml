@@ -4,6 +4,8 @@ package: AI
 type: module
 core_version_requirement: ^10.2 || ^11
 configure: ai_logging.settings_form
+tags:
+  - developer
 
 dependencies:
   - ai:ai
