@@ -159,6 +159,15 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
       $assistants[$id] = $ai_assistant->label();
     }
 
+    $form['notice'] = [
+      '#theme' => 'status_messages',
+      '#message_list' => [
+        'warning' => [
+          $this->t('Important and recommended to select the appropriate user role for this block to ensure it aligns with the AI assistance functionality and prevents anonymous users from accessing restricted features.'),
+        ],
+      ],
+    ];
+
     $form['ai_assistant'] = [
       '#type' => 'select',
       '#title' => $this->t('AI Assistant'),

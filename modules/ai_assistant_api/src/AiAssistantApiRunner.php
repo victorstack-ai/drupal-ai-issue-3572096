@@ -401,7 +401,7 @@ class AiAssistantApiRunner {
     }
     // Check if they have values.
     if (count($chosen_roles)) {
-      if ($this->currentUser->isAnonymous() && $roles['anonymous']) {
+      if ($this->currentUser->isAnonymous() && isset($chosen_roles['anonymous'])) {
         return TRUE;
       }
       else {
