@@ -307,12 +307,14 @@ class GeneralHelper {
    *   The entity.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The field definition.
+   * @param array $defaultValues
+   *   The default values.
    * @param array $extraJoiners
    *   Extra joiners specific to this field, assoc array with key/title.
    * @param string $defaultJoiner
    *   The default joiner.
    */
-  public function addJoinerConfigurationFormField($id, array &$form, ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $extraJoiners = [], $defaultJoiner = "") {
+  public function addJoinerConfigurationFormField($id, array &$form, ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $defaultValues, array $extraJoiners = [], $defaultJoiner = "") {
     $joiners = [
       '' => $this->t("-- Don't join --"),
       ', ' => $this->t('Comma, with space (, )'),
@@ -329,18 +331,25 @@ class GeneralHelper {
       'other' => $this->t('Other'),
     ];
     $joiners = array_merge_recursive($joiners, $extraJoiners);
+    $storage = $this->entityTypeManager->getStorage('ai_automator');
+    $fields = $storage->loadByProperties([
+      'entity_type' => $entity->getEntityTypeId(),
+      'bundle' => $entity->bundle(),
+    ]);
+
     $form["{$id}_joiner"] = [
       '#type' => 'select',
       '#options' => $joiners,
       '#title' => $this->t('Joiner'),
       '#description' => $this->t('If you do not want multiple values back, this will take all values and join them.'),
-      '#default_value' => $fieldDefinition->getConfig($entity->bundle())->getThirdPartySetting('ai_automator', "{$id}_joiner", $defaultJoiner),
+      '#default_value' => !empty($fieldDefinition->getConfig($entity->bundle())->getThirdPartySetting('ai_automator', "{$id}_joiner", $defaultJoiner)) ? $fieldDefinition->getConfig($entity->bundle())->getThirdPartySetting('ai_automator', "{$id}_joiner", $defaultJoiner) : $defaultValues["{$id}_joiner"] ?? "",
     ];
 
     $form["{$id}_joiner_other"] = [
       '#type' => 'textfield',
       '#title' => $this->t('Other Joiner'),
       '#description' => $this->t('If you selected other, please specify the joiner.'),
+      '#default_value' => $defaultValues["{$id}_joiner_other"] ?? "",
       '#states' => [
         'visible' => [
           'select[name="' . $id . '_joiner"]' => [
