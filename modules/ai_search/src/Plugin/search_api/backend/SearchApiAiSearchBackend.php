@@ -395,6 +395,11 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     // Get query.
     $results = $query->getResults();
 
+    // Determine default relevance order. Typically, this is in descending order
+    // but a search could specify that it wants the least relevant.
+    $sorts = $query->getSorts();
+    $relevance_order = $sorts['search_api_relevance'] ?? 'DESC';
+
     // Prepare params.
     $params = [
       'collection_name' => $this->configuration['database_settings']['collection'],
@@ -412,8 +417,11 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     // Conduct the search.
     $real_results = [];
     $meta_data = $this->doSearch($query, $params, $bypass_access, $real_results, $params['limit'], $params['offset']);
+
     // Keep track of items already added so existing result items do not get
-    // overwritten by later records containing the same item.
+    // overwritten by later records containing the same item. Store by ID
+    // as key, and score as value. This is more efficient than checking if the
+    // item already exists in the result set.
     $stored_items = [];
 
     // Obtain results.
@@ -422,12 +430,33 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       $item = $this->getFieldsHelper()->createItem($index, $id);
       $item->setScore($match['distance'] ?? 1);
       $this->extractMetadata($match, $item);
-      if (!$get_chunked && !in_array($item->getId(), $stored_items)) {
-        $stored_items[] = $item->getId();
-        $results->addResultItem($item);
+
+      // Adding result items always overwrites, see the Result Set class in
+      // Search API. Ensure that the items with the desired highest or lowest
+      // score are what get stored.
+      if (array_key_exists($item->getId(), $stored_items)) {
+
+        // In this scenario, we have already added the item. Decide whether to
+        // overwrite based on score.
+        if ($relevance_order === 'DESC' && $item->getScore() > $stored_items[$item->getId()]) {
+
+          // Store only the highest score.
+          $results->addResultItem($item);
+          $stored_items[$item->getId()] = $item->getScore();
+        }
+        elseif ($relevance_order === 'ASC' && $item->getScore() < $stored_items[$item->getId()]) {
+
+          // Store only the lowest score.
+          $results->addResultItem($item);
+          $stored_items[$item->getId()] = $item->getScore();
+        }
       }
       else {
+
+        // This is a new result in the result set, not previously found in other
+        // chunks: store it.
         $results->addResultItem($item);
+        $stored_items[$item->getId()] = $item->getScore();
       }
     }
     $results->setExtraData('real_offset', $meta_data['real_offset']);
@@ -436,8 +465,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     $results->setExtraData('current_vector_score', $meta_data['vector_score'] ?? 0);
 
     // Sort results.
-    $sorts = $query->getSorts();
-    if (!empty($sorts["search_api_relevance"])) {
+    if (!empty($sorts['search_api_relevance'])) {
       $result_items = $results->getResultItems();
       usort($result_items, function ($a, $b) use ($sorts) {
         $distance_a = $a->getScore();
