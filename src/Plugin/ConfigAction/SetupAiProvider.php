@@ -76,9 +76,9 @@ final class SetupAiProvider implements ConfigActionPluginInterface, ContainerFac
           $this->aiProviderPluginManager->defaultIfNone($operation, $value['provider'], $model);
         }
       }
+      // Run the post setup.
+      $provider->postSetup();
     }
-    // Run the post setup.
-    $provider->postSetup();
   }
 
   /**
