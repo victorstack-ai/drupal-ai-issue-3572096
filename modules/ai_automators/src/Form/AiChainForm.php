@@ -94,26 +94,25 @@ class AiChainForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array {
-    // Get entity type from the route.
-    [, , $entity_type] = explode(".", $this->routeMatch->getRouteName());
+    $entity = NULL;
+
+    // This is our route, so we know the only parameter is the entity. We have
+    // to get it this way, as the parameter is named for the entity's id in
+    // these routes so we cannot know what it will be until we have the entity.
+    if ($route_params = $this->routeMatch->getParameters()->all()) {
+      $entity = reset($route_params);
+    }
+
+    $entity_type = $entity->getEntityType()->getBundleOf();
+
+    // But if there is some unexpected problem, abort trying to build the form.
     if (empty($entity_type)) {
       throw new NotFoundException('Entity type and bundle are required.');
     }
+
+    // Set the required variables.
     $this->entityType = $entity_type;
-
-    // Load the bundle dynamically.
-    $bundle = NULL;
-    $parameters = $this->routeMatch->getParameters()->all();
-    foreach ($parameters as $parameter => $value) {
-      if ($parameter !== 'entity_type') {
-        $bundle = $value;
-      }
-    }
-
-    if (empty($bundle)) {
-      $bundle = $entity_type;
-    }
-    $this->bundle = $bundle;
+    $bundle = $this->bundle = $entity->id();
 
     // Get all fields, including base fields for the entity type and bundle.
     try {
@@ -213,7 +212,6 @@ class AiChainForm extends FormBase {
           'field' => $definition->get('field_name'),
         ];
 
-        $route_params = $parameters;
         $route_params['field_config'] = implode('.', $field_config);
 
         $links['edit'] = [
