@@ -658,7 +658,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     elseif (isset($json[0])) {
       $values = [];
       foreach ($json as $val) {
-        if (isset($val[key($val)])) {
+        if (is_array($val) && isset($val[key($val)])) {
           $values[] = $val[key($val)];
         }
         return $values;
