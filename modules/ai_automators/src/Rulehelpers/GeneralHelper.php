@@ -284,6 +284,42 @@ class GeneralHelper {
   }
 
   /**
+   * Get all image fields or media fields with image field as options.
+   *
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   The entity to look at.
+   *
+   * @return array
+   *   The image fields.
+   */
+  public function getImageMediaFields(ContentEntityInterface $entity) {
+    $fields = $this->entityFieldManager->getFieldDefinitions($entity->getEntityTypeId(), $entity->bundle());
+    $names = [];
+    foreach ($fields as $fieldDefinition) {
+      $fieldTarget = $fieldDefinition->getFieldStorageDefinition()->getSettings()['target_type'] ?? NULL;
+      if ('image' == $fieldDefinition->getType()) {
+        $names[$fieldDefinition->getName()] = $fieldDefinition->getLabel();
+      }
+      if ('entity_reference' == $fieldDefinition->getType() && $fieldTarget == 'media') {
+        $bundles = array_keys($fieldDefinition->getSettings()['handler_settings']['target_bundles']) ?? [];
+        foreach ($bundles as $bundle) {
+          $mediaStorage = $this->entityTypeManager->getStorage('media');
+          $mediaTypeInterface = $this->entityTypeManager->getStorage('media_type')->load($bundle);
+          /** @var \Drupal\media\Entity\Media $media */
+          $media = $mediaStorage->create([
+            'name' => 'tmp',
+            'bundle' => $bundle,
+          ]);
+          $mediaSource = $media->getSource();
+          $sourceField = $mediaSource->getSourceFieldDefinition($mediaTypeInterface);
+          $names[$fieldDefinition->getName() . '--' . $sourceField->getName()] = $fieldDefinition->getLabel() . ' (Media: ' . $mediaTypeInterface->label() . ')';
+        }
+      }
+    }
+    return $names;
+  }
+
+  /**
    * Base64 encode an image.
    *
    * @param \Drupal\file\FileInterface $imageEntity
