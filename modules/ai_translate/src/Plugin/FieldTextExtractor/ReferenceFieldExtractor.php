@@ -35,7 +35,9 @@ class ReferenceFieldExtractor implements ConfigurableFieldTextExtractorInterface
    * Translatability options for entity reference fields.
    */
   const TRANSLATE_REFERENCE_YES = 'yes';
+
   const TRANSLATE_REFERENCE_NO = 'no';
+
   const TRANSLATE_REFERENCE_DEFAULT = 'default';
 
   /**
@@ -64,7 +66,8 @@ class ReferenceFieldExtractor implements ConfigurableFieldTextExtractorInterface
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = new static();
-    $instance->config = $container->get('config.factory')->get('ai_translate.settings');
+    $instance->config = $container->get('config.factory')
+      ->get('ai_translate.settings');
     $instance->entityTypeManager = $container->get('entity_type.manager');
     $instance->textExtractor = $container->get('ai_translate.text_extractor');
     return $instance;
@@ -90,7 +93,8 @@ class ReferenceFieldExtractor implements ConfigurableFieldTextExtractorInterface
     // Increment depth at the start of processing.
     $depth++;
     $textMeta = [];
-    foreach ($entity->get($fieldName)->referencedEntities() as $delta => $subEntity) {
+    foreach ($entity->get($fieldName)
+      ->referencedEntities() as $delta => $subEntity) {
       foreach ($this->textExtractor->extractTextMetadata($subEntity) as $subMeta) {
         $textMeta[] = ['delta' => $delta] + $subMeta;
       }
@@ -108,32 +112,111 @@ class ReferenceFieldExtractor implements ConfigurableFieldTextExtractorInterface
     ContentEntityInterface $entity,
     string $fieldName,
     array $textMeta,
-  ) : void {
-    // Don't do anything if the field is empty.
-    if ($entity->get($fieldName)->isEmpty()) {
+  ): void {
+
+    // Get the entity in the source language.
+    $entity_in_source_language = $entity->getUntranslated();
+
+    // Check if the field exists and has values before proceeding.
+    if ($entity_in_source_language->get($fieldName)->isEmpty()) {
       return;
     }
 
     $newValue = [];
-    $referencedEntities = $entity->get($fieldName)->referencedEntities();
+    // Get the referenced entities based on the source language.
+    $referencedEntities = $entity_in_source_language->get($fieldName)->referencedEntities();
     $translationLanguage = $entity->language()->getId();
+
     foreach ($textMeta as $delta => $singleValue) {
-      // Original value always exists, otherwise no translation.
-      $referencedEntity = $referencedEntities[$delta];
-      $referencedEntity = $referencedEntity->hasTranslation($translationLanguage)
-        ? $referencedEntity->getTranslation($translationLanguage)
-        : $referencedEntity->addTranslation($translationLanguage);
-      foreach ($singleValue as $subFieldName => $subValue) {
-        foreach ($subValue as &$singleSubValue) {
-          unset($singleSubValue['field_name']);
-          unset($singleSubValue['field_type']);
-        }
-        $referencedEntity->set($subFieldName, $subValue);
+      // Ensure the referenced entity exists.
+      if (!isset($referencedEntities[$delta])) {
+        continue;
       }
+
+      $referencedEntity = $referencedEntities[$delta];
+
+      // Translate text fields while preserving non-translatable fields.
+      $this->translateAndPreserveFields($referencedEntity, $singleValue, $translationLanguage);
+
+      // Save the updated referenced entity.
       $referencedEntity->save();
       $newValue[$delta] = ['entity' => $referencedEntity];
     }
+
+    // Set the updated values back on the entity.
     $entity->set($fieldName, $newValue);
+  }
+
+  /**
+   * Translate text fields while keeping non-translatable fields in paragraphs.
+   */
+  protected function translateAndPreserveFields(
+    ContentEntityInterface $entity,
+    array $fieldsMeta,
+    string $language,
+  ): void {
+
+    $stringTypes = [
+      'title',
+      'text',
+      'text_with_summary',
+      'text_long',
+      'string',
+      'string_long',
+    ];
+
+    // Check if the entity has the translation, create it if not.
+    if (!$entity->hasTranslation($language)) {
+      $translatedEntity = $entity->addTranslation($language);
+    }
+    else {
+      $translatedEntity = $entity->getTranslation($language);
+    }
+
+    foreach ($fieldsMeta as $subFieldName => $subFieldValue) {
+      // Get the field definition to check the type.
+      $fieldDefinition = $entity->get($subFieldName)->getFieldDefinition();
+
+      // If it's a text field, translate it.
+      if (in_array($fieldDefinition->getType(), $stringTypes)) {
+        foreach ($subFieldValue as &$singleSubValue) {
+          unset($singleSubValue['field_name']);
+          unset($singleSubValue['field_type']);
+
+          // Set the translated value.
+          if (isset($singleSubValue['value'])) {
+            $translatedEntity->set($subFieldName, $singleSubValue);
+          }
+        }
+      }
+      // Handle entity reference fields.
+      // E.g., media, content references, or nested paragraphs.
+      elseif (in_array($fieldDefinition->getType(), ['entity_reference', 'entity_reference_revisions'])) {
+        $referencedSubEntities = $entity->get($subFieldName)->referencedEntities();
+
+        foreach ($subFieldValue as $subDelta => $subSubFieldValue) {
+          if (!isset($referencedSubEntities[$subDelta])) {
+            continue;
+          }
+
+          $nestedEntity = $referencedSubEntities[$subDelta];
+
+          // Recursively translate the fields of the nested entity.
+          $this->translateAndPreserveFields($nestedEntity, $subSubFieldValue, $language);
+
+          // Save the updated nested entity.
+          $nestedEntity->save();
+        }
+
+        // Set the original referenced entities to the translated
+        // entity if they aren't translated.
+        $translatedEntity->set($subFieldName, $entity->get($subFieldName)->getValue());
+      }
+      // If translatable, preserve the original value in the translated entity.
+      else {
+        $translatedEntity->set($subFieldName, $entity->get($subFieldName)->getValue());
+      }
+    }
   }
 
   /**
@@ -165,9 +248,10 @@ class ReferenceFieldExtractor implements ConfigurableFieldTextExtractorInterface
         self::TRANSLATE_REFERENCE_DEFAULT => $this->t('Use default'),
       ],
       '#default_value' => $entity->getThirdPartySetting('ai_translate',
-        'translate_references') ?? self::TRANSLATE_REFERENCE_DEFAULT,
+          'translate_references') ?? self::TRANSLATE_REFERENCE_DEFAULT,
     ];
-    $targetType = $entity->getFieldStorageDefinition()->getSetting('target_type');
+    $targetType = $entity->getFieldStorageDefinition()
+      ->getSetting('target_type');
     $default = $this->entityTypeTranslatedDefault($targetType);
     $subform['translate_references']['#description'] =
       $this->t('Current default for @entity_type is @default', [
@@ -204,7 +288,7 @@ class ReferenceFieldExtractor implements ConfigurableFieldTextExtractorInterface
    * @return bool
    *   TRUE to translate referenced entities of this type by default.
    */
-  protected function entityTypeTranslatedDefault(string $entityTypeId) : bool {
+  protected function entityTypeTranslatedDefault(string $entityTypeId): bool {
     $defaults = $this->config->get('reference_defaults') ?? [];
 
     // Default is to not translate entities of unknown type.
