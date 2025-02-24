@@ -101,6 +101,11 @@ class AiChainForm extends FormBase {
     // these routes so we cannot know what it will be until we have the entity.
     if ($route_params = $this->routeMatch->getParameters()->all()) {
       $entity = reset($route_params);
+
+      // The route params have been upscaled to actual entities, which can cause
+      // issues for some field types so we'll switch back to the raw params from
+      // now on.
+      $route_params = $this->routeMatch->getRawParameters()->all();
     }
 
     $entity_type = $entity->getEntityType()->getBundleOf();
