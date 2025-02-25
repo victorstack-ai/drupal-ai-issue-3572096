@@ -247,22 +247,37 @@ class AiChainForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
-    // First get the lowest values.
+    // Get items safely.
+    $items = $form_state->getValue('items', []);
+
+    // Ensure $items is an array.
+    if (!is_array($items)) {
+      $items = [];
+    }
+
+    if (empty($items)) {
+      $this->messenger()->addWarning($this->t('No instructions to process.'));
+      return;
+    }
+
+    // First, get the lowest weight value.
     $weight = NULL;
-    foreach ($form_state->getValues()['items'] as $instruction => $new_weight) {
-      if (is_null($weight) || $new_weight['weight'] < $weight) {
+    foreach ($items as $instruction => $new_weight) {
+      if (is_null($weight) || (isset($new_weight['weight']) && $new_weight['weight'] < $weight)) {
         $weight = $new_weight['weight'];
       }
     }
 
     // Now loop through the instructions and update the weight.
-    foreach ($form_state->getValues()['items'] as $instruction => $new_weight) {
-
+    foreach ($items as $instruction => $new_weight) {
       /** @var \Drupal\ai_automators\Entity\AiAutomator $definition */
       $definition = $this->entityTypeManager->getStorage('ai_automator')->load($instruction);
-      $definition->set('weight', (int) $weight);
-      $definition->save();
-      $weight++;
+
+      if ($definition) {
+        $definition->set('weight', (int) $weight);
+        $definition->save();
+        $weight++;
+      }
     }
 
     // Set a message.
