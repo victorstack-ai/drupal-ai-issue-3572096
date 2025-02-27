@@ -7,6 +7,7 @@ use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldConfigInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -62,6 +63,13 @@ class ReferenceFieldExtractor implements ConfigurableFieldTextExtractorInterface
   protected TextExtractorInterface $textExtractor;
 
   /**
+   * The logger service.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelInterface
+   */
+  protected LoggerChannelInterface $logger;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
@@ -70,6 +78,7 @@ class ReferenceFieldExtractor implements ConfigurableFieldTextExtractorInterface
       ->get('ai_translate.settings');
     $instance->entityTypeManager = $container->get('entity_type.manager');
     $instance->textExtractor = $container->get('ai_translate.text_extractor');
+    $instance->logger = $container->get('logger.factory')->get('ai_translate');
     return $instance;
   }
 
@@ -138,8 +147,21 @@ class ReferenceFieldExtractor implements ConfigurableFieldTextExtractorInterface
       // Translate text fields while preserving non-translatable fields.
       $this->translateAndPreserveFields($referencedEntity, $singleValue, $translationLanguage);
 
-      // Save the updated referenced entity.
-      $referencedEntity->save();
+      try {
+        // Save the updated referenced entity.
+        $referencedEntity->save();
+      }
+      catch (\Throwable $e) {
+        $this->logger->error('Unexpected error while saving referenced entity @delta. Type: @type, Message: @message, File: @file, Line: @line', [
+          '@delta' => $referencedEntity->id(),
+          '@type' => get_class($e),
+          '@message' => $e->getMessage(),
+          '@file' => $e->getFile(),
+          '@line' => $e->getLine(),
+        ]);
+
+        continue;
+      }
       $newValue[$delta] = ['entity' => $referencedEntity];
     }
 
