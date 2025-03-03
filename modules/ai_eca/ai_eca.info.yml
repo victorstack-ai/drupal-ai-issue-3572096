@@ -8,3 +8,4 @@ dependencies:
   - ai:ai
   - drupal:file
   - eca:eca
+  - eca_content:eca_content
