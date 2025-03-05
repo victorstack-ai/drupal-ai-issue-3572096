@@ -57,11 +57,6 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
   public string $tmpDir;
 
   /**
-   * The directory inside the subdirectory, to use for security.
-   */
-  public string $tmpSubDir = 'ai_automator';
-
-  /**
    * The images.
    */
   public array $images;
@@ -171,7 +166,7 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
    */
   public function __destruct() {
     if (!empty($this->tmpDir) && file_exists($this->tmpDir)) {
-      exec('rm -rf ' . $this->tmpDir);
+      $this->deleteFilesFromTmpDir('', TRUE);
     }
   }
 
@@ -399,7 +394,7 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
   protected function createVideoRasterImages($automatorConfig, File $file, $timeStamp = NULL) {
     $this->images = [];
     // Remove all the images.
-    exec('rm ' . $this->tmpDir . '/*.jpeg');
+    $this->deleteFilesFromTmpDir('jpeg');
     // Get the video file.
     $video = $file->getFileUri();
     // Let FFMPEG do its magic.
@@ -438,7 +433,7 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
    * Helper function to generate a temp directory.
    */
   protected function createTempDirectory() {
-    $this->tmpDir = $this->fileSystem->getTempDirectory() . '/' . $this->tmpSubDir . '/' . mt_rand(10000, 99999) . '/';
+    $this->tmpDir = $this->fileSystem->getTempDirectory() . '/ai_automator/' . mt_rand(10000, 99999) . '/';
     if (!file_exists($this->tmpDir)) {
       $this->fileSystem->mkdir($this->tmpDir, NULL, TRUE);
     }
@@ -554,6 +549,33 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
     }
     // @todo Add full path to ffmpeg.
     return "ffmpeg $command";
+  }
+
+  /**
+   * Delete files from the tmp dir.
+   *
+   * @param string $ext
+   *   The extension to delete.
+   * @param bool $remove_directory
+   *   If the directory should be removed.
+   */
+  public function deleteFilesFromTmpDir($ext = '', $remove_directory = FALSE) {
+    // Get the actual tmp directory, to make sure nothing was injected.
+    $tmpDir = $this->fileSystem->getTempDirectory() . '/ai_automator';
+
+    foreach (scandir($tmpDir) as $file) {
+      if ($file == '.' || $file == '..') {
+        continue;
+      }
+      if ($ext && pathinfo($file, PATHINFO_EXTENSION) != $ext) {
+        continue;
+      }
+      unlink($tmpDir . $file);
+    }
+
+    if ($remove_directory) {
+      rmdir($tmpDir);
+    }
   }
 
 }

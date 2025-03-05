@@ -4,7 +4,7 @@ namespace Drupal\ai_automators\Plugin\AiAutomatorType;
 
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
-use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\File\FileExists;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\OperationType\Chat\ChatInput;
@@ -200,7 +200,7 @@ class LlmVideoToImage extends VideoToText implements AiAutomatorTypeInterface {
       }
 
       // Move the file to the correct place.
-      $fixedFile = $this->fileSystem->copy($tmpName, $newFile, FileSystemInterface::EXISTS_RENAME);
+      $fixedFile = $this->fileSystem->copy($tmpName, $newFile, FileExists::Rename);
 
       // Generate the new file entity.
       $file = File::create([
