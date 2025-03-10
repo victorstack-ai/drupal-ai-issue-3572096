@@ -68,11 +68,18 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
   protected $moduleHandler;
 
   /**
-   * The theme handler.
+   * The theme manager.
    *
    * @var \Drupal\Core\Theme\ThemeManager
    */
   protected $themeManager;
+
+  /**
+   * The theme handler.
+   *
+   * @var \Drupal\Core\Extension\ThemeHandlerInterface
+   */
+  protected $themeHandler;
 
   /**
    * The messages button service.
@@ -107,6 +114,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $plugin->fileUrlGenerator = $container->get('file_url_generator');
     $plugin->moduleHandler = $container->get('module_handler');
     $plugin->themeManager = $container->get('theme.manager');
+    $plugin->themeHandler = $container->get('theme_handler');
     $plugin->messagesButton = $container->get('ai_chatbot.buttons');
     $plugin->cache = $container->get('cache.default');
     $plugin->logger = $container->get('logger.factory')->get('ai_chatbot');
@@ -506,9 +514,21 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
    *   Return an array of styles.
    */
   public function getStyles() {
-    // Get the folder of this module.
-    $module_path = $this->moduleHandler->getModule('ai_chatbot')->getPath();
-    $styles = $this->getStylesFromPath($module_path . '/deepchat_styles');
+    $styles = [];
+    $module_list = ['ai_chatbot'];
+    $this->moduleHandler->alter('ai_chatbot_style_modules', $module_list);
+
+    foreach ($module_list as $module_name) {
+      $module_path = $this->moduleHandler->getModule($module_name)->getPath();
+      $styles += $this->getStylesFromPath($module_path . '/deepchat_styles', 'module:' . $module_name);
+    }
+
+    // Also get the active themes.
+    $themes = $this->themeHandler->listInfo();
+    foreach ($themes as $theme) {
+      $styles += $this->getStylesFromPath($theme->getPath() . '/deepchat_styles', 'theme:' . $theme->getName());
+    }
+
     return $styles;
   }
 
@@ -526,6 +546,9 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
   protected function getStylesFromPath(string $path, string $prefix = '') {
     $styles = [];
 
+    if (!is_dir($path)) {
+      return $styles;
+    }
     foreach (scandir($path) as $file) {
       // If its a yaml or yml file.
       if (preg_match('/\.ya?ml$/', $file)) {
@@ -549,17 +572,23 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
    *   Return the parameters.
    */
   public function getStyleParameters(string $style) {
-    // If its cached, get it cached.
-    $key = 'ai_chatbot:style:' . $style;
+    // If it's cached, get it cached.
+    [$type, $name, $style] = explode(':', $style, 3);
+    $key = $type . ':name:' . $name . ':style:' . $style;
     $data = $this->cache->get($key);
     if ($data) {
       return $data->data;
     }
 
-    $module_path = $this->moduleHandler->getModule('ai_chatbot')->getPath();
-    $path = $module_path . '/deepchat_styles/' . $style;
+    if ($type == 'theme') {
+      $type_path = $this->themeHandler->getTheme($name)->getPath();
+    }
+    else {
+      $type_path = $this->moduleHandler->getModule($name)->getPath();
+    }
+    $path = $type_path . '/deepchat_styles/' . $style;
     $style = Yaml::parse(file_get_contents($path));
-    $this->cache->set($key, $style['parameters'], CacheBackendInterface::CACHE_PERMANENT, ['ai_chatbot:style']);
+    $this->cache->set($key, $style['parameters'], CacheBackendInterface::CACHE_PERMANENT, [$type . ':type:' . $name . ':style']);
     return $style['parameters'];
   }
 
