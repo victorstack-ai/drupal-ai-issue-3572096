@@ -124,6 +124,7 @@ octect
 octocat
 oden
 oneshot
+operationtype
 outro
 overriden
 paranthesis

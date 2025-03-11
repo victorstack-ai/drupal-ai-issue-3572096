@@ -38,6 +38,9 @@ use Drupal\ai\OperationType\TextToImage\TextToImageOutput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInterface;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechOutput;
+use Drupal\ai_test\OperationType\Echo\EchoInput;
+use Drupal\ai_test\OperationType\Echo\EchoInterface;
+use Drupal\ai_test\OperationType\Echo\EchoOutput;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -54,7 +57,8 @@ class EchoProvider extends AiProviderClientBase implements
   SpeechToTextInterface,
   TextToSpeechInterface,
   ImageClassificationInterface,
-  TextToImageInterface {
+  TextToImageInterface,
+  EchoInterface {
 
   /**
    * {@inheritdoc}
@@ -106,6 +110,7 @@ class EchoProvider extends AiProviderClientBase implements
       'text_to_speech',
       'moderation',
       'image_classification',
+      'echo',
     ];
   }
 
@@ -280,6 +285,16 @@ class EchoProvider extends AiProviderClientBase implements
     }
 
     return new ImageClassificationOutput($output, $response, []);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function echo(string|EchoInput $input, string $model_id, array $options = []): EchoOutput {
+    if (!$input instanceof EchoInput) {
+      $input = new EchoInput($input);
+    }
+    return new EchoOutput((string) $input, ['echo' => (string) $input], []);
   }
 
 }

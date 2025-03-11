@@ -275,30 +275,29 @@ final class AiProviderPluginManager extends DefaultPluginManager {
     if (!empty($data->data)) {
       return $data->data;
     }
-    // Look in the OperationType/** directories.
-    $operation_types = [];
-    $base_path = $this->moduleHandler->getModule('ai')->getPath() . '/src/OperationType';
-    $directories = new \RecursiveDirectoryIterator($base_path);
-    $iterator = new \RecursiveIteratorIterator($directories);
-    $regex = new \RegexIterator($iterator, '/^.+\.php$/i', \RecursiveRegexIterator::GET_MATCH);
-    foreach ($regex as $file) {
-      $interface = $this->getInterfaceFromFile($file[0]);
-      if ($interface && $this->doesInterfaceExtend($interface, OperationTypeInterface::class)) {
-        $reflection = new \ReflectionClass($interface);
-        $attributes = $reflection->getAttributes(OperationType::class);
-        foreach ($attributes as $attribute) {
-          $operation_types[] = [
-            'id' => $attribute->newInstance()->id,
-            'label' => $attribute->newInstance()->label->render(),
-          ];
-        }
+
+    // We use a plugin manager only to discover the possible operation types.
+    $manager = new class(
+      'OperationType',
+      $this->namespaces,
+      $this->moduleHandler,
+      OperationTypeInterface::class,
+      OperationType::class
+    ) extends DefaultPluginManager {
+
+      /**
+       * Call protected methods usually called in the constructor.
+       */
+      public function finishSetup(): void {
+        $this->alterInfo('ai_operationtype');
       }
-    }
 
-    // Save to cache.
-    $this->cacheBackend->set('ai_operation_types', $operation_types);
+    };
+    $manager->finishSetup();
+    // The in situ plugin manager uses the same cache backend.
+    $manager->setCacheBackend($this->cacheBackend, 'ai_operation_types');
 
-    return $operation_types;
+    return $manager->getDefinitions();
   }
 
   /**
@@ -367,58 +366,6 @@ final class AiProviderPluginManager extends DefaultPluginManager {
     $this->loggerFactory->get('ai')->notice("Default provider $provider_id with model $model_id set for operation type $operation_type.");
     $config->set('default_providers', $default_providers)->save();
     return TRUE;
-  }
-
-  /**
-   * Extracts the fully qualified interface name from a file.
-   *
-   * @param string $file
-   *   The file path.
-   *
-   * @return string|null
-   *   The fully qualified interface name, or NULL if not found.
-   */
-  protected function getInterfaceFromFile($file) {
-    $contents = file_get_contents($file);
-
-    // Match namespace and interface declarations.
-    if (preg_match('/namespace\s+([^;]+);/i', $contents, $matches)) {
-      $namespace = $matches[1];
-    }
-
-    // Match on starts with interface and has extends in it.
-    if (preg_match('/interface\s+([^ ]+)\s+extends\s+([^ ]+)/i', $contents, $matches) && isset($namespace)) {
-      $interface = $matches[1];
-      return $namespace . '\\' . $interface;
-    }
-
-    return NULL;
-  }
-
-  /**
-   * Checks if an interface extends another interface.
-   *
-   * @param string $interface
-   *   The interface name.
-   * @param string $baseInterface
-   *   The base interface name.
-   *
-   * @return bool
-   *   TRUE if the interface extends the base interface, FALSE otherwise.
-   */
-  protected function doesInterfaceExtend($interface, $baseInterface) {
-    try {
-      $reflection = new \ReflectionClass($interface);
-
-      if ($reflection->isInterface() && in_array($baseInterface, $reflection->getInterfaceNames())) {
-        return TRUE;
-      }
-    }
-    catch (\ReflectionException $e) {
-      // Ignore.
-    }
-
-    return FALSE;
   }
 
   /**
