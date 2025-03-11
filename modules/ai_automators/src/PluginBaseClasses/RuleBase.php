@@ -37,6 +37,13 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
   protected string $llmType = 'chat';
 
   /**
+   * The json schema.
+   *
+   * @var array
+   */
+  public array $jsonSchema = [];
+
+  /**
    * The plugin manager.
    *
    * @var \Drupal\ai\AiProviderPluginManager
@@ -171,6 +178,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     if ($this->llmType == 'chat') {
       $providers = [
         'default_json' => $this->t('Default Advanced JSON model'),
+        'default_structured_response' => $this->t('Default Structured Response model'),
         'default_vision' => $this->t('Default Vision model'),
       ] + $providers;
     }
@@ -221,7 +229,12 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
 
     $llmInstance = NULL;
     $model = NULL;
-    if ($provider && $provider !== 'default_json' && $provider !== 'default_vision' && $provider !== 'default') {
+    if ($provider && !in_array($provider, [
+      'default_structured_response',
+      'default_json',
+      'default_vision',
+      'default',
+    ])) {
       $llmInstance = $this->aiPluginManager->createInstance($provider);
       $model = $formState->getValue('automator_ai_model');
       $models = $llmInstance->getConfiguredModels($this->llmType);
@@ -358,6 +371,16 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
    */
   public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     $entity->set($fieldDefinition->getName(), $values);
+  }
+
+  /**
+   * If a json schema is set, it returns it.
+   *
+   * @return array|null
+   *   The json schema.
+   */
+  public function getJsonSchema() {
+    return !empty($this->jsonSchema) && count($this->jsonSchema) ? $this->jsonSchema : NULL;
   }
 
   /**
@@ -543,6 +566,10 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     if (!is_array($json)) {
       throw new AiAutomatorResponseErrorException('The response was not a valid JSON response. The response was: ' . $text->getText());
     }
+    if ($this->getJsonSchema()) {
+      // Return as it is.
+      return $this->promptJsonDecoder->decode($text)['values'] ?? [];
+    }
     return $this->decodeValueArray($this->promptJsonDecoder->decode($text));
   }
 
@@ -597,6 +624,10 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
       new ChatMessage("user", $prompt, $images),
     ]);
 
+    if ($this->getJsonSchema()) {
+      $instance->setChatStructuredJsonSchema($this->getJsonSchema());
+    }
+
     $model = $this->getModel($automatorConfig);
     $response = $instance->chat($input, $model)->getNormalized();
 
@@ -617,6 +648,9 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
       throw new AiAutomatorTypeNotRunnable('No provider set for the LLM type ' . $this->llmType);
     }
     if ($automatorConfig['ai_provider'] == 'default_json') {
+      $automatorConfig['ai_provider'] = $this->aiPluginManager->getDefaultProviderForOperationType('chat_with_complex_json')['provider_id'];
+    }
+    elseif ($automatorConfig['ai_provider'] == 'default_structured_response') {
       $automatorConfig['ai_provider'] = $this->aiPluginManager->getDefaultProviderForOperationType('chat_with_complex_json')['provider_id'];
     }
     elseif ($automatorConfig['ai_provider'] == 'default_vision') {
@@ -640,6 +674,9 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
   protected function getModel(array &$automatorConfig): string {
     if ($automatorConfig['ai_provider'] == 'default_json') {
       $automatorConfig['ai_model'] = $this->aiPluginManager->getDefaultProviderForOperationType('chat_with_complex_json')['model_id'];
+    }
+    elseif ($automatorConfig['ai_provider'] == 'default_structured_response') {
+      $automatorConfig['ai_model'] = $this->aiPluginManager->getDefaultProviderForOperationType('chat_with_structured_response')['model_id'];
     }
     elseif ($automatorConfig['ai_provider'] == 'default_vision') {
       $automatorConfig['ai_model'] = $this->aiPluginManager->getDefaultProviderForOperationType('chat_with_image_vision')['model_id'];

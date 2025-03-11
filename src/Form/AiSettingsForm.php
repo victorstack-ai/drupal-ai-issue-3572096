@@ -44,6 +44,18 @@ class AiSettingsForm extends ConfigFormBase {
       'label' => 'Chat with Complex JSON',
       'filter' => [AiModelCapability::ChatJsonOutput],
     ],
+    [
+      'id' => 'chat_with_structured_response',
+      'actual_type' => 'chat',
+      'label' => 'Chat with Structured Response',
+      'filter' => [AiModelCapability::ChatStructuredResponse],
+    ],
+    [
+      'id' => 'chat_with_tools',
+      'actual_type' => 'chat',
+      'label' => 'Chat with Tools/Function Calling',
+      'filter' => [AiModelCapability::ChatTools],
+    ],
   ];
 
   /**

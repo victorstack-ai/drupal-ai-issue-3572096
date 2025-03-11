@@ -106,8 +106,8 @@ class DeepChatApi extends ControllerBase {
     }
 
     // Set the context if provided.
-    if (isset($data['context']) && is_array($data['context'])) {
-      $this->aiAssistantClient->setContext($data['context']);
+    if (isset($data['contexts']) && is_array($data['contexts'])) {
+      $this->aiAssistantClient->setContext($data['contexts']);
     }
 
     // Check if 'messages' array is provided.

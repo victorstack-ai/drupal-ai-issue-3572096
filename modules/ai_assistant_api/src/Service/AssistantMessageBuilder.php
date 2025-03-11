@@ -2,10 +2,6 @@
 
 namespace Drupal\ai_assistant_api\Service;
 
-use Drupal\ai_assistant_api\AiAssistantActionPluginManager;
-use Drupal\ai_assistant_api\AiAssistantApiCacheTrait;
-use Drupal\ai_assistant_api\Entity\AiAssistant;
-use Drupal\ai_assistant_api\Event\PrepromptSystemRoleEvent;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\TitleResolverInterface;
 use Drupal\Core\Entity\EntityTypeManager;
@@ -13,6 +9,10 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Site\Settings;
+use Drupal\ai_assistant_api\AiAssistantActionPluginManager;
+use Drupal\ai_assistant_api\AiAssistantApiCacheTrait;
+use Drupal\ai_assistant_api\Entity\AiAssistant;
+use Drupal\ai_assistant_api\Event\PrepromptSystemRoleEvent;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -36,6 +36,13 @@ class AssistantMessageBuilder {
    * @var string
    */
   protected string $threadId;
+
+  /**
+   * Extra context.
+   *
+   * @var array
+   */
+  protected array $context;
 
   /**
    * Constructs a new AssistantMessageBuilder object.
@@ -84,11 +91,14 @@ class AssistantMessageBuilder {
    *   The thread id.
    * @param bool $include_pre_prompt
    *   Whether to include the pre-prompt message.
+   * @param array $context
+   *   Extra context.
    *
    * @return string
    *   The assistant message.
    */
-  public function buildMessage(AiAssistant $ai_assistant, $thread_id, $include_pre_prompt = FALSE): string {
+  public function buildMessage(AiAssistant $ai_assistant, $thread_id, $include_pre_prompt = FALSE, $context = []): string {
+    $this->context = $context;
     $this->assistant = $ai_assistant;
     $this->threadId = $thread_id;
     // Get the system prompt.
@@ -236,7 +246,7 @@ class AssistantMessageBuilder {
     $context['user_language'] = $this->currentUser->getPreferredLangcode();
     $context['user_timezone'] = $this->currentUser->getTimeZone();
     $context['page_title'] = (string) $this->titleResolver->getTitle($current_request, $current_request->attributes->get('_route_object'));
-    $context['page_path'] = $current_request->getRequestUri();
+    $context['page_path'] = $this->context['current_route'] ?? $current_request->getRequestUri();
     $context['page_language'] = $this->languageManager->getCurrentLanguage()->getId();
     $context['site_name'] = $this->configFactory->get('system.site')->get('name');
 

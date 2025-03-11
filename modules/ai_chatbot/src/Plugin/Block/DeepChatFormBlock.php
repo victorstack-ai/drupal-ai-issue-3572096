@@ -103,6 +103,13 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
   protected $logger;
 
   /**
+   * The current path.
+   *
+   * @var \Drupal\Core\Path\CurrentPathStack
+   */
+  protected $currentPath;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
@@ -118,6 +125,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $plugin->messagesButton = $container->get('ai_chatbot.buttons');
     $plugin->cache = $container->get('cache.default');
     $plugin->logger = $container->get('logger.factory')->get('ai_chatbot');
+    $plugin->currentPath = $container->get('path.current');
     return $plugin;
   }
 
@@ -483,6 +491,9 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
         'stream' => $this->configuration['stream'],
         'structured_results' => $this->configuration['show_structured_results'],
         'show_copy_icon' => $this->configuration['show_copy_icon'],
+        'contexts' => [
+          'current_route' => $this->currentPath->getPath(),
+        ],
       ],
     ];
 

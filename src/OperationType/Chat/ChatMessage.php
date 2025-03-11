@@ -35,6 +35,20 @@ class ChatMessage {
   private array $images;
 
   /**
+   * The tools.
+   *
+   * @var \Drupal\ai\OperationType\Chat\Tools\ToolsOutputInterface[]|null
+   */
+  private ?array $tools = NULL;
+
+  /**
+   * The tool id if any.
+   *
+   * @var string
+   */
+  private string $toolId = "";
+
+  /**
    * The constructor.
    *
    * @param string $role
@@ -108,6 +122,62 @@ class ChatMessage {
    */
   public function setImage(ImageFile $image): void {
     $this->images[] = $image;
+  }
+
+  /**
+   * Get the tools.
+   *
+   * @return \Drupal\ai\OperationType\Chat\Tools\ToolsOutputInterface[]|null
+   *   The tools.
+   */
+  public function getTools(): ?array {
+    return $this->tools;
+  }
+
+  /**
+   * Set the tools.
+   *
+   * @param \Drupal\ai\OperationType\Chat\Tools\ToolsOutputInterface[] $tools
+   *   The tools.
+   */
+  public function setTools(array $tools): void {
+    $this->tools = $tools;
+  }
+
+  /**
+   * Get rendered tools output array.
+   *
+   * @return array
+   *   The rendered array.
+   */
+  public function getRenderedTools(): array {
+    $output = [];
+    if ($this->tools) {
+      foreach ($this->tools as $tool) {
+        $output[] = $tool->getOutputRenderArray();
+      }
+    }
+    return $output;
+  }
+
+  /**
+   * Get the tool id.
+   *
+   * @return string
+   *   The tool id.
+   */
+  public function getToolsId(): string {
+    return $this->toolId;
+  }
+
+  /**
+   * Set the tool id.
+   *
+   * @param string $tool_id
+   *   The tool id.
+   */
+  public function setToolsId(string $tool_id): void {
+    $this->toolId = $tool_id;
   }
 
   /**
