@@ -103,6 +103,13 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
   protected $logger;
 
   /**
+   * The request stack.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  protected $requestStack;
+
+  /**
    * The current path.
    *
    * @var \Drupal\Core\Path\CurrentPathStack
@@ -125,6 +132,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $plugin->messagesButton = $container->get('ai_chatbot.buttons');
     $plugin->cache = $container->get('cache.default');
     $plugin->logger = $container->get('logger.factory')->get('ai_chatbot');
+    $plugin->requestStack = $container->get('request_stack');
     $plugin->currentPath = $container->get('path.current');
     return $plugin;
   }
@@ -409,15 +417,9 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $block['#attached']['drupalSettings']['ai_deepchat']['collapse_minimal'] = $this->configuration['collapse_minimal'];
     $block['#attached']['drupalSettings']['ai_deepchat']['show_copy_icon'] = $this->configuration['show_copy_icon'];
     $block['#attached']['drupalSettings']['ai_deepchat']['messages'] = $this->historicalMessages();
-
+    $block['#attached']['drupalSettings']['ai_deepchat']['session_exists'] = $this->requestStack->getCurrentRequest()->getSession()->isStarted();
+    $block['#cache']['contexts'][] = 'session.exists';
     return $block;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getCacheMaxAge() {
-    return 0;
   }
 
   /**
@@ -576,15 +578,26 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
   /**
    * Get the style YAML files parameters.
    *
-   * @param string $style
+   * @param string $old_style
    *   The style to get the parameters for.
    *
    * @return array
    *   Return the parameters.
    */
-  public function getStyleParameters(string $style) {
+  public function getStyleParameters(string $old_style) {
     // If it's cached, get it cached.
-    [$type, $name, $style] = explode(':', $style, 3);
+    $parts = explode(':', $old_style);
+    if (count($parts) == 3) {
+      $type = $parts[0];
+      $name = $parts[1];
+      $style = $parts[2];
+    }
+    else {
+      // Fallback to the old style.
+      $type = 'module';
+      $name = 'ai_chatbot';
+      $style = $old_style;
+    }
     $key = $type . ':name:' . $name . ':style:' . $style;
     $data = $this->cache->get($key);
     if ($data) {

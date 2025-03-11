@@ -4,6 +4,7 @@
   Drupal.behaviors.deepChatToggle = {
     chats: [],
     initialized: false,
+    csrf_token: '',
     attach: function (context, settings) {
       if (Drupal.behaviors.deepChatToggle.initialized) {
         return;
@@ -189,7 +190,22 @@
         // Add retry on error
         deepchatElement.addEventListener('error', handleError);
 
-        deepchatElement.addEventListener('render', () => {
+        // We create a session when the first message is sent.
+        deepchatElement.requestInterceptor = async (request) => {
+          // If a session does not exist, we need to set one and get a new csrf.
+          if (drupalSettings.ai_deepchat.session_exists === false && !Drupal.behaviors.deepChatToggle.csrf_token) {
+            // Get the session and csrf token.
+            if (!Drupal.behaviors.deepChatToggle.csrf_token) {
+              Drupal.behaviors.deepChatToggle.csrf_token = await Drupal.behaviors.deepChatToggle.getSession();
+            }
+            // Remove the current ?token= from the connect url.
+            let newUrl = deepchatElement.connect.url.replace(/\?token=[^&]+/, '');
+            // Add the new csrf token.
+            deepchatElement.connect.url = newUrl + '?token=' + Drupal.behaviors.deepChatToggle.csrf_token;
+          }
+        }
+
+        deepchatElement.addEventListener('render', async () => {
           pendingRenders--;
 
           // Some extra theming.
@@ -256,6 +272,7 @@
               deepchatElement.addMessage(message);
             }
           }
+
           // When all chatbots are rendered.
           if (pendingRenders === 0) {
             // Add event listener for the initialized event.
@@ -275,8 +292,22 @@
         // Menu items
         clearHistory.addEventListener('click', clearMessages);
       });
-
-    }
-  };
-
+    },
+    getSession: async function () {
+      return new Promise((resolve, reject) => {
+        // Set a session and get a csrf token.
+        fetch(drupalSettings.path.baseUrl + 'api/deepchat/session', {
+          method: 'POST',
+        }).then(response => {
+          if (!response.ok) {
+            resolve({ error: 'Failed to set session.' });
+          }
+          return response.text();
+        }).then(token => {
+          Drupal.behaviors.deepChatToggle.csrf_token = token;
+          resolve(token);
+        });
+      })
+    },
+  }
 })(Drupal, drupalSettings);

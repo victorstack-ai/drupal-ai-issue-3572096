@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\ai_chatbot\Controller;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\Core\Access\CsrfTokenGenerator;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\ai\Exception\AiBadRequestException;
 use Drupal\ai\Exception\AiQuotaException;
@@ -20,6 +21,7 @@ use Drupal\ai_chatbot\Service\MessagesButtons;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Yaml\Yaml;
 
@@ -49,10 +51,13 @@ class DeepChatApi extends ControllerBase {
    *   The AI Assistant API client.
    * @param \Drupal\ai_chatbot\Service\MessagesButtons $messagesButtons
    *   The messages buttons render service.
+   * @param \Drupal\Core\Access\CsrfTokenGenerator $csrfTokenGenerator
+   *   The CSRF token generator.
    */
   public function __construct(
     protected AiAssistantApiRunner $aiAssistantClient,
     protected MessagesButtons $messagesButtons,
+    protected CsrfTokenGenerator $csrfTokenGenerator,
   ) {
   }
 
@@ -63,6 +68,7 @@ class DeepChatApi extends ControllerBase {
     return new static(
       $container->get('ai_assistant_api.runner'),
       $container->get('ai_chatbot.buttons'),
+      $container->get('csrf_token'),
     );
   }
 
@@ -294,6 +300,23 @@ class DeepChatApi extends ControllerBase {
     });
 
     return $response;
+  }
+
+  /**
+   * Gets an x-csrf-token back.
+   *
+   * @return \Symfony\Component\HttpFoundation\Response
+   *   The response object.
+   */
+  public function setSession(Request $request): Response {
+    $session = $request->getSession();
+    // Create a session for the user if they are anonymous.
+    if (!$session->isStarted()) {
+      $session->start();
+    }
+    // Set a session variable.
+    $session->set('deepchat', 'true');
+    return new Response($this->csrfTokenGenerator->get("api/deepchat"));
   }
 
   /**
