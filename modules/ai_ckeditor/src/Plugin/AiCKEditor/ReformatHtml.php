@@ -49,9 +49,13 @@ final class ReformatHtml extends AiCKEditorPluginBase {
     $form['prompt'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Reformat prompt'),
-      '#required' => TRUE,
       '#default_value' => $prompt_reformat,
       '#description' => $this->t('This prompt will be used to reformat the html.'),
+      '#states' => [
+        'required' => [
+          ':input[name="editor[settings][plugins][ai_ckeditor_ai][plugins][ai_ckeditor_reformat_html][enabled]"]' => ['checked' => TRUE],
+        ],
+      ],
     ];
 
     return $form;

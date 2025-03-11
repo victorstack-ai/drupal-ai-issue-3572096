@@ -88,9 +88,13 @@ final class Translate extends AiCKEditorPluginBase {
     $form['prompt'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Change translation prompt'),
-      '#required' => TRUE,
       '#default_value' => $prompt_translate,
       '#description' => $this->t('This prompt will be used to translate the text. {{ tone }} is the target tone of voice that is chosen.'),
+      '#states' => [
+        'required' => [
+          ':input[name="editor[settings][plugins][ai_ckeditor_ai][plugins][ai_ckeditor_translate][enabled]"]' => ['checked' => TRUE],
+        ],
+      ],
     ];
 
     return $form;
@@ -204,8 +208,8 @@ final class Translate extends AiCKEditorPluginBase {
       $prompts_config = $this->getConfigFactory()->get('ai_ckeditor.settings');
       $prompt = $prompts_config->get('prompts.translate');
       $prompt = str_replace('{{ lang }}', $term->label(), $prompt);
-      if ($this->configuration['use_description'] && !empty($term->description->value)) {
-        $prompt .= 'Think about the following when translating it into ' . $term->label() . ': ' . strip_tags($term->description->value);
+      if ($this->configuration['use_description'] && !empty($term->getDescription())) {
+        $prompt .= 'Think about the following when translating it into ' . $term->label() . ': ' . strip_tags($term->getDescription());
       }
       $prompt .= "\n\nThe text that we want to translate is the following:\n" . $values["plugin_config"]["selected_text"];
       $response = new AjaxResponse();

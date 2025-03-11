@@ -48,9 +48,13 @@ final class Summarize extends AiCKEditorPluginBase {
     $form['prompt'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Summarise prompt'),
-      '#required' => TRUE,
       '#default_value' => $prompt_summarise,
       '#description' => $this->t('This prompt will be used to summarise the text.'),
+      '#states' => [
+        'required' => [
+          ':input[name="editor[settings][plugins][ai_ckeditor_ai][plugins][ai_ckeditor_summarize][enabled]"]' => ['checked' => TRUE],
+        ],
+      ],
     ];
     return $form;
   }
