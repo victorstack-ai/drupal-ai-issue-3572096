@@ -35,11 +35,14 @@ final class SpellFix extends AiCKEditorPluginBase {
    * {@inheritdoc}
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+    $options = $this->aiProviderManager->getSimpleProviderModelOptions('chat');
+    array_shift($options);
+    array_splice($options, 0, 1);
     $form['provider'] = [
       '#type' => 'select',
       '#title' => $this->t('AI provider'),
-      '#options' => $this->aiProviderManager->getSimpleProviderModelOptions('chat'),
-      '#required' => TRUE,
+      '#options' => $options,
+      "#empty_option" => $this->t('-- Default from AI module (chat) --'),
       '#default_value' => $this->configuration['provider'] ?? $this->aiProviderManager->getSimpleDefaultProviderOptions('chat'),
       '#description' => $this->t('Select which provider to use for this plugin. See the <a href=":link">Provider overview</a> for details about each provider.', [':link' => '/admin/config/ai/providers']),
     ];
@@ -48,9 +51,13 @@ final class SpellFix extends AiCKEditorPluginBase {
     $form['prompt'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Spelling fix prompt'),
-      '#required' => TRUE,
       '#default_value' => $prompt_fix_spelling,
       '#description' => $this->t('This prompt will be used to fix the spelling.'),
+      '#states' => [
+        'required' => [
+          ':input[name="editor[settings][plugins][ai_ckeditor_ai][plugins][ai_ckeditor_spellfix][enabled]"]' => ['checked' => TRUE],
+        ],
+      ],
     ];
 
     return $form;

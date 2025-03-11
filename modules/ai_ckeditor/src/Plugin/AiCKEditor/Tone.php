@@ -88,9 +88,13 @@ final class Tone extends AiCKEditorPluginBase {
     $form['prompt'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Change tone prompt'),
-      '#required' => TRUE,
       '#default_value' => $prompt_tone,
       '#description' => $this->t('This prompt will be used to change the tone of voice. {{ tone }} is the target tone of voice that is chosen.'),
+      '#states' => [
+        'required' => [
+          ':input[name="editor[settings][plugins][ai_ckeditor_ai][plugins][ai_ckeditor_tone][enabled]"]' => ['checked' => TRUE],
+        ],
+      ],
     ];
 
     return $form;
@@ -211,8 +215,8 @@ final class Tone extends AiCKEditorPluginBase {
       $prompts_config = $this->getConfigFactory()->get('ai_ckeditor.settings');
       $prompt = $prompts_config->get('prompts.tone');
       $prompt = str_replace('{{ tone }}', $term->label(), $prompt);
-      if ($this->configuration['use_description'] && !empty($term->description->value)) {
-        $prompt .= 'That tone can described as: ' . strip_tags($term->description->value);
+      if ($this->configuration['use_description'] && !empty($term->getDescription())) {
+        $prompt .= 'That tone can described as: ' . strip_tags($term->getDescription());
       }
       $prompt .= "\n\nThe text that we want to change is the following:\n" . $values["plugin_config"]["selected_text"];
       $response = new AjaxResponse();
