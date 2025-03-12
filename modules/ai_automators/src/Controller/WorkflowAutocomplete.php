@@ -2,9 +2,9 @@
 
 namespace Drupal\ai_automators\Controller;
 
-use Drupal\ai_automators\Service\Automate;
 use Drupal\Component\Utility\Xss;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\ai_automators\Service\Automate;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -50,9 +50,11 @@ class WorkflowAutocomplete extends ControllerBase {
     $found = 0;
     foreach ($allWorkflows as $key => $workflow) {
       if (strpos(strtolower($workflow), strtolower($input)) !== FALSE) {
+        $config = $this->entityTypeManager()->getStorage('automator_chain_type')->load($key);
+
         $found++;
         $results[] = [
-          'value' => $key,
+          'value' => 'automator_chain--' . $key,
           'label' => $workflow,
         ];
       }

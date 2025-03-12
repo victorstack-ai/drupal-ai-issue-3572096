@@ -4,14 +4,94 @@ declare(strict_types=1);
 
 namespace Drupal\ai_automators\Form;
 
+use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\ai_automators\Entity\AutomatorsTool;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Automators Tool form.
  */
 final class AutomatorsToolForm extends EntityForm {
+
+  /**
+   * The entity being used by this form.
+   *
+   * @var \Drupal\ai_automators\Entity\AutomatorsTool
+   */
+  protected $entity;
+
+  /**
+   * Known outliers.
+   *
+   * @var array
+   */
+  protected array $knownOutliers = [
+    'id',
+    'ai_automator_status',
+    'revision_timestamp',
+    'revision_uid',
+    'revision_log',
+    'created',
+    'changed',
+    'sticky',
+    'revision_default',
+    'ai_interpolator_status',
+  ];
+
+  /**
+   * Allowed field input fields for now.
+   *
+   * @var array
+   */
+  protected array $inputFieldsType = [
+    'string_long' => 'string',
+    'string' => 'string',
+    'text_long' => 'string',
+    'text_with_summary' => 'string',
+    'text' => 'string',
+    'integer' => 'integer',
+    'decimal' => 'number',
+    'float' => 'number',
+    'boolean' => 'boolean',
+    'list_string' => 'string',
+    'list_integer' => 'integer',
+    'list_float' => 'number',
+  ];
+
+  /**
+   * Allowed field output fields for now.
+   *
+   * @var array
+   */
+  protected array $outputFieldTypes = [
+    'string_long' => 'text',
+    'string' => 'text',
+    'text_long' => 'text',
+    'text_with_summary' => 'text',
+    'text' => 'text',
+  ];
+
+  /**
+   * The constructor.
+   *
+   * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entityFieldManager
+   *   The entity field manager.
+   */
+  public function __construct(
+    protected EntityFieldManagerInterface $entityFieldManager,
+  ) {
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('entity_field.manager'),
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -47,6 +127,7 @@ final class AutomatorsToolForm extends EntityForm {
       '#type' => 'textarea',
       '#title' => $this->t('Description'),
       '#default_value' => $this->entity->get('description'),
+      '#required' => TRUE,
     ];
 
     $workflow = $form_state->getValue('workflow') ?? $this->entity->get('workflow');
@@ -76,7 +157,7 @@ final class AutomatorsToolForm extends EntityForm {
       '#type' => 'checkbox',
       '#title' => $this->t('Enabled'),
       '#default_value' => $this->entity->status(),
-      '#description' => $this->t('If you disable an agent that has worker tasks connected to them, they will be assigned to the fallback user.'),
+      '#description' => $this->t('The status of the tool. If you disable an enabled tool that is used by an agent, you will run into errors.'),
     ];
 
     $form['field_connections'] = [
@@ -87,26 +168,205 @@ final class AutomatorsToolForm extends EntityForm {
       '#attributes' => [
         'id' => 'field-connections-wrapper',
       ],
+      '#tree' => TRUE,
       '#open' => $workflow,
     ];
 
+    if ($workflow) {
+      $bundleParts = explode('--', $workflow);
+      $fields = $this->getFieldsForBundle($bundleParts[0], $bundleParts[1]);
+      $i = 0;
+      $defaultValues = $this->getDefaultValues();
+      $initial = $this->getInitialValues($fields);
+      foreach ($fields as $fieldName => $field) {
+        //
+        // If it is a key field, we do not allow it unless its the label.
+        if ((empty($field['key']) || $field['key'] === 'label') && !in_array($fieldName, $this->knownOutliers)) {
+          $form['field_connections'][$i] = [
+            '#type' => 'container',
+          ];
+          $form['field_connections'][$i]['header'] = [
+            '#markup' => '<strong>' . $field['label'] . '</strong>',
+          ];
+          $form['field_connections'][$i]['field_name'] = [
+            '#type' => 'value',
+            '#value' => $field['id'],
+          ];
+
+          $options = [
+            'ignore' => $this->t('Ignore'),
+          ];
+
+          if (in_array($field['type'], array_keys($this->inputFieldsType))) {
+            $options['input'] = $this->t('Input');
+            $options['default'] = $this->t('Set Default Value');
+          }
+
+          if (in_array($field['type'], array_keys($this->outputFieldTypes))) {
+            $options['output'] = $this->t('Output');
+          }
+
+          $form['field_connections'][$i]['agent_process'] = [
+            '#type' => 'select',
+            '#title' => $this->t('Agent Process'),
+            '#default_value' => $defaultValues[$fieldName]['agent_process'] ?? $initial[$fieldName],
+            '#options' => $options,
+            '#description' => $this->t('This is the type of field this is for the tool. Note that not all field types can be input or output.'),
+          ];
+
+          $form['field_connections'][$i]['tool_field_type'] = [
+            '#type' => 'value',
+            '#value' => $this->inputFieldsType[$field['type']] ?? $field['type'],
+          ];
+
+          $form['field_connections'][$i]['drupal_field_type'] = [
+            '#type' => 'value',
+            '#value' => $field['type'],
+          ];
+
+          $form['field_connections'][$i]['input_explanation'] = [
+            '#type' => 'textarea',
+            '#title' => $this->t('Input Explanation'),
+            '#default_value' => $defaultValues[$fieldName]['input_explanation'] ?? '',
+            '#description' => $this->t('Write a little bit of what the Manager should put as input in this field.'),
+            '#attributes' => [
+              'rows' => 2,
+              'placeholder' => $this->t('The text that should be summarized.'),
+            ],
+            '#states' => [
+              'visible' => [
+                ':input[name="field_connections[' . $i . '][agent_process]"]' => ['value' => 'input'],
+              ],
+            ],
+          ];
+
+          $form['field_connections'][$i]['required'] = [
+            '#type' => 'checkbox',
+            '#title' => $this->t('Required'),
+            '#default_value' => $defaultValues[$fieldName]['required'] ?? '',
+            '#description' => $this->t('Is this field required or not. Most input fields should be required.'),
+            '#states' => [
+              'visible' => [
+                ':input[name="field_connections[' . $i . '][agent_process]"]' => ['value' => 'input'],
+              ],
+            ],
+          ];
+
+          $form['field_connections'][$i]['output_explanation'] = [
+            '#type' => 'textarea',
+            '#title' => $this->t('Output Explanation'),
+            '#default_value' => $defaultValues[$fieldName]['output_explanation'] ?? '',
+            '#description' => $this->t('Write a little bit of what the Manager can except to get as output in this field.'),
+            '#attributes' => [
+              'rows' => 2,
+              'placeholder' => $this->t('The textual summary.'),
+            ],
+            '#states' => [
+              'visible' => [
+                ':input[name="field_connections[' . $i . '][agent_process]"]' => ['value' => 'output'],
+              ],
+            ],
+          ];
+
+          $form['field_connections'][$i]['default_value'] = [
+            '#type' => 'textfield',
+            '#title' => $this->t('Default Value'),
+            '#default_value' => $defaultValues[$fieldName]['default_value'] ?? '',
+            '#description' => $this->t('This is the default value that will be set if the tools does not have any input.'),
+            '#states' => [
+              'visible' => [
+                ':input[name="field_connections[' . $i . '][agent_process]"]' => [
+                  ['value' => 'default'],
+                  'or',
+                  ['value' => 'input'],
+                ],
+              ],
+            ],
+          ];
+
+          $form['field_connections'][$i]['break'] = [
+            '#markup' => '<br><hr><br>',
+          ];
+          $i++;
+        }
+      }
+    }
     return $form;
   }
 
   /**
    * {@inheritdoc}
    */
+  public function validateForm(array &$form, FormStateInterface $formState) {
+    // Validation is optional.
+    $values = $formState->getValues();
+    foreach ($values['field_connections'] as $key => $rules) {
+      if ($rules['agent_process'] === 'default' && empty($rules['default_value'])) {
+        $formState->setErrorByName('field_connections][' . $key . '][default_value', $this->t('You need to set a default value for the field.'));
+      }
+      if ($rules['agent_process'] === 'input' && empty($rules['input_explanation'])) {
+        $formState->setErrorByName('field_connections][' . $key . '][input_explanation', $this->t('You need to set an input explanation for the field.'));
+      }
+      if ($rules['agent_process'] === 'output' && empty($rules['output_explanation'])) {
+        $formState->setErrorByName('field_connections][' . $key . '][output_explanation', $this->t('You need to set an output explanation for the field.'));
+      }
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function save(array $form, FormStateInterface $form_state): int {
+    $fields = $form_state->getValue('field_connections');
+    if (empty($fields)) {
+      $this->entity->set('field_connections', []);
+    }
     $result = parent::save($form, $form_state);
     $message_args = ['%label' => $this->entity->label()];
     $this->messenger()->addStatus(
-      match($result) {
+      match ($result) {
         \SAVED_NEW => $this->t('Created new example %label.', $message_args),
         \SAVED_UPDATED => $this->t('Updated example %label.', $message_args),
       }
     );
     $form_state->setRedirectUrl($this->entity->toUrl('collection'));
     return $result;
+  }
+
+  /**
+   * Get the default values if nothing is set.
+   */
+  private function getInitialValues(array $fields) {
+    $defaults = [];
+    foreach ($fields as $fieldName => $field) {
+      if (!empty($field['config'])) {
+        $defaults[$fieldName] = 'output';
+      }
+      elseif ($field['key'] == 'label') {
+        $defaults[$fieldName] = 'default';
+      }
+      elseif ($field['required']) {
+        $defaults[$fieldName] = 'input';
+      }
+      else {
+        $defaults[$fieldName] = 'ignore';
+      }
+    }
+    return $defaults;
+  }
+
+  /**
+   * Get the actual default values.
+   */
+  private function getDefaultValues() {
+    $connections = $this->entity->get('field_connections');
+    $defaults = [];
+    if (is_array($connections)) {
+      foreach ($connections as $field) {
+        $defaults[$field['field_name']] = $field;
+      }
+    }
+    return $defaults;
   }
 
   /**
@@ -119,6 +379,37 @@ final class AutomatorsToolForm extends EntityForm {
    */
   public function getWorkflow(array $form, FormStateInterface $form_state): array {
     return $form['field_connections'];
+  }
+
+  /**
+   * Get all fields for a bundle with their settings and configs.
+   *
+   * @param string $entityType
+   *   The entity type.
+   * @param string $bundle
+   *   The bundle.
+   *
+   * @return array
+   *   An array of fields for the bundle.
+   */
+  public function getFieldsForBundle($entityType, $bundle) {
+    $fields = [];
+    $fieldDefinitions = $this->entityFieldManager->getFieldDefinitions($entityType, $bundle);
+    $keys = array_flip($this->entityTypeManager->getDefinition($entityType)->getKeys());
+
+    foreach ($fieldDefinitions as $fieldName => $fieldDefinition) {
+      $fields[$fieldName] = [
+        'id' => $fieldName,
+        'label' => $fieldDefinition->getLabel(),
+        'type' => $fieldDefinition->getType(),
+        'required' => $fieldDefinition->isRequired(),
+        'settings' => $fieldDefinition->getSettings(),
+        'key' => $keys[$fieldName] ?? '',
+        'config' => $fieldDefinition->getConfig($bundle)->getThirdPartySetting('ai_interpolator', 'interpolator_enabled'),
+      ];
+    }
+
+    return $fields;
   }
 
 }

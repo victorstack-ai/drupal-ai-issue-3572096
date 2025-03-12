@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\ai_automators\Entity;
 
-use Drupal\ai_automators\AutomatorsToolInterface;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\ai_automators\AutomatorsToolInterface;
 
 /**
  * Defines the automators tool entity type.
@@ -45,7 +45,8 @@ use Drupal\Core\Config\Entity\ConfigEntityBase;
  *     "id",
  *     "label",
  *     "description",
- *      "workflow",
+ *     "workflow",
+ *     "field_connections",
  *   },
  * )
  */
@@ -70,5 +71,10 @@ final class AutomatorsTool extends ConfigEntityBase implements AutomatorsToolInt
    * The workflow.
    */
   protected string $workflow;
+
+  /**
+   * The field connections.
+   */
+  protected array $field_connections;
 
 }
