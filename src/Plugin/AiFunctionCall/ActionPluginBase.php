@@ -3,6 +3,7 @@
 namespace Drupal\ai\Plugin\AiFunctionCall;
 
 use Drupal\Component\Plugin\ConfigurableInterface;
+use Drupal\Core\Action\ActionManager;
 use Drupal\Core\Action\ActionPluginCollection;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\Attribute\FunctionCall;
@@ -26,31 +27,55 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class ActionPluginBase extends FunctionCallBase implements ExecutableFunctionCallInterface {
 
   /**
+   * The action manager service.
+   *
+   * @var \Drupal\Core\Action\ActionManager
+   */
+  protected ActionManager $actionManager;
+
+  /**
    * The action plugin.
    *
-   * @var \Drupal\Core\Action\ActionInterface
+   * @var \Drupal\Core\Action\ActionPluginCollection
    */
   protected $pluginCollection;
 
   /**
-   * The action plugin manager.
+   * Constructs a FunctionCall plugin.
    *
-   * @var \Drupal\Core\Action\ActionManager
+   * @param array $configuration
+   *   A configuration array containing information about the plugin instance.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
+   * @param \Drupal\ai\Utility\ContextDefinitionNormalizer $context_definition_normalizer
+   *   The context definition normalizer service.
+   * @param \Drupal\Core\Action\ActionManager $action_manager
+   *   The action manager service.
    */
-  protected $actionManager;
+  public function __construct(
+    array $configuration,
+    $plugin_id,
+    $plugin_definition,
+    protected ContextDefinitionNormalizer $context_definition_normalizer,
+    protected ActionManager $action_manager,
+  ) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition, $context_definition_normalizer);
+    $this->actionManager = $action_manager;
+  }
 
   /**
    * Load from dependency injection container.
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): FunctionCallInterface|static {
-    $instance = new static(
+    return new static(
       $configuration,
       $plugin_id,
       $plugin_definition,
-      new ContextDefinitionNormalizer(),
+      $container->get('ai.context_definition_normalizer'),
+      $container->get('plugin.manager.action')
     );
-    $instance->actionManager = $container->get('plugin.manager.action');
-    return $instance;
   }
 
   /**
@@ -62,19 +87,23 @@ class ActionPluginBase extends FunctionCallBase implements ExecutableFunctionCal
       $params = [];
       $configuration = $action_plugin->getConfiguration();
       // If context keys exist, not in configuration, set to execute.
-      foreach ($this->getContexts() as $key => $context) {
+      foreach ($this->getContextValues() as $key => $value) {
         if (isset($configuration[$key])) {
-          $configuration[$key] = $context->getContextValue();
+          $configuration[$key] = $value;
         }
         else {
-          $params[$key] = $context;
+          $params[$key] = $value;
         }
       }
+      $action_plugin->setConfiguration($configuration);
     }
     else {
-      $params = $this->getContexts();
+      $params = $this->getContextValues();
     }
-
+    $params = array_values($params);
+    // @todo Add access check.
+    // @todo Count params? or find something better.
+    // $this->actionPlugin->access($entity, \Drupal::currentUser());
     $action_plugin->execute(...$params);
   }
 
