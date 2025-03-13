@@ -29,6 +29,8 @@ final class FunctionCall extends Plugin {
    *   The (optional) description of the function.
    * @param string $group
    *   The (optional) group of the function.
+   * @param array $module_dependencies
+   *   The (optional) array of module dependencies.
    * @param array $context_definitions
    *   The (optional) An array of context definitions describing the contexts
    *   used by the plugin.
@@ -41,6 +43,7 @@ final class FunctionCall extends Plugin {
     public readonly string $name,
     public readonly ?string $description,
     public readonly ?string $group = "",
+    public readonly array $module_dependencies = [],
     public readonly array $context_definitions = [],
     public readonly ?string $deriver = NULL,
   ) {}

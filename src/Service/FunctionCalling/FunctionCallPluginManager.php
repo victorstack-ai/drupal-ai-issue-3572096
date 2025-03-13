@@ -25,6 +25,30 @@ final class FunctionCallPluginManager extends DefaultPluginManager {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function getDefinitions() {
+    $definitions = $this->getCachedDefinitions();
+    if (!isset($definitions)) {
+      $definitions = $this->findDefinitions();
+      foreach ($definitions as $id => $definition) {
+        if (!empty($definition['module_dependencies'])) {
+          // Check if all modules are installed, otherwise remove this.
+          foreach ($definition['module_dependencies'] as $module) {
+            if (!$this->moduleHandler->moduleExists($module)) {
+              unset($definitions[$id]);
+              break;
+            }
+          }
+        }
+      }
+      // Cache.
+      $this->setCachedDefinitions($definitions);
+    }
+    return $definitions;
+  }
+
+  /**
    * Helper function to check if a function name exists.
    *
    * @param string $function_name
