@@ -7,8 +7,6 @@ namespace Drupal\ai_api_explorer\Plugin\AiApiExplorer;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Plugin\Context\Context;
-use Drupal\Core\Plugin\Context\ContextDefinition;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\AiProviderPluginManager;
@@ -144,7 +142,7 @@ final class ToolsExplorer extends AiApiExplorerPluginBase {
       '#description' => $this->t('Please choose a tool to test against.'),
       '#default_value' => $form_state->getValue('tool') ?? $query['tool'] ?? '',
       '#ajax' => [
-        'callback' => [$this, 'getFunctionProperties'],
+        'callback' => [$this, 'getFunctionPropertiesCallback'],
         'wrapper' => 'ai-properties-response',
         'event' => 'change',
       ],
@@ -163,6 +161,9 @@ final class ToolsExplorer extends AiApiExplorerPluginBase {
     // If a tool is preset and nothing exists in the form state, create subform.
     if (!empty($query['tool']) && empty($form_state->getValue('tool'))) {
       $form_state->setValue('tool', $query['tool']);
+    }
+
+    if ($form_state->getValue('tool')) {
       $this->getFunctionProperties($form, $form_state);
     }
 
@@ -182,6 +183,22 @@ final class ToolsExplorer extends AiApiExplorerPluginBase {
     ];
 
     return $form;
+  }
+
+  /**
+   * Creates an ajax callback for the function properties.
+   *
+   * @param array $form
+   *   The form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array
+   *   The form element.
+   */
+  public function getFunctionPropertiesCallback(array &$form, FormStateInterface $form_state): array {
+    $form_state->setRebuild(TRUE);
+    return $form['left']['properties'];
   }
 
   /**
@@ -211,17 +228,15 @@ final class ToolsExplorer extends AiApiExplorerPluginBase {
    * {@inheritdoc}
    */
   public function getResponse(array &$form, FormStateInterface $form_state): array {
-    // Get the tool.
     $tool = $form_state->getValue('tool');
     /** @var \Drupal\ai\Service\FunctionCalling\ExecutableFunctionCallInterface|\Drupal\ai\Base\FunctionCallBase $function_call */
     $function_call = $this->functionCallPluginManager->createInstance($tool);
     // Run through and fill all the properties.
     foreach ($function_call->getContextDefinitions() as $function_name => $property) {
-      $property_name = $function_name;
-      $property_type = (string) $property->getDataType();
+      $property_name = str_replace(':', '__colon__', $function_name);
       $value = $form_state->getValue(['properties', $property_name]) ?? '';
       if ($value) {
-        $function_call->setContext($property_name, new Context(new ContextDefinition($property_type, $this->castValue($value, $property_type)), $value));
+        $function_call->setContextValue($function_name, $value);
       }
     }
     $function_call->execute();
@@ -230,39 +245,6 @@ final class ToolsExplorer extends AiApiExplorerPluginBase {
       '#markup' => $function_call->getReadableOutput(),
     ];
     return $form['right'];
-  }
-
-  /**
-   * Cast value.
-   *
-   * @param mixed $value
-   *   The value.
-   * @param string $type
-   *   The type.
-   *
-   * @return mixed
-   *   The casted value.
-   */
-  public function castValue(mixed $value, string $type): mixed {
-    switch ($type) {
-      case 'string':
-        return (string) $value;
-
-      case 'int':
-        return (int) $value;
-
-      case 'float':
-        return (float) $value;
-
-      case 'bool':
-        return (bool) $value;
-
-      case 'array':
-        return (array) $value;
-
-      default:
-        return $value;
-    }
   }
 
 }
