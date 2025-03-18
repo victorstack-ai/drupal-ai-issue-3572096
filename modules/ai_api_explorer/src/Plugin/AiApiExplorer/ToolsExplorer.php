@@ -242,7 +242,7 @@ final class ToolsExplorer extends AiApiExplorerPluginBase {
     $function_call->execute();
     $form['right']['response'] = [
       '#type' => 'markup',
-      '#markup' => $function_call->getReadableOutput(),
+      '#markup' => '<pre>' . $function_call->getReadableOutput() . '</pre>',
     ];
     return $form['right'];
   }
