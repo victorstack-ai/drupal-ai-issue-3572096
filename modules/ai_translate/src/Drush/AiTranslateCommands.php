@@ -10,6 +10,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\ai_translate\TextExtractorInterface;
 use Drupal\ai_translate\TextTranslatorInterface;
 use Drupal\ai_translate\TranslationException;
+use Drupal\filter\Entity\FilterFormat;
 use Drush\Attributes\Argument;
 use Drush\Attributes\Command;
 use Drush\Commands\DrushCommands;
@@ -100,6 +101,14 @@ class AiTranslateCommands extends DrushCommands {
       try {
         $singleText['translated'] = $this->textTranslator->translateContent(
           $singleText['value'], $langNames[$langTo], $langNames[$langFrom] ?? NULL);
+
+        // Checks if the field allows HTML and decodes the HTML entities.
+        if (isset($singleText['format'])) {
+          $format = $singleText['format'];
+          if (FilterFormat::load($format)) {
+            $singleText['translated'] = html_entity_decode($singleText['translated']);
+          }
+        }
       }
       catch (TranslationException) {
         // Error already logged by text_translate service.
