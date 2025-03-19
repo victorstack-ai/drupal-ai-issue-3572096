@@ -12,6 +12,7 @@ use Drupal\Core\Plugin\Context\ContextDefinition;
 use Drupal\Core\Plugin\Context\EntityContextDefinition;
 use Drupal\Core\Plugin\Discovery\ContainerDeriverInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\TypedData\Attribute\DataType;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -158,11 +159,28 @@ class ActionPluginDeriver extends DeriverBase implements ContainerDeriverInterfa
         // @todo Handle missing schema.
         foreach ($config_schema_definition['mapping'] as $key => $info) {
           $constraints = $info['constraints'] ?? [];
+          $info['type'] = $this->resolveRootDataType($info['type']);
           $context_definitions[$key] = new ContextDefinition($info['type'], $info['label'], $info['required'] ?? FALSE, FALSE, $info['label'], $info['default_value'] ?? NULL, $constraints);
         }
       }
     }
     return $context_definitions;
+  }
+
+  /**
+   * Resolve the root data type for the given type.
+   *
+   * @param string $type
+   *   The type to resolve.
+   *
+   * @return string
+   *   The resolved root data type.
+   */
+  protected function resolveRootDataType(string $type): string {
+    $definition = $this->typedConfigManager->getDefinition($type);
+    $reflection_class = new \ReflectionClass($definition['class']);
+    $attributes = $reflection_class->getAttributes(DataType::class);
+    return $attributes[0]->newInstance()->id;
   }
 
 }
