@@ -80,7 +80,12 @@ final class SetupAiProvider implements ConfigActionPluginInterface, ContainerFac
       $this->simpleConfigUpdate->apply($configName, [
         $setupData['key_config_name'] => $key->id(),
       ]);
-      if (isset($setupData['default_models'])) {
+      if (!empty($value['default_models'])) {
+        foreach ($value['default_models'] as $operation => $model) {
+          $this->aiProviderPluginManager->defaultIfNone($operation, $value['provider'], $model);
+        }
+      }
+      elseif (isset($setupData['default_models'])) {
         foreach ($setupData['default_models'] as $operation => $model) {
           $this->aiProviderPluginManager->defaultIfNone($operation, $value['provider'], $model);
         }
