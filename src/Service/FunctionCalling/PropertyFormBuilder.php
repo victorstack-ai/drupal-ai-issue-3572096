@@ -59,8 +59,18 @@ class PropertyFormBuilder {
     switch ($property->getType()) {
       case 'string':
         if (!empty($property->getEnum())) {
+          // The options key should also be the options value.
+          $values = [];
+          // If its not required, we can add a null value.
+          if (!$property->isRequired()) {
+            $values[''] = '- None -';
+          }
+          foreach ($property->getEnum() as $value) {
+            $values[$value] = $value;
+          }
+
           $form_element['#type'] = 'select';
-          $form_element['#options'] = $property->getEnum();
+          $form_element['#options'] = $values;
         }
         else {
           // We don't know the size, so a 2 rows textarea is a good default.

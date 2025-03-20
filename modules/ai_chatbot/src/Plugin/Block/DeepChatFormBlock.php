@@ -423,6 +423,13 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function getCacheMaxAge() {
+    return 0;
+  }
+
+  /**
    * Get the context objects actual output.
    *
    * @param string $style
