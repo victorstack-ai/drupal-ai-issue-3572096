@@ -6,22 +6,40 @@ ai_content_suggestions.settings:
       type: sequence
       label: Plugins
       orderby: key
-      model:
+      sequence:
         type: string
-        label: Model
+        label: 'Plugin ID'
+
+ai_content_suggestions.prompts:
+  type: config_object
+  label: 'AI Content Suggestions prompts'
+  mapping:
+    readability:
+      type: string
+      label: 'Readability prompt'
+    title_suggest:
+      type: string
+      label: 'Title suggestion prompt'
     tone:
-      type: map
-      label: Tone
-      description: 'Dynamic tone analysis settings.'
-      mapping:
-        '*':
-          type: string
-          label: 'Tone Vocabulary ID'
-    prompts:
-      type: map
-      label: Prompts
-      description: 'Dynamic prompts settings.'
-      mapping:
-        '*':
-          type: string
-          label: 'Prompt'
+      type: string
+      label: 'Tone modification prompt'
+    summarise:
+      type: string
+      label: 'Summarization prompt'
+    taxonomy_suggest_open:
+      type: string
+      label: 'Open taxonomy suggestion prompt'
+    taxonomy_suggest_from_voc:
+      type: string
+      label: 'Vocabulary-based taxonomy suggestion prompt'
+
+ai_content_suggestions.tone:
+  type: config_object
+  label: 'AI Content Suggestions tone settings'
+  mapping:
+    tone_taxonomy:
+      type: string
+      label: 'Tone taxonomy vocabulary'
+    tone_taxonomy_enabled:
+      type: boolean
+      label: 'Enable custom tone taxonomy'
