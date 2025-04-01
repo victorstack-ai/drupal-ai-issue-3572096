@@ -582,7 +582,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
    *   The automator configuration.
    * @param \Drupal\ai\Plugin\ProviderProxy $instance
    *   The LLM instance.
-   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   * @param \Drupal\Core\Entity\ContentEntityInterface|null $entity
    *   The entity.
    *
    * @return \Drupal\ai\OperationType\Chat\ChatMessage
@@ -629,7 +629,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     }
 
     $model = $this->getModel($automatorConfig);
-    $response = $instance->chat($input, $model)->getNormalized();
+    $response = $instance->chat($input, $model, $this->getTags($prompt, $automatorConfig, $instance, $entity))->getNormalized();
 
     return $response;
   }
@@ -733,6 +733,48 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
       return [$json['value']];
     }
     return [];
+  }
+
+  /**
+   * Generate the tags for the LLM request.
+   *
+   * This allows event subscribers to identify automator requests and responses
+   * and can provide context such as the entity and field the automator is
+   * attached to.
+   *
+   * @param string $prompt
+   *   The prompt.
+   * @param array $automatorConfig
+   *   The automator configuration.
+   * @param \Drupal\ai\Plugin\ProviderProxy $instance
+   *   The LLM instance.
+   * @param \Drupal\Core\Entity\ContentEntityInterface|null $entity
+   *   The entity if available.
+   *
+   * @return string[]
+   *   The array of tags for the LLM request.
+   */
+  public function getTags(string $prompt, array $automatorConfig, $instance, ?ContentEntityInterface $entity = NULL): array {
+    // Always add an automator tag.
+    $tags = [
+      'ai_automator',
+    ];
+
+    // Add the rule being used as a tag.
+    if (!empty($automatorConfig['rule'])) {
+      $tags[] = 'ai_automator:type:' . $automatorConfig['rule'];
+    }
+
+    // Add some tags based on the entity & field name.
+    if ($entity) {
+      $tags[] = 'ai_automator:entity_type:' . $entity->getEntityTypeId();
+      $tags[] = 'ai_automator:entity:' . $entity->id();
+      $tags[] = 'ai_automator:bundle:' . $entity->bundle();
+    }
+    if (!empty($automatorConfig['field_name'])) {
+      $tags[] = 'ai_automator:field_name:' . $automatorConfig['field_name'];
+    }
+    return $tags;
   }
 
 }
