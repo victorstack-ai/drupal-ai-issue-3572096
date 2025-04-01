@@ -41,6 +41,20 @@ class ActionPluginBase extends FunctionCallBase implements ExecutableFunctionCal
   protected $pluginCollection;
 
   /**
+   * The status of the action execution.
+   *
+   * @var string|null
+   */
+  protected $executionStatus;
+
+  /**
+   * The error message, if any.
+   *
+   * @var string|null
+   */
+  protected $errorMessage;
+
+  /**
    * Constructs a FunctionCall plugin.
    *
    * @param array $configuration
@@ -82,36 +96,61 @@ class ActionPluginBase extends FunctionCallBase implements ExecutableFunctionCal
    * {@inheritdoc}
    */
   public function execute() {
-    $action_plugin = $this->getPluginCollection()->get($this->getDerivativeId());
-    if ($action_plugin instanceof ConfigurableInterface) {
-      $params = [];
-      $configuration = $action_plugin->getConfiguration();
-      // If context keys exist, not in configuration, set to execute.
-      foreach ($this->getContextValues() as $key => $value) {
-        if (isset($configuration[$key])) {
-          $configuration[$key] = $value;
+    try {
+      $action_plugin = $this->getPluginCollection()->get($this->getDerivativeId());
+      if ($action_plugin instanceof ConfigurableInterface) {
+        $params = [];
+        $configuration = $action_plugin->getConfiguration();
+        // If context keys exist, not in configuration, set to execute.
+        foreach ($this->getContextValues() as $key => $value) {
+          if (isset($configuration[$key])) {
+            $configuration[$key] = $value;
+          }
+          else {
+            $params[$key] = $value;
+          }
         }
-        else {
-          $params[$key] = $value;
-        }
+        $action_plugin->setConfiguration($configuration);
       }
-      $action_plugin->setConfiguration($configuration);
+      else {
+        $params = $this->getContextValues();
+      }
+      $params = array_values($params);
+      // @todo Add access check.
+      // @todo Count params? or find something better.
+      // $this->actionPlugin->access($entity, \Drupal::currentUser());
+      $action_plugin->execute(...$params);
+
+      // Set the execution status to success if no exception occurs.
+      $this->executionStatus = 'success';
+      $this->errorMessage = NULL;
+
     }
-    else {
-      $params = $this->getContextValues();
+    catch (\Exception $e) {
+      // Set the execution status to failed and store the error message.
+      $this->executionStatus = 'failed';
+      $this->errorMessage = $e->getMessage();
+
     }
-    $params = array_values($params);
-    // @todo Add access check.
-    // @todo Count params? or find something better.
-    // $this->actionPlugin->access($entity, \Drupal::currentUser());
-    $action_plugin->execute(...$params);
   }
 
   /**
    * {@inheritdoc}
    */
   public function getReadableOutput(): string {
-    return '';
+    // Get the action ID (derivative ID).
+    $action_id = $this->getDerivativeId() ?? 'unknown';
+
+    // Default to 'not executed' if the action hasn't run.
+    $status = $this->executionStatus ?? 'not executed';
+    $output = "Action '$action_id' status: $status";
+
+    // Append the error message if the action failed.
+    if ($status === 'failed' && !empty($this->errorMessage)) {
+      $output .= "\nError: " . $this->errorMessage;
+    }
+
+    return $output;
   }
 
   /**
