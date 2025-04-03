@@ -19,5 +19,6 @@ The full list of providers available.
 | [Mistral](https://www.drupal.org/project/ai_provider_mistral) | ☑ |
 | [Ollama](https://www.drupal.org/project/ai_provider_ollama) | ☑ | ☑ |
 | [OpenAI](https://www.drupal.org/project/ai_provider_openai) | ☑ | ☑ | ☑ | ☑ | ☑ | ☑ |
+| [x AI](https://www.drupal.org/project/ai_provider_x/) | ☑ | | | ☑ |
 
 Do a pull request on this MD file if your provider is missing.
