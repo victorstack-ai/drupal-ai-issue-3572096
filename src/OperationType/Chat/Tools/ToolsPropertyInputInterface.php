@@ -340,6 +340,28 @@ interface ToolsPropertyInputInterface {
   public function setItems(array|string $items);
 
   /**
+   * Get the constant value for the property.
+   *
+   * Constant values are used when a value is forced and cannot be changed by
+   * the LLM. This is useful for fixed values that must be maintained.
+   *
+   * @return mixed
+   *   The constant value for the property.
+   */
+  public function getConstant();
+
+  /**
+   * Set the constant value for the property.
+   *
+   * Constant values are used when a value is forced and cannot be changed by
+   * the LLM. This is useful for fixed values that must be maintained.
+   *
+   * @param mixed $constant
+   *   The constant value for the property.
+   */
+  public function setConstant($constant);
+
+  /**
    * Get the custom property values.
    *
    * This is used to get a custom value for the property that is not covered by

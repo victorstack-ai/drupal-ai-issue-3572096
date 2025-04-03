@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Plugin\AiApiExplorer;
 
+use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Renderer;
@@ -402,7 +403,19 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
         $output .= '- ' . '<em>' . $argument->getName() . '</em>: ' . Json::encode($argument->getValue()) . '<br>';
       }
       $function = $this->functionCallPluginManager->convertToolResponseToObject($tool);
-      if ($function instanceof ExecutableFunctionCallInterface && $execute) {
+
+      // Validate the context.
+      $violations = $function->validateContexts();
+      if ($violations->count()) {
+        $output .= $this->t('<strong>Validation errors</strong>:') . '<br>';
+        foreach ($violations as $violation) {
+          $output .= '- ' . new FormattableMarkup('@property: @violation', [
+            '@property' => $violation->getRoot()->getDataDefinition()->getLabel(),
+            '@violation' => $violation->getMessage(),
+          ]) . '<br/>';
+        }
+      }
+      elseif ($function instanceof ExecutableFunctionCallInterface && $execute) {
         $function->execute();
         $output .= $this->t('<strong>Executed value</strong>:') . ' ' . $function->getReadableOutput() . '<br>';
       }

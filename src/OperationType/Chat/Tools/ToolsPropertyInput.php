@@ -115,6 +115,14 @@ class ToolsPropertyInput implements ToolsPropertyInputInterface {
    * @var array|string
    */
   private $items = NULL;
+
+  /**
+   * The constant value of the property.
+   *
+   * @var mixed
+   */
+  private $constant = NULL;
+
   /**
    * The custom values of the property.
    *
@@ -381,6 +389,20 @@ class ToolsPropertyInput implements ToolsPropertyInputInterface {
   /**
    * {@inheritDoc}
    */
+  public function getConstant() {
+    return $this->constant;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function setConstant($constant) {
+    $this->constant = $constant;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   public function getCustomValues(): array {
     return $this->customValues;
   }
@@ -409,6 +431,9 @@ class ToolsPropertyInput implements ToolsPropertyInputInterface {
     }
     if (isset($property['type'])) {
       $this->setType($property['type']);
+    }
+    if (isset($property['required'])) {
+      $this->setRequired($property['required']);
     }
     if (isset($property['enum'])) {
       $this->setEnum($property['enum']);
@@ -443,6 +468,9 @@ class ToolsPropertyInput implements ToolsPropertyInputInterface {
     if (isset($property['items'])) {
       $this->setItems($property['items']);
     }
+    if (isset($property['constant'])) {
+      $this->setConstant($property['constant']);
+    }
     foreach ($property as $key => $value) {
       if (!in_array($key, [
         'name',
@@ -459,6 +487,7 @@ class ToolsPropertyInput implements ToolsPropertyInputInterface {
         'format',
         'exampleValue',
         'items',
+        'constant',
       ])) {
         $this->setCustomValue($key, $value);
       }
@@ -476,13 +505,26 @@ class ToolsPropertyInput implements ToolsPropertyInputInterface {
       'name' => $this->name,
       'type' => $this->type,
     ];
+
     // Merge the custom values.
     $property = array_merge($property, $this->customValues);
 
     if (!empty($this->description)) {
       $property['description'] = $this->description;
     }
-    if (!empty($this->options)) {
+    if ($this->constant !== NULL) {
+      $property['const'] = $this->constant;
+      // Non scalar values aren't suitable to be presented as an enum, and can't
+      // be added to the description.
+      if (is_scalar($this->constant)) {
+        $property['enum'] = [$this->constant];
+        $property['description'] = trim($property['description'] . " This must always have the value {$this->constant} and cannot be modified.");
+      }
+      else {
+        $property['description'] = trim($property['description'] . " This is a constant and cannot be modified.");
+      }
+    }
+    elseif (!empty($this->options)) {
       $property['enum'] = $this->options;
     }
     if (!empty($this->properties)) {

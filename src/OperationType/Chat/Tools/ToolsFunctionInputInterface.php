@@ -93,22 +93,6 @@ interface ToolsFunctionInputInterface extends ToolsInterface {
   public function getRequiredProperties(): array;
 
   /**
-   * Set on required property.
-   *
-   * @param \Drupal\ai\OperationType\Chat\ToolsPropertyInputInterface $requiredProperty
-   *   The required property.
-   */
-  public function setRequiredProperty(ToolsPropertyInputInterface $requiredProperty);
-
-  /**
-   * Sets the required properties.
-   *
-   * @param \Drupal\ai\OperationType\Chat\ToolsPropertyInputInterface[] $requiredProperties
-   *   The required properties.
-   */
-  public function setRequiredProperties(array $requiredProperties);
-
-  /**
    * Set values from an array.
    *
    * @param string $name

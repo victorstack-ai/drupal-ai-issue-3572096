@@ -28,15 +28,16 @@ class ToolsFunctionInputTest extends TestCase {
    */
   public function testConstructor() {
     $function = new ToolsFunctionInput();
-    $this->assertEquals('', $function->getName());
-    $this->assertEquals('', $function->getDescription());
-    $this->assertEquals([], $function->getProperties());
-    $this->assertEquals([], $function->getRequiredProperties());
+    $this->assertEquals('', $function->getName(), 'Initial function name');
+    $this->assertEquals('', $function->getDescription(), 'Initial function description');
+    $this->assertEquals([], $function->getProperties(), 'Initial function properties');
+    $this->assertEquals([], $function->getRequiredProperties(), 'Initial function required properties');
 
     $property = new ToolsPropertyInput('test', [
       'description' => 'Test description',
       'type' => 'string',
       'default' => 'test',
+      'required' => TRUE,
     ]);
     $property2 = new ToolsPropertyInput('test2', [
       'description' => 'Test description',
@@ -46,15 +47,14 @@ class ToolsFunctionInputTest extends TestCase {
     $function = new ToolsFunctionInput('test', [
       'description' => 'Test description',
       'properties' => [$property, $property2],
-      'required' => [$property],
     ]);
-    $this->assertEquals('test', $function->getName());
-    $this->assertEquals('Test description', $function->getDescription());
-    $this->assertEquals(2, count($function->getProperties()));
-    $this->assertEquals(1, count($function->getRequiredProperties()));
-    $this->assertEquals($property, $function->getProperties()['test']);
-    $this->assertEquals($property2, $function->getProperties()['test2']);
-    $this->assertEquals($property, $function->getRequiredProperties()['test']);
+    $this->assertEquals('test', $function->getName(), 'Configured function name');
+    $this->assertEquals('Test description', $function->getDescription(), 'Configured function description');
+    $this->assertEquals(2, count($function->getProperties()), 'Configured function properties');
+    $this->assertEquals(1, count($function->getRequiredProperties()), 'Configured function required properties');
+    $this->assertEquals($property, $function->getProperties()['test'], 'Configured function properties test');
+    $this->assertEquals($property2, $function->getProperties()['test2'], 'Configured function properties test2');
+    $this->assertEquals($property, $function->getRequiredProperties()['test'], 'Configured function required properties test');
   }
 
 }

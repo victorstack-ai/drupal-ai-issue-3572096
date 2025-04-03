@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Plugin\AiApiExplorer;
 
+use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -20,6 +21,7 @@ use Drupal\ai_api_explorer\ExplorerHelper;
 use Drupal\user\Entity\Role;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Validator\ConstraintViolationInterface;
 
 /**
  * Plugin implementation of the ai_api_explorer.
@@ -220,6 +222,49 @@ final class ToolsExplorer extends AiApiExplorerPluginBase {
       // Load an instance of the function.
       $sub_form = $this->propertyFormBuilder->createFormElements($tool);
       $form['left']['properties'] += $sub_form;
+
+      // Expose the usage limit.
+      $form['left']['properties']['limits'] = [
+        '#type' => 'details',
+        '#open' => FALSE,
+        '#title' => $this->t('Limits'),
+        '#parents' => ['property_limits'],
+      ];
+      $tool_definition = $this->functionCallPluginManager->getDefinition($tool);
+      foreach ($tool_definition['context_definitions'] as $name => $definition) {
+        $form['left']['properties']['limits'][$name] = [
+          '#type' => 'details',
+          '#open' => FALSE,
+          '#title' => $definition->getLabel(),
+        ];
+        $form['left']['properties']['limits'][$name]['action'] = [
+          '#type' => 'select',
+          '#title' => $this->t('Restrictions for property %name', [
+            '%name' => $definition->getLabel(),
+          ]),
+          '#options' => [
+            '' => $this->t('Allow all'),
+            'only_allow' => $this->t('Only allow certain values'),
+            'force_value' => $this->t('Force value'),
+          ],
+          '#description' => $this->t('Restrict the allowed values or enforce a value.'),
+        ];
+        $form['left']['properties']['limits'][$name]['values'] = [
+          '#type' => 'textarea',
+          '#title' => $this->t('Values'),
+          '#description' => $this->t('The values that are allowed or the value that should be set. If you pick to only allow certain values, you can set the allowed values new line separated if there are more then one. If you pick to force a value, you can set the value that should be set.'),
+          '#rows' => 2,
+          '#states' => [
+            'visible' => [
+              ':input[name="property_limits[' . $name . '][action]"]' => [
+                ['value' => 'only_allow'],
+                'or',
+                ['value' => 'force_value'],
+              ],
+            ],
+          ],
+        ];
+      }
     }
     return $form['left']['properties'];
   }
@@ -232,18 +277,52 @@ final class ToolsExplorer extends AiApiExplorerPluginBase {
     /** @var \Drupal\ai\Service\FunctionCalling\ExecutableFunctionCallInterface|\Drupal\ai\Base\FunctionCallBase $function_call */
     $function_call = $this->functionCallPluginManager->createInstance($tool);
     // Run through and fill all the properties.
-    foreach ($function_call->getContextDefinitions() as $function_name => $property) {
-      $property_name = str_replace(':', '__colon__', $function_name);
+    foreach ($function_call->getContextDefinitions() as $name => $property) {
+      // Apply any limits.
+      $limit = $form_state->getValue(['property_limits', $name]) ?? [];
+
+      $values = explode("\n", $limit['values']);
+      switch ($limit['action']) {
+        // Set constant value (forced value).
+        case 'force_value':
+          $property->addConstraint('FixedValue', $values[0]);
+          $property->setDefaultValue($limit['values'][0]);
+          $property->setRequired(FALSE);
+          break;
+
+        case 'only_allow':
+          $property->addConstraint('Choice', $values);
+          break;
+      }
+
+      $property_name = str_replace(':', '__colon__', $name);
       $value = $form_state->getValue(['properties', $property_name]) ?? '';
       if ($value) {
-        $function_call->setContextValue($function_name, $value);
+        $function_call->setContextValue($name, $value);
       }
     }
-    $function_call->execute();
-    $form['right']['response'] = [
-      '#type' => 'markup',
-      '#markup' => '<pre>' . $function_call->getReadableOutput() . '</pre>',
-    ];
+    $violations = $function_call->validateContexts();
+    if ($violations->count()) {
+      $form['right']['response'] = [
+        '#theme' => 'item_list',
+        '#list_type' => 'ul',
+        '#title' => $this->t('Property validation errors'),
+        '#items' => array_map(
+          fn (ConstraintViolationInterface $violation) => new FormattableMarkup('@property: @violation', [
+            '@property' => $violation->getRoot()->getDataDefinition()->getLabel(),
+            '@violation' => $violation->getMessage(),
+          ]),
+          (array) $violations->getIterator(),
+        ),
+      ];
+    }
+    else {
+      $function_call->execute();
+      $form['right']['response'] = [
+        '#type' => 'markup',
+        '#markup' => '<pre>' . $function_call->getReadableOutput() . '</pre>',
+      ];
+    }
     return $form['right'];
   }
 

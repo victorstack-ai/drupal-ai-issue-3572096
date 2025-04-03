@@ -24,16 +24,9 @@ class ToolsFunctionInput implements ToolsFunctionInputInterface {
   /**
    * The properties of the function.
    *
-   * @var \Drupal\ai\OperationType\Chat\ToolsPropertyInputInterface[]
+   * @var \Drupal\ai\OperationType\Chat\Tools\ToolsPropertyInputInterface[]
    */
   private array $properties = [];
-
-  /**
-   * The required properties of the function.
-   *
-   * @var \Drupal\ai\OperationType\Chat\ToolsPropertyInputInterface[]
-   */
-  private array $requiredProperties = [];
 
   /**
    * The instructions.
@@ -94,9 +87,6 @@ class ToolsFunctionInput implements ToolsFunctionInputInterface {
    */
   public function setProperty(ToolsPropertyInputInterface $property) {
     $this->properties[$property->getName()] = $property;
-    if ($property->isRequired()) {
-      $this->setRequiredProperty($property);
-    }
   }
 
   /**
@@ -105,9 +95,6 @@ class ToolsFunctionInput implements ToolsFunctionInputInterface {
   public function setProperties(array $properties) {
     foreach ($properties as $property) {
       $this->properties[$property->getName()] = $property;
-      if ($property->isRequired()) {
-        $this->setRequiredProperty($property);
-      }
     }
   }
 
@@ -115,23 +102,10 @@ class ToolsFunctionInput implements ToolsFunctionInputInterface {
    * {@inheritDoc}
    */
   public function getRequiredProperties(): array {
-    return $this->requiredProperties;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function setRequiredProperty(ToolsPropertyInputInterface $requiredProperty) {
-    $this->requiredProperties[$requiredProperty->getName()] = $requiredProperty;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function setRequiredProperties(array $requiredProperties) {
-    foreach ($requiredProperties as $property) {
-      $this->requiredProperties[$property->getName()] = $property;
-    }
+    return array_filter(
+      $this->properties,
+      fn (ToolsPropertyInputInterface $property) => $property->isRequired(),
+    );
   }
 
   /**
@@ -144,9 +118,6 @@ class ToolsFunctionInput implements ToolsFunctionInputInterface {
     }
     if (isset($function['properties'])) {
       $this->setProperties($function['properties']);
-    }
-    if (isset($function['required'])) {
-      $this->setRequiredProperties($function['required']);
     }
   }
 
@@ -167,13 +138,9 @@ class ToolsFunctionInput implements ToolsFunctionInputInterface {
         'type' => 'object',
         'properties' => $properties,
       ];
-    }
-    if (!empty($this->requiredProperties)) {
-      $requiredProperties = [];
-      foreach ($this->requiredProperties as $requiredProperty) {
-        $requiredProperties[] = $requiredProperty->getName();
+      foreach ($this->getRequiredProperties() as $property) {
+        $function['parameters']['required'][] = $property->getName();
       }
-      $function['parameters']['required'] = $requiredProperties;
     }
     return $function;
   }

@@ -39,6 +39,20 @@ class ContextDefinitionNormalizer {
       // Map constraints to properties.
       // @todo Make plugins that map from existing constraints?
       $constraints = $definition->getConstraints();
+
+      // Check for constant value constraint.
+      if (isset($constraints['FixedValue'])) {
+        // Extract value from constraint object or array structure.
+        if (is_object($constraints['FixedValue']) && property_exists($constraints['FixedValue'], 'value')) {
+          $property->setConstant($constraints['FixedValue']->value);
+        }
+        elseif (is_array($constraints['FixedValue']) && isset($constraints['FixedValue']['value'])) {
+          $property->setConstant($constraints['FixedValue']['value']);
+        }
+        else {
+          $property->setConstant($constraints['FixedValue']);
+        }
+      }
       if (isset($constraints['Choice'])) {
         if (isset($constraints['Choice']['choices'])) {
           $property->setEnum($constraints['Choice']['choices']);
