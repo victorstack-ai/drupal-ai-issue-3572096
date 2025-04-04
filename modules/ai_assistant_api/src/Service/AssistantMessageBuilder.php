@@ -9,6 +9,10 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Site\Settings;
+use Drupal\ai\OperationType\Chat\Tools\ToolsFunctionInput;
+use Drupal\ai\OperationType\Chat\Tools\ToolsInput;
+use Drupal\ai\OperationType\Chat\Tools\ToolsInputInterface;
+use Drupal\ai\OperationType\Chat\Tools\ToolsPropertyInput;
 use Drupal\ai_assistant_api\AiAssistantActionPluginManager;
 use Drupal\ai_assistant_api\AiAssistantApiCacheTrait;
 use Drupal\ai_assistant_api\Entity\AiAssistant;
@@ -136,6 +140,9 @@ class AssistantMessageBuilder {
    * Runs the pre prompt to figure out what to do.
    */
   protected function prePrompt() {
+    if ($this->assistant->get('use_function_calling')) {
+      return "";
+    }
     $preprompt = $this->assistant->get('pre_action_prompt');
     // If configured to use the updated prompts from the module, override.
     if (!$this->settings->get('ai_assistant_custom_prompts', FALSE)) {
@@ -251,6 +258,32 @@ class AssistantMessageBuilder {
     $context['site_name'] = $this->configFactory->get('system.site')->get('name');
 
     return $context;
+  }
+
+  /**
+   * Load the function calls available.
+   *
+   * @return \Drupal\ai\OperationType\Chat\Tools\ToolsInputInterface
+   *   The tools input.
+   */
+  public function getFunctionCalls(): ToolsInputInterface {
+    $tools = [];
+    $enabled_actions = $this->assistant->get('actions_enabled');
+    $functions = [];
+    foreach ($enabled_actions as $action => $config) {
+      $instance = $this->actions->createInstance($action, $config);
+      $properties = [];
+      foreach ($instance->getFunctionCallSchema() as $name => $schema) {
+        // Create new abstracted function calls.
+        $property = new ToolsPropertyInput($name, $schema);
+        $properties[$name] = $property;
+      }
+      $function = new ToolsFunctionInput($action);
+      $function->setProperties($properties);
+      $functions[] = $function;
+    }
+    $tools = new ToolsInput($functions);
+    return $tools;
   }
 
 }

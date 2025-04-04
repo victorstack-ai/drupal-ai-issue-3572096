@@ -37,3 +37,7 @@ services:
     factory: cache_factory:get
     tags:
       - { name: cache.bin }
+  ai_assistant_api.agent_runner:
+    class: Drupal\ai_assistant_api\Service\AgentRunner
+    arguments:
+      - '@ai.provider'

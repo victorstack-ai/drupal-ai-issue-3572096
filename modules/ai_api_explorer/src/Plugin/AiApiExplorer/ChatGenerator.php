@@ -304,7 +304,7 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
     $code = '';
     $tools_output = '';
     if ($response) {
-      if ($response->getTools()) {
+      if (method_exists($response, 'getTools') && $response->getTools()) {
         $tools_output = $this->getToolsOutput($function_instances, $response->getTools(), $form_state->getValue('execute'));
       }
       // Generation code for normalization.

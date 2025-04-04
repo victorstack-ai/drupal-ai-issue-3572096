@@ -6,6 +6,7 @@ namespace Drupal\ai_assistant_api\Form;
 
 use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Extension\ExtensionPathResolver;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformState;
 use Drupal\Core\Site\Settings;
@@ -50,6 +51,13 @@ final class AiAssistantForm extends EntityForm {
   protected $aiProvider;
 
   /**
+   * The module handler.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
+
+  /**
    * Constructs a new AiAssistantForm object.
    */
   public function __construct(
@@ -57,11 +65,13 @@ final class AiAssistantForm extends EntityForm {
     ExtensionPathResolver $extension_path_resolver,
     AiProviderFormHelper $form_helper,
     AiProviderPluginManager $ai_provider,
+    ModuleHandlerInterface $module_handler,
   ) {
     $this->actionPluginManager = $action_plugin_manager;
     $this->extensionPathResolver = $extension_path_resolver;
     $this->formHelper = $form_helper;
     $this->aiProvider = $ai_provider;
+    $this->moduleHandler = $module_handler;
   }
 
   /**
@@ -72,7 +82,8 @@ final class AiAssistantForm extends EntityForm {
       $container->get('ai_assistant_api.action_plugin.manager'),
       $container->get('extension.path.resolver'),
       $container->get('ai.form_helper'),
-      $container->get('ai.provider')
+      $container->get('ai.provider'),
+      $container->get('module_handler'),
     );
   }
 
@@ -105,11 +116,33 @@ final class AiAssistantForm extends EntityForm {
       '#disabled' => !$entity->isNew(),
     ];
 
-    $form['status'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Enabled'),
-      '#default_value' => $entity->status(),
+    $form['description'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Administrative Description'),
+      '#default_value' => $entity->get('description'),
+      '#description' => $this->t('Add a short 1-2 sentence description of what this AI Assistant does. This is not used in the prompt at all and is primarily for site admins. If for any reason the assistant is called by an AI this description may be used to help another AI agent understand this Assistant.'),
+      '#attributes' => [
+        'rows' => 2,
+        'placeholder' => $this->t('An assistant that can find old articles and also publish and unpublish them.'),
+      ],
     ];
+
+    // Hard dependency for now.
+    if ($this->moduleHandler->moduleExists('ai_agents')) {
+      $agents = $this->entityTypeManager->getStorage('ai_agent')->loadMultiple();
+      $options = [];
+      foreach ($agents as $agent) {
+        $options[$agent->id()] = $agent->label();
+      }
+      $form['ai_agent'] = [
+        '#type' => 'select',
+        '#title' => $this->t('Use agent as assistant'),
+        '#empty_option' => $this->t('Select an agent'),
+        '#default_value' => $entity->get('ai_agent') ?? '',
+        '#description' => $this->t('If enabled, the AI Assistant will use the agent as the assistant. This is only available if you have the AI Agents module installed.'),
+        '#options' => $options,
+      ];
+    }
 
     $form['instructions'] = [
       '#type' => 'textarea',
@@ -119,6 +152,11 @@ final class AiAssistantForm extends EntityForm {
       '#attributes' => [
         'rows' => 15,
         'placeholder' => $this->t('If the user asks questions about unpublished articles, make sure to add status unpublished somewhere in the lookup.'),
+      ],
+      '#states' => [
+        'visible' => [
+          ':input[name="ai_agent"]' => ['value' => ''],
+        ],
       ],
     ];
 
@@ -130,6 +168,11 @@ final class AiAssistantForm extends EntityForm {
         '#description' => $this->t('Configure the %label settings for this AI assistant.', [
           '%label' => $definition['label'],
         ]),
+        '#states' => [
+          'visible' => [
+            ':input[name="ai_agent"]' => ['value' => ''],
+          ],
+        ],
       ];
 
       $form['action_plugin_' . $definition['id']]['enabled'] = [
@@ -167,18 +210,19 @@ final class AiAssistantForm extends EntityForm {
       $form['action_plugin_' . $definition['id']]['#tree'] = TRUE;
     }
 
-    $form['description'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('Administrative Description'),
-      '#default_value' => $entity->get('description'),
-      '#description' => $this->t('Add a short 1-2 sentence description of what this AI Assistant does. This is not used in the prompt at all and is primarily for site admins. If for any reason the assistant is called by an AI this description may be used to help another AI agent understand this Assistant.'),
-      '#attributes' => [
-        'rows' => 2,
-        'placeholder' => $this->t('An assistant that can find old articles and also publish and unpublish them.'),
-      ],
+    $form['advanced'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Advanced settings'),
+      '#open' => FALSE,
     ];
 
-    $form['allow_history'] = [
+    $form['advanced']['status'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Enabled'),
+      '#default_value' => $entity->status(),
+    ];
+
+    $form['advanced']['allow_history'] = [
       '#type' => 'select',
       '#title' => $this->t('Allow History'),
       '#default_value' => $entity->get('allow_history') ?? 'session',
@@ -190,7 +234,7 @@ final class AiAssistantForm extends EntityForm {
       ],
     ];
 
-    $form['history_context_length'] = [
+    $form['advanced']['history_context_length'] = [
       '#type' => 'number',
       '#title' => $this->t('History context length'),
       '#default_value' => $entity->get('history_context_length') ?? 2,
@@ -212,7 +256,7 @@ final class AiAssistantForm extends EntityForm {
     }
 
     $this->formHelper->generateAiProvidersForm($form, $form_state, 'chat', 'llm', AiProviderFormHelper::FORM_CONFIGURATION_FULL, 0, '', $this->t('AI Provider'), $this->t('The provider of the AI models used by this assistant. You will only be able to select the advanced models that are capable of providing the responses the Assistant needs.'), TRUE);
-
+    $form['llm_ajax_prefix']['#open'] = FALSE;
     // Set default values.
     $llm_configs = $entity->get('llm_configuration');
     if ($llm_configs && count($llm_configs)) {
@@ -222,12 +266,6 @@ final class AiAssistantForm extends EntityForm {
     }
     $pre_action_prompt = file_get_contents($this->extensionPathResolver->getPath('module', 'ai_assistant_api') . '/resources/pre_action_prompt.txt');
     $system_prompt = file_get_contents($this->extensionPathResolver->getPath('module', 'ai_assistant_api') . '/resources/system_prompt.txt');
-
-    $form['advanced'] = [
-      '#type' => 'details',
-      '#title' => $this->t('Advanced settings'),
-      '#open' => FALSE,
-    ];
 
     $options = [];
     foreach (Role::loadMultiple() as $role) {
@@ -288,6 +326,11 @@ final class AiAssistantForm extends EntityForm {
       '#attributes' => [
         'rows' => 30,
       ],
+      '#states' => [
+        'visible' => [
+          ':input[name="ai_agent"]' => ['value' => ''],
+        ],
+      ],
     ];
     $form['advanced']['system_prompt'] = [
       '#type' => 'textarea',
@@ -311,6 +354,11 @@ final class AiAssistantForm extends EntityForm {
       '#disabled' => !Settings::get('ai_assistant_advanced_mode_enabled', FALSE),
       '#attributes' => [
         'rows' => 30,
+      ],
+      '#states' => [
+        'visible' => [
+          ':input[name="ai_agent"]' => ['value' => ''],
+        ],
       ],
     ];
 

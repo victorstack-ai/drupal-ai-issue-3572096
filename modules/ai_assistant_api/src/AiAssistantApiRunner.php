@@ -301,6 +301,18 @@ class AiAssistantApiRunner {
     $this->resetStructuredResults();
     $this->resetOutputContexts();
     $instance = NULL;
+
+    // If we are using an agent as assistant.
+    if ($this->assistant->get('ai_agent') && $this->moduleHandler->moduleExists('ai_agents')) {
+      // Use the agent to run the task, kid of anti pattern in requirement.
+      // @phpstan-ignore-next-line
+      return \Drupal::service('ai_assistant_api.agent_runner')->runAsAgent(
+        $this->assistant->get('ai_agent'),
+        $this->getMessageHistory(),
+        $this->getProviderAndModel(),
+      );
+    }
+
     try {
       $system_prompt = $this->assistant->get('system_prompt');
       // If the site isn't configured to use custom prompts, override with the
@@ -463,6 +475,11 @@ class AiAssistantApiRunner {
       $messages[] = new ChatMessage($message['role'], $message['message']);
     }
     $input = new ChatInput($messages);
+    // If its preprompt and function calling, we set the function calling.
+    if ($pre_prompt && $this->assistant->get('use_function_calling')) {
+      $tools = $this->assistantMessageBuilder->getFunctionCalls();
+      $input->setChatTools($tools);
+    }
 
     $tags = [
       'ai_assistant_api',
@@ -478,6 +495,11 @@ class AiAssistantApiRunner {
     $response = $provider->chat($input, $connect['model_id'], $tags);
     $values = $response->getNormalized();
 
+    // If its using function calling, return this.
+    if ($values->getTools()) {
+      print_r($values->getTools());
+      exit;
+    }
     $response = $this->promptJsonDecoder->decode($values, 20);
 
     if (is_array($response)) {
