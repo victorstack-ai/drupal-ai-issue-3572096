@@ -101,6 +101,13 @@ class ToolsFunctionInput implements ToolsFunctionInputInterface {
   /**
    * {@inheritDoc}
    */
+  public function unsetProperty(string $property_name) {
+    unset($this->properties[$property_name]);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   public function getRequiredProperties(): array {
     return array_filter(
       $this->properties,

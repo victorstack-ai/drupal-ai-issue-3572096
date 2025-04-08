@@ -85,6 +85,14 @@ interface ToolsFunctionInputInterface extends ToolsInterface {
   public function setProperties(array $properties);
 
   /**
+   * Unset a property.
+   *
+   * @param string $property_name
+   *   The property name.
+   */
+  public function unsetProperty(string $property_name);
+
+  /**
    * Gets the required properties.
    *
    * @return \Drupal\ai\OperationType\Chat\Tools\ToolsPropertyInputInterface[]
