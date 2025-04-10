@@ -34,6 +34,13 @@ abstract class FunctionCallBase extends PluginBase implements FunctionCallInterf
   protected string $toolsId = "";
 
   /**
+   * The output.
+   *
+   * @var string
+   */
+  protected string $stringOutput = "";
+
+  /**
    * Constructs a FunctionCall plugin.
    *
    * @param array $configuration
@@ -99,6 +106,23 @@ abstract class FunctionCallBase extends PluginBase implements FunctionCallInterf
       // @todo What happens if this fails to pass constraints?
       $this->setContextValue($property_name, $argument->getValue());
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getReadableOutput(): string {
+    return $this->stringOutput;
+  }
+
+  /**
+   * Set output.
+   *
+   * @param string $output
+   *   The output.
+   */
+  public function setOutput(string $output) {
+    $this->stringOutput = $output;
   }
 
   /**
