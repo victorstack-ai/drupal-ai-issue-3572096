@@ -2,6 +2,7 @@
 
 namespace Drupal\ai\Plugin\Validation\Constraint;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\ai\Service\FunctionCalling\FunctionCallPluginManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -29,7 +30,7 @@ class ComplexToolItemsConstraintValidator extends ConstraintValidator implements
    */
   public static function create(ContainerInterface $container): static {
     return new static(
-      $container->get('plugin.manager.ai_function_call')
+      $container->get('plugin.manager.ai.function_calls')
     );
   }
 
@@ -70,12 +71,9 @@ class ComplexToolItemsConstraintValidator extends ConstraintValidator implements
    *   The constraint.
    */
   protected function validateItem($item, Constraint $constraint) {
-    // Check so the items is a class and implements the FunctionCallInterface.
-    if (!class_exists($item)) {
-      $this->context->addViolation($constraint->message, ['%value' => $item]);
-    }
-    elseif (!in_array($item, $this->functionCallClasses)) {
-      $this->context->addViolation($constraint->message, ['%value' => $item]);
+    // Check so the items is a complex class.
+    if (!is_array($item) && !is_object($item) && !class_exists($item)) {
+      $this->context->addViolation($constraint->message, ['%value' => Json::encode($item)]);
     }
   }
 

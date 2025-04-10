@@ -11,15 +11,52 @@ use Symfony\Component\Validator\Constraint;
  */
 #[ConstraintAttribute(
   id: 'ComplexToolItems',
-  label: new TranslatableMarkup('Tool Items', [], ['context' => 'Validation'])
+  label: new TranslatableMarkup('Tool Items', [], ['context' => 'Validation']),
+  // We might need to add some types there.
+  type: [
+    'list',
+    'map',
+  ],
 )]
 class ComplexToolItemsConstraint extends Constraint {
+
+  /**
+   * The object value that must be used.
+   *
+   * @var mixed
+   */
+  public $value;
 
   /**
    * The error message.
    *
    * @var string
    */
-  public $message = "The value '%value' has to be an class or array of classes that implements the FunctionCallInterface.";
+  public $message = "The value '%value' has to be an class or array of classes that implements the FunctionCallInterface or the output value.";
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __construct($options = NULL) {
+    parent::__construct($options);
+    // Allow for a compact notation where the value is directly provided.
+    if (isset($options) && !is_array($options) && !($options instanceof \Traversable)) {
+      $this->value = $options;
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDefaultOption(): string {
+    return 'value';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getRequiredOptions(): array {
+    return ['value'];
+  }
 
 }
