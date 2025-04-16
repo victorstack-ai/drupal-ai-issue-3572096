@@ -64,13 +64,6 @@ final class Completion extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
-
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state): void {
     $this->configuration['provider'] = $form_state->getValue('provider');
     $newPrompt = $form_state->getValue('prompt');
@@ -81,28 +74,23 @@ final class Completion extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
+  protected function needsSelectedText() {
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []): array {
     $form = parent::buildCkEditorModalForm($form, $form_state);
-
-    $editor_id = $this->requestStack->getParentRequest()->get('editor_id');
 
     $form['text_to_submit'] = [
       '#type' => 'textarea',
       '#title' => $this->t('What would you like to ask or get ideas for?'),
       '#default_value' => '',
       '#required' => TRUE,
-    ];
-
-    $form['response_text'] = [
-      '#type' => 'text_format',
-      '#title' => $this->t('Response from AI'),
-      '#description' => $this->t('The response from AI will appear in the box above. You can edit and tweak the response before saving it back to the main editor.'),
-      '#prefix' => '<div id="ai-ckeditor-response">',
-      '#suffix' => '</div>',
-      '#default_value' => '',
-      '#allowed_formats' => [$editor_id],
-      '#format' => $editor_id,
-      '#ai_ckeditor_response' => TRUE,
+      // Ensure this comes before the generate button.
+      '#weight' => 5,
     ];
 
     return $form;

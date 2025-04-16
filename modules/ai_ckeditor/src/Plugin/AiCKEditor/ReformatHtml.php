@@ -81,39 +81,22 @@ final class ReformatHtml extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []) {
-    $storage = $form_state->getStorage();
-    $editor_id = $this->requestStack->getParentRequest()->get('editor_id');
+  protected function getGenerateButtonLabel() {
+    return $this->t('Reformat');
+  }
 
-    if (empty($storage['selected_text'])) {
-      return [
-        '#markup' => '<p>' . $this->t('You must select some text/markup before you can reformat it.') . '</p>',
-      ];
-    }
+  /**
+   * {@inheritdoc}
+   */
+  protected function getSelectedTextLabel() {
+    return $this->t('Selected text/markup to reformat');
+  }
 
-    $form = parent::buildCkEditorModalForm($form, $form_state);
-
-    $form['selected_text'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('Selected text/markup to reformat'),
-      '#disabled' => TRUE,
-      '#default_value' => $storage['selected_text'],
-    ];
-
-    $form['response_text'] = [
-      '#type' => 'text_format',
-      '#title' => $this->t('Suggested markup'),
-      '#description' => $this->t('The response from AI will appear in the box above. You can edit and tweak the response before saving it back to the main editor.'),
-      '#prefix' => '<div id="ai-ckeditor-response">',
-      '#suffix' => '</div>',
-      '#default_value' => '',
-      '#allowed_formats' => [$editor_id],
-      '#format' => $editor_id,
-    ];
-
-    $form['actions']['generate']['#value'] = $this->t('Reformat');
-
-    return $form;
+  /**
+   * {@inheritdoc}
+   */
+  protected function getAiResponseLabel() {
+    return $this->t('Suggested markup');
   }
 
   /**
@@ -141,7 +124,7 @@ final class ReformatHtml extends AiCKEditorPluginBase {
     }
     catch (\Exception $e) {
       $this->logger->error("There was an error in the Reformat HTML plugin for CKEditor.");
-      return $form['plugin_config']['response_text']['#value'] = "There was an error in the Reformat HTML plugin for CKEditor.";
+      return $form['plugin_config']['response_wrapper']['response_text']['#value'] = "There was an error in the Reformat HTML plugin for CKEditor.";
     }
   }
 

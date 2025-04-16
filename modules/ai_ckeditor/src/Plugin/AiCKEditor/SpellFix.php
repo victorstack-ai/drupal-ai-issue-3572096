@@ -66,13 +66,6 @@ final class SpellFix extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
-
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     $this->configuration['provider'] = $form_state->getValue('provider');
     $newPrompt = $form_state->getValue('prompt');
@@ -83,39 +76,15 @@ final class SpellFix extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []) {
-    $storage = $form_state->getStorage();
-    $editor_id = $this->requestStack->getParentRequest()->get('editor_id');
+  protected function getGenerateButtonLabel() {
+    return $this->t('Fix spelling');
+  }
 
-    if (empty($storage['selected_text'])) {
-      return [
-        '#markup' => '<p>' . $this->t('You must select some text before you can summarize it.') . '</p>',
-      ];
-    }
-
-    $form = parent::buildCkEditorModalForm($form, $form_state, $settings);
-
-    $form['selected_text'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('Selected text to fix'),
-      '#disabled' => TRUE,
-      '#default_value' => $storage['selected_text'],
-    ];
-
-    $form['response_text'] = [
-      '#type' => 'text_format',
-      '#title' => $this->t('Suggested fixed text'),
-      '#description' => $this->t('The response from AI will appear in the box above. You can edit and tweak the response before saving it back to the main editor.'),
-      '#prefix' => '<div id="ai-ckeditor-response">',
-      '#suffix' => '</div>',
-      '#default_value' => '',
-      '#allowed_formats' => [$editor_id],
-      '#format' => $editor_id,
-    ];
-
-    $form['actions']['generate']['#value'] = $this->t('Fix spelling');
-
-    return $form;
+  /**
+   * {@inheritdoc}
+   */
+  protected function getSelectedTextLabel() {
+    return $this->t('Selected text to fix');
   }
 
   /**
@@ -142,7 +111,7 @@ final class SpellFix extends AiCKEditorPluginBase {
     }
     catch (\Exception $e) {
       $this->logger->error("There was an error in the Spellfix AI plugin for CKEditor.");
-      return $form['plugin_config']['response_text']['#value'] = "There was an error in the Spellfix AI plugin for CKEditor.";
+      return $form['plugin_config']['response_wrapper']['response_text']['#value'] = "There was an error in the Spellfix AI plugin for CKEditor.";
     }
   }
 

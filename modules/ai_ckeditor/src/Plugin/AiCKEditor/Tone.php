@@ -103,8 +103,22 @@ final class Tone extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
+  protected function getGenerateButtonLabel() {
+    return $this->t('Change the tone');
+  }
 
+  /**
+   * {@inheritdoc}
+   */
+  protected function getSelectedTextLabel() {
+    return $this->t('Selected text to convert');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getAiResponseLabel() {
+    return $this->t('Suggested conversion');
   }
 
   /**
@@ -124,21 +138,13 @@ final class Tone extends AiCKEditorPluginBase {
    * {@inheritdoc}
    */
   public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []) {
-    $storage = $form_state->getStorage();
-    $editor_id = $this->requestStack->getParentRequest()->get('editor_id');
-
-    if (empty($storage['selected_text'])) {
-      return [
-        '#markup' => '<p>' . $this->t('You must select some text before you can change its tone.') . '</p>',
-      ];
-    }
-
     $form = parent::buildCkEditorModalForm($form, $form_state);
 
     $form['tone'] = [
       '#type' => $this->configuration['autocreate'] ? 'entity_autocomplete' : 'select',
       '#title' => $this->t('Choose tone'),
       '#tags' => FALSE,
+      '#weight' => 3,
       '#required' => TRUE,
       '#description' => $this->t('Selecting one of the options will adjust/reword the body content to be appropriate for the target audience.'),
     ];
@@ -158,26 +164,6 @@ final class Tone extends AiCKEditorPluginBase {
         'bundle' => $this->configuration['tone_vocabulary'],
       ];
     }
-
-    $form['selected_text'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('Selected text to convert'),
-      '#disabled' => TRUE,
-      '#default_value' => $storage['selected_text'],
-    ];
-
-    $form['response_text'] = [
-      '#type' => 'text_format',
-      '#title' => $this->t('Suggested conversion'),
-      '#description' => $this->t('The response from AI will appear in the box above. You can edit and tweak the response before saving it back to the main editor.'),
-      '#prefix' => '<div id="ai-ckeditor-response">',
-      '#suffix' => '</div>',
-      '#default_value' => '',
-      '#allowed_formats' => [$editor_id],
-      '#format' => $editor_id,
-    ];
-
-    $form['actions']['generate']['#value'] = $this->t('Change the tone');
 
     return $form;
   }
@@ -226,7 +212,7 @@ final class Tone extends AiCKEditorPluginBase {
     }
     catch (\Exception $e) {
       $this->logger->error("There was an error in the Tone AI plugin for CKEditor.");
-      return $form['plugin_config']['response_text']['#value'] = "There was an error in the Tone AI plugin for CKEditor.";
+      return $form['plugin_config']['response_wrapper']['response_text']['#value'] = "There was an error in the Tone AI plugin for CKEditor.";
     }
   }
 
