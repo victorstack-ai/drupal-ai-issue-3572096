@@ -394,4 +394,33 @@ final class AiProviderPluginManager extends DefaultPluginManager {
     $this->eventDispatcher->dispatch(new ProviderDisabledEvent($provider_id), ProviderDisabledEvent::EVENT_NAME);
   }
 
+  /**
+   * Get the preferred provider if configured, else take the default one.
+   *
+   * @param string $operation_type
+   *   The operation type.
+   * @param string|null $preferred_model
+   *   The preferred model.
+   *
+   * @return array
+   *   The provider and model.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\PluginException
+   */
+  public function getSetProvider(string $operation_type, string|null $preferred_model = NULL): array {
+    if ($preferred_model) {
+      $provider = $this->loadProviderFromSimpleOption($preferred_model);
+      $model = $this->getModelNameFromSimpleOption($preferred_model);
+    }
+    else {
+      $default_provider = $this->getDefaultProviderForOperationType($operation_type);
+      $provider = $this->createInstance($default_provider['provider_id']);
+      $model = $default_provider['model_id'];
+    }
+    return [
+      'provider_id' => $provider,
+      'model_id' => $model,
+    ];
+  }
+
 }
