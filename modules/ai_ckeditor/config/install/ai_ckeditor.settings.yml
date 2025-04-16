@@ -1,5 +1,9 @@
 prompts:
   complete: ''
+  modify_prompt: |
+    Use the following instructions to process this text. Return only the processed text without explanations.
+    Instructions: {{ modify_prompt }}
+    Text to process:
   reformat: |
     Please fix this text to be marked up with semantic HTML using only lists, headers, or paragraph tags:
   spellfix: |

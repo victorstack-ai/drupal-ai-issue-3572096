@@ -22,6 +22,15 @@ final class Completion extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
+  public function defaultConfiguration() {
+    return [
+      'provider' => NULL,
+    ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state): array {
     $options = $this->aiProviderManager->getSimpleProviderModelOptions('chat');
     array_shift($options);
