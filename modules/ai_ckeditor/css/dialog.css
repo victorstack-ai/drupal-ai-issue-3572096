@@ -1,13 +1,7 @@
-[dir="ltr"]
-  .ui-dialog
-  .ui-widget-content.ui-dialog-buttonpane
-  .button:last-of-type {
+[dir="ltr"] .ui-dialog .ui-widget-content.ui-dialog-buttonpane .button:last-of-type {
   margin-left: auto;
 }
 
-[dir="rtl"]
-  .ui-dialog
-  .ui-widget-content.ui-dialog-buttonpane
-  .button:last-of-type {
+[dir="rtl"] .ui-dialog .ui-widget-content.ui-dialog-buttonpane .button:last-of-type {
   margin-right: auto;
 }
