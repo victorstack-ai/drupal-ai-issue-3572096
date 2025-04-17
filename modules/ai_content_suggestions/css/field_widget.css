@@ -34,6 +34,7 @@
   display: block;
   font-size: 18px;
   padding-right: 64px;
+  position: relative;
 }
 .ui-dialog-ai-suggestions li:hover .ai-content-suggestion {
   background: #01004326;
