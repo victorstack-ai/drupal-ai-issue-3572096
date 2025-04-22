@@ -104,8 +104,10 @@ class ReferenceFieldExtractor implements ConfigurableFieldTextExtractorInterface
     $textMeta = [];
     foreach ($entity->get($fieldName)
       ->referencedEntities() as $delta => $subEntity) {
-      foreach ($this->textExtractor->extractTextMetadata($subEntity) as $subMeta) {
-        $textMeta[] = ['delta' => $delta] + $subMeta;
+      if ($subEntity instanceof ContentEntityInterface) {
+        foreach ($this->textExtractor->extractTextMetadata($subEntity) as $subMeta) {
+          $textMeta[] = ['delta' => $delta] + $subMeta;
+        }
       }
     }
     // Decrement depth after processing.
