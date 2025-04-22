@@ -180,7 +180,7 @@ class AiTranslateController extends ControllerBase {
         : $translation->setUnpublished();
     }
     $this->textExtractor->insertTextMetadata($translation,
-      $context['results']['processedTranslations']);
+      $context['results']['processedTranslations'] ?? []);
     try {
       $translation->save();
       $this->messenger()->addStatus($this->t('Content translated successfully.'));
