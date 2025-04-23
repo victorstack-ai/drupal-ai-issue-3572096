@@ -495,10 +495,14 @@ class AiAssistantApiRunner {
     $response = $provider->chat($input, $connect['model_id'], $tags);
     $values = $response->getNormalized();
 
-    // If its using function calling, return this.
-    if ($values->getTools()) {
-      print_r($values->getTools());
-      exit;
+    // If it's using function calling, and the provider has tools, use them.
+    if (method_exists($values, 'getTools')) {
+      // Output the tools if they exist.
+      $tools = $values->getTools();
+      if ($tools) {
+        print_r($tools);
+        exit;
+      }
     }
     $response = $this->promptJsonDecoder->decode($values, 20);
 
