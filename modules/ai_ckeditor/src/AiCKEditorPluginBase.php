@@ -7,6 +7,7 @@ use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\CloseModalDialogCommand;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
@@ -64,9 +65,16 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
   protected LoggerChannelInterface $logger;
 
   /**
+   * The language manager.
+   *
+   * @var \Drupal\Core\Language\LanguageManagerInterface
+   */
+  protected LanguageManagerInterface $languageManager;
+
+  /**
    * {@inheritdoc}
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, AiProviderPluginManager $ai_provider_manager, EntityTypeManagerInterface $entity_type_manager, AccountProxyInterface $account, RequestStack $requestStack, LoggerChannelFactoryInterface $logger_factory) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, AiProviderPluginManager $ai_provider_manager, EntityTypeManagerInterface $entity_type_manager, AccountProxyInterface $account, RequestStack $requestStack, LoggerChannelFactoryInterface $logger_factory, LanguageManagerInterface $language_manager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->setConfiguration($configuration);
     $this->aiProviderManager = $ai_provider_manager;
@@ -74,6 +82,7 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
     $this->account = $account;
     $this->requestStack = $requestStack;
     $this->logger = $logger_factory->get('ai_ckeditor');
+    $this->languageManager = $language_manager;
   }
 
   /**
@@ -89,6 +98,7 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
       $container->get('current_user'),
       $container->get('request_stack'),
       $container->get('logger.factory'),
+      $container->get('language_manager'),
     );
   }
 

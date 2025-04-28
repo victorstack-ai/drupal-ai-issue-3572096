@@ -29,6 +29,7 @@ final class Translate extends AiCKEditorPluginBase {
       'provider' => NULL,
       'translate_vocabulary' => NULL,
       'use_description' => FALSE,
+      'language_source' => 'tax',
     ];
   }
 
@@ -49,6 +50,16 @@ final class Translate extends AiCKEditorPluginBase {
     foreach ($vocabularies as $vocabulary) {
       $vocabulary_options[$vocabulary->id()] = $vocabulary->label();
     }
+
+    $form['language_source'] = [
+      '#type' => 'select',
+      '#options' => [
+        'lang' => $this->t('Language'),
+        'tax' => $this->t('Taxonomy term'),
+      ],
+      '#title' => $this->t('Use languages or taxonomy terms for language selection.'),
+      '#default_value' => $this->configuration['language_source'] ?? FALSE,
+    ];
 
     $form['translate_vocabulary'] = [
       '#type' => 'select',
@@ -89,7 +100,7 @@ final class Translate extends AiCKEditorPluginBase {
       '#type' => 'textarea',
       '#title' => $this->t('Change translation prompt'),
       '#default_value' => $prompt_translate,
-      '#description' => $this->t('This prompt will be used to translate the text. {{ tone }} is the target tone of voice that is chosen.'),
+      '#description' => $this->t('This prompt will be used to translate the text. {{ lang }} is the target language that is chosen.'),
       '#states' => [
         'required' => [
           ':input[name="editor[settings][plugins][ai_ckeditor_ai][plugins][ai_ckeditor_translate][enabled]"]' => ['checked' => TRUE],
@@ -105,6 +116,7 @@ final class Translate extends AiCKEditorPluginBase {
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     $this->configuration['provider'] = $form_state->getValue('provider');
+    $this->configuration['language_source'] = $form_state->getValue('language_source');
     $this->configuration['autocreate'] = (bool) $form_state->getValue('autocreate');
     $this->configuration['translate_vocabulary'] = $form_state->getValue('translate_vocabulary');
     $this->configuration['use_description'] = (bool) $form_state->getValue('use_description');
@@ -139,30 +151,43 @@ final class Translate extends AiCKEditorPluginBase {
    */
   public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []) {
     $form = parent::buildCkEditorModalForm($form, $form_state);
-
-    $form['language'] = [
-      '#type' => $this->configuration['autocreate'] ? 'entity_autocomplete' : 'select',
-      '#title' => $this->t('Choose language'),
-      '#tags' => FALSE,
-      '#required' => TRUE,
-      '#weight' => 3,
-      '#description' => $this->t('Selecting one of the options will translate the selected text.'),
-    ];
-
-    if ($this->configuration['autocreate']) {
-      $form['language']['#target_type'] = 'taxonomy_term';
-      $form['language']['#selection_settings'] = [
-        'target_bundles' => [$this->configuration['translate_vocabulary']],
+    if ($this->configuration['language_source'] == 'lang') {
+      $site_languages = $this->languageManager->getLanguages();
+      $options = [];
+      foreach ($site_languages as $id => $language) {
+        $options[$id] = $language->getName();
+      }
+      $form['language'] = [
+        '#type' => 'select',
+        '#title' => $this->t('Choose language'),
+        '#required' => TRUE,
+        '#description' => $this->t('Selecting one of the options will translate the selected text.'),
+        '#options' => $options,
       ];
     }
     else {
-      $form['language']['#options'] = $this->getTermOptions($this->configuration['translate_vocabulary']);
-    }
-
-    if ($this->configuration['autocreate'] && $this->account->hasPermission('create terms in ' . $this->configuration['translate_vocabulary'])) {
-      $form['language']['#autocreate'] = [
-        'bundle' => $this->configuration['translate_vocabulary'],
+      $form['language'] = [
+        '#type' => $this->configuration['autocreate'] ? 'entity_autocomplete' : 'select',
+        '#title' => $this->t('Choose language'),
+        '#tags' => FALSE,
+        '#required' => TRUE,
+        '#description' => $this->t('Selecting one of the options will translate the selected text.'),
       ];
+
+      if ($this->configuration['autocreate']) {
+        $form['language']['#target_type'] = 'taxonomy_term';
+        $form['language']['#selection_settings'] = [
+          'target_bundles' => [$this->configuration['translate_vocabulary']],
+        ];
+      }
+      else {
+        $form['language']['#options'] = $this->getTermOptions($this->configuration['translate_vocabulary']);
+      }
+      if ($this->configuration['autocreate'] && $this->account->hasPermission('create terms in ' . $this->configuration['translate_vocabulary'])) {
+        $form['language']['#autocreate'] = [
+          'bundle' => $this->configuration['translate_vocabulary'],
+        ];
+      }
     }
 
     return $form;
@@ -183,27 +208,36 @@ final class Translate extends AiCKEditorPluginBase {
     $values = $form_state->getValues();
 
     try {
-      if (is_array($values['plugin_config']['language']) && reset($values['plugin_config']['language']) instanceof Term) {
-        $term = reset($values['plugin_config']['language']);
-      }
-      else {
-        $term = $this->entityTypeManager->getStorage('taxonomy_term')
-          ->load($values['plugin_config']['language']);
-      }
-
-      if (empty($term)) {
-        throw new \Exception('Term could not be loaded.');
-      }
-
-      if ($term->isNew() && $this->configuration['autocreate'] && $this->account->hasPermission('create terms in ' . $this->configuration['translate_vocabulary'])) {
-        $term->save();
-      }
       $prompts_config = $this->getConfigFactory()->get('ai_ckeditor.settings');
       $prompt = $prompts_config->get('prompts.translate');
-      $prompt = str_replace('{{ lang }}', $term->label(), $prompt);
-      if ($this->configuration['use_description'] && !empty($term->getDescription())) {
-        $prompt .= 'Think about the following when translating it into ' . $term->label() . ': ' . strip_tags($term->getDescription());
+      if ($this->configuration['language_source'] == 'lang') {
+        $site_languages = $this->languageManager->getLanguages();
+        $langName = $site_languages[$values['plugin_config']['language']]->getName();
+        $prompt = str_replace('{{ lang }}', $langName . ' (' . $values['plugin_config']['language'] . ')', $prompt);
       }
+      else {
+        if (is_array($values['plugin_config']['language']) && reset($values['plugin_config']['language']) instanceof Term) {
+          $term = reset($values['plugin_config']['language']);
+        }
+        else {
+          $term = $this->entityTypeManager->getStorage('taxonomy_term')
+            ->load($values['plugin_config']['language']);
+        }
+
+        if (empty($term)) {
+          throw new \Exception('Term could not be loaded.');
+        }
+
+        if ($term->isNew() && $this->configuration['autocreate'] && $this->account->hasPermission('create terms in ' . $this->configuration['translate_vocabulary'])) {
+          $term->save();
+        }
+
+        $prompt = str_replace('{{ lang }}', $term->label(), $prompt);
+        if ($this->configuration['use_description'] && !empty($term->getDescription())) {
+          $prompt .= 'Think about the following when translating it into ' . $term->label() . ': ' . strip_tags($term->getDescription());
+        }
+      }
+
       $prompt .= "\n\nThe text that we want to translate is the following:\n" . $values["plugin_config"]["selected_text"];
       $response = new AjaxResponse();
       $values = $form_state->getValues();
@@ -228,7 +262,9 @@ final class Translate extends AiCKEditorPluginBase {
    *   The options array.
    */
   protected function getTermOptions(string $vid): array {
-    $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadTree($vid);
+    /** @var \Drupal\taxonomy\TermStorageInterface $voc */
+    $voc = $this->entityTypeManager->getStorage('taxonomy_term');
+    $terms = $voc->loadTree($vid);
     $options = [];
 
     foreach ($terms as $term) {

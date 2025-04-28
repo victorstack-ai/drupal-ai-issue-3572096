@@ -10,6 +10,7 @@ use Drupal\Core\Entity\EntityFormBuilderInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileUrlGeneratorInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -66,6 +67,13 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
   protected $entityFormBuilder;
 
   /**
+   * The language manager.
+   *
+   * @var \Drupal\Core\Language\LanguageManagerInterface
+   */
+  protected LanguageManagerInterface $languageManager;
+
+  /**
    * {@inheritdoc}
    */
   public function __construct(
@@ -82,13 +90,15 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
     EntityFieldManagerInterface $field_manager,
     FileUrlGeneratorInterface $file_url_generator,
     EntityFormBuilderInterface $entity_form_builder,
+    LanguageManagerInterface $language_manager,
   ) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition, $ai_provider_manager, $entity_type_manager, $account, $requestStack, $logger_factory);
+    parent::__construct($configuration, $plugin_id, $plugin_definition, $ai_provider_manager, $entity_type_manager, $account, $requestStack, $logger_factory, $language_manager);
     $this->automate = $automate;
     $this->configFactory = $config_factory;
     $this->fieldManager = $field_manager;
     $this->fileUrlGenerator = $file_url_generator;
     $this->entityFormBuilder = $entity_form_builder;
+    $this->languageManager = $language_manager;
   }
 
   /**
@@ -109,6 +119,7 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
       $container->get('entity_field.manager'),
       $container->get('file_url_generator'),
       $container->get('entity.form_builder'),
+      $container->get('language_manager'),
     );
   }
 
