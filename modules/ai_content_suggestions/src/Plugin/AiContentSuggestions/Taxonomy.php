@@ -134,7 +134,7 @@ final class Taxonomy extends AiContentSuggestionsPluginBase {
       '#type' => 'textarea',
       '#required' => TRUE,
       '#default_value' => $prompt ?? $this->defaultOpenPrompt . PHP_EOL,
-      '#parents' => [$this->getPluginId(), $this->getPluginId() . '_prompt_open'],
+      '#parents' => ['plugins', $this->getPluginId(), $this->getPluginId() . '_prompt_open'],
       '#states' => [
         'visible' => [
           ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_enabled' . ']"]' => ['checked' => TRUE],
@@ -147,7 +147,7 @@ final class Taxonomy extends AiContentSuggestionsPluginBase {
       '#type' => 'textarea',
       '#required' => TRUE,
       '#default_value' => $prompt ?? $this->defaultFromVocPrompt . PHP_EOL,
-      '#parents' => [$this->getPluginId(), $this->getPluginId() . '_prompt_from_voc'],
+      '#parents' => ['plugins', $this->getPluginId(), $this->getPluginId() . '_prompt_from_voc'],
       '#states' => [
         'visible' => [
           ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_enabled' . ']"]' => ['checked' => TRUE],
@@ -160,7 +160,7 @@ final class Taxonomy extends AiContentSuggestionsPluginBase {
    * {@inheritdoc}
    */
   public function saveSettingsForm(array &$form, FormStateInterface $form_state): void {
-    $value = $form_state->getValue($this->getPluginId());
+    $value = $form_state->getValue(['plugins', $this->getPluginId()]);
     $prompt_open = $value[$this->getPluginId() . '_prompt_open'];
     $this->promptConfig->set($this->getPluginId() . '_open', $prompt_open)->save();
     $prompt_from_voc = $value[$this->getPluginId() . '_prompt_from_voc'];

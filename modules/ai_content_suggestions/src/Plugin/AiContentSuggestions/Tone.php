@@ -199,7 +199,7 @@ final class Tone extends AiContentSuggestionsPluginBase {
       '#type' => 'textarea',
       '#required' => TRUE,
       '#default_value' => $prompt ?? $this->defaultPrompt . PHP_EOL,
-      '#parents' => [$this->getPluginId(), $this->getPluginId() . '_prompt'],
+      '#parents' => ['plugins', $this->getPluginId(), $this->getPluginId() . '_prompt'],
       '#states' => [
         'visible' => [
           ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_enabled' . ']"]' => ['checked' => TRUE],
@@ -213,7 +213,7 @@ final class Tone extends AiContentSuggestionsPluginBase {
       $vocabulary_options[$vocabulary->id()] = $vocabulary->label();
     }
     $form[$this->getPluginId()][$this->getPluginId() . '_taxonomy_enabled'] = [
-      '#parents' => [$this->getPluginId(), $this->getPluginId() . '_taxonomy_enabled'],
+      '#parents' => ['plugins', $this->getPluginId(), $this->getPluginId() . '_taxonomy_enabled'],
       '#type' => 'checkbox',
       '#title' => $this->t('Choose own vocabulary for tone of voice options.'),
       '#description' => $this->t('Keeping this unselected falls back to default tone of voice options (Friendly, Professional, High school, College, Five year old).'),
@@ -226,7 +226,7 @@ final class Tone extends AiContentSuggestionsPluginBase {
     ];
 
     $form[$this->getPluginId()][$this->getPluginId() . '_taxonomy'] = [
-      '#parents' => [$this->getPluginId(), $this->getPluginId() . '_taxonomy'],
+      '#parents' => ['plugins', $this->getPluginId(), $this->getPluginId() . '_taxonomy'],
       '#type' => 'select',
       '#title' => $this->t('Choose vocabulary for tone options'),
       '#options' => $vocabulary_options,
@@ -245,7 +245,7 @@ final class Tone extends AiContentSuggestionsPluginBase {
    * {@inheritdoc}
    */
   public function saveSettingsForm(array &$form, FormStateInterface $form_state): void {
-    $value = $form_state->getValue($this->getPluginId());
+    $value = $form_state->getValue(['plugins', $this->getPluginId()]);
     $taxonomy = $value[$this->getPluginId() . '_taxonomy'];
     $this->toneConfig->set($this->getPluginId() . '_taxonomy', $taxonomy)->save();
     $taxonomy_enabled = $value[$this->getPluginId() . '_taxonomy_enabled'];
