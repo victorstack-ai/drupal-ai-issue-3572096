@@ -11,6 +11,8 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Url;
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Session\AccountInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Yaml\Yaml;
 
@@ -379,16 +381,36 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
   /**
    * {@inheritdoc}
    */
+  protected function blockAccess(AccountInterface $account) {
+    // Load the AI assistant entity based on the block configuration.
+    $assistant = $this->entityTypeManager->getStorage('ai_assistant')->load($this->configuration['ai_assistant']);
+
+    // Check if the assistant exists and is enabled.
+    if (!$assistant || !$assistant->status()) {
+      return AccessResult::forbidden();
+    }
+
+    // Set the assistant in the runner and check setup and access.
+    $this->aiAssistantRunner->setAssistant($assistant);
+    if (!$this->aiAssistantRunner->isSetup()) {
+      return AccessResult::forbidden();
+    }
+    if (!$this->aiAssistantRunner->userHasAccess()) {
+      return AccessResult::forbidden();
+    }
+
+    // If all checks pass, allow access.
+    return AccessResult::allowed();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function build() {
     /** @var \Drupal\ai_assistant_api\Entity\AiAssistant $assistant */
     $assistant = $this->entityTypeManager->getStorage('ai_assistant')->load($this->configuration['ai_assistant']);
 
     $this->aiAssistantRunner->setAssistant($assistant);
-    // Check if the assistant is setup and that the user has access to it.
-    if (!$this->aiAssistantRunner->isSetup() || !$this->aiAssistantRunner->userHasAccess()) {
-      $this->logger->warning('The AI Assistants AI provider is not setup or you are exposing it to a user that does not have access to it.');
-      return [];
-    }
     $this->aiAssistantRunner->streamedOutput($this->configuration['stream'] ?? FALSE);
     $block = [];
 
@@ -632,7 +654,6 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
   public function getUserData() {
     $user = $this->currentUser->getAccount();
     // Figure out username and avatar based on settings.
-    $user = $this->currentUser->getAccount();
     $username = $this->configuration['default_username'];
     if ($user->isAuthenticated() && $this->configuration['use_username']) {
       $username = $user->getDisplayName();
