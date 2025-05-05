@@ -18,7 +18,11 @@ export default class Aiui extends Plugin {
     const options = config.get('ai_ckeditor_ai');
 
     if (!options) {
-      return;
+      return ViewModel;
+    }
+    // Empty ViewModel if no access.
+    if (options.hasAccess === false) {
+      return ViewModel;
     }
 
     editor.commands.add('AiDrupalDialog', new AiDrupalDialog(editor));
