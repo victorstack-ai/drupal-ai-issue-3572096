@@ -4,6 +4,8 @@ namespace Drupal\ai\OperationType\Chat\Tools;
 
 /**
  * The property interface.
+ *
+ * @phpstan-type MappedEnum array{const: string|int, title: string}
  */
 interface ToolsPropertyInputInterface {
 
@@ -90,7 +92,7 @@ interface ToolsPropertyInputInterface {
    * Usually only ordered arrays are supported. If the array is associative,
    * the keys will be used as the values.
    *
-   * @return array
+   * @return string[]|int[]|MappedEnum[]|null
    *   The options for the property.
    */
   public function getEnum(): ?array;
@@ -98,13 +100,13 @@ interface ToolsPropertyInputInterface {
   /**
    * Set the options (enum) for the property.
    *
-   * Usually only ordered arrays are supported. If the array is associative,
-   * the keys will be used as the values.
-   *
-   * @param array $options
-   *   The options for the property.
+   * @param string[]|int[]|MappedEnum[]|null $options
+   *   The options for the property. An array of either:
+   *   - String/integer
+   *   - An array map of const/title for key/label pairs.
+   *   These cannot be mixed.
    */
-  public function setEnum(array $options);
+  public function setEnum(?array $options);
 
   /**
    * Get the default value for the property.

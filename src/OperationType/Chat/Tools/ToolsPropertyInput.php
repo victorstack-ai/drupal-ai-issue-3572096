@@ -218,10 +218,13 @@ class ToolsPropertyInput implements ToolsPropertyInputInterface {
   /**
    * {@inheritDoc}
    */
-  public function setEnum(array $options) {
+  public function setEnum(?array $options): void {
     foreach ($options as $value) {
-      if (is_array($value) || is_object($value)) {
-        throw new \InvalidArgumentException('The options should be a flat array.');
+      if (is_array($value)) {
+        $keys = array_keys($value);
+        if ($keys != ['const', 'title']) {
+          throw new \InvalidArgumentException('The options should be a flat array and only have const/title properties.');
+        }
       }
     }
     $this->options = $options;
@@ -525,7 +528,13 @@ class ToolsPropertyInput implements ToolsPropertyInputInterface {
       }
     }
     elseif (!empty($this->options)) {
-      $property['enum'] = $this->options;
+      // Dicts need to be set on oneOf/anyOf.
+      if (is_array($this->options[0])) {
+        $property[$this->type === 'array' ? 'anyOf' : 'oneOf'] = $this->options;
+      }
+      else {
+        $property['enum'] = $this->options;
+      }
     }
     if (!empty($this->properties)) {
       foreach ($this->properties as $property) {
