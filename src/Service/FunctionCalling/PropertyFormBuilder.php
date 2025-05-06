@@ -3,6 +3,10 @@
 namespace Drupal\ai\Service\FunctionCalling;
 
 use Drupal\ai\OperationType\Chat\Tools\ToolsPropertyInputInterface;
+use Drupal\Component\Render\FormattableMarkup;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Element\Textarea;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * This service helps with creating a form from function calling properties.
@@ -104,11 +108,60 @@ class PropertyFormBuilder {
         }
         break;
 
+      case 'array':
+        if (!empty($property->getEnum())) {
+          $form_element['#type'] = 'select';
+          $form_element['#options'] = [];
+          foreach ($property->getEnum() as $value) {
+            if (is_array($value)) {
+              $form_element['#options'][$value['const']] = $value['title'];
+            }
+            else {
+              $form_element['#options'][$value] = $value;
+            }
+          }
+          $form_element['#multiple'] = TRUE;
+        }
+        else {
+          $form_element['#type'] = 'textarea';
+          $form_element['#rows'] = 5;
+          $form_element['#value_callback'] = [self::class, 'splitContextList'];
+          $form_element['#description'] .= new FormattableMarkup(
+            '@description @list',
+            [
+              '@description' => $form_element['#description'],
+              '@list' => new TranslatableMarkup('Enter one value per row.'),
+            ],
+          );
+        }
+        break;
+
       default:
         $form_element['#type'] = 'textfield';
         break;
     }
     return $form_element;
+  }
+
+  /**
+   * Value callback to split textarea into multiple values.
+   *
+   * @param array $element
+   *   An associative array containing the properties of the element.
+   * @param mixed $input
+   *   The incoming input to populate the form element. If this is FALSE,
+   *   the element's default value should be returned.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The current state of the form.
+   *
+   * @return mixed
+   *   The value to assign to the element.
+   */
+  public static function splitContextList(array &$element, mixed $input, FormStateInterface $form_state) {
+    $value = Textarea::valueCallback($element, $input, $form_state);
+    return $value !== NULL ?
+      array_filter(array_map('trim', explode("\n", $value))) :
+      NULL;
   }
 
 }
