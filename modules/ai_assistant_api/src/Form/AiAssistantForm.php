@@ -100,6 +100,11 @@ final class AiAssistantForm extends EntityForm {
     $agents_enabled = $this->moduleHandler->moduleExists('ai_agents');
     $old_entity = count($entity->get('actions_enabled')) && !$agents_enabled;
 
+    if ($old_entity) {
+      // Show message that this will be deprecated.
+      $this->messenger()->addWarning($this->t('This assistant is using the old AI Assistant API for 1.0.0. Please create a new one and migrate the settings to the new one. The old one will be removed in 2.0.0.'));
+    }
+
     $agent_options = [];
 
     // Hard dependency for now.
