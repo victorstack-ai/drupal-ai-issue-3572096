@@ -100,10 +100,11 @@ final class AiAssistantForm extends EntityForm {
     $agents_enabled = $this->moduleHandler->moduleExists('ai_agents');
     $old_entity = count($entity->get('actions_enabled')) && !$agents_enabled;
 
+    $agent_options = [];
+
     // Hard dependency for now.
     if ($agents_enabled) {
       $agents = $this->entityTypeManager->getStorage('ai_agent')->loadMultiple();
-      $agent_options = [];
       foreach ($agents as $agent) {
         $agent_options[$agent->id()] = $agent->label();
       }
