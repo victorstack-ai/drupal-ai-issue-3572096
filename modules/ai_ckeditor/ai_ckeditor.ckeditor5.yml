@@ -36,5 +36,3 @@ ai_ckeditor_balloon_menu:
       ai_balloon_menu:
         label: AI Balloon Menu
     elements: false
-    conditions:
-      toolbarItem: aickeditor
