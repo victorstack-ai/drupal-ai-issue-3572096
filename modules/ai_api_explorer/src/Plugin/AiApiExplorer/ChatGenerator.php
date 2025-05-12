@@ -283,7 +283,7 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
     }
 
     if ($form_state->getValue('json_schema')) {
-      $provider->setChatStructuredJsonSchema(Json::decode($form_state->getValue('json_schema')));
+      $input->setChatStructuredJsonSchema(Json::decode($form_state->getValue('json_schema')));
     }
 
     $message = NULL;
