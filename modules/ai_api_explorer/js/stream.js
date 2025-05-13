@@ -1,5 +1,4 @@
 (function ($, Drupal, drupalSettings) {
-
   'use strict';
 
   Drupal.behaviors.chatFormStream = {
@@ -10,8 +9,16 @@
         const form = element.closest('form');
         // Use plain javascript with capture, so we can run first.
         item.addEventListener('mousedown', (event) => {
-          // Check if streaming is not checked.
-          if ($('#edit-streamed').prop('checked') === false) {
+          // Get the loading message within the form context.
+          const loadingMessage = form.find('#ai-loading-message-chat');
+          
+          // Show the loader only if streaming is checked.
+          if (form.find('#edit-streamed').prop('checked') && loadingMessage.length) {
+            loadingMessage.show();
+          }
+
+          // If streaming is not checked return.
+          if (!form.find('#edit-streamed').prop('checked')) {
             return;
           }
           // Check all click events on the button.
@@ -37,12 +44,27 @@
               onprogress: function (event) {
                 responseField.html(event.currentTarget.response.replaceAll("\n", "<br />"));
                 responseField.scrollTop(responseField[0].scrollHeight);
+              },
+            },
+            complete: function () {
+              // Hide the loading message when the streamed response completes.
+              if (loadingMessage.length) {
+                loadingMessage.hide();
               }
             }
           });
         }, true);
       });
-    }
-  };
 
+    // Hide the loading message for non-streamed AJAX responses.
+    $(document).ajaxComplete(function (event, xhr, settings) {
+      if (
+        settings.extraData &&
+        settings.extraData._triggering_element_name === 'op'
+      ) {
+        $('#ai-loading-message-chat').hide();
+      }
+    });
+  },
+};
 })(jQuery, Drupal, drupalSettings);

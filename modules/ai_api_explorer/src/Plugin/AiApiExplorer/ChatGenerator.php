@@ -211,11 +211,20 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
       '#description' => $this->t('If you want to execute the function call and show the output.'),
     ];
 
-    $form['left']['submit'] = [
+    $form['left']['submit_wrapper'] = [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['ai-submit-wrapper'],
+        'style' => 'display: flex; align-items: center; gap: 5px;',
+      ],
+    ];
+
+    $form['left']['submit_wrapper']['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Ask The AI'),
       '#attributes' => [
         'data-response' => 'ai-text-response',
+        'class' => ['ai-submit-button'],
       ],
       '#ajax' => [
         'callback' => $this->getAjaxResponseId(),
@@ -223,6 +232,16 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
       ],
     ];
 
+    $form['left']['submit_wrapper']['loading'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'span',
+      '#attributes' => [
+        'id' => 'ai-loading-message-chat',
+        'class' => ['ai-loading'],
+        'style' => 'display: none;',
+      ],
+      '#value' => $this->t('Processing...'),
+    ];
     // Load the LLM configurations.
     $this->aiProviderHelper->generateAiProvidersForm($form['right'], $form_state, 'chat', 'chat', AiProviderFormHelper::FORM_CONFIGURATION_FULL, 1003);
 
