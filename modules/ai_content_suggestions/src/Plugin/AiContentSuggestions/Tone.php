@@ -102,7 +102,7 @@ final class Tone extends AiContentSuggestionsPluginBase {
       'easier for a college educated reader' => $this->t('College level reader'),
       'explained to a five year old' => $this->t("Explain like I'm 5"),
     ];
-    if ($config->get($this->getPluginId() . '_taxonomy_enabled') == TRUE && $config->get($this->getPluginId() . '_taxonomy') !== NULL && $config->get($this->getPluginId() . '_taxonomy') != '') {
+    if ($config->get($this->getPluginId() . '_taxonomy_enabled') && $config->get($this->getPluginId() . '_taxonomy') !== NULL && $config->get($this->getPluginId() . '_taxonomy') != '') {
       $terms = $this->getTerms($config->get($this->getPluginId() . '_taxonomy'));
       $terms = array_combine($terms, $terms);
       $options = $terms;
@@ -129,7 +129,7 @@ final class Tone extends AiContentSuggestionsPluginBase {
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  public function getTerms(string $source_vocabulary):array {
+  public function getTerms(string $source_vocabulary): array|bool {
 
     // Use the loadTree to avoid loading all the terms.
     /** @var \Drupal\taxonomy\TermStorage $terms_storage */
@@ -210,45 +210,62 @@ final class Tone extends AiContentSuggestionsPluginBase {
     $vocabularies = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->loadMultiple();
     $vocabulary_options = [];
     foreach ($vocabularies as $vocabulary) {
-      $vocabulary_options[$vocabulary->id()] = $vocabulary->label();
-    }
-    $form[$this->getPluginId()][$this->getPluginId() . '_taxonomy_enabled'] = [
-      '#parents' => ['plugins', $this->getPluginId(), $this->getPluginId() . '_taxonomy_enabled'],
-      '#type' => 'checkbox',
-      '#title' => $this->t('Choose own vocabulary for tone of voice options.'),
-      '#description' => $this->t('Keeping this unselected falls back to default tone of voice options (Friendly, Professional, High school, College, Five year old).'),
-      '#default_value' => !!$this->toneConfig->get($this->getPluginId() . '_taxonomy_enabled'),
-      '#states' => [
-        'visible' => [
-          ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_enabled' . ']"]' => ['checked' => TRUE],
-        ],
-      ],
-    ];
+      $terms_exist = $this->entityTypeManager->getStorage('taxonomy_term')->getQuery()
+        ->condition('vid', $vocabulary->id())
+        ->range(0, 1)
+        ->accessCheck()
+        ->execute();
 
-    $form[$this->getPluginId()][$this->getPluginId() . '_taxonomy'] = [
-      '#parents' => ['plugins', $this->getPluginId(), $this->getPluginId() . '_taxonomy'],
-      '#type' => 'select',
-      '#title' => $this->t('Choose vocabulary for tone options'),
-      '#options' => $vocabulary_options,
-      '#description' => $this->t('Select the vocabulary that contains tone options.'),
-      '#default_value' => $this->toneConfig->get($this->getPluginId() . '_taxonomy'),
-      '#states' => [
-        'visible' => [
-          ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_enabled' . ']"]' => ['checked' => TRUE],
-          ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_taxonomy_enabled' . ']"]' => ['checked' => TRUE],
+      if (!empty($terms_exist)) {
+        $vocabulary_options[$vocabulary->id()] = $vocabulary->label();
+      }
+    }
+
+    if (!empty($vocabulary_options)) {
+      $form[$this->getPluginId()][$this->getPluginId() . '_taxonomy_enabled'] = [
+        '#parents' => [
+          $this->getPluginId(),
+          $this->getPluginId() . '_taxonomy_enabled',
         ],
-      ],
-    ];
+        '#type' => 'checkbox',
+        '#title' => $this->t('Choose own vocabulary for tone of voice options.'),
+        '#description' => $this->t('Keeping this unselected falls back to default tone of voice options (Friendly, Professional, High school, College, Five year old).'),
+        '#default_value' => !!$this->toneConfig->get($this->getPluginId() . '_taxonomy_enabled'),
+        '#states' => [
+          'visible' => [
+            ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_enabled' . ']"]' => ['checked' => TRUE],
+          ],
+        ],
+      ];
+
+      $form[$this->getPluginId()][$this->getPluginId() . '_taxonomy'] = [
+        '#parents' => [
+          $this->getPluginId(),
+          $this->getPluginId() . '_taxonomy',
+        ],
+        '#type' => 'select',
+        '#title' => $this->t('Choose vocabulary for tone options'),
+        '#options' => $vocabulary_options,
+        '#description' => $this->t('Select the vocabulary that contains tone options.'),
+        '#default_value' => $this->toneConfig->get($this->getPluginId() . '_taxonomy'),
+        '#states' => [
+          'visible' => [
+            ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_enabled' . ']"]' => ['checked' => TRUE],
+            ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_taxonomy_enabled' . ']"]' => ['checked' => TRUE],
+          ],
+        ],
+      ];
+    }
   }
 
   /**
    * {@inheritdoc}
    */
   public function saveSettingsForm(array &$form, FormStateInterface $form_state): void {
-    $value = $form_state->getValue(['plugins', $this->getPluginId()]);
-    $taxonomy = $value[$this->getPluginId() . '_taxonomy'];
+    $value = $form_state->getValue($this->getPluginId());
+    $taxonomy = $value[$this->getPluginId() . '_taxonomy'] ?? '';
     $this->toneConfig->set($this->getPluginId() . '_taxonomy', $taxonomy)->save();
-    $taxonomy_enabled = $value[$this->getPluginId() . '_taxonomy_enabled'];
+    $taxonomy_enabled = $value[$this->getPluginId() . '_taxonomy_enabled'] ?? 0;
     $this->toneConfig->set($this->getPluginId() . '_taxonomy_enabled', (bool) $taxonomy_enabled)->save();
     $prompt = $value[$this->getPluginId() . '_prompt'];
     $this->promptConfig->set($this->getPluginId(), $prompt)->save();
