@@ -257,138 +257,142 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
     // This runs on streamed.
     $provider = $this->aiProviderHelper->generateAiProviderFromFormSubmit($form, $form_state, 'chat', 'chat');
     $values = $form_state->getValues();
+    $prompt_message = $values['message_1'];
+
     // Get the messages.
     $messages = [];
     // Get potential files.
     $files = $this->getRequest()->files->all();
-    foreach ($values as $key => $value) {
-      if (str_starts_with($key, 'role_')) {
-        $index = substr($key, 5);
-        $role = $value;
-        $message = $values['message_' . $index];
-        // Load the file.
-        $image = "";
-        if (isset($files['files']['image_' . $index])) {
-          $raw_file = file_get_contents($files['files']['image_' . $index]->getPathname());
-          $image = new ImageFile($raw_file, $files['files']['image_' . $index]->getClientMimeType(), $files['files']['image_' . $index]->getClientOriginalName());
-        }
-        if ($role && $message) {
-          $images = [];
-          if ($image) {
-            $images[] = $image;
+    if (!empty($prompt_message)) {
+      foreach ($values as $key => $value) {
+        if (str_starts_with($key, 'role_')) {
+          $index = substr($key, 5);
+          $role = $value;
+          $message = $values['message_' . $index];
+          // Load the file.
+          $image = "";
+          if (isset($files['files']['image_' . $index])) {
+            $raw_file = file_get_contents($files['files']['image_' . $index]->getPathname());
+            $image = new ImageFile($raw_file, $files['files']['image_' . $index]->getClientMimeType(), $files['files']['image_' . $index]->getClientOriginalName());
           }
-          $messages[] = new ChatMessage($role, $message, $images);
+          if ($role && $message) {
+            $images = [];
+            if ($image) {
+              $images[] = $image;
+            }
+            $messages[] = new ChatMessage($role, $message, $images);
+          }
         }
       }
-    }
 
-    $functions = [];
-    $function_instances = [];
-    foreach ($values['function_calls'] as $function_call_name) {
-      $function_call = $this->functionCallPluginManager->createInstance($function_call_name);
-      $function_instances[$function_call->getFunctionName()] = $function_call;
-      $functions[] = $function_call->normalize();
-    }
-
-    $input = new ChatInput($messages);
-
-    if (count($functions)) {
-      $input->setChatTools(new ToolsInput($functions));
-    }
-
-    // Check for system message.
-    if ($form_state->getValue('system_message')) {
-      $provider->setChatSystemRole($form_state->getValue('system_message'));
-    }
-
-    if ($form_state->getValue('json_schema')) {
-      $input->setChatStructuredJsonSchema(Json::decode($form_state->getValue('json_schema')));
-    }
-
-    $message = NULL;
-    $response = NULL;
-    try {
-      // If we should stream.
-      if ($form_state->getValue('streamed')) {
-        $provider->streamedOutput();
+      $functions = [];
+      $function_instances = [];
+      foreach ($values['function_calls'] as $function_call_name) {
+        $function_call = $this->functionCallPluginManager->createInstance($function_call_name);
+        $function_instances[$function_call->getFunctionName()] = $function_call;
+        $functions[] = $function_call->normalize();
       }
-      $response = $provider->chat($input, $form_state->getValue('chat_ai_model'), [
-        'chat_generation',
-        'ai_api_explorer',
-      ])->getNormalized();
-    }
-    catch (\Exception $e) {
-      $message = $this->explorerHelper->renderException($e);
-    }
-    $code = '';
-    $tools_output = '';
-    if ($response) {
-      if (method_exists($response, 'getTools') && $response->getTools()) {
-        $tools_output = $this->getToolsOutput($function_instances, $response->getTools(), $form_state->getValue('execute'));
-      }
-      // Generation code for normalization.
-      $code = $this->normalizeCodeExample($provider, $form_state, $messages);
-    }
 
-    if (is_object($response) && get_class($response) == ChatMessage::class) {
-      $output = $response->getText();
+      $input = new ChatInput($messages);
+
+      if (count($functions)) {
+        $input->setChatTools(new ToolsInput($functions));
+      }
+
+      // Check for system message.
+      if ($form_state->getValue('system_message')) {
+        $provider->setChatSystemRole($form_state->getValue('system_message'));
+      }
+
       if ($form_state->getValue('json_schema')) {
-        // Decode && encode nicely.
-        $json = json_encode(Json::decode($output), JSON_PRETTY_PRINT);
-        if (!empty($json)) {
-          $output = '<pre>' . $json . '</pre>';
+        $input->setChatStructuredJsonSchema(Json::decode($form_state->getValue('json_schema')));
+      }
+
+      $message = NULL;
+      $response = NULL;
+      try {
+        // If we should stream.
+        if ($form_state->getValue('streamed')) {
+          $provider->streamedOutput();
         }
+        $response = $provider->chat($input, $form_state->getValue('chat_ai_model'), [
+          'chat_generation',
+          'ai_api_explorer',
+        ])->getNormalized();
       }
-      $form['middle']['response']['#context']['ai_response']['role'] = [
-        '#type' => 'html_tag',
-        '#tag' => 'h4',
-        '#value' => 'Role: ' . $response->getRole(),
-      ];
-      $form['middle']['response']['#context']['ai_response']['text'] = [
-        '#type' => 'html_tag',
-        '#tag' => 'p',
-        '#value' => $output,
-      ];
-      if ($tools_output) {
-        $form['middle']['response']['#context']['ai_response']['tools_wrapper'] = [
-          '#type' => 'details',
-          '#title' => $this->t('Tools Output'),
-          '#open' => TRUE,
-        ];
-        $form['middle']['response']['#context']['ai_response']['tools_wrapper']['tools'] = [
-          '#type' => 'html_tag',
-          '#tag' => 'div',
-          '#value' => $tools_output,
-        ];
+      catch (\Exception $e) {
+        $message = $this->explorerHelper->renderException($e);
       }
-      $form['middle']['response']['#context']['ai_response']['code'] = $code;
-      $form_state->setRebuild();
-      return $form['middle'];
-    }
-    elseif ($response instanceof StreamedChatMessageIteratorInterface) {
-      $http_response = new StreamedResponse();
-      $http_response->setCallback(function () use ($response, $code) {
-        foreach ($response as $key => $chat_message) {
-          if ($chat_message->getRole() && !$key) {
-            echo '<h4>Role: ' . $chat_message->getRole() . "</h4><p>";
+      $code = '';
+      $tools_output = '';
+      if ($response) {
+        if (method_exists($response, 'getTools') && $response->getTools()) {
+          $tools_output = $this->getToolsOutput($function_instances, $response->getTools(), $form_state->getValue('execute'));
+        }
+        // Generation code for normalization.
+        $code = $this->normalizeCodeExample($provider, $form_state, $messages);
+      }
+
+      if (is_object($response) && get_class($response) == ChatMessage::class) {
+        $output = $response->getText();
+        if ($form_state->getValue('json_schema')) {
+          // Decode && encode nicely.
+          $json = json_encode(Json::decode($output), JSON_PRETTY_PRINT);
+          if (!empty($json)) {
+            $output = '<pre>' . $json . '</pre>';
           }
-          echo $chat_message->getText();
+        }
+        $form['middle']['response']['#context']['ai_response']['role'] = [
+          '#type' => 'html_tag',
+          '#tag' => 'h4',
+          '#value' => 'Role: ' . $response->getRole(),
+        ];
+        $form['middle']['response']['#context']['ai_response']['text'] = [
+          '#type' => 'html_tag',
+          '#tag' => 'p',
+          '#value' => $output,
+        ];
+        if ($tools_output) {
+          $form['middle']['response']['#context']['ai_response']['tools_wrapper'] = [
+            '#type' => 'details',
+            '#title' => $this->t('Tools Output'),
+            '#open' => TRUE,
+          ];
+          $form['middle']['response']['#context']['ai_response']['tools_wrapper']['tools'] = [
+            '#type' => 'html_tag',
+            '#tag' => 'div',
+            '#value' => $tools_output,
+          ];
+        }
+        $form['middle']['response']['#context']['ai_response']['code'] = $code;
+        $form_state->setRebuild();
+        return $form['middle'];
+      }
+      elseif ($response instanceof StreamedChatMessageIteratorInterface) {
+        $http_response = new StreamedResponse();
+        $http_response->setCallback(function () use ($response, $code) {
+          foreach ($response as $key => $chat_message) {
+            if ($chat_message->getRole() && !$key) {
+              echo '<h4>Role: ' . $chat_message->getRole() . "</h4><p>";
+            }
+            echo $chat_message->getText();
+            ob_flush();
+            flush();
+          }
+          echo $this->renderer->render($code);
           ob_flush();
           flush();
-        }
-        echo $this->renderer->render($code);
-        ob_flush();
-        flush();
-      });
-      $form_state->setResponse($http_response);
-    }
-    else {
-      $form['middle']['response']['#context']['ai_response']['#markup'] = $message;
-      $form_state->setRebuild();
-      return $form['middle'];
+        });
+        $form_state->setResponse($http_response);
+      }
+      else {
+        $form['middle']['response']['#context']['ai_response']['#markup'] = $message;
+        $form_state->setRebuild();
+        return $form['middle'];
+      }
     }
 
-    return [];
+    return $form['middle'] ?? [];
   }
 
   /**

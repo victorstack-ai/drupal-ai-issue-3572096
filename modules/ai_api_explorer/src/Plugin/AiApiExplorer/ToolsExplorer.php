@@ -274,54 +274,56 @@ final class ToolsExplorer extends AiApiExplorerPluginBase {
    */
   public function getResponse(array &$form, FormStateInterface $form_state): array {
     $tool = $form_state->getValue('tool');
-    /** @var \Drupal\ai\Service\FunctionCalling\ExecutableFunctionCallInterface|\Drupal\ai\Base\FunctionCallBase $function_call */
-    $function_call = $this->functionCallPluginManager->createInstance($tool);
-    // Run through and fill all the properties.
-    foreach ($function_call->getContextDefinitions() as $name => $property) {
-      // Apply any limits.
-      $limit = $form_state->getValue(['property_limits', $name]) ?? [];
+    if (!empty($tool)) {
+      /** @var \Drupal\ai\Service\FunctionCalling\ExecutableFunctionCallInterface|\Drupal\ai\Base\FunctionCallBase $function_call */
+      $function_call = $this->functionCallPluginManager->createInstance($tool);
+      // Run through and fill all the properties.
+      foreach ($function_call->getContextDefinitions() as $name => $property) {
+        // Apply any limits.
+        $limit = $form_state->getValue(['property_limits', $name]) ?? [];
 
-      $values = explode("\n", $limit['values']);
-      switch ($limit['action']) {
-        // Set constant value (forced value).
-        case 'force_value':
-          $property->addConstraint('FixedValue', $values[0]);
-          $property->setDefaultValue($limit['values'][0]);
-          $property->setRequired(FALSE);
-          break;
+        $values = explode("\n", $limit['values']);
+        switch ($limit['action']) {
+          // Set constant value (forced value).
+          case 'force_value':
+            $property->addConstraint('FixedValue', $values[0]);
+            $property->setDefaultValue($limit['values'][0]);
+            $property->setRequired(FALSE);
+            break;
 
-        case 'only_allow':
-          $property->addConstraint('Choice', $values);
-          break;
+          case 'only_allow':
+            $property->addConstraint('Choice', $values);
+            break;
+        }
+
+        $property_name = str_replace(':', '__colon__', $name);
+        $value = $form_state->getValue(['properties', $property_name]) ?? '';
+        if ($value) {
+          $function_call->setContextValue($name, $value);
+        }
       }
-
-      $property_name = str_replace(':', '__colon__', $name);
-      $value = $form_state->getValue(['properties', $property_name]) ?? '';
-      if ($value) {
-        $function_call->setContextValue($name, $value);
+      $violations = $function_call->validateContexts();
+      if ($violations->count()) {
+        $form['right']['response'] = [
+          '#theme' => 'item_list',
+          '#list_type' => 'ul',
+          '#title' => $this->t('Property validation errors'),
+          '#items' => array_map(
+            fn (ConstraintViolationInterface $violation) => new FormattableMarkup('@property: @violation', [
+              '@property' => $violation->getRoot()->getDataDefinition()->getLabel(),
+              '@violation' => $violation->getMessage(),
+            ]),
+            (array) $violations->getIterator(),
+          ),
+        ];
       }
-    }
-    $violations = $function_call->validateContexts();
-    if ($violations->count()) {
-      $form['right']['response'] = [
-        '#theme' => 'item_list',
-        '#list_type' => 'ul',
-        '#title' => $this->t('Property validation errors'),
-        '#items' => array_map(
-          fn (ConstraintViolationInterface $violation) => new FormattableMarkup('@property: @violation', [
-            '@property' => $violation->getRoot()->getDataDefinition()->getLabel(),
-            '@violation' => $violation->getMessage(),
-          ]),
-          (array) $violations->getIterator(),
-        ),
-      ];
-    }
-    else {
-      $function_call->execute();
-      $form['right']['response'] = [
-        '#type' => 'markup',
-        '#markup' => '<pre>' . $function_call->getReadableOutput() . '</pre>',
-      ];
+      else {
+        $function_call->execute();
+        $form['right']['response'] = [
+          '#type' => 'markup',
+          '#markup' => '<pre>' . $function_call->getReadableOutput() . '</pre>',
+        ];
+      }
     }
     return $form['right'];
   }
