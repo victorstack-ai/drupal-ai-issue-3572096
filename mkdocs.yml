@@ -38,6 +38,7 @@ nav:
     - AI Ckeditor: modules/ai_ckeditor/index.md
     - AI Content Suggestions: modules/ai_content_suggestions/index.md
     - AI ECA: modules/ai_eca/index.md
+    - AI External Moderation: modules/ai_external_moderation/index.md
     - AI Logging: modules/ai_logging/index.md
     - AI Search: modules/ai_search/index.md
     - AI Translate: modules/ai_translate/index.md
