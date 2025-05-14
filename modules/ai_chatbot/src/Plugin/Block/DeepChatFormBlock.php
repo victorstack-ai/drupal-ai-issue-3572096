@@ -206,6 +206,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
       ]),
       '#options' => $assistants,
       '#default_value' => $this->configuration['ai_assistant'],
+      '#required' => TRUE,
     ];
 
     $form['messages'] = [
