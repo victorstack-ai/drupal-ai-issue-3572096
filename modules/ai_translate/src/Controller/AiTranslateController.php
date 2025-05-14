@@ -173,7 +173,7 @@ class AiTranslateController extends ControllerBase {
     string $lang_to,
     array &$context,
   ) {
-    $translation = $entity->addTranslation($lang_to);
+    $translation = $entity->addTranslation($lang_to, $entity->toArray());
     // Keep published status when translating.
     if ($entity instanceof EntityPublishedInterface) {
       $entity->isPublished() ? $translation->setPublished()
