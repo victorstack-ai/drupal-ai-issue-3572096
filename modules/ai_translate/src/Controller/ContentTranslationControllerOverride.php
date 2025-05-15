@@ -178,7 +178,7 @@ class ContentTranslationControllerOverride extends ContentTranslationController 
             $model = $config->get($langcode . '_model') ?? '';
             $parts = explode('__', $model);
             if ($model == "" || empty($parts[0])) {
-              $default_model = $this->providerManager->getSimpleDefaultProviderOptions('chat');
+              $default_model = $this->providerManager->getSimpleDefaultProviderOptions('translate_text');
               if ($default_model !== "") {
                 $parts1 = explode('__', $default_model);
                 $ai_model = $parts1[1];
