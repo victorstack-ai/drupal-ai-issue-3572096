@@ -6,14 +6,14 @@ namespace Drupal\ai\Drush\Commands;
 
 use Drush\Attributes as CLI;
 use Drush\Commands\DrushCommands;
-use Drush\Utils\StringUtils;
-use Symfony\Component\Console\Input\InputInterface;
 use Drush\Boot\DrupalBootLevels;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 
-class AiCommands extends DrushCommands
-{
+/**
+ * Provides Drush commands that integrate with the AI module.
+ */
+class AiCommands extends DrushCommands {
   const DEFAULT_SYSTEM_PROMPT = <<<EOD
     You are a Drupal assistant, capable of answer questions about Drupal and Drush. When responding, make sure...
 
@@ -35,8 +35,11 @@ class AiCommands extends DrushCommands
   #[CLI\Option(name: 'system', description: 'Indicates the system message to use, other than the default.')]
   #[CLI\Usage(name: 'drush ai:chat "Hello, how are you?"', description: 'Sends a message to your chat provider.')]
   #[CLI\Bootstrap(level: DrupalBootLevels::FULL)]
-  public function chat(string $input, array $options = ['provider' => self::OPT, 'model' => self::OPT, 'system' => self::OPT]): void
-  {
+  public function chat(string $input, array $options = [
+        'provider' => self::OPT,
+        'model' => self::OPT,
+        'system' => self::OPT,
+      ]): void {
     // Make sure an AI Provider exists.
     if (!\Drupal::hasService('ai.provider')) {
       $this->logger()->error(dt('No AI Provider Service found'));
@@ -69,5 +72,6 @@ class AiCommands extends DrushCommands
     foreach ($lines as $line) {
       $this->output()->writeln($line);
     }
+
   }
 }
