@@ -22,7 +22,7 @@ class AiCommands extends DrushCommands
     3. When output errors, use <error></error> tags
     4. When writing optional text, use <comment></comment> tags
     5. When posing questions, use <question></question> tags
-    6. When outputing a link, write the link in this format: <href=https://drupal.org>Drupal</>
+    6. When outputting a link, write the link in this format: <href=https://drupal.org>Drupal</>
     EOD;
 
   /**
@@ -48,7 +48,7 @@ class AiCommands extends DrushCommands
     $defaults = $service->getDefaultProviderForOperationType('chat');
     $provider_id = empty($options['provider']) ? $defaults['provider_id'] : $options['provider'];
     $model_id = empty($options['model']) ? $defaults['model_id'] : $options['model'];
-    $system_message = !empty($optionts['system']) ? $option['system'] : self::DEFAULT_SYSTEM_PROMPT;
+    $system_message = !empty($options['system']) ? $options['system'] : self::DEFAULT_SYSTEM_PROMPT;
 
     // Validate the provider ID and model ID.
     if (empty($provider_id) || empty($model_id)) {
