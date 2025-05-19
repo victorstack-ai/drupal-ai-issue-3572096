@@ -588,7 +588,12 @@ class GeneralHelper {
    *   An array of all image styles.
    */
   public function getImageStyles($none = TRUE) {
-    $imageStyles = $this->entityTypeManager->getStorage('image_style')->loadMultiple();
+    if ($this->entityTypeManager->hasDefinition('image_style')) {
+      $imageStyles = $this->entityTypeManager->getStorage('image_style')->loadMultiple();
+    }
+    else {
+      $imageStyles = [];
+    }
     $imageStylesOptions = [];
     if ($none) {
       $imageStylesOptions[''] = $this->t('-- None --');
