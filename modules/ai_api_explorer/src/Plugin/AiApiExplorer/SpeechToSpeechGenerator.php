@@ -110,6 +110,15 @@ final class SpeechToSpeechGenerator extends AiApiExplorerPluginBase {
     $this->aiProviderHelper->generateAiProvidersForm($form['left'], $form_state, 'speech_to_speech', 'sts', AiProviderFormHelper::FORM_CONFIGURATION_FULL);
     $form['left']['sts_ai_provider']['#ajax']['callback'] = $this::class . '::loadModelsAjaxCallback';
 
+    // Add submit button.
+    $form['left']['submit'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Generate an Audio Response'),
+      '#ajax' => [
+        'callback' => $this->getAjaxResponseId(),
+        'wrapper' => 'ai-audio-response',
+      ],
+    ];
     return $form;
   }
 
