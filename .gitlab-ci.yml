@@ -40,38 +40,52 @@ phpstan:
 phpunit:
   extends: .phpunit-base
   before_script:
-    # Update and install build tools.
+    # Update and install build tools (needed for compilation), libffi-dev, and wget.
     - apt-get update && apt-get install -y --no-install-recommends $PHPIZE_DEPS libffi-dev wget
-    # Download and extract PHP source code.
+    # Download and extract PHP source code (PHP 8.3 for this job).
+    # Ensure this URL points to the PHP version matching your Docker image if 8.3.0 is not exact.
     - wget -qO /usr/src/php.tar.xz https://www.php.net/distributions/php-8.3.0.tar.xz
     - mkdir -p /usr/src/php
     - tar -xf /usr/src/php.tar.xz -C /usr/src/php --strip-components=1
-    # Build and enable FFI extension.
-    - docker-php-ext-configure ffi
-    - docker-php-ext-install ffi
-    - echo "ffi.enable=true" >> /usr/local/etc/php/conf.d/docker-php-ext-ffi.ini
-    # Output whether FFI is successfully enabled into the pipeline log.
+    # Manually compile FFI from the bundled source to avoid PECL fallback.
+    - |
+      cd /usr/src/php/ext/ffi \
+      && phpize \
+      && ./configure \
+      && make \
+      && make install
+    # Create INI file to load ffi.so and set ffi.enable=true.
+    # The 'make install' step should place ffi.so in the correct extension directory.
+    - |
+      echo "extension=ffi.so" > /usr/local/etc/php/conf.d/docker-php-ext-ffi.ini; \
+      echo "ffi.enable=true" >> /usr/local/etc/php/conf.d/docker-php-ext-ffi.ini
+    # Debug output to check FFI is enabled.
     - php -i | grep ffi
 
-# Do the same with FFI for PHP 8.4.
 phpunit (max PHP version):
   extends: .phpunit-base
   before_script:
-    # Update and install build tools.
+    # Update and install build tools (needed for compilation), libffi-dev, and wget.
     - apt-get update && apt-get install -y --no-install-recommends $PHPIZE_DEPS libffi-dev wget
-    # Download and extract PHP source code.
+    # Download and extract PHP source code (PHP 8.4 for this job).
+    # Ensure this URL points to the PHP version matching your Docker image if 8.4.0 is not exact.
     - wget -qO /usr/src/php.tar.xz https://www.php.net/distributions/php-8.4.0.tar.xz
     - mkdir -p /usr/src/php
     - tar -xf /usr/src/php.tar.xz -C /usr/src/php --strip-components=1
-    # Build and enable FFI extension.
-    - docker-php-ext-configure ffi
-    - docker-php-ext-install ffi
-    - echo "ffi.enable=true" >> /usr/local/etc/php/conf.d/docker-php-ext-ffi.ini
-    # Output whether FFI is successfully enabled into the pipeline log.
+    # Manually compile FFI from the bundled source to avoid PECL fallback.
+    - |
+      cd /usr/src/php/ext/ffi \
+      && phpize \
+      && ./configure \
+      && make \
+      && make install
+    # Create INI file to load ffi.so and set ffi.enable=true.
+    # The 'make install' step should place ffi.so in the correct extension directory.
+    - |
+      echo "extension=ffi.so" > /usr/local/etc/php/conf.d/docker-php-ext-ffi.ini; \
+      echo "ffi.enable=true" >> /usr/local/etc/php/conf.d/docker-php-ext-ffi.ini
+    # Debug output to check FFI is enabled.
     - php -i | grep ffi
-    # Update to dev version of Key module until a new release contains
-    # https://www.drupal.org/project/key/issues/3489100.
-    - composer require drupal/key:dev-1.x
 
 # Revert to Drupal Gitlab CI default template.
 phpunit (previous major):
