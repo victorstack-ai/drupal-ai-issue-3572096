@@ -16,6 +16,7 @@ use Drupal\ai_ckeditor\Command\AiRequestCommand;
   id: 'ai_ckeditor_reformat_html',
   label: new TranslatableMarkup('Reformat HTML'),
   description: new TranslatableMarkup('Reformat the HTML of the selected markup.'),
+  module_dependencies: [],
 )]
 final class ReformatHtml extends AiCKEditorPluginBase {
 
@@ -124,7 +125,7 @@ final class ReformatHtml extends AiCKEditorPluginBase {
     }
     catch (\Exception $e) {
       $this->logger->error("There was an error in the Reformat HTML plugin for CKEditor.");
-      return $form['plugin_config']['response_wrapper']['response_text']['#value'] = "There was an error in the Reformat HTML plugin for CKEditor.";
+      return $form['plugin_config']['response_wrapper']['response_text']['#value'] = 'There was an error in the Reformat HTML plugin for CKEditor.';
     }
   }
 

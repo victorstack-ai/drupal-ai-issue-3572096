@@ -16,6 +16,7 @@ use Drupal\ai_ckeditor\Command\AiRequestCommand;
   id: 'ai_ckeditor_summarize',
   label: new TranslatableMarkup('Summarize'),
   description: new TranslatableMarkup('Summarize the currently selected text.'),
+  module_dependencies: [],
 )]
 final class Summarize extends AiCKEditorPluginBase {
 
@@ -113,15 +114,15 @@ final class Summarize extends AiCKEditorPluginBase {
     $prompts_config = $this->getConfigFactory()->get('ai_ckeditor.settings');
     $prompt = $prompts_config->get('prompts.summarise');
     try {
-      $prompt .= '"' . $values["plugin_config"]["selected_text"] . '"';
+      $prompt .= '"' . $values['plugin_config']['selected_text'] . '"';
       $response = new AjaxResponse();
       $values = $form_state->getValues();
-      $response->addCommand(new AiRequestCommand($prompt, $values["editor_id"], $this->pluginDefinition['id'], 'ai-ckeditor-response'));
+      $response->addCommand(new AiRequestCommand($prompt, $values['editor_id'], $this->pluginDefinition['id'], 'ai-ckeditor-response'));
       return $response;
     }
     catch (\Exception $e) {
-      $this->logger->error("There was an error in the Summarize AI plugin for CKEditor.");
-      return $form['plugin_config']['response_wrapper']['response_text']['#value'] = "There was an error in the Summarize AI plugin for CKEditor.";
+      $this->logger->error('There was an error in the Summarize AI plugin for CKEditor.');
+      return $form['plugin_config']['response_wrapper']['response_text']['#value'] = 'There was an error in the Summarize AI plugin for CKEditor.';
     }
   }
 

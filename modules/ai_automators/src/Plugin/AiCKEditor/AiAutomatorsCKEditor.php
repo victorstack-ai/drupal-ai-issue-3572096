@@ -28,6 +28,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
   id: 'ai_automators_ckeditor',
   label: new TranslatableMarkup('AI Automators CKEditor'),
   description: new TranslatableMarkup('Chained workflows setup with AI Automators.'),
+  module_dependencies: [],
 )]
 final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
 

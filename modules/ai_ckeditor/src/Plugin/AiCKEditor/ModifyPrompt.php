@@ -16,6 +16,7 @@ use Drupal\ai_ckeditor\Command\AiRequestCommand;
   id: 'ai_ckeditor_modify_prompt',
   label: new TranslatableMarkup('Modify with a prompt'),
   description: new TranslatableMarkup('Apply custom instructions to the selected text.'),
+  module_dependencies: [],
 )]
 final class ModifyPrompt extends AiCKEditorPluginBase {
 
@@ -146,8 +147,8 @@ final class ModifyPrompt extends AiCKEditorPluginBase {
       return $response;
     }
     catch (\Exception $e) {
-      $this->logger->error("There was an error in the 'Modify with a prompt' AI plugin for CKEditor: @error", ['@error' => $e->getMessage()]);
-      return $form['plugin_config']['response_text']['#value'] = "There was an error processing your request. Please try again.";
+      $this->logger->error('There was an error in the Modify with a prompt AI plugin for CKEditor: @error', ['@error' => $e->getMessage()]);
+      return $form['plugin_config']['response_text']['#value'] = 'There was an error processing your request. Please try again.';
     }
   }
 
