@@ -76,15 +76,6 @@ final class ModifyPrompt extends AiCKEditorPluginBase {
    * {@inheritdoc}
    */
   public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []): array {
-    $storage = $form_state->getStorage();
-    $editor_id = $this->requestStack->getParentRequest()->get('editor_id');
-
-    if (empty($storage['selected_text'])) {
-      return [
-        '#markup' => '<p>' . $this->t('You must select some text before you can modify it with a prompt.') . '</p>',
-      ];
-    }
-
     $form = parent::buildCkEditorModalForm($form, $form_state);
 
     $form['modify_prompt'] = [
@@ -93,29 +84,17 @@ final class ModifyPrompt extends AiCKEditorPluginBase {
       '#description' => $this->t('Describe how you want the AI to modify the selected text.'),
       '#required' => TRUE,
       '#rows' => 4,
+      '#weight' => 5,
     ];
-
-    $form['selected_text'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('Selected text to convert'),
-      '#disabled' => TRUE,
-      '#default_value' => $storage['selected_text'],
-    ];
-
-    $form['response_text'] = [
-      '#type' => 'text_format',
-      '#title' => $this->t('Result'),
-      '#description' => $this->t('The response from AI will appear in the box above. You can edit and tweak the response before saving it back to the main editor.'),
-      '#prefix' => '<div id="ai-ckeditor-response">',
-      '#suffix' => '</div>',
-      '#default_value' => '',
-      '#allowed_formats' => [$editor_id],
-      '#format' => $editor_id,
-    ];
-
-    $form['actions']['generate']['#value'] = $this->t('Modify text');
 
     return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getGenerateButtonLabel() {
+    return $this->t('Modify text');
   }
 
   /**
