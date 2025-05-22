@@ -44,7 +44,7 @@ export default class AiBalloonMenu extends Plugin {
     const collection = new Collection();
 
     // Add all enabled plugins to the collection.
-    if (typeof options.plugins !== 'undefined' || options.plugins !== null) {
+    if (typeof options.plugins !== 'undefined') {
       Object.keys(options.plugins).forEach(function (plugin_id) {
         if (options.plugins[plugin_id].enabled) {
           collection.add({
