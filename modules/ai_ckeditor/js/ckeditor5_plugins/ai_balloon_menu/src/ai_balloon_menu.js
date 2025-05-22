@@ -41,13 +41,13 @@ export default class AiBalloonMenu extends Plugin {
     const locale = editor.locale;
 
     // Create a collection for menu items.
-    const collection = new Collection();
+    const items = new Collection();
 
     // Add all enabled plugins to the collection.
     if (typeof options.plugins !== 'undefined') {
       Object.keys(options.plugins).forEach(function (plugin_id) {
         if (options.plugins[plugin_id].enabled) {
-          collection.add({
+          items.add({
             type: 'button',
             model: {
               isEnabled: options.plugins[plugin_id].enabled,
@@ -73,8 +73,8 @@ export default class AiBalloonMenu extends Plugin {
       icon
     });
 
-    // Add menu collection items to the dropdown.
-    addListToDropdown(this.menuView, collection);
+    // Add menu items to the dropdown.
+    addListToDropdown(this.menuView, items);
 
     // Handle clicks on dropdown items.
     this.listenTo(this.menuView, 'execute', (event) => {
