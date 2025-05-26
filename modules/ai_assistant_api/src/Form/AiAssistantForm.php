@@ -97,7 +97,8 @@ final class AiAssistantForm extends EntityForm {
 
     // Possible agent object.
     $agent_entity = NULL;
-    $agents_enabled = $this->moduleHandler->moduleExists('ai_agents');
+    $form_state->set('agents_enabled', $this->moduleHandler->moduleExists('ai_agents'));
+    $agents_enabled = $form_state->get('agents_enabled');
     $old_entity = count($entity->get('actions_enabled')) && !$agents_enabled;
 
     if ($old_entity) {
@@ -217,29 +218,31 @@ final class AiAssistantForm extends EntityForm {
     }
     else {
       // Hard code agents and rag action for now.
-      $form['agents_enabled'] = [
-        '#type' => 'details',
-        '#title' => $this->t('Agents Enabled'),
-        '#description' => $this->t('The agents that this assistant should have access to.'),
-        '#open' => TRUE,
-      ];
+      if ($form_state->get('agents_enabled')) {
+        $form['agents_enabled'] = [
+          '#type' => 'details',
+          '#title' => $this->t('Agents Enabled'),
+          '#description' => $this->t('The agents that this assistant should have access to.'),
+          '#open' => TRUE,
+        ];
 
-      $tools = [];
-      if ($agent_entity) {
-        foreach ($agent_entity->get('tools') as $tool => $enabled) {
-          if ($enabled && substr($tool, 0, 9) === 'ai_agent:') {
-            $tools[] = substr($tool, 9);
+        $tools = [];
+        if ($agent_entity) {
+          foreach ($agent_entity->get('tools') as $tool => $enabled) {
+            if ($enabled && substr($tool, 0, 9) === 'ai_agent:') {
+              $tools[] = substr($tool, 9);
+            }
           }
         }
-      }
 
-      $form['agents_enabled']['agents_agent'] = [
-        '#type' => 'checkboxes',
-        '#title' => $this->t('Agents to use'),
-        '#options' => $agent_options,
-        '#default_value' => $tools,
-        '#description' => $this->t('Select which agents to use for this plugin.'),
-      ];
+        $form['agents_enabled']['agents_agent'] = [
+          '#type' => 'checkboxes',
+          '#title' => $this->t('Agents to use'),
+          '#options' => $agent_options,
+          '#default_value' => $tools,
+          '#description' => $this->t('Select which agents to use for this plugin.'),
+        ];
+      }
 
       // Only show if AI search is enabled.
       if ($this->moduleHandler->moduleExists('ai_search')) {
@@ -493,7 +496,8 @@ final class AiAssistantForm extends EntityForm {
     }
     $entity->set('actions_enabled', $action_plugins);
 
-    if ($entity->isNew() || $form_state->getValue('ai_agent')) {
+    // Handle agent-related logic only if the ai_agents module is enabled.
+    if ($form_state->get('agents_enabled') && $form_state->getValue('ai_agent')) {
       // Get the tools.
       $tools = [];
       foreach ($form_state->getValue('agents_agent') as $key => $val) {
@@ -540,20 +544,22 @@ final class AiAssistantForm extends EntityForm {
         $agent->save();
         $entity->set('ai_agent', $agent->id());
       }
-      elseif ($form_state->getValue('ai_agent')) {
+      else {
         // Load the agent and set the tools.
         $agent = $this->entityTypeManager->getStorage('ai_agent')->load($form_state->getValue('ai_agent'));
-        $agent->set('tools', $tools);
-        $agent->set('description', $form_state->getValue('description'));
-        $agent->set('system_prompt', $form_state->getValue('instructions'));
-        // Load an merge the tool usage limits.
-        $old_tool_usage_limits = $agent->get('tool_usage_limits');
-        if ($old_tool_usage_limits) {
-          $tool_usage_limits = array_merge($old_tool_usage_limits, $tool_usage_limits);
-        }
-        $agent->set('tool_usage_limits', $tool_usage_limits);
+        if ($agent) {
+          $agent->set('tools', $tools);
+          $agent->set('description', $form_state->getValue('description'));
+          $agent->set('system_prompt', $form_state->getValue('instructions'));
+          // Load and merge the tool usage limits.
+          $old_tool_usage_limits = $agent->get('tool_usage_limits');
+          if ($old_tool_usage_limits) {
+            $tool_usage_limits = array_merge($old_tool_usage_limits, $tool_usage_limits);
+          }
+          $agent->set('tool_usage_limits', $tool_usage_limits);
 
-        $agent->save();
+          $agent->save();
+        }
       }
       $entity->set('pre_action_prompt', "");
       $entity->set('system_prompt', "");

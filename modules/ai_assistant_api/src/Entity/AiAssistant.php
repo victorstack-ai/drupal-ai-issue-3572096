@@ -97,7 +97,7 @@ final class AiAssistant extends ConfigEntityBase implements AiAssistantInterface
   /**
    * The pre action prompt.
    */
-  protected string $pre_action_prompt;
+  protected ?string $pre_action_prompt;
 
   /**
    * The system prompt.
