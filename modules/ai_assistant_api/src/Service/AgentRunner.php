@@ -3,10 +3,10 @@
 namespace Drupal\ai_assistant_api\Service;
 
 use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\ChatOutput;
 use Drupal\ai_agents\PluginInterfaces\AiAgentInterface;
-use Drupal\ai_agents\Task\Task;
 
 /**
  * Class AgentRunner, runs agents as assistants.
@@ -37,13 +37,11 @@ class AgentRunner {
     // @phpstan-ignore-next-line
     $agent = \Drupal::service('plugin.manager.ai_agents')->createInstance($assistant_id);
     // Remove the last message from the chat history.
-    $message = array_pop($chat_history);
-    $task = new Task($message['message']);
-    // Reverse chat history.
-    $chat_history = array_reverse($chat_history);
-    $task->setComments($chat_history);
-    $agent->setTask($task);
-
+    $new_messages = [];
+    foreach ($chat_history as $key => $message) {
+      $new_messages[] = new ChatMessage($message['role'], $message['content']);
+    }
+    $agent->setChatInput(new ChatInput($new_messages));
     $agent->setAiProvider($this->aiProvider->createInstance($defaults['provider_id']));
     $agent->setModelName($defaults['model_id']);
     $agent->setCreateDirectly(TRUE);
