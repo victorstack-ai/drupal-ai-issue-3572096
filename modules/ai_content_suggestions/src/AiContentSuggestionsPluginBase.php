@@ -111,7 +111,7 @@ abstract class AiContentSuggestionsPluginBase extends PluginBase implements AiCo
       '#parents' => [$this->getPluginId(), $this->getPluginId() . '_model'],
       '#states' => [
         'visible' => [
-          ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_enabled' . ']"]' => ['checked' => TRUE],
+          ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_enabled]"]' => ['checked' => TRUE],
         ],
       ],
     ];
