@@ -137,7 +137,7 @@ final class Taxonomy extends AiContentSuggestionsPluginBase {
       '#parents' => ['plugins', $this->getPluginId(), $this->getPluginId() . '_prompt_open'],
       '#states' => [
         'visible' => [
-          ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_enabled' . ']"]' => ['checked' => TRUE],
+          ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_enabled]"]' => ['checked' => TRUE],
         ],
       ],
     ];
@@ -150,7 +150,7 @@ final class Taxonomy extends AiContentSuggestionsPluginBase {
       '#parents' => ['plugins', $this->getPluginId(), $this->getPluginId() . '_prompt_from_voc'],
       '#states' => [
         'visible' => [
-          ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_enabled' . ']"]' => ['checked' => TRUE],
+          ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_enabled]"]' => ['checked' => TRUE],
         ],
       ],
     ];

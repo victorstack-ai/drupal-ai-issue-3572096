@@ -423,7 +423,7 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
       $output .= $this->t('<strong>Tool name</strong>') . ' ' . $tool->getName() . '<br>';
       $output .= $this->t('<strong>Arguments from LLM:</strong>') . '<br>';
       foreach ($tool->getArguments() as $argument) {
-        $output .= '- ' . '<em>' . $argument->getName() . '</em>: ' . Json::encode($argument->getValue()) . '<br>';
+        $output .= '- <em>' . $argument->getName() . '</em>: ' . Json::encode($argument->getValue()) . '<br>';
       }
       $function = $this->functionCallPluginManager->convertToolResponseToObject($tool);
 
