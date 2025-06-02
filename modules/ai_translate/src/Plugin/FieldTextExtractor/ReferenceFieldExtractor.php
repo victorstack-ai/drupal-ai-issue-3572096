@@ -245,14 +245,18 @@ class ReferenceFieldExtractor implements ConfigurableFieldTextExtractorInterface
    * {@inheritDoc}
    */
   public function shouldExtract(ContentEntityInterface $entity, FieldConfigInterface $fieldDefinition): bool {
+    $targetType = $fieldDefinition->getFieldStorageDefinition()->getSetting('target_type');
+    // Extract only fields of content entities.
+    if (!in_array(ContentEntityInterface::class, class_implements(
+      $this->entityTypeManager->getDefinition($targetType)->getClass()))) {
+      return FALSE;
+    }
     $fieldSetting = $fieldDefinition->getThirdPartySetting('ai_translate',
       'translate_references', self::TRANSLATE_REFERENCE_DEFAULT);
     return match ($fieldSetting) {
       self::TRANSLATE_REFERENCE_YES => TRUE,
       self::TRANSLATE_REFERENCE_NO => FALSE,
-      default => $this->entityTypeTranslatedDefault(
-        $fieldDefinition->getFieldStorageDefinition()
-          ->getSetting('target_type')),
+      default => $this->entityTypeTranslatedDefault($targetType),
     };
   }
 
