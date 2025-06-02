@@ -98,7 +98,8 @@ class PropertyFormBuilder {
 
       case 'number':
       case 'integer':
-        $form_element['#type'] = 'number';
+        // Type casting is happening and we don't want form validation, so text.
+        $form_element['#type'] = 'textfield';
         if ($property->getExampleValue()) {
           $form_element['#attributes']['placeholder'] = $property->getExampleValue();
         }
