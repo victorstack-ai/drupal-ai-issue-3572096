@@ -85,6 +85,10 @@ final class Completion extends AiCKEditorPluginBase {
   public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []): array {
     $form = parent::buildCkEditorModalForm($form, $form_state);
 
+    // Automatically enable the CKEditor5 sourceEditing plugin for the response
+    // text textarea, since the Completion plugin requires this.
+    $form['response_wrapper']['response_text']['#ai_ckeditor_response'] = TRUE;
+
     $form['text_to_submit'] = [
       '#type' => 'textarea',
       '#title' => $this->t('What would you like to ask or get ideas for?'),
