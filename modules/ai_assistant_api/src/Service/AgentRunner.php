@@ -39,7 +39,7 @@ class AgentRunner {
     // Remove the last message from the chat history.
     $new_messages = [];
     foreach ($chat_history as $key => $message) {
-      $new_messages[] = new ChatMessage($message['role'], $message['content']);
+      $new_messages[] = new ChatMessage($message['role'], $message['message']);
     }
     $agent->setChatInput(new ChatInput($new_messages));
     $agent->setAiProvider($this->aiProvider->createInstance($defaults['provider_id']));
