@@ -2,10 +2,12 @@
 
 namespace Drupal\ai\Base;
 
+use Drupal\ai\Exception\AiUnsafePromptException;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Logger\LoggerChannelTrait;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -25,7 +27,10 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  * Service to handle API requests server.
  */
 abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, AiVdbProviderSearchApiInterface, ContainerFactoryPluginInterface {
+
   use StringTranslationTrait;
+
+  use LoggerChannelTrait;
 
   /**
    * Module Handler.
@@ -260,14 +265,27 @@ abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, AiVdbP
 
     /** @var \Drupal\search_api\Item\ItemInterface $item */
     foreach ($items as $item) {
-      $embeddings = $embedding_strategy->getEmbedding(
-        $configuration['embeddings_engine'],
-        $configuration['chat_model'],
-        $configuration['embedding_strategy_configuration'],
-        $item->getFields(),
-        $item,
-        $index,
-      );
+      $item_id = $item->getId();
+      try {
+        $embeddings = $embedding_strategy->getEmbedding(
+          $configuration['embeddings_engine'],
+          $configuration['chat_model'],
+          $configuration['embedding_strategy_configuration'],
+          $item->getFields(),
+          $item,
+          $index,
+        );
+      }
+      catch (AiUnsafePromptException $e) {
+        // Log the exception and skip this item.
+        $logger = $this->getLogger('ai_search');
+        $logger->warning('Skipping item @id due to unsafe prompt: @message', [
+          '@id' => $item_id,
+          '@message' => $e->getMessage(),
+        ]);
+        continue;
+      }
+
       foreach ($embeddings as $embedding) {
         // Ensure consistent embedding structure as per
         // EmbeddingStrategyInterface.
@@ -277,7 +295,7 @@ abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, AiVdbP
         // structure and add additional details.
         $embedding = array_merge_recursive($embedding, $itemBase);
         $data['drupal_long_id'] = $embedding['id'];
-        $data['drupal_entity_id'] = $item->getId();
+        $data['drupal_entity_id'] = $item_id;
         $data['vector'] = $embedding['values'];
         foreach ($embedding['metadata'] as $key => $value) {
           $data[$key] = $value;
@@ -289,7 +307,7 @@ abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, AiVdbP
         );
       }
 
-      $successfulItemIds[] = $item->getId();
+      $successfulItemIds[] = $item_id;
     }
 
     return $successfulItemIds;
