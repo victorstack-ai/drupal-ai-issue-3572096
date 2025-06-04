@@ -90,15 +90,42 @@ final class AiAssistantForm extends EntityForm {
   /**
    * {@inheritdoc}
    */
+  public function actions(array $form, FormStateInterface $form_state) {
+    $entity = $this->entity;
+    $agents_enabled = $this->moduleHandler->moduleExists('ai_agents') &&  $this->entityTypeManager->hasDefinition('ai_agent');
+    if (($entity->isNew() && !$agents_enabled) || $entity->get('ai_agent') && !$agents_enabled) {
+      // We just inform that new assistants will use agents and that you have
+      // to upgrade the AI Agents module.
+      return [];
+    }
+    return parent::actions($form, $form_state);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function form(array $form, FormStateInterface $form_state): array {
     /** @var \Drupal\ai_assistant_api\Entity\AiAssistant $entity */
     $entity = $this->entity;
+    $form_state->set('agents_enabled', $this->moduleHandler->moduleExists('ai_agents') &&  $this->entityTypeManager->hasDefinition('ai_agent'));
+    $agents_enabled = $form_state->get('agents_enabled');
+
+    if (($entity->isNew() && !$agents_enabled) || $entity->get('ai_agent') && !$agents_enabled) {
+      // We just inform that new assistants will use agents and that you have
+      // to upgrade the AI Agents module.
+      $form['warning'] = [
+        '#type' => 'markup',
+        '#markup' => $this->t('All assistants going forward will be agents. To be able to add a new assistant you need to update to the AI Agents module 1.1.0+.'),
+      ];
+      return $form;
+    }
+
     $form = parent::form($form, $form_state);
 
     // Possible agent object.
     $agent_entity = NULL;
-    $form_state->set('agents_enabled', $this->moduleHandler->moduleExists('ai_agents'));
-    $agents_enabled = $form_state->get('agents_enabled');
+    $agents = FALSE;
+
     $old_entity = count($entity->get('actions_enabled')) && !$agents_enabled;
 
     if ($old_entity) {
@@ -225,8 +252,8 @@ final class AiAssistantForm extends EntityForm {
         $tools = [];
         if ($agent_entity) {
           foreach ($agent_entity->get('tools') as $tool => $enabled) {
-            if ($enabled && substr($tool, 0, 9) === 'ai_agent:') {
-              $tools[] = substr($tool, 9);
+            if ($enabled && substr($tool, 0, 20) === 'ai_agents::ai_agent::') {
+              $tools[] = substr($tool, 20);
             }
           }
         }
@@ -493,12 +520,12 @@ final class AiAssistantForm extends EntityForm {
     $entity->set('actions_enabled', $action_plugins);
 
     // Handle agent-related logic only if the ai_agents module is enabled.
-    if ($form_state->get('agents_enabled') && $form_state->getValue('ai_agent')) {
+    if ($form_state->get('agents_enabled')) {
       // Get the tools.
       $tools = [];
       foreach ($form_state->getValue('agents_agent') as $key => $val) {
         if ($val) {
-          $tools['ai_agent:' . $key] = TRUE;
+          $tools['ai_agents::ai_agent::' . $key] = TRUE;
         }
       }
       $tool_usage_limits = [];
