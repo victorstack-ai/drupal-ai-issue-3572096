@@ -115,12 +115,8 @@ final class AiAssistantForm extends EntityForm {
         $agent_options[$agent->id()] = $agent->label();
       }
       $form['ai_agent'] = [
-        '#type' => 'select',
-        '#title' => $this->t('Use agent as assistant'),
-        '#empty_option' => $this->t('Select an agent'),
+        '#type' => 'hidden',
         '#default_value' => $entity->get('ai_agent') ?? '',
-        '#description' => $this->t('If enabled, the AI Assistant will use the agent as the assistant. This is only available if you have the AI Agents module installed.'),
-        '#options' => $agent_options,
         '#access' => TRUE,
       ];
 
