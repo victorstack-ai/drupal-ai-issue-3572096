@@ -4,7 +4,11 @@
   Drupal.behaviors.deepChatToggle = {
     chats: [],
     initialized: false,
-    csrf_token: '',
+    csrfToken: '',
+    shouldContinue: false,
+    stepMessages: [],
+    agentUsageIsOpen: false,
+    processing: false,
     attach: function (context, settings) {
       if (Drupal.behaviors.deepChatToggle.initialized) {
         return;
@@ -190,18 +194,44 @@
         // Add retry on error
         deepchatElement.addEventListener('error', handleError);
 
+        // We need to know if we should automatically continuer to agent.
+        deepchatElement.responseInterceptor = (response) => {
+          Drupal.behaviors.deepChatToggle.shouldContinue = response.should_continue || false;
+          if (response.should_continue) {
+            Drupal.behaviors.deepChatToggle.stepMessages.push(response.html);
+            const html = response.html;
+            response.html = '<div class="loading-wrapper"><span class="loading-span">' + Drupal.t('Contacting agents..') + '</span>';
+            response.html += `<details class="step-messages loading-text"><summary class="step-messages-summary">`;
+            response.html += Drupal.t('Details') + `</summary>` + html + `</details></div>`;
+          }
+          return response;
+        };
+
+        // When the message is rendered.
+        deepchatElement.onMessage = (message) => {
+          if (Drupal.behaviors.deepChatToggle.shouldContinue === true && message.message.role === 'ai') {
+            Drupal.behaviors.deepChatToggle.shouldContinue = false;
+            // Make sure that the submit button is still disabled.
+            deepchatElement.disableSubmitButton();
+            // Get the following messages.
+            getAllMessages(deepchatElement);
+          }
+        };
+
         // We create a session when the first message is sent.
         deepchatElement.requestInterceptor = async (request) => {
+          // Start processing.
+          Drupal.behaviors.deepChatToggle.processing = true;
           // If a session does not exist, we need to set one and get a new csrf.
-          if (drupalSettings.ai_deepchat.session_exists === false && !Drupal.behaviors.deepChatToggle.csrf_token) {
+          if (drupalSettings.ai_deepchat.session_exists === false && !Drupal.behaviors.deepChatToggle.csrfToken) {
             // Get the session and csrf token.
-            if (!Drupal.behaviors.deepChatToggle.csrf_token) {
-              Drupal.behaviors.deepChatToggle.csrf_token = await Drupal.behaviors.deepChatToggle.getSession();
+            if (!Drupal.behaviors.deepChatToggle.csrfToken) {
+              Drupal.behaviors.deepChatToggle.csrfToken = await Drupal.behaviors.deepChatToggle.getSession();
             }
             // Remove the current ?token= from the connect url.
             let newUrl = deepchatElement.connect.url.replace(/\?token=[^&]+/, '');
             // Add the new csrf token.
-            deepchatElement.connect.url = newUrl + '?token=' + Drupal.behaviors.deepChatToggle.csrf_token;
+            deepchatElement.connect.url = newUrl + '?token=' + Drupal.behaviors.deepChatToggle.csrfToken;
           }
         }
 
@@ -224,6 +254,37 @@
                 "display": "inline",
                 "float": "none",
                 "cursor": "pointer"
+              }
+            }
+          }
+          // Loading when using multiple tools/agents.
+          deepchatElement.htmlClassUtilities['loading-span'] = {
+            "styles": {
+              "default": {
+                "color": "#555",
+                "animation": "pulse-color 2s infinite",
+              }
+            }
+          }
+          deepchatElement.htmlClassUtilities['step-messages'] = {
+            events: {
+              toggle: (event) => {
+                Drupal.behaviors.deepChatToggle.agentUsageIsOpen = event.target.open;
+              }
+            }
+          },
+          deepchatElement.htmlClassUtilities['loading-wrapper'] = {
+            "styles": {
+              "default": {
+                "padding-bottom": "10px",
+              }
+            }
+          },
+          deepchatElement.htmlClassUtilities['loading-text'] = {
+            "styles": {
+              "default": {
+                "color": "#888",
+                "font-style": "italic",
               }
             }
           }
@@ -304,10 +365,105 @@
           }
           return response.text();
         }).then(token => {
-          Drupal.behaviors.deepChatToggle.csrf_token = token;
+          Drupal.behaviors.deepChatToggle.csrfToken = token;
           resolve(token);
         });
       })
     },
+  }
+
+  function getAllMessages(deepchatElement) {
+    const n = (deepchatElement.getMessages().length - 1);
+    fetch(deepchatElement.connect.url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        thread_id: drupalSettings.ai_deepchat.thread_id,
+        assistant_id: drupalSettings.ai_deepchat.assistant_id,
+        show_copy_icon: drupalSettings.ai_deepchat.show_copy_icon,
+        structured_results: drupalSettings.ai_deepchat.structured_results,
+        messages: [
+          {
+            role: 'user',
+            text: 'dummy_loading', // Dummy message to trigger.
+          }
+        ]
+      }),
+    }).then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to get messages.');
+      }
+      return response.json();
+    }).then(data => {
+      if ("should_continue" in data && data.should_continue) {
+        Drupal.behaviors.deepChatToggle.stepMessages.push(data.html);
+        let open = Drupal.behaviors.deepChatToggle.agentUsageIsOpen ? 'open' : '';
+        let html = `<div class="loading-wrapper"><span class="loading-span">` + Drupal.t('Calling agents..') + '</span>';
+        html += `<details class="step-messages loading-text" ${open}><summary class="step-messages-summary">`;
+        html += Drupal.t('Details') + `</summary>` + data.html + `</details></div>`;
+
+        // Store the messages in the stepMessages array.
+
+        // We just replace the message.
+        deepchatElement.updateMessage({
+          role: 'ai',
+          html: html,
+        }, n);
+        // Rerun the request to get the next messages.
+        getAllMessages(deepchatElement);
+      }
+      else {
+        // End the processing.
+        Drupal.behaviors.deepChatToggle.processing = false;
+        // Reset the agent usage open state.
+        Drupal.behaviors.deepChatToggle.agentUsageIsOpen = false;
+        // Create a details on the top of the chat with the step messages.
+        let details = '';
+        if (Drupal.behaviors.deepChatToggle.stepMessages.length > 0) {
+          details = `<details class="step-messages loading-text"><summary class="step-messages-summary">`
+          details += Drupal.t('Details') + `</summary><ol><li>`;
+          details += Drupal.behaviors.deepChatToggle.stepMessages.join('</li><li>');
+          details += `</li></ol></details>`;
+        }
+        if ("error" in data) {
+          // Add an error message to the chat.
+          deepchatElement.updateMessage({
+            role: 'assistant',
+            html: details + `<p>` + data.error + `</p>`,
+          }, n);
+        }
+        else {
+          // We just replace the message.
+          deepchatElement.updateMessage({
+            role: 'ai',
+            html: details + data.html,
+          }, n);
+        }
+        // Enabled submit again.
+        deepchatElement.disableSubmitButton(false);
+        // Reset the step messages.
+        Drupal.behaviors.deepChatToggle.stepMessages = [];
+        // Reset the should continue.
+        Drupal.behaviors.deepChatToggle.shouldContinue = false;
+      }
+      // Empty
+    }).catch(error => {
+      // Add an error message to the chat.
+      deepchatElement.updateMessage({
+        role: 'assistant',
+        html: `<p>` + Drupal.t('An error occurred while fetching messages. Please try again.') + `</p>`,
+      }, n);
+      deepchatElement.disableSubmitButton(false);
+    });
+
+    // Make sure that we do not close while getting answers.
+    window.addEventListener("beforeunload", function (e) {
+      if (Drupal.behaviors.deepChatToggle.processing) {
+        e.preventDefault();
+        e.returnValue = Drupal.t("The chat is still processing. Are you sure you want to leave, it might still be modifying things?");
+      }
+    });
   }
 })(Drupal, drupalSettings);

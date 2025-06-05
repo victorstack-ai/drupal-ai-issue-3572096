@@ -20,4 +20,12 @@ interface ExecutableFunctionCallInterface extends FunctionCallInterface, Executa
    */
   public function getReadableOutput(): string;
 
+  /**
+   * Sets the output.
+   *
+   * @param string $output
+   *   The output to set.
+   */
+  public function setOutput(string $output): void;
+
 }
