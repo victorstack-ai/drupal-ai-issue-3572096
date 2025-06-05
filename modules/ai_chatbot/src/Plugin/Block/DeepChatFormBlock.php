@@ -152,7 +152,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
       'use_avatar' => TRUE,
       'default_avatar' => '/core/misc/favicon.ico',
       'first_message' => 'Hello! How can I help you today?',
-      'stream' => TRUE,
+      'stream' => FALSE,
       'toggle_state' => 'remember',
       'width' => '400px',
       'height' => '500px',
@@ -161,6 +161,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
       'collapse_minimal' => FALSE,
       'style_file' => 'bard.yml',
       'show_copy_icon' => TRUE,
+      'verbose_mode' => TRUE,
     ];
   }
 
@@ -168,6 +169,8 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
    * {@inheritdoc}
    */
   public function blockForm($form, FormStateInterface $form_state) {
+    $form['#prefix'] = '<div id="ai-chatbot-form-wrapper">';
+    $form['#suffix'] = '</div>';
     // Warn people to install the CommonMark library.
     if (!class_exists('League\CommonMark\CommonMarkConverter')) {
       $form['notice'] = [
@@ -207,7 +210,23 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
       '#options' => $assistants,
       '#default_value' => $this->configuration['ai_assistant'],
       '#required' => TRUE,
+      // We need to change some fields depending on the assistant selected.
+      '#ajax' => [
+        'callback' => [$this, 'updateForm'],
+        'wrapper' => 'ai-chatbot-form-wrapper',
+      ],
     ];
+
+    // If the assistant is set, we load it.
+    $is_legacy_assistant = TRUE;
+    $selected_assistant = $form_state->getCompleteFormState()->getUserInput()['settings']['ai_assistant'] ?? $this->configuration['ai_assistant'];
+    if (!empty($selected_assistant)) {
+      $assistant = $this->entityTypeManager->getStorage('ai_assistant')->load($selected_assistant);
+      // Check if an agent is set.
+      if ($assistant && $assistant->get('ai_agent')) {
+        $is_legacy_assistant = FALSE;
+      }
+    }
 
     $form['messages'] = [
       '#type' => 'details',
@@ -328,16 +347,16 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     ];
 
     $form['advanced']['stream'] = [
-      '#type' => 'checkbox',
+      '#type' => $is_legacy_assistant ? 'checkbox' : 'hidden',
       '#title' => $this->t('Stream'),
-      '#description' => $this->t('Stream the messages in real-time.'),
+      '#description' => $this->t('Stream the messages in real-time. Note that this will be disabled for agents based assistants.'),
       '#default_value' => $this->configuration['stream'],
     ];
 
     $form['advanced']['show_structured_results'] = [
-      '#type' => 'checkbox',
+      '#type' => $is_legacy_assistant ? 'checkbox' : 'hidden',
       '#title' => $this->t('Show structured results'),
-      '#description' => $this->t('Show the structured results from the actions taken.'),
+      '#description' => $this->t('Show the structured results from the actions taken. Only available for legacy'),
       '#default_value' => $this->configuration['show_structured_results'],
     ];
 
@@ -353,7 +372,36 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
       '#default_value' => $this->configuration['toggle_state'],
     ];
 
+    $form['advanced']['verbose_mode'] = [
+      '#type' => $is_legacy_assistant ? 'hidden' : 'checkbox',
+      '#title' => $this->t('Verbose Mode'),
+      '#description' => $this->t('If enabled shows a message at each step the assistant takes while generating the final response. Will only work with assistants created in version 1.1.0.'),
+      '#default_value' => $this->configuration['verbose_mode'],
+    ];
+
     return $form;
+  }
+
+  /**
+   * Ajax callback to update the form.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array
+   *   The updated form.
+   */
+  public function updateForm(array $form, FormStateInterface $form_state) {
+    // Set a state of the assistant picked.
+    $this->configuration['ai_assistant'] = $form_state->getUserInput()['settings']['ai_assistant'] ?? $this->configuration['ai_assistant'];
+
+    // Rebuild the form with the new AI assistant.
+    $form_state->setRebuild();
+
+    // Return the updated form.
+    return $form['settings'];
   }
 
   /**
@@ -374,9 +422,10 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $this->configuration['placement'] = $form_state->getValue('styling')['placement'];
     $this->configuration['collapse_minimal'] = $form_state->getValue('styling')['collapse_minimal'];
     $this->configuration['show_copy_icon'] = $form_state->getValue('styling')['show_copy_icon'];
-    $this->configuration['stream'] = $form_state->getValue('advanced')['stream'];
-    $this->configuration['show_structured_results'] = $form_state->getValue('advanced')['show_structured_results'];
+    $this->configuration['stream'] = $form_state->getValue('advanced')['stream'] ?? FALSE;
+    $this->configuration['show_structured_results'] = $form_state->getValue('advanced')['show_structured_results'] ?? FALSE;
     $this->configuration['toggle_state'] = $form_state->getValue('advanced')['toggle_state'];
+    $this->configuration['verbose_mode'] = $form_state->getValue('advanced')['verbose_mode'] ?? FALSE;
   }
 
   /**
@@ -412,7 +461,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $assistant = $this->entityTypeManager->getStorage('ai_assistant')->load($this->configuration['ai_assistant']);
 
     $this->aiAssistantRunner->setAssistant($assistant);
-    $this->aiAssistantRunner->streamedOutput($this->configuration['stream'] ?? FALSE);
+    $this->aiAssistantRunner->streamedOutput($this->isStreamingSupported());
     $block = [];
 
     $block['#theme'] = 'ai_deepchat';
@@ -441,6 +490,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $block['#attached']['drupalSettings']['ai_deepchat']['show_copy_icon'] = $this->configuration['show_copy_icon'];
     $block['#attached']['drupalSettings']['ai_deepchat']['messages'] = $this->historicalMessages();
     $block['#attached']['drupalSettings']['ai_deepchat']['session_exists'] = $this->requestStack->getCurrentRequest()->getSession()->isStarted();
+    $block['#attached']['drupalSettings']['ai_deepchat']['verbose_mode'] = $this->configuration['verbose_mode'];
     $block['#cache']['contexts'][] = 'session.exists';
     return $block;
   }
@@ -517,12 +567,13 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $deepchat['connect'] = [
       'url' => $url->toString(),
       'method' => 'POST',
-      'stream' => $this->configuration['stream'],
+      'stream' => $this->isStreamingSupported(),
       'additionalBodyProps' => [
         'assistant_id' => $this->configuration['ai_assistant'],
-        'stream' => $this->configuration['stream'],
+        'stream' => $this->isStreamingSupported(),
         'structured_results' => $this->configuration['show_structured_results'],
         'show_copy_icon' => $this->configuration['show_copy_icon'],
+        'verbose_mode' => $this->configuration['verbose_mode'],
         'contexts' => [
           'current_route' => $this->currentPath->getPath(),
         ],
@@ -717,6 +768,24 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
       }
     }
     return $messages;
+  }
+
+  /**
+   * Function to check if streaming actually works.
+   *
+   * @return bool
+   *   Return TRUE if streaming is supported, FALSE otherwise.
+   */
+  public function isStreamingSupported() {
+    // Get the assistant.
+    $assistant = $this->aiAssistantRunner->getAssistant();
+    // Check if the assistant has an agent connected.
+    if (!empty($assistant->get('ai_agent'))) {
+      // We do not allow streaming on tools calling.
+      return FALSE;
+    }
+    // Otherwise return block settings.
+    return $this->configuration['stream'] ?? FALSE;
   }
 
 }

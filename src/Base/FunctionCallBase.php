@@ -116,12 +116,9 @@ abstract class FunctionCallBase extends PluginBase implements FunctionCallInterf
   }
 
   /**
-   * Set output.
-   *
-   * @param string $output
-   *   The output.
+   * {@inheritdoc}
    */
-  public function setOutput(string $output) {
+  public function setOutput(string $output): void {
     $this->stringOutput = $output;
   }
 

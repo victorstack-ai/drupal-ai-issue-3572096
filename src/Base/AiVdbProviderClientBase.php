@@ -20,6 +20,7 @@ use Drupal\ai_search\Plugin\Exception\EmbeddingStrategyException;
 use Drupal\key\KeyRepositoryInterface;
 use Drupal\search_api\IndexInterface;
 use Drupal\search_api\Item\FieldInterface;
+use Drupal\search_api\ServerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -59,6 +60,13 @@ abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, AiVdbP
    * @var array
    */
   protected array $configuration = [];
+
+  /**
+   * The server this backend is configured for.
+   *
+   * @var \Drupal\search_api\ServerInterface
+   */
+  protected ServerInterface $server;
 
   /**
    * Constructs a new AiVdbClientBase abstract class.
@@ -104,6 +112,26 @@ abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, AiVdbP
       $container->get('entity_field.manager'),
       $container->get('messenger'),
     );
+  }
+
+  /**
+   * Retrieves the server instance this backend is configured for.
+   *
+   * @return \Drupal\search_api\ServerInterface|null
+   *   The server instance, or NULL if the server is not set yet.
+   */
+  public function getSearchApiServer(): ?ServerInterface {
+    return $this->server;
+  }
+
+  /**
+   * Sets the server the for this backend.
+   *
+   * @param \Drupal\search_api\ServerInterface|null $server
+   *   The server this backend associated with, or NULL.
+   */
+  public function setSearchApiServer(?ServerInterface $server = NULL): void {
+    $this->server = $server;
   }
 
   /**

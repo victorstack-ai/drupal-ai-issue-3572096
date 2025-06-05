@@ -228,4 +228,24 @@ class ChatMessage {
     $this->images[] = new ImageFile(file_get_contents($file->getFileUri()), $file->getMimeType(), $file->getFilename());
   }
 
+  /**
+   * Create an array of the message.
+   *
+   * @return array
+   *   The array of the message.
+   */
+  public function toArray(): array {
+    $images = [];
+    foreach ($this->images as $image) {
+      $images[] = $image->getBinary();
+    }
+    return [
+      'role' => $this->role,
+      'text' => $this->text,
+      'images' => $images,
+      'tools' => $this->tools ? $this->getRenderedTools() : NULL,
+      'tool_id' => $this->toolId,
+    ];
+  }
+
 }

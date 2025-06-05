@@ -91,6 +91,7 @@ final class AiAssistantForm extends EntityForm {
    * {@inheritdoc}
    */
   public function actions(array $form, FormStateInterface $form_state) {
+    /** @var \Drupal\ai_assistant_api\Entity\AiAssistant $entity */
     $entity = $this->entity;
     $agents_enabled = $this->moduleHandler->moduleExists('ai_agents') &&  $this->entityTypeManager->hasDefinition('ai_agent');
     if (($entity->isNew() && !$agents_enabled) || $entity->get('ai_agent') && !$agents_enabled) {
@@ -126,7 +127,7 @@ final class AiAssistantForm extends EntityForm {
     $agent_entity = NULL;
     $agents = FALSE;
 
-    $old_entity = count($entity->get('actions_enabled')) && !$agents_enabled;
+    $old_entity = count($entity->get('actions_enabled'));
 
     if ($old_entity) {
       // Show message that this will be deprecated.
@@ -143,10 +144,11 @@ final class AiAssistantForm extends EntityForm {
       }
       $form['ai_agent'] = [
         '#type' => 'hidden',
-        '#default_value' => $entity->get('ai_agent') ?? '',
+        '#value' => $entity->get('ai_agent') ?? '',
         '#access' => TRUE,
       ];
 
+      /** @var \Drupal\ai_agent\Entity\AiAgent $agent_entity */
       $agent_entity = $entity->get('ai_agent') ? $this->entityTypeManager->getStorage('ai_agent')->load($entity->get('ai_agent')) : NULL;
     }
 
@@ -252,10 +254,15 @@ final class AiAssistantForm extends EntityForm {
         $tools = [];
         if ($agent_entity) {
           foreach ($agent_entity->get('tools') as $tool => $enabled) {
-            if ($enabled && substr($tool, 0, 20) === 'ai_agents::ai_agent::') {
-              $tools[] = substr($tool, 20);
+            if ($enabled && substr($tool, 0, 21) === 'ai_agents::ai_agent::') {
+              $tools[] = substr($tool, 21);
             }
           }
+        }
+
+        // Remove own agent if it exists.
+        if (isset($agent_options[$entity->id()])) {
+          unset($agent_options[$entity->id()]);
         }
 
         $form['agents_enabled']['agents_agent'] = [
@@ -518,9 +525,10 @@ final class AiAssistantForm extends EntityForm {
       }
     }
     $entity->set('actions_enabled', $action_plugins);
+    $old_entity = count($entity->get('actions_enabled'));
 
     // Handle agent-related logic only if the ai_agents module is enabled.
-    if ($form_state->get('agents_enabled')) {
+    if ($form_state->get('agents_enabled') && !$old_entity) {
       // Get the tools.
       $tools = [];
       foreach ($form_state->getValue('agents_agent') as $key => $val) {
@@ -569,6 +577,7 @@ final class AiAssistantForm extends EntityForm {
       }
       else {
         // Load the agent and set the tools.
+        /** @var \Drupal\ai_agent\Entity\AiAgent $agent */
         $agent = $this->entityTypeManager->getStorage('ai_agent')->load($form_state->getValue('ai_agent'));
         if ($agent) {
           $agent->set('tools', $tools);
