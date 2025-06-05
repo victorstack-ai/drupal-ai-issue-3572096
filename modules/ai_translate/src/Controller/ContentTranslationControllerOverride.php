@@ -20,16 +20,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class ContentTranslationControllerOverride extends ContentTranslationController {
 
   /**
-   * The time service.
-   *
-   * To maintain compatibility with Drupal 10, the time service cannot have
-   * constructor promotion yet.
-   *
-   * @var \Drupal\Component\Datetime\TimeInterface
-   */
-  protected TimeInterface $time;
-
-  /**
    * Initializes a content translation controller.
    *
    * @param \Drupal\content_translation\ContentTranslationManagerInterface $manager
@@ -48,11 +38,8 @@ class ContentTranslationControllerOverride extends ContentTranslationController 
     EntityFieldManagerInterface $entity_field_manager,
     protected readonly AiProviderPluginManager $providerManager,
     protected readonly ControllerResolver $controllerResolver,
-    ?TimeInterface $time,
+    ?TimeInterface $time = NULL,
   ) {
-    if ($time instanceof TimeInterface) {
-      $this->time = $time;
-    }
     parent::__construct($manager, $entity_field_manager, $time);
   }
 
