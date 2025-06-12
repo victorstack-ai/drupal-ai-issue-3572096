@@ -84,13 +84,16 @@
 }
 
 /* Short text */
-.field--type-string.ai-content-suggestions--enabled *:has( > .form-element) {
+.field--type-string.ai-content-suggestions--enabled *:has( > .form-element),
+.field--type-string-long.ai-content-suggestions--enabled *:has( > .form-element) {
   position: relative;
 }
-.field--type-string.ai-content-suggestions--enabled .ai-content-suggestions.button {
+.field--type-string.ai-content-suggestions--enabled .ai-content-suggestions.button,
+.field--type-string-long.ai-content-suggestions--enabled .ai-content-suggestions.button {
   margin-left: 16px;
 }
-.field--type-string.ai-content-suggestions--enabled {
+.field--type-string.ai-content-suggestions--enabled,
+.field--type-string-long.ai-content-suggestions--enabled {
   position: relative;
   display: flex;
   align-items: center;
@@ -98,9 +101,13 @@
 .field--type-string.ai-content-suggestions--enabled *:has( > .form-element)::after {
   top: 36px;
 }
+.field--type-string-long.ai-content-suggestions--enabled .form-textarea-wrapper::after {
+  bottom: 10px;
+}
 
 /* AI function indicator */
 .field--type-string.ai-content-suggestions--enabled *:has( > .form-element)::after,
+.field--type-string-long.ai-content-suggestions--enabled .form-textarea-wrapper::after,
 .field--type-text-long.ai-content-suggestions--enabled .form-textarea-wrapper::after {
   content: "AI Function";
   pointer-events: none;
@@ -120,6 +127,7 @@
   transition: all 0.25s ease-in-out;
 }
 .field--type-string.ai-content-suggestions--enabled:has(input:focus) .form-item::after,
+.field--type-string-long.ai-content-suggestions--enabled:has(textarea:focus) .form-textarea-wrapper::after,
 .field--type-text-long.ai-content-suggestions--enabled:has(.ck-focused) .form-textarea-wrapper::after {
   opacity: 0;
 }
@@ -129,6 +137,7 @@
   display: none;
 }
 .field--type-string.ai-content-suggestions--enabled:has(input:focus) .ai-content-suggestions.button,
+.field--type-string-long.ai-content-suggestions--enabled:has(textarea:focus) .ai-content-suggestions.button,
 .field--type-text-long.ai-content-suggestions--enabled:has(.ck-focused) .ai-content-suggestions.button {
   display: block;
 }
