@@ -84,13 +84,6 @@ class RagTool extends FunctionCallBase implements ExecutableFunctionCallInterfac
   }
 
   /**
-   * The results.
-   *
-   * @var array
-   */
-  protected array $results = [];
-
-  /**
    * The index for the results.
    *
    * @var string
@@ -114,10 +107,12 @@ class RagTool extends FunctionCallBase implements ExecutableFunctionCallInterfac
     $amount = $this->getContextValue('amount');
     $min_score = $this->getContextValue('min_score');
 
+    $end_results = [];
+
     /** @var \Drupal\search_api\Entity\Index */
     $index = $this->entityTypeManager->getStorage('search_api_index')->load($this->index);
     if (!$index) {
-      $this->results[] = 'Index not found.';
+      $this->setOutput("The index was not found.");
       return;
     }
     // Then we try to search.
@@ -134,26 +129,22 @@ class RagTool extends FunctionCallBase implements ExecutableFunctionCallInterfac
         if ($min_score > $result->getScore()) {
           continue;
         }
-        $this->results[] = "Search result: #$i:\n```\n" . $result->getExtraData('content') . "\n```\n\n";
+        $end_results[] = "Search result: #$i:\n```\n" . $result->getExtraData('content') . "\n```\n\n";
         $i++;
       }
     }
     catch (\Exception $e) {
-      $this->results[] = 'Failed to search the index.';
+      $this->setOutput("Failed to search the index");
       return;
     }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getReadableOutput(): string {
-    if (count($this->results)) {
+    if (count($end_results)) {
       $output = "Results from searching in the rag index $this->index for the following prompt: $this->searchString.\n";
-      $output .= implode("\n", $this->results);
-      return $output;
+      $output .= implode("\n", $end_results);
+      $this->setOutput($output);
     }
-    return "No results were found when searching in the rag index $this->index for the following prompt: $this->searchString.\n";
+    else {
+      $this->setOutput("No results were found when searching in the rag index for the following prompt: $this->searchString.\n");
+    }
   }
 
 }
