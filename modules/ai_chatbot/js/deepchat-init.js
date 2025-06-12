@@ -220,8 +220,6 @@
 
         // We create a session when the first message is sent.
         deepchatElement.requestInterceptor = async (request) => {
-          // Start processing.
-          Drupal.behaviors.deepChatToggle.processing = true;
           // If a session does not exist, we need to set one and get a new csrf.
           if (drupalSettings.ai_deepchat.session_exists === false && !Drupal.behaviors.deepChatToggle.csrfToken) {
             // Get the session and csrf token.
@@ -373,6 +371,8 @@
   }
 
   function getAllMessages(deepchatElement) {
+    // Start processing.
+    Drupal.behaviors.deepChatToggle.processing = true;
     const n = (deepchatElement.getMessages().length - 1);
     fetch(deepchatElement.connect.url, {
       method: 'POST',
