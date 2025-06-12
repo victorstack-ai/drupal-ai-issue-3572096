@@ -56,7 +56,7 @@ class AiContentSuggestions {
   #[Hook('field_widget_third_party_settings_form')]
   public function fieldWidgetThirdPartySettingsForm(WidgetInterface $plugin, FieldDefinitionInterface $field_definition, $form_mode, array $form, FormStateInterface $form_state) {
     $element = [];
-    if (in_array($field_definition->getType(), ['string', 'text', 'text_long', 'text_with_summary'])) {
+    if (in_array($field_definition->getType(), ['string', 'string_long', 'text', 'text_long', 'text_with_summary'])) {
       $element['enabled'] = [
         '#type' => 'checkbox',
         '#title' => $this->t('Enable AI suggestions'),
