@@ -33,7 +33,9 @@ nav:
   - Modules:
     - AI API Explorer: modules/ai_api_explorer/index.md
     - AI Assistant API: modules/ai_assistant_api/index.md
-    - AI Automators: modules/ai_automators/index.md
+    - AI Automators:
+      - General: modules/ai_automators/index.md
+      - AI Automator Types: modules/ai_automators/automator_types/index.md
     - AI Chatbot: modules/ai_assistant_api/#ai-chatbot-module
     - AI Ckeditor: modules/ai_ckeditor/index.md
     - AI Content Suggestions: modules/ai_content_suggestions/index.md
