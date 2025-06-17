@@ -459,6 +459,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
   public function build() {
     /** @var \Drupal\ai_assistant_api\Entity\AiAssistant $assistant */
     $assistant = $this->entityTypeManager->getStorage('ai_assistant')->load($this->configuration['ai_assistant']);
+    $active_theme = $this->themeManager->getActiveTheme()->getName();
 
     $this->aiAssistantRunner->setAssistant($assistant);
     $this->aiAssistantRunner->streamedOutput($this->isStreamingSupported());
@@ -466,6 +467,9 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
 
     $block['#theme'] = 'ai_deepchat';
     $block['#attached']['library'][] = 'ai_chatbot/deepchat';
+    if ($active_theme == 'gin') {
+      $block['#attached']['library'][] = 'ai_chatbot/gin';
+    }
 
     $user_data = $this->getUserData();
 
@@ -473,7 +477,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $this->configuration['default_avatar'] = $user_data['avatar'];
     $block['#settings'] = $this->configuration;
     $block['#deepchat_settings'] = $this->getDeepChatParameters($this->configuration['style_file']);
-    $block['#current_theme'] = 'chatbot-' . $this->themeManager->getActiveTheme()->getName();
+    $block['#current_theme'] = 'chatbot-' . $active_theme;
     $block['#attached']['drupalSettings']['ai_deepchat']['assistant_id'] = $this->aiAssistantRunner->getAssistant()->id();
     $block['#attached']['drupalSettings']['ai_deepchat']['thread_id'] = $this->aiAssistantRunner->getThreadsKey();
     $block['#attached']['drupalSettings']['ai_deepchat']['bot_name'] = $this->configuration['bot_name'];
