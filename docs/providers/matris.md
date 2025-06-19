@@ -27,5 +27,6 @@ The full list of providers available.
 | [SQLite](https://www.drupal.org/project/ai_vdb_provider_sqlite) | | ☑ |
 | [Vertex AI](https://www.drupal.org/project/ai_provider_google_vertex) | ☑ | | ☑ |  |  |  |  | | | ☑ |
 | [x AI](https://www.drupal.org/project/ai_provider_x/) | ☑ | | | | ☑ |
+| [Docker Model Runner](https://www.drupal.org/project/ai_provider_docker) | ☑ | | ☑ |
 
 Do a pull request on this MD file if your provider is missing.
