@@ -222,3 +222,13 @@ COSIM
 subprompt
 voiceovers
 amazee
+fontawesome
+glightbox
+autohide
+pymdownx
+Anthropics
+loggability
+agentic
+minikanban
+johansson
+RTBC

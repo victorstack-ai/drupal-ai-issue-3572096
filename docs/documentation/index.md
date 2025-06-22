@@ -8,10 +8,13 @@ This means that if you want an offline version of this documentation, this is wh
 ## How do I change this documentation
 You can simply create an issue, under the [AI Issue queue](https://www.drupal.org/project/issues/ai?categories=All). Then you do a MR with your changes and if they make sense we will merge them and they will show up.
 
-For exact instructions see [Contribute Documentation](../developers/contribute.md#contribute-documentation).
+For exact instructions see [Contribute Documentation](../contribute/documentation.md).
 
 ## How do I test the changes locally.
 Use pip to get the mkdocs package and then you can just run `mkdocs serve` in the root directory of the AI module and it will be available under http://localhost:8000 by default.
+
+## How do I install mkdocs
+Install MkDocs: `pip install mkdocs mkdocs-material`
 
 ## My changes only apply for specific versions
 Just make the MR to latest version it applied to it, and they you can tag the issue as "Backport to version x.x.x" and the maintainer that merges it will make sure it shows up on all the different documentations.
@@ -25,6 +28,7 @@ If you contribute to an Provider and want to promote it or write installation in
 This can only be done by maintainers that has the right to push to the repo. When you have decided that we for instance have a stable release or near stable release of a version and want to make that the default when you visit https://project.pages.drupalcode.org/ai/ these are the following things you need to to.
 
 In this case we do 3.1.x for instance.
+
 1. Get mkdocs and mike - `pip install mike mkdocs`
 2. Checkout that version in git - `git checkout 3.1.x`
 3. Change in mkdocs.yml the canonical_version, this is for SEO reasons. Make sure to push this also.
