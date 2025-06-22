@@ -118,6 +118,8 @@ pages:
     - git remote set-url origin https://oauth2:${DOCS_TOKEN}@git.drupalcode.org/project/ai.git
     - echo "Deploying documentation to gh-pages branch to have latest built version"
     - mike deploy $VERSION --push
+    - echo "Remove any changes"
+    - git reset --hard
     - echo "Switching to updated gh-pages branch to copy the built documentation"
     - git checkout gh-pages
     - mv mkdocs public
