@@ -29,7 +29,22 @@ extra:
       link: https://www.linkedin.com/company/drupal-ai
 nav:
   - Home: index.md
-  - Develop & Contribute:
+  - Submodules:
+    - AI API Explorer: modules/ai_api_explorer/index.md
+    - AI Assistant API: modules/ai_assistant_api/index.md
+    - AI Automators:
+      - General: modules/ai_automators/index.md
+      - AI Automator Types: modules/ai_automators/automator_types/index.md
+    - AI Chatbot: modules/ai_assistant_api/#ai-chatbot-module
+    - AI Ckeditor: modules/ai_ckeditor/index.md
+    - AI Content Suggestions: modules/ai_content_suggestions/index.md
+    - AI ECA: modules/ai_eca/index.md
+    - AI External Moderation: modules/ai_external_moderation/index.md
+    - AI Logging: modules/ai_logging/index.md
+    - AI Search: modules/ai_search/index.md
+    - AI Translate: modules/ai_translate/index.md
+    - AI Validations: modules/ai_validations/index.md
+  - Develop:
     - Getting Started: developers/developer_information.md
     - Why base on the AI module?: developers/why_ai.md
     - Making AI Calls:
@@ -47,7 +62,6 @@ nav:
     - Plugins:
       - Function Call Schema: developers/function_call_schema.md
     - Develop a third-party module: developers/develop_third_party_module.md
-    - Contribute to the AI module: developers/contribute.md
     - Events: developers/events.md
     - DDEV: developers/ddev.md
     - Develop for submodules:
@@ -56,25 +70,13 @@ nav:
         - Develop an AI Automators plugin: developers/writing_an_ai_automators_plugin.md
         - AI CKEditor: developers/ck_editor_plugin.md
         - Develop an AI Provider: developers/writing_an_ai_provider.md
-  - Modules:
-    - AI API Explorer: modules/ai_api_explorer/index.md
-    - AI Assistant API: modules/ai_assistant_api/index.md
-    - AI Automators:
-      - General: modules/ai_automators/index.md
-      - AI Automator Types: modules/ai_automators/automator_types/index.md
-    - AI Chatbot: modules/ai_assistant_api/#ai-chatbot-module
-    - AI Ckeditor: modules/ai_ckeditor/index.md
-    - AI Content Suggestions: modules/ai_content_suggestions/index.md
-    - AI ECA: modules/ai_eca/index.md
-    - AI External Moderation: modules/ai_external_moderation/index.md
-    - AI Logging: modules/ai_logging/index.md
-    - AI Search: modules/ai_search/index.md
-    - AI Translate: modules/ai_translate/index.md
-    - AI Validations: modules/ai_validations/index.md
-    - Providers:
-      - Ollama: modules/providers/provider_ollama/index.md
-    - VDB Providers:
-      - Milvus: modules/vdb_providers/vdb_provider_milvus/index.md
+  - Contribute:
+    - Getting Started: contribute/index.md
+    - Contribute Documentation: contribute/documentation.md
+    - Contribute Bug Reports: contribute/bug_finding.md
+    - Contribute Testings: contribute/testing.md
+    - Contribute Features: contribute/features.md
+    - Developer Information: contribute/developer_information.md
   - Providers: providers/matris.md
   - Agents:
     - Getting Started: agents/index.md

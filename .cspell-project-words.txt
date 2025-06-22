@@ -230,3 +230,5 @@ Anthropics
 loggability
 agentic
 minikanban
+johansson
+RTBC
