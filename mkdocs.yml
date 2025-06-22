@@ -1,6 +1,32 @@
-site_name: Documentation for AI (Artificial Intelligence) module for Drupal
+site_name: AI (Artificial Intelligence) module for Drupal
+repo_url: https://git.drupalcode.org/project/ai
+repo_name: drupal/ai
+edit_uri: -/tree/1.1.x/docs/
 theme:
   name: material
+  font:
+    code: Roboto Mono
+  palette:
+    primary: indigo
+  features:
+    - header.autohide
+  features:
+    - navigation.footer
+    - content.action.edit
+plugins:
+  - glightbox
+markdown_extensions:
+  - attr_list
+  - md_in_html
+  - pymdownx.blocks.caption
+extra:
+  social:
+    - icon: fontawesome/brands/gitlab
+      link: https://git.drupalcode.org/project/ai
+    - icon: fontawesome/brands/slack
+      link: https://drupal.slack.com/archives/C0803LX4536
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/company/drupal-ai
 nav:
   - Home: index.md
   - Develop & Contribute:
@@ -50,6 +76,13 @@ nav:
     - VDB Providers:
       - Milvus: modules/vdb_providers/vdb_provider_milvus/index.md
   - Providers: providers/matris.md
+  - Agents:
+    - Getting Started: agents/index.md
+    - What is an Agent?: agents/what_is_an_agent.md
+    - Understanding Orchestration: agents/orchestration.md
+    - Building an Agent: agents/build_agent.md
+    - Agent Form Parts: agents/agent_form_parts.md
+    - Security Considerations: agents/security.md
   - Documentation (How to): documentation/index.md
 docs_dir: docs
 site_dir: site
