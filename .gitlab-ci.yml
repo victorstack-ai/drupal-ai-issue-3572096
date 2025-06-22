@@ -120,6 +120,7 @@ pages:
     - mike deploy $VERSION --push
     - echo "Remove any changes"
     - git reset --hard
+    - git clean -fd
     - echo "Switching to updated gh-pages branch to copy the built documentation"
     - git checkout gh-pages
     - mv mkdocs public

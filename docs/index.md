@@ -7,7 +7,7 @@ integrating various AI models and services into your Drupal site.
 
 - Drupal ^10.3 || ^11
 - [Key module](https://www.drupal.org/project/key)
-- Requires at least one AI Provider to be installed and configured to do something.
+- Requires at least one AI Provider to be installed and configured.
 
 ## Getting Started
 
