@@ -143,7 +143,7 @@ class AiContentSuggestions {
         '#weight' => 100,
         '#name' => $context['items']->getName() . '_ai_content_suggestions',
         '#type' => 'button',
-        '#value' => $settings['button'] ?? $this->t('AI Suggestions'),
+        '#value' => $settings['button'] ?: $this->t('AI Suggestions'),
         '#prefix' => '<div class="ai-content-suggestions-wrapper">',
         '#suffix' => '</div>',
         '#attributes' => [
