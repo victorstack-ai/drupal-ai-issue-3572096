@@ -87,6 +87,8 @@ nav:
 docs_dir: docs
 site_dir: site
 plugins:
+  - search:
+      lang: en
   - mike:
       alias_type: redirect
       # This is for SEO reasons, not redirects.
