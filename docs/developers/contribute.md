@@ -21,6 +21,8 @@ To contribute documentation, please follow these steps:
 3. Download this fork and do you documentation changes.
 4. Push them back and do a merge request.
 
+For more information about documentation, checkout [Documentation (How to)](../documentation/index.md).
+
 ## Contribute testing scripts
 
 Any type of kernel or functional test, based on how the features are supposed to behave would be great to add. The main maintainers do have limited time and a lot of time initially is spent on feature development.
