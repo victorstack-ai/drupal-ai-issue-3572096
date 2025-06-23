@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Plugin\AiApiExplorer;
 
+use Drupal\ai\OperationType\GenericType\DocumentFile;
 use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Form\FormStateInterface;
@@ -146,9 +147,8 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
     $form['left']['prompts']['image_1'] = [
       '#type' => 'file',
       // Only jpg, png files are allowed, since that covers most models.
-      '#accept' => '.jpg, .png, .jpeg',
-      '#title' => $this->t('Image'),
-      '#description' => $this->t('Attach an image to the call. Note that not all models support images and will throw an error.'),
+      '#title' => $this->t('File'),
+      '#description' => $this->t('Attach a file to the call. Note that not all models support images or other files and will throw an error.'),
     ];
 
     $form['left']['streamed'] = [
@@ -270,15 +270,22 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
           $role = $value;
           $message = $values['message_' . $index];
           // Load the file.
-          $image = "";
+          $attachment = "";
           if (isset($files['files']['image_' . $index])) {
-            $raw_file = file_get_contents($files['files']['image_' . $index]->getPathname());
-            $image = new ImageFile($raw_file, $files['files']['image_' . $index]->getClientMimeType(), $files['files']['image_' . $index]->getClientOriginalName());
+            $file = $files['files']['image_' . $index];
+            $raw_file = file_get_contents($file->getPathname());
+            if (str_starts_with($file->getClientMimeType(), 'image')) {
+              $attachment = new ImageFile($raw_file, $file->getClientMimeType(), $file->getClientOriginalName());
+            }
+            elseif ($file->getClientMimeType() === 'application/pdf') {
+              $attachment = new DocumentFile($raw_file, $file->getClientMimeType(), $file->getClientOriginalName());
+            }
+            // @todo support also other file types.
           }
           if ($role && $message) {
             $images = [];
-            if ($image) {
-              $images[] = $image;
+            if ($attachment) {
+              $images[] = $attachment;
             }
             $messages[] = new ChatMessage($role, $message, $images);
           }

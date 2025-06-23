@@ -2,6 +2,7 @@
 
 namespace Drupal\ai\OperationType\Chat;
 
+use Drupal\ai\OperationType\GenericType\FileBaseInterface;
 use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\Traits\File\FileMimeTypeTrait;
 use Drupal\file\Entity\File;
@@ -28,11 +29,11 @@ class ChatMessage {
   private string $text;
 
   /**
-   * The images files in an array.
+   * The files in an array.
    *
-   * @var \Drupal\ai\OperationType\GenericType\ImageFile[]
+   * @var \Drupal\ai\OperationType\GenericType\FileBaseInterface[]
    */
-  private array $images;
+  private array $files;
 
   /**
    * The tools.
@@ -55,13 +56,13 @@ class ChatMessage {
    *   The role of the message.
    * @param string $text
    *   The text.
-   * @param \Drupal\ai\OperationType\GenericType\ImageFile[] $images
-   *   The images.
+   * @param \Drupal\ai\OperationType\GenericType\FileBaseInterface[] $images
+   *   The files.
    */
   public function __construct(string $role = "", string $text = "", array $images = []) {
     $this->role = $role;
     $this->text = $text;
-    $this->images = $images;
+    $this->files = $images;
   }
 
   /**
@@ -105,13 +106,34 @@ class ChatMessage {
   }
 
   /**
+   * Get the files.
+   *
+   * @return \Drupal\ai\OperationType\GenericType\FileBaseInterface[]
+   *   The files.
+   */
+  public function getFiles(): array {
+    return $this->files;
+  }
+
+  /**
    * Get the images.
    *
    * @return \Drupal\ai\OperationType\GenericType\ImageFile[]
    *   The images.
    */
   public function getImages(): array {
-    return $this->images;
+    // As part of the BC we return only images here.
+    return array_filter($this->files, fn($file) => $file instanceof ImageFile);
+  }
+
+  /**
+   * Set the file.
+   *
+   * @param \Drupal\ai\OperationType\GenericType\FileBaseInterface $file
+   *   The file.
+   */
+  public function setFile(FileBaseInterface $file): void {
+    $this->files[] = $file;
   }
 
   /**
@@ -121,7 +143,7 @@ class ChatMessage {
    *   The image.
    */
   public function setImage(ImageFile $image): void {
-    $this->images[] = $image;
+    $this->files[] = $image;
   }
 
   /**
@@ -189,7 +211,7 @@ class ChatMessage {
    *   The mime type.
    */
   public function setImageFromBinary(string $binary, string $mime_type): void {
-    $this->images[] = new ImageFile($binary, $mime_type);
+    $this->files[] = new ImageFile($binary, $mime_type);
   }
 
   /**
@@ -202,7 +224,7 @@ class ChatMessage {
     // Get mime type from the uri.
     $mime_type = $this->getFileMimeTypeGuesser()->guessMimeType($url);
     $filename = basename($url);
-    $this->images[] = new ImageFile(file_get_contents($url), $mime_type, $filename);
+    $this->files[] = new ImageFile(file_get_contents($url), $mime_type, $filename);
   }
 
   /**
@@ -215,7 +237,7 @@ class ChatMessage {
     // Get mime type from the uri.
     $mime_type = $this->getFileMimeTypeGuesser()->guessMimeType($uri);
     $filename = basename($uri);
-    $this->images[] = new ImageFile(file_get_contents($uri), $mime_type, $filename);
+    $this->files[] = new ImageFile(file_get_contents($uri), $mime_type, $filename);
   }
 
   /**
@@ -225,7 +247,7 @@ class ChatMessage {
    *   The file.
    */
   public function setImageFromFile(File $file): void {
-    $this->images[] = new ImageFile(file_get_contents($file->getFileUri()), $file->getMimeType(), $file->getFilename());
+    $this->files[] = new ImageFile(file_get_contents($file->getFileUri()), $file->getMimeType(), $file->getFilename());
   }
 
   /**
@@ -236,12 +258,13 @@ class ChatMessage {
    */
   public function toArray(): array {
     $images = [];
-    foreach ($this->images as $image) {
+    foreach ($this->files as $image) {
       $images[] = $image->getBinary();
     }
     return [
       'role' => $this->role,
       'text' => $this->text,
+      // @todo find out if this can be changed to 'files'
       'images' => $images,
       'tools' => $this->tools ? $this->getRenderedTools() : NULL,
       'tool_id' => $this->toolId,
