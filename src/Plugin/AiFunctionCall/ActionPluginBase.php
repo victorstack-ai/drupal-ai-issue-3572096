@@ -2,6 +2,7 @@
 
 namespace Drupal\ai\Plugin\AiFunctionCall;
 
+use Drupal\ai\PluginManager\AiDataTypeConverterPluginManager;
 use Drupal\Component\Plugin\ConfigurableInterface;
 use Drupal\Core\Action\ActionManager;
 use Drupal\Core\Action\ActionPluginCollection;
@@ -64,7 +65,9 @@ class ActionPluginBase extends FunctionCallBase implements ExecutableFunctionCal
    * @param mixed $plugin_definition
    *   The plugin implementation definition.
    * @param \Drupal\ai\Utility\ContextDefinitionNormalizer $context_definition_normalizer
-   *   The context definition normalizer service.
+   *   The data type normalizer service.
+   * @param \Drupal\ai\PluginManager\AiDataTypeConverterPluginManager $data_type_converter_manager
+   *   The ai context converter plugin manager.
    * @param \Drupal\Core\Action\ActionManager $action_manager
    *   The action manager service.
    */
@@ -73,9 +76,10 @@ class ActionPluginBase extends FunctionCallBase implements ExecutableFunctionCal
     $plugin_id,
     $plugin_definition,
     protected ContextDefinitionNormalizer $context_definition_normalizer,
+    protected AiDataTypeConverterPluginManager $data_type_converter_manager,
     protected ActionManager $action_manager,
   ) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition, $context_definition_normalizer);
+    parent::__construct($configuration, $plugin_id, $plugin_definition, $context_definition_normalizer, $data_type_converter_manager);
     $this->actionManager = $action_manager;
   }
 
@@ -88,6 +92,7 @@ class ActionPluginBase extends FunctionCallBase implements ExecutableFunctionCal
       $plugin_id,
       $plugin_definition,
       $container->get('ai.context_definition_normalizer'),
+      $container->get('plugin.manager.ai_data_type_converter'),
       $container->get('plugin.manager.action')
     );
   }

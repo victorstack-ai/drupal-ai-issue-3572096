@@ -128,13 +128,13 @@ class ActionPluginDeriver extends DeriverBase implements ContainerDeriverInterfa
   }
 
   /**
-   * Get the context definitions for the action plugin.
+   * Get the data types for the action plugin.
    *
    * @param \Drupal\Core\Action\ActionInterface $action_plugin
    *   The action plugin.
    *
    * @return array
-   *   An array of context definitions.
+   *   An array of data types.
    */
   protected function getContextDefinitions(ActionInterface $action_plugin) {
     $context_definitions = [];
