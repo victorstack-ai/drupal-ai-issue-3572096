@@ -49,6 +49,13 @@ abstract class FunctionCallBase extends PluginBase implements FunctionCallInterf
   protected string $stringOutput = "";
 
   /**
+   * The structured output.
+   *
+   * @var array
+   */
+  protected array $structuredOutput = [];
+
+  /**
    * Constructs a FunctionCall plugin.
    *
    * @param array $configuration
@@ -148,7 +155,7 @@ abstract class FunctionCallBase extends PluginBase implements FunctionCallInterf
    */
   public function populateChildValue(FunctionCallInterface $child, array $values): array {
     $items = [];
-    foreach ($values as $key => $props) {
+    foreach ($values as $props) {
       $item = clone $child;
       foreach ($props as $prop => $value) {
         if (property_exists($child, $prop)) {
@@ -176,6 +183,26 @@ abstract class FunctionCallBase extends PluginBase implements FunctionCallInterf
       }
     }
     return $function;
+  }
+
+  /**
+   * Add the get structured output method to the abstract as fallback.
+   *
+   * @return array
+   *   The structured output.
+   */
+  public function getStructuredOutput(): array {
+    return $this->structuredOutput ?? [];
+  }
+
+  /**
+   * Set the structured output.
+   *
+   * @param array $output
+   *   The structured output to set.
+   */
+  public function setStructuredOutput(array $output): void {
+    $this->structuredOutput = $output;
   }
 
 }

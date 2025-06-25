@@ -135,7 +135,6 @@ class ActionPluginBase extends FunctionCallBase implements ExecutableFunctionCal
       // Set the execution status to failed and store the error message.
       $this->executionStatus = 'failed';
       $this->errorMessage = $e->getMessage();
-
     }
   }
 
