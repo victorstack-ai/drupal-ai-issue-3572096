@@ -73,18 +73,18 @@ class AiAutomatorEntityModifier {
    * @param bool $isInsert
    *   Is it an insert.
    *
-   * @return bool
-   *   If the entity is saved or marked for saving.
+   * @return \Drupal\Core\Entity\ContentEntityInterface|null
+   *   The entity or NULL if no automator fields are found.
    */
   public function saveEntity(EntityInterface $entity, $isInsert = FALSE) {
     // Only run on Content Interfaces.
     if (!($entity instanceof ContentEntityInterface)) {
-      return FALSE;
+      return NULL;
     }
     // Get and check so field configs exists.
     $configs = $this->entityHasConfig($entity);
     if (!count($configs)) {
-      return FALSE;
+      return NULL;
     }
 
     // Resort on weight to create in the right order.
@@ -134,7 +134,7 @@ class AiAutomatorEntityModifier {
     foreach ($processes as $process) {
       $process->postProcessing($entity);
     }
-    return TRUE;
+    return $entity;
   }
 
   /**

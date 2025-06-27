@@ -1,11 +1,14 @@
 /* Suggestions Button */
+.ai-content-suggestions--enabled .button--primary,
+.ai-content-suggestions--enabled .button--primary:not(:focus),
 .ai-content-suggestions.form-submit {
-  background-image: url("../icons/ai_spark_icon_black.svg");
+  background-image: url("../icons/ai_spark_icon_red.svg");
   background-position: 8px 8px;
   background-size: 25px;
   background-repeat: no-repeat;
   padding-left: 40px !important;
 }
+.ai-content-suggestions--enabled .button--primary:hover,
 .ai-content-suggestions.form-submit:hover {
   background-image: url("../icons/ai_spark_icon_purple.svg");
 }
@@ -89,7 +92,8 @@
   position: relative;
 }
 .field--type-string.ai-content-suggestions--enabled .ai-content-suggestions.button,
-.field--type-string-long.ai-content-suggestions--enabled .ai-content-suggestions.button {
+.field--type-string-long.ai-content-suggestions--enabled .ai-content-suggestions.button,
+.field--type-string.ai-content-suggestions--enabled .field-widget-action-widget-button {
   margin-left: 16px;
 }
 .field--type-string.ai-content-suggestions--enabled,
@@ -133,9 +137,13 @@
 }
 
 /* Only show button when fields are focused */
+.ai-content-suggestions--enabled .field-widget-action-widget-button,
 .ai-content-suggestions.button {
   display: none;
 }
+
+.field--type-string.ai-content-suggestions--enabled:has(input:focus) .field-widget-action-widget-button,
+.field--type-text-long.ai-content-suggestions--enabled:has(.ck-focused) .field-widget-action-widget-button,
 .field--type-string.ai-content-suggestions--enabled:has(input:focus) .ai-content-suggestions.button,
 .field--type-string-long.ai-content-suggestions--enabled:has(textarea:focus) .ai-content-suggestions.button,
 .field--type-text-long.ai-content-suggestions--enabled:has(.ck-focused) .ai-content-suggestions.button {
