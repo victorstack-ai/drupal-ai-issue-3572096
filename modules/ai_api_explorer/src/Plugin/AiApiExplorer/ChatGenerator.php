@@ -108,7 +108,7 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
       '#type' => 'details',
       '#title' => $this->t('Chat Messages'),
       '#open' => TRUE,
-      '#description' => $this->t('<strong>Please note: This is not a chat, its an explorer of the chat endpoint to build chat logic!</strong> <br />Enter your chat messages here, each message has to have a role and a message. Role will no always be used by all providers/models.'),
+      '#description' => $this->t('<strong>Please note: This is not a chat, it is an explorer of the chat endpoint to build chat logic!</strong> <br />Enter your chat messages here, each message has to have a role and a message. The role may not be used by all providers or models.'),
     ];
 
     $form['left']['prompts']['system_prompt'] = [
