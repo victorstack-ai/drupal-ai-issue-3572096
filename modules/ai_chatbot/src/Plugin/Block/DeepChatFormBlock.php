@@ -516,6 +516,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
    *   Return the parameters.
    */
   public function getDeepChatParameters(string $style) {
+    $deepchat = [];
     // Some basic settings.
     $style_parameters = $this->getStyleParameters($style);
     // Special solution for style.
@@ -542,7 +543,18 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     // Override the avatars.
     $user_data = $this->getUserData();
     $deepchat['avatars']['ai']['src'] = $this->configuration['bot_image'];
+    if (empty($deepchat['avatars']['ai']['src'])) {
+      unset($deepchat['avatars']['ai']);
+    }
     $deepchat['avatars']['user']['src'] = $user_data['avatar'];
+    if (empty($deepchat['avatars']['user']['src'])) {
+      unset($deepchat['avatars']['user']);
+    }
+
+    if (is_array($deepchat['avatars']) && !count($deepchat['avatars'])) {
+      unset($deepchat['avatars']);
+    }
+
     $deepchat['class'] = 'deepchat-element';
     $deepchat['intromessage']['text'] = $this->configuration['first_message'];
 
