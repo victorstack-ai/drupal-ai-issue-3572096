@@ -144,14 +144,14 @@ class RagTool extends FunctionCallBase implements StructuredExecutableFunctionCa
       $this->setOutput("Failed to search the index");
       return;
     }
-
-    if (count($this->results)) {
+    if (count($end_results)) {
       $output = "Results from searching in the rag index " . $this->index . " for the following prompt: " . $this->searchString . ".\n";
-      $output .= implode("\n", $this->results);
+      $output .= implode("\n", $end_results);
       $this->setOutput($output);
-      return;
     }
-    $this->setOutput("No results were found when searching in the rag index " . $this->index . " for the following prompt: " . $this->searchString . ".\n");
+    else {
+      $this->setOutput("No results were found when searching in the rag index " . $this->index . " for the following prompt: " . $this->searchString . ".\n");
+    }
   }
 
   /**

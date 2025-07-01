@@ -2,23 +2,24 @@
 
 namespace Drupal\ai\Base;
 
-use Drupal\ai\PluginManager\AiDataTypeConverterPluginManager;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\Core\Plugin\ContextAwarePluginTrait;
 use Drupal\Core\Plugin\PluginBase;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\ai\OperationType\Chat\Tools\ToolsFunctionInput;
 use Drupal\ai\OperationType\Chat\Tools\ToolsFunctionOutput;
+use Drupal\ai\PluginManager\AiDataTypeConverterPluginManager;
 use Drupal\ai\Service\FunctionCalling\FunctionCallInterface;
+use Drupal\ai\Traits\PluginManager\AiDataTypeConverterPluginManagerTrait;
 use Drupal\ai\Utility\ContextDefinitionNormalizer;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Function call base class.
  */
-abstract class FunctionCallBase extends PluginBase implements FunctionCallInterface, ContainerFactoryPluginInterface, ContextAwarePluginInterface {
+abstract class FunctionCallBase extends PluginBase implements FunctionCallInterface, ContainerFactoryPluginInterface {
 
+  use AiDataTypeConverterPluginManagerTrait;
   use StringTranslationTrait;
   use ContextAwarePluginTrait {
     setContextValue as protected traitSetContextValue;
@@ -74,11 +75,15 @@ abstract class FunctionCallBase extends PluginBase implements FunctionCallInterf
     $plugin_id,
     $plugin_definition,
     protected ContextDefinitionNormalizer $context_definition_normalizer,
-    protected AiDataTypeConverterPluginManager $data_type_converter_manager,
+    protected ?AiDataTypeConverterPluginManager $data_type_converter_manager = NULL,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->contextDefinitionNormalizer = $context_definition_normalizer;
-    $this->dataTypeConverterManager = $data_type_converter_manager;
+
+    if (!$data_type_converter_manager instanceof AiDataTypeConverterPluginManager) {
+      @trigger_error('FunctionCallBase::__construct() without the AiDataTypeConverterPluginManager argument is deprecated in ai:1.2.0 and will be required in ai:2.0.0. See https://www.drupal.org/project/ai/issues/3512100', E_USER_DEPRECATED);
+    }
+
   }
 
   /**
@@ -146,7 +151,7 @@ abstract class FunctionCallBase extends PluginBase implements FunctionCallInterf
    * {@inheritdoc}
    */
   public function setContextValue($name, $value) {
-    $value = $this->dataTypeConverterManager->convert($this->getContextDefinition($name)->getDataType(), $value);
+    $value = $this->dataTypeConverterManager()->convert($this->getContextDefinition($name)->getDataType(), $value);
     return $this->traitSetContextValue($name, $value);
   }
 
@@ -203,6 +208,16 @@ abstract class FunctionCallBase extends PluginBase implements FunctionCallInterf
    */
   public function setStructuredOutput(array $output): void {
     $this->structuredOutput = $output;
+  }
+
+  /**
+   * Get the data type converter manager.
+   *
+   * @return \Drupal\ai\PluginManager\AiDataTypeConverterPluginManager
+   *   The data type converter plugin manager.
+   */
+  protected function dataTypeConverterManager(): AiDataTypeConverterPluginManager {
+    return $this->dataTypeConverterManager ?? $this->getAiDataTypeConverterPluginManager();
   }
 
 }
