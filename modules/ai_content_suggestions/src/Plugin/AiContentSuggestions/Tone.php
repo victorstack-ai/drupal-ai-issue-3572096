@@ -267,7 +267,7 @@ final class Tone extends AiContentSuggestionsPluginBase {
     $this->toneConfig->set($this->getPluginId() . '_taxonomy', $taxonomy)->save();
     $taxonomy_enabled = $value[$this->getPluginId() . '_taxonomy_enabled'] ?? 0;
     $this->toneConfig->set($this->getPluginId() . '_taxonomy_enabled', (bool) $taxonomy_enabled)->save();
-    $prompt = $value[$this->getPluginId() . '_prompt'];
+    $prompt = $value[$this->getPluginId() . '_prompt'] ?? $this->defaultPrompt;
     $this->promptConfig->set($this->getPluginId(), $prompt)->save();
   }
 
