@@ -8,6 +8,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai_ckeditor\AiCKEditorPluginBase;
 use Drupal\ai_ckeditor\Attribute\AiCKEditor;
 use Drupal\ai_ckeditor\Command\AiRequestCommand;
+use Drupal\taxonomy\Entity\Term;
 
 /**
  * Plugin to translate the language of selected text.
@@ -166,30 +167,15 @@ final class Translate extends AiCKEditorPluginBase {
       $form['language']['#selection_settings'] = [
         'target_bundles' => [$this->configuration['translate_vocabulary']],
       ];
-    }
-    else {
-      $form['language'] = [
-        '#type' => $this->configuration['autocreate'] ? 'entity_autocomplete' : 'select',
-        '#title' => $this->t('Choose language'),
-        '#tags' => FALSE,
-        '#required' => TRUE,
-        '#description' => $this->t('Selecting one of the options will translate the selected text.'),
-      ];
 
-      if ($this->configuration['autocreate']) {
-        $form['language']['#target_type'] = 'taxonomy_term';
-        $form['language']['#selection_settings'] = [
-          'target_bundles' => [$this->configuration['translate_vocabulary']],
-        ];
-      }
-      else {
-        $form['language']['#options'] = $this->getTermOptions($this->configuration['translate_vocabulary']);
-      }
-      if ($this->configuration['autocreate'] && $this->account->hasPermission('create terms in ' . $this->configuration['translate_vocabulary'])) {
+      if ($this->account->hasPermission('create terms in ' . $this->configuration['translate_vocabulary'])) {
         $form['language']['#autocreate'] = [
           'bundle' => $this->configuration['translate_vocabulary'],
         ];
       }
+    }
+    else {
+      $form['language']['#options'] = $this->getTermOptions($this->configuration['translate_vocabulary']);
     }
 
     return $form;
@@ -212,23 +198,47 @@ final class Translate extends AiCKEditorPluginBase {
     try {
       $prompts_config = $this->getConfigFactory()->get('ai_ckeditor.settings');
       $prompt = $prompts_config->get('prompts.translate');
+
       if ($this->configuration['language_source'] == 'lang') {
         $site_languages = $this->languageManager->getLanguages();
         $langName = $site_languages[$values['plugin_config']['language']]->getName();
         $prompt = str_replace('{{ lang }}', $langName . ' (' . $values['plugin_config']['language'] . ')', $prompt);
       }
+      else {
+        // Handle taxonomy terms.
+        if (is_array($values['plugin_config']['language']) && reset($values['plugin_config']['language']) instanceof Term) {
+          $term = reset($values['plugin_config']['language']);
+        }
+        else {
+          $term = $this->entityTypeManager->getStorage('taxonomy_term')
+            ->load($values['plugin_config']['language']);
+        }
+
+        if (empty($term)) {
+          throw new \Exception('Language term could not be loaded.');
+        }
+
+        if ($term->isNew() && $this->configuration['autocreate'] && $this->account->hasPermission('create terms in ' . $this->configuration['translate_vocabulary'])) {
+          $term->save();
+        }
+
+        $prompt = str_replace('{{ lang }}', $term->label(), $prompt);
+        if ($this->configuration['use_description'] && !empty($term->getDescription())) {
+          $prompt .= ' Translation context: ' . strip_tags($term->getDescription());
+        }
+      }
+
       $prompt .= "\n\nThe text that we want to translate is the following:\n" . $values['plugin_config']['selected_text'];
       $response = new AjaxResponse();
-      $values = $form_state->getValues();
       $response->addCommand(new AiRequestCommand($prompt, $values["editor_id"], $this->pluginDefinition['id'], 'ai-ckeditor-response'));
       return $response;
     }
-    catch (\Exception) {
-      $this->logger->error('There was an error in the Translate AI plugin for CKEditor.');
-      $form['plugin_config']['response_wrapper']['response_text']['#value'] = 'There was an error in the Translate AI plugin for CKEditor.';
+    catch (\Exception $e) {
+      $this->logger->error("There was an error in the Translate AI plugin for CKEditor: @message", [
+        '@message' => $e->getMessage(),
+      ]);
+      return $form['plugin_config']['response_wrapper']['response_text']['#value'] = 'There was an error in the Translate AI plugin for CKEditor.';
     }
-
-    return $form['plugin_config']['response_wrapper']['response_text'];
   }
 
   /**
