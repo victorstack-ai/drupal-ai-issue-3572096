@@ -19,7 +19,7 @@ function ai_automators_install($is_syncing): void {
 
   if (!$module_handler->moduleExists('ai_ckeditor')) {
     if (!Settings::get('ai_automator_advanced_mode_enabled', FALSE)) {
-      $messenger->addMessage("The AI Automator module's advanced features require either the AI CK Editor Integration module or AI Agents module to be enabled, or for the ai_automator_advanced_mode_enabled setting to be set to TRUE in your settings.php file. These have been disabled but will become available if you enable the module or set the setting. Please see the instructions at https://project.pages.drupalcode.org/ai/modules/ai_automators/ for more information.");
+      $messenger->addMessage("The AI Automator module's advanced features require either the AI CK Editor Integration module or AI Agents module to be enabled, or for the ai_automator_advanced_mode_enabled setting to be set to TRUE in your settings.php file. These have been disabled but will become available if you enable the module or set the setting. Please see the instructions at https://project.pages.drupalcode.org/ai/latest/modules/ai_automators/ for more information.");
     }
   }
   if (!$module_handler->moduleExists('field_ui')) {

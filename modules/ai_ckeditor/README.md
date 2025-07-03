@@ -17,5 +17,5 @@ To use this feature:
 The same AI plugins are available through both the toolbar button and the contextual menu.
 
 ## Using the module
-Check the [AI CKEditor integration module guide](https://project.pages.drupalcode.org/ai/modules/ai_ckeditor/) for
+Check the [AI CKEditor integration module guide](https://project.pages.drupalcode.org/ai/latest/modules/ai_ckeditor/) for
 information on using the module.
