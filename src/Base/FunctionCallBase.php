@@ -128,8 +128,10 @@ abstract class FunctionCallBase extends PluginBase implements FunctionCallInterf
       $property_name = $argument->getName();
       // Tmp fix?.
       $property_name = str_replace('__colon__', ':', $property_name);
-      // @todo What happens if this fails to pass constraints?
-      $this->setContextValue($property_name, $argument->getValue());
+      // Only set context value if the context exists.
+      if (array_key_exists($property_name, $this->getContextDefinitions())) {
+        $this->setContextValue($property_name, $argument->getValue());
+      }
     }
   }
 
