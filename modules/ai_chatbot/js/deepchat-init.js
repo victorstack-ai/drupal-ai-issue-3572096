@@ -135,10 +135,6 @@
             // Unset connection to force rerendering.
             delete deepchatElement._activeService;
             deepchatElement.onRender();
-            deepchatElement.addMessage({
-              role: 'assistant',
-              text: drupalSettings.ai_deepchat.first_message,
-            });
           });
         }
 
