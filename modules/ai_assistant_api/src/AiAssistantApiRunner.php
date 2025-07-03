@@ -91,6 +91,13 @@ class AiAssistantApiRunner {
   protected bool $throwException = FALSE;
 
   /**
+   * If the verbose mode is enabled.
+   *
+   * @var bool
+   */
+  protected bool $verboseMode = FALSE;
+
+  /**
    * Constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
@@ -197,7 +204,7 @@ class AiAssistantApiRunner {
     $this->tokens['question'] = $userMessage->getMessage();
 
     // If session is set, we store the user message.
-    if ($this->shouldStoreSession()) {
+    if ($this->shouldStoreSession() && $this->userMessage->getMessage() !== 'dummy_loading') {
       $this->addMessageToSession('user', $this->userMessage->getMessage());
     }
   }
@@ -310,6 +317,8 @@ class AiAssistantApiRunner {
         $this->assistant->get('ai_agent'),
         $this->getMessageHistory(),
         $this->getProviderAndModel(),
+        $this->getThreadsKey(),
+        $this->getVerboseMode(),
       );
     }
 
@@ -729,6 +738,26 @@ class AiAssistantApiRunner {
       'provider_id' => $provider_id,
       'model_id' => $model_id,
     ];
+  }
+
+  /**
+   * Get the verbose mode.
+   *
+   * @return bool
+   *   If the verbose mode is enabled.
+   */
+  public function getVerboseMode() {
+    return $this->verboseMode;
+  }
+
+  /**
+   * Set the verbose mode.
+   *
+   * @param bool $verbose
+   *   If the verbose mode should be enabled.
+   */
+  public function setVerboseMode(bool $verbose) {
+    $this->verboseMode = $verbose;
   }
 
 }

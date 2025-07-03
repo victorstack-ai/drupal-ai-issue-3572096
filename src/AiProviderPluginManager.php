@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\ai;
 
+use Drupal\ai\Plugin\Discovery\OperationTypeDiscovery;
+use Drupal\Core\Plugin\Discovery\AttributeClassDiscovery;
 use Drupal\Component\Uuid\UuidInterface;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -13,9 +15,9 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\ai\Attribute\AiProvider;
 use Drupal\ai\Attribute\OperationType;
 use Drupal\ai\Event\ProviderDisabledEvent;
-use Drupal\ai\OperationType\OperationTypeInterface;
 use Drupal\ai\Plugin\ProviderProxy;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Large Language Model plugin manager.
@@ -276,28 +278,38 @@ final class AiProviderPluginManager extends DefaultPluginManager {
       return $data->data;
     }
 
-    // We use a plugin manager only to discover the possible operation types.
-    $manager = new class(
+    // Create the attribute discovery.
+    $attribute_discovery = new AttributeClassDiscovery(
       'OperationType',
       $this->namespaces,
-      $this->moduleHandler,
-      OperationTypeInterface::class,
       OperationType::class
-    ) extends DefaultPluginManager {
+    );
 
-      /**
-       * Call protected methods usually called in the constructor.
-       */
-      public function finishSetup(): void {
-        $this->alterInfo('ai_operationtype');
-      }
+    // Create our custom discovery.
+    $discovery = new OperationTypeDiscovery(
+      $attribute_discovery,
+      $this->moduleHandler
+    );
 
-    };
-    $manager->finishSetup();
-    // The in situ plugin manager uses the same cache backend.
-    $manager->setCacheBackend($this->cacheBackend, 'ai_operation_types');
+    // Get the definitions and format them.
+    $definitions = $discovery->getDefinitions();
+    $operation_types = [];
+    foreach ($definitions as $id => $definition) {
+      $operation_types[$id] = [
+        'id' => $id,
+        'label' => $definition['label'] instanceof TranslatableMarkup ? $definition['label']->render() : (string) $definition['label'],
+        'actual_type' => $definition['actual_type'] ?? $id,
+        'filter' => $definition['filter'] ?? [],
+      ];
+    }
 
-    return $manager->getDefinitions();
+    // Allow modules to alter the final operation types.
+    $this->moduleHandler->alter('ai_operation_types', $operation_types);
+
+    // Save to cache.
+    $this->cacheBackend->set('ai_operation_types', $operation_types);
+
+    return $operation_types;
   }
 
   /**

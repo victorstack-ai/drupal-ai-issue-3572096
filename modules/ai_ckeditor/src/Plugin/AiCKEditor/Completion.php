@@ -16,6 +16,7 @@ use Drupal\ai_ckeditor\Command\AiRequestCommand;
   id: 'ai_ckeditor_completion',
   label: new TranslatableMarkup('Generate with AI'),
   description: new TranslatableMarkup('Get ideas and text completion assistance from AI.'),
+  module_dependencies: [],
 )]
 final class Completion extends AiCKEditorPluginBase {
 
@@ -84,6 +85,10 @@ final class Completion extends AiCKEditorPluginBase {
   public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []): array {
     $form = parent::buildCkEditorModalForm($form, $form_state);
 
+    // Automatically enable the CKEditor5 sourceEditing plugin for the response
+    // text textarea, since the Completion plugin requires this.
+    $form['response_wrapper']['response_text']['#ai_ckeditor_response'] = TRUE;
+
     $form['text_to_submit'] = [
       '#type' => 'textarea',
       '#title' => $this->t('What would you like to ask or get ideas for?'),
@@ -105,10 +110,10 @@ final class Completion extends AiCKEditorPluginBase {
     $prompts_config = $this->getConfigFactory()->get('ai_ckeditor.settings');
     $prompt_complete = $prompts_config->get('prompts.complete');
     if (!empty($prompt_complete)) {
-      $prompt = $prompt_complete . PHP_EOL . $values["plugin_config"]["text_to_submit"];
+      $prompt = $prompt_complete . PHP_EOL . $values['plugin_config']['text_to_submit'];
     }
     else {
-      $prompt = $values["plugin_config"]["text_to_submit"];
+      $prompt = $values['plugin_config']['text_to_submit'];
     }
     $response->addCommand(new AiRequestCommand($prompt, $values["editor_id"], $this->pluginDefinition['id'], 'ai-ckeditor-response'));
 

@@ -1,0 +1,11 @@
+admin_ui:
+  version: VERSION
+  css:
+    theme:
+      css/admin.css: {  }
+  js:
+    js/admin.js: {  }
+  dependencies:
+    - core/once
+    - core/sortable
+    - core/drupal

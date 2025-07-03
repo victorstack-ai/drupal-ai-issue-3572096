@@ -35,3 +35,10 @@ function ai_content_suggestions_update_10001() {
   If there is too little information to generate a response, respond with "Insufficient information provided, please add more data before generating suggestions."');
   $config->save(TRUE);
 }
+
+/**
+ * Install field_widget_actions module.
+ */
+function ai_content_suggestions_update_10002() {
+  \Drupal::service('module_installer')->install(['field_widget_actions']);
+}

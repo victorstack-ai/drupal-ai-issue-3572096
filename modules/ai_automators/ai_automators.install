@@ -58,3 +58,25 @@ function ai_automators_update_10200(): void {
   // Log a message indicating the update was successful.
   \Drupal::messenger()->addMessage(t('Base tables for the new entity type "automator_chain" have been created successfully.'));
 }
+
+/**
+ * Install the Automators Tool entity type.
+ */
+function ai_automators_update_11000(): void {
+  $entity_type_manager = \Drupal::entityTypeManager();
+  $entity_definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  // Check if the entity type is already defined in code but not installed.
+  try {
+    $entity_type = $entity_type_manager->getDefinition('automators_tool');
+    if ($entity_type && !$entity_definition_update_manager->getEntityType('automators_tool')) {
+      // Install the entity type.
+      $entity_definition_update_manager->installEntityType($entity_type);
+      \Drupal::messenger()->addStatus(t('The Automators Tool entity type has been installed.'));
+    }
+  }
+  catch (\Exception $e) {
+    \Drupal::logger('ai_automators')->error('Failed to install the Automators Tool entity type: @message', ['@message' => $e->getMessage()]);
+    \Drupal::messenger()->addError(t('Failed to install the Automators Tool entity type. Please check the logs for more information.'));
+  }
+}

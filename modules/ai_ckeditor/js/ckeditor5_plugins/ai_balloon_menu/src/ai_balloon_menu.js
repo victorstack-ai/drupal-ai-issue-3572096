@@ -3,7 +3,6 @@
  */
 
 import { Plugin } from 'ckeditor5/src/core';
-import { ButtonView } from 'ckeditor5/src/ui';
 import { addListToDropdown, createDropdown } from 'ckeditor5/src/ui';
 import { ContextualBalloon, clickOutsideHandler } from 'ckeditor5/src/ui';
 import icon from '../../../../icons/sparkles.svg';
@@ -15,7 +14,6 @@ export default class AiBalloonMenu extends Plugin {
   }
 
   init() {
-    //const editor = this.editor;
     const config = this.editor.config;
     const options = config.get('ai_ckeditor_ai');
 

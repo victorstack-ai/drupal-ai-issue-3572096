@@ -17,6 +17,7 @@ use Drupal\ai_ckeditor\Command\AiRequestCommand;
   id: 'ai_ckeditor_spellfix',
   label: new TranslatableMarkup('Fix spelling'),
   description: new TranslatableMarkup('Only fix the spelling and interpunction in the selected text'),
+  module_dependencies: [],
 )]
 final class SpellFix extends AiCKEditorPluginBase {
 
@@ -103,15 +104,15 @@ final class SpellFix extends AiCKEditorPluginBase {
     $prompts_config = $this->getConfigFactory()->get('ai_ckeditor.settings');
     $prompt = $prompts_config->get('prompts.spellfix');
     try {
-      $prompt .= '"' . $values["plugin_config"]["selected_text"] . '"';
+      $prompt .= '"' . $values['plugin_config']['selected_text'] . '"';
       $response = new AjaxResponse();
       $values = $form_state->getValues();
-      $response->addCommand(new AiRequestCommand($prompt, $values["editor_id"], $this->pluginDefinition['id'], 'ai-ckeditor-response'));
+      $response->addCommand(new AiRequestCommand($prompt, $values['editor_id'], $this->pluginDefinition['id'], 'ai-ckeditor-response'));
       return $response;
     }
     catch (\Exception $e) {
       $this->logger->error("There was an error in the Spellfix AI plugin for CKEditor.");
-      return $form['plugin_config']['response_wrapper']['response_text']['#value'] = "There was an error in the Spellfix AI plugin for CKEditor.";
+      return $form['plugin_config']['response_wrapper']['response_text']['#value'] = 'There was an error in the Spellfix AI plugin for CKEditor.';
     }
   }
 

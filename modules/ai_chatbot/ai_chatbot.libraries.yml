@@ -30,6 +30,10 @@ deepchat:
     - core/drupal.ajax
     - core/drupal.dialog.ajax
     - ai_chatbot/chat-print
+gin:
+  css:
+    theme:
+      css/gin_deepchat.css: { }
 ai_chatbot:
   css:
     theme:

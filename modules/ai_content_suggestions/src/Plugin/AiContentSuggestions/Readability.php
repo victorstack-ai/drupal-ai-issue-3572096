@@ -86,7 +86,7 @@ final class Readability extends AiContentSuggestionsPluginBase {
       '#parents' => ['plugins', $this->getPluginId(), $this->getPluginId() . '_prompt'],
       '#states' => [
         'visible' => [
-          ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_enabled' . ']"]' => ['checked' => TRUE],
+          ':input[name="' . $this->getPluginId() . '[' . $this->getPluginId() . '_enabled]"]' => ['checked' => TRUE],
         ],
       ],
     ];

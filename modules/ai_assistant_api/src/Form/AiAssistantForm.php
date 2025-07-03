@@ -90,15 +90,44 @@ final class AiAssistantForm extends EntityForm {
   /**
    * {@inheritdoc}
    */
+  public function actions(array $form, FormStateInterface $form_state) {
+    /** @var \Drupal\ai_assistant_api\Entity\AiAssistant $entity */
+    $entity = $this->entity;
+    $agents_enabled = $this->moduleHandler->moduleExists('ai_agents') &&  $this->entityTypeManager->hasDefinition('ai_agent');
+    if (($entity->isNew() && !$agents_enabled) || $entity->get('ai_agent') && !$agents_enabled) {
+      // We just inform that new assistants will use agents and that you have
+      // to upgrade the AI Agents module.
+      return [];
+    }
+    return parent::actions($form, $form_state);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function form(array $form, FormStateInterface $form_state): array {
     /** @var \Drupal\ai_assistant_api\Entity\AiAssistant $entity */
     $entity = $this->entity;
+    $form_state->set('agents_enabled', $this->moduleHandler->moduleExists('ai_agents') &&  $this->entityTypeManager->hasDefinition('ai_agent'));
+    $agents_enabled = $form_state->get('agents_enabled');
+
+    if (($entity->isNew() && !$agents_enabled) || $entity->get('ai_agent') && !$agents_enabled) {
+      // We just inform that new assistants will use agents and that you have
+      // to upgrade the AI Agents module.
+      $form['warning'] = [
+        '#type' => 'markup',
+        '#markup' => $this->t('All assistants going forward will be agents. To be able to add a new assistant you need to update to the AI Agents module 1.1.0+.'),
+      ];
+      return $form;
+    }
+
     $form = parent::form($form, $form_state);
 
     // Possible agent object.
     $agent_entity = NULL;
-    $agents_enabled = $this->moduleHandler->moduleExists('ai_agents');
-    $old_entity = count($entity->get('actions_enabled')) && !$agents_enabled;
+    $agents = FALSE;
+
+    $old_entity = count($entity->get('actions_enabled'));
 
     if ($old_entity) {
       // Show message that this will be deprecated.
@@ -114,15 +143,12 @@ final class AiAssistantForm extends EntityForm {
         $agent_options[$agent->id()] = $agent->label();
       }
       $form['ai_agent'] = [
-        '#type' => 'select',
-        '#title' => $this->t('Use agent as assistant'),
-        '#empty_option' => $this->t('Select an agent'),
-        '#default_value' => $entity->get('ai_agent') ?? '',
-        '#description' => $this->t('If enabled, the AI Assistant will use the agent as the assistant. This is only available if you have the AI Agents module installed.'),
-        '#options' => $agent_options,
+        '#type' => 'hidden',
+        '#value' => $entity->get('ai_agent') ?? '',
         '#access' => TRUE,
       ];
 
+      /** @var \Drupal\ai_agent\Entity\AiAgent $agent_entity */
       $agent_entity = $entity->get('ai_agent') ? $this->entityTypeManager->getStorage('ai_agent')->load($entity->get('ai_agent')) : NULL;
     }
 
@@ -217,29 +243,36 @@ final class AiAssistantForm extends EntityForm {
     }
     else {
       // Hard code agents and rag action for now.
-      $form['agents_enabled'] = [
-        '#type' => 'details',
-        '#title' => $this->t('Agents Enabled'),
-        '#description' => $this->t('The agents that this assistant should have access to.'),
-        '#open' => TRUE,
-      ];
+      if ($form_state->get('agents_enabled')) {
+        $form['agents_enabled'] = [
+          '#type' => 'details',
+          '#title' => $this->t('Agents Enabled'),
+          '#description' => $this->t('The agents that this assistant should have access to.'),
+          '#open' => TRUE,
+        ];
 
-      $tools = [];
-      if ($agent_entity) {
-        foreach ($agent_entity->get('tools') as $tool => $enabled) {
-          if ($enabled && substr($tool, 0, 9) === 'ai_agent:') {
-            $tools[] = substr($tool, 9);
+        $tools = [];
+        if ($agent_entity) {
+          foreach ($agent_entity->get('tools') as $tool => $enabled) {
+            if ($enabled && substr($tool, 0, 21) === 'ai_agents::ai_agent::') {
+              $tools[] = substr($tool, 21);
+            }
           }
         }
-      }
 
-      $form['agents_enabled']['agents_agent'] = [
-        '#type' => 'checkboxes',
-        '#title' => $this->t('Agents to use'),
-        '#options' => $agent_options,
-        '#default_value' => $tools,
-        '#description' => $this->t('Select which agents to use for this plugin.'),
-      ];
+        // Remove own agent if it exists.
+        if (isset($agent_options[$entity->id()])) {
+          unset($agent_options[$entity->id()]);
+        }
+
+        $form['agents_enabled']['agents_agent'] = [
+          '#type' => 'checkboxes',
+          '#title' => $this->t('Agents to use'),
+          '#options' => $agent_options,
+          '#default_value' => $tools,
+          '#description' => $this->t('Select which agents to use for this plugin.'),
+        ];
+      }
 
       // Only show if AI search is enabled.
       if ($this->moduleHandler->moduleExists('ai_search')) {
@@ -468,6 +501,13 @@ final class AiAssistantForm extends EntityForm {
     parent::validateForm($form, $form_state);
     $this->formHelper->validateAiProvidersConfig($form, $form_state, 'chat', 'llm');
 
+    // Even if the model is required, it can be empty.
+    // Trigger an error if the provider is not set to default and the model is
+    // empty.
+    if ($form_state->getValue('llm_ai_provider') !== '__default__' && empty($form_state->getValue('llm_ai_model'))) {
+      $form_state->setErrorByName('llm_ai_model', $this->t('You need to select a model for the AI provider.'));
+    }
+
     // If the rag is enabled, we need to check if the database is selected.
     if ($form_state->getValue('enable_rag') && !$form_state->getValue('rag_database')) {
       $form_state->setErrorByName('rag_database', $this->t('You need to select a RAG database.'));
@@ -492,13 +532,15 @@ final class AiAssistantForm extends EntityForm {
       }
     }
     $entity->set('actions_enabled', $action_plugins);
+    $old_entity = count($entity->get('actions_enabled'));
 
-    if ($entity->isNew() || $form_state->getValue('ai_agent')) {
+    // Handle agent-related logic only if the ai_agents module is enabled.
+    if ($form_state->get('agents_enabled') && !$old_entity) {
       // Get the tools.
       $tools = [];
       foreach ($form_state->getValue('agents_agent') as $key => $val) {
         if ($val) {
-          $tools['ai_agent:' . $key] = TRUE;
+          $tools['ai_agents::ai_agent::' . $key] = TRUE;
         }
       }
       $tool_usage_limits = [];
@@ -540,20 +582,23 @@ final class AiAssistantForm extends EntityForm {
         $agent->save();
         $entity->set('ai_agent', $agent->id());
       }
-      elseif ($form_state->getValue('ai_agent')) {
+      else {
         // Load the agent and set the tools.
+        /** @var \Drupal\ai_agent\Entity\AiAgent $agent */
         $agent = $this->entityTypeManager->getStorage('ai_agent')->load($form_state->getValue('ai_agent'));
-        $agent->set('tools', $tools);
-        $agent->set('description', $form_state->getValue('description'));
-        $agent->set('system_prompt', $form_state->getValue('instructions'));
-        // Load an merge the tool usage limits.
-        $old_tool_usage_limits = $agent->get('tool_usage_limits');
-        if ($old_tool_usage_limits) {
-          $tool_usage_limits = array_merge($old_tool_usage_limits, $tool_usage_limits);
-        }
-        $agent->set('tool_usage_limits', $tool_usage_limits);
+        if ($agent) {
+          $agent->set('tools', $tools);
+          $agent->set('description', $form_state->getValue('description'));
+          $agent->set('system_prompt', $form_state->getValue('instructions'));
+          // Load and merge the tool usage limits.
+          $old_tool_usage_limits = $agent->get('tool_usage_limits');
+          if ($old_tool_usage_limits) {
+            $tool_usage_limits = array_merge($old_tool_usage_limits, $tool_usage_limits);
+          }
+          $agent->set('tool_usage_limits', $tool_usage_limits);
 
-        $agent->save();
+          $agent->save();
+        }
       }
       $entity->set('pre_action_prompt', "");
       $entity->set('system_prompt', "");

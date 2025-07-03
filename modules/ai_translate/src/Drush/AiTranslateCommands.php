@@ -10,7 +10,6 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\ai_translate\TextExtractorInterface;
 use Drupal\ai_translate\TextTranslatorInterface;
 use Drupal\ai_translate\TranslationException;
-use Drupal\filter\Entity\FilterFormat;
 use Drush\Attributes\Argument;
 use Drush\Attributes\Command;
 use Drush\Commands\DrushCommands;
@@ -97,23 +96,27 @@ class AiTranslateCommands extends DrushCommands {
       return;
     }
     $textMetadata = $this->textExtractor->extractTextMetadata($entity);
-    foreach ($textMetadata as &$singleText) {
-      try {
-        $singleText['translated'] = $this->textTranslator->translateContent(
-          $singleText['value'], $langNames[$langTo], $langNames[$langFrom] ?? NULL);
-
-        // Checks if the field allows HTML and decodes the HTML entities.
-        if (isset($singleText['format'])) {
-          $format = $singleText['format'];
-          if (FilterFormat::load($format)) {
-            $singleText['translated'] = html_entity_decode($singleText['translated']);
+    foreach ($textMetadata as &$singleField) {
+      // Get translations for each extracted field property.
+      foreach ($singleField['_columns'] as $column) {
+        try {
+          $singleField['translated'][$column] = '';
+          if (!empty($singleField[$column])) {
+            $singleField['translated'][$column] = $this->textTranslator->translateContent(
+              $singleField[$column], $langNames[$langTo], $langNames[$langFrom] ?? NULL);
           }
         }
+        catch (TranslationException) {
+          // Error already logged by text_translate service.
+          $this->messenger()->addError('Error translating content.');
+          return;
+        }
       }
-      catch (TranslationException) {
-        // Error already logged by text_translate service.
-        $this->messenger()->addError('Error translating content.');
-        return;
+
+      // Decodes HTML entities in translation.
+      // Because of sanitation in StringFormatter/Markup, this should be safe.
+      foreach ($singleField['translated'] as &$translated_text_item) {
+        $translated_text_item = html_entity_decode($translated_text_item);
       }
     }
     $translation = $entity->addTranslation($langTo);

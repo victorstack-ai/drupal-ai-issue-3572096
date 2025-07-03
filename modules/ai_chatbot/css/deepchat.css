@@ -14,19 +14,9 @@
   font-weight: bold;
 }
 
-.chatbot-gin .ai-deepchat--header {
-  background-color: var(--gin-color-text);
-}
-
 .ai-deepchat--header:hover,
 .ai-deepchat--header.active {
   background-color: #0056b3;
-}
-
-.chatbot-gin .ai-deepchat--header:hover,
-.chatbot-gin .ai-deepchat--header.active {
-  color: var(--gin-color-button-text);
-  background-color: var(--gin-color-primary);
 }
 
 .ai-deepchat--header:focus {

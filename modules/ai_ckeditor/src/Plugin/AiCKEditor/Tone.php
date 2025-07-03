@@ -17,6 +17,7 @@ use Drupal\taxonomy\Entity\Term;
   id: 'ai_ckeditor_tone',
   label: new TranslatableMarkup('Tone'),
   description: new TranslatableMarkup('Convert tone of selected text.'),
+  module_dependencies: ['taxonomy'],
 )]
 final class Tone extends AiCKEditorPluginBase {
 
@@ -144,7 +145,6 @@ final class Tone extends AiCKEditorPluginBase {
       '#type' => $this->configuration['autocreate'] ? 'entity_autocomplete' : 'select',
       '#title' => $this->t('Choose tone'),
       '#tags' => FALSE,
-      '#weight' => 3,
       '#required' => TRUE,
       '#description' => $this->t('Selecting one of the options will adjust/reword the body content to be appropriate for the target audience.'),
     ];
@@ -204,15 +204,15 @@ final class Tone extends AiCKEditorPluginBase {
       if ($this->configuration['use_description'] && !empty($term->getDescription())) {
         $prompt .= 'That tone can described as: ' . strip_tags($term->getDescription());
       }
-      $prompt .= "\n\nThe text that we want to change is the following:\n" . $values["plugin_config"]["selected_text"];
+      $prompt .= "\n\nThe text that we want to change is the following:\n" . $values['plugin_config']['selected_text'];
       $response = new AjaxResponse();
       $values = $form_state->getValues();
-      $response->addCommand(new AiRequestCommand($prompt, $values["editor_id"], $this->pluginDefinition['id'], 'ai-ckeditor-response'));
+      $response->addCommand(new AiRequestCommand($prompt, $values['editor_id'], $this->pluginDefinition['id'], 'ai-ckeditor-response'));
       return $response;
     }
     catch (\Exception $e) {
       $this->logger->error("There was an error in the Tone AI plugin for CKEditor.");
-      return $form['plugin_config']['response_wrapper']['response_text']['#value'] = "There was an error in the Tone AI plugin for CKEditor.";
+      return $form['plugin_config']['response_wrapper']['response_text']['#value'] = 'There was an error in the Tone AI plugin for CKEditor.';
     }
   }
 

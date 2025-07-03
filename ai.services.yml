@@ -31,6 +31,9 @@ services:
   plugin.manager.ai.function_groups:
     class: Drupal\ai\Service\FunctionCalling\FunctionGroupPluginManager
     parent: default_plugin_manager
+  plugin.manager.ai_data_type_converter:
+    class: Drupal\ai\PluginManager\AiDataTypeConverterPluginManager
+    parent: default_plugin_manager
   ai.function_call_form_helper:
     class: Drupal\ai\Service\FunctionCalling\PropertyFormBuilder
     arguments: ['@plugin.manager.ai.function_calls']

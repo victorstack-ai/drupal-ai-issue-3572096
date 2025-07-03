@@ -41,3 +41,5 @@ services:
     class: Drupal\ai_assistant_api\Service\AgentRunner
     arguments:
       - '@ai.provider'
+      - '@tempstore.private'
+      - '@?plugin.manager.ai_agents'

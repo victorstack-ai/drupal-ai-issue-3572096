@@ -2,7 +2,7 @@ name: AI ECA integration
 type: module
 description: Adds integration with the ECA module.
 package: AI
-core_version_requirement: ^10.3 || ^11
+core_version_requirement: ^10.4 || ^11
 lifecycle: experimental
 dependencies:
   - ai:ai

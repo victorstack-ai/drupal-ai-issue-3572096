@@ -28,6 +28,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
   id: 'ai_automators_ckeditor',
   label: new TranslatableMarkup('AI Automators CKEditor'),
   description: new TranslatableMarkup('Chained workflows setup with AI Automators.'),
+  module_dependencies: [],
 )]
 final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
 
@@ -237,6 +238,7 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
     $form_state->setCached(FALSE);
     $storage = $form_state->getStorage();
     $form = parent::buildCkEditorModalForm($form, $form_state);
+    unset($form['selected_text']);
 
     // Something is wrong with the settings if we don't get the ids.
     if (!isset($settings['config_id']) || !isset($settings['editor_id']) || !isset($settings['plugin_id'])) {
@@ -360,20 +362,6 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
 
     $form['#attached']['library'][] = 'ai_automators/automator_ckeditor';
 
-    // Output is fixed.
-    $editor_id = $this->requestStack->getParentRequest()->get('editor_id');
-
-    $form['response_text'] = [
-      '#type' => 'text_format',
-      '#title' => $this->t('Response from AI'),
-      '#description' => $this->t('The response from AI will appear in the box above. You can edit and tweak the response before saving it back to the main editor.'),
-      '#prefix' => '<div id="ai-ckeditor-response">',
-      '#suffix' => '</div>',
-      '#default_value' => '',
-      '#allowed_formats' => [$editor_id],
-      '#format' => $editor_id,
-    ];
-
     return $form;
   }
 
@@ -401,6 +389,8 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
         'automator_output',
         'automator_storage',
         'automator_write_mode',
+        'generate_actions',
+        'response_wrapper',
         'config_id',
       ])) {
         if (isset($fields[$key]) && in_array($fields[$key]->getType(), [

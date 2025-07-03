@@ -14,6 +14,7 @@ use Drupal\ai\Exception\AiRequestErrorException;
 use Drupal\ai\Exception\AiSetupFailureException;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\StreamedChatMessageIterator;
+use Drupal\ai\Service\FunctionCalling\FunctionCallPluginManager;
 use Drupal\ai_assistant_api\AiAssistantApiRunner;
 use Drupal\ai_assistant_api\Data\UserMessage;
 use Drupal\ai_assistant_api\Entity\AiAssistant;
@@ -53,11 +54,14 @@ class DeepChatApi extends ControllerBase {
    *   The messages buttons render service.
    * @param \Drupal\Core\Access\CsrfTokenGenerator $csrfTokenGenerator
    *   The CSRF token generator.
+   * @param \Drupal\ai\Service\FunctionCalling\FunctionCallPluginManager $functionCallPluginManager
+   *   The function call plugin manager.
    */
   public function __construct(
     protected AiAssistantApiRunner $aiAssistantClient,
     protected MessagesButtons $messagesButtons,
     protected CsrfTokenGenerator $csrfTokenGenerator,
+    protected FunctionCallPluginManager $functionCallPluginManager,
   ) {
   }
 
@@ -69,6 +73,7 @@ class DeepChatApi extends ControllerBase {
       $container->get('ai_assistant_api.runner'),
       $container->get('ai_chatbot.buttons'),
       $container->get('csrf_token'),
+      $container->get('plugin.manager.ai.function_calls'),
     );
   }
 
@@ -84,19 +89,19 @@ class DeepChatApi extends ControllerBase {
   public function api(Request $request): JsonResponse|StreamedResponse {
     // Get the request content and decode it.
     $content = $request->getContent();
-    $data = json_decode($content, TRUE);
+    $data = Json::decode($content);
 
     // Retrieve the assistant_id from request payload.
     if (!isset($data['assistant_id'])) {
       // Assistant ID is required.
-      return new JsonResponse(['error' => t('assistant_id is required.')], 422);
+      return new JsonResponse(['error' => $this->t('assistant_id is required.')], 422);
     }
 
     // Load the AiAssistant entity.
     $assistant = $this->entityTypeManager()->getStorage('ai_assistant')->load($data['assistant_id']);
 
     if (!$assistant instanceof AiAssistant) {
-      return new JsonResponse(['error' => t('Invalid assistant ID.')], 422);
+      return new JsonResponse(['error' => $this->t('Invalid assistant ID.')], 422);
     }
 
     // Set the assistant in the AiAssistantApiRunner.
@@ -116,6 +121,10 @@ class DeepChatApi extends ControllerBase {
       $this->aiAssistantClient->setContext($data['contexts']);
     }
 
+    if (isset($data['verbose_mode']) && $data['verbose_mode']) {
+      $this->aiAssistantClient->setVerboseMode(TRUE);
+    }
+
     // Check if 'messages' array is provided.
     if (isset($data['messages']) && is_array($data['messages'])) {
       $messages = $data['messages'];
@@ -133,7 +142,7 @@ class DeepChatApi extends ControllerBase {
       }
 
       if (empty($conversation)) {
-        return new JsonResponse(['error' => t('No user messages provided.')], 400);
+        return new JsonResponse(['error' => $this->t('No user messages provided.')], 400);
       }
 
       // Set the latest user message.
@@ -199,7 +208,7 @@ class DeepChatApi extends ControllerBase {
     }
     else {
       // No messages provided in the request.
-      return new JsonResponse(['error' => t('No messages provided.')], 400);
+      return new JsonResponse(['error' => $this->t('No messages provided.')], 400);
     }
   }
 
@@ -209,7 +218,10 @@ class DeepChatApi extends ControllerBase {
   public function createResponse($normalizedResponse): JsonResponse {
     $assistantResponseText = $normalizedResponse->getText();
     // Set the assistant message for logging or further processing.
-    $this->aiAssistantClient->setAssistantMessage($assistantResponseText);
+    // Only if it does not contain tools.
+    if (empty($normalizedResponse->getTools())) {
+      $this->aiAssistantClient->setAssistantMessage($assistantResponseText);
+    }
     // Change the response if needed.
     $extra = $this->moduleHandler()->invokeAll('deepchat_prepend_message', [
       $assistantResponseText,
@@ -221,19 +233,32 @@ class DeepChatApi extends ControllerBase {
     $converter = $this->getCommonMarkConverter();
     $assistantResponseText = $this->rewriteMarkdownMessage($assistantResponseText);
     $assistantResponseText = $converter ? $converter->convert($assistantResponseText) : $assistantResponseText;
-
-    $assistantResponseText .= $this->renderStructuredResults();
-    if (!empty($extra)) {
-      foreach ($extra as $message) {
-        $assistantResponseText .= $message;
+    $assistantResponseText = (string) $assistantResponseText;
+    if (empty($normalizedResponse->getTools())) {
+      $assistantResponseText .= $this->renderStructuredResults();
+      if (!empty($extra)) {
+        foreach ($extra as $message) {
+          $assistantResponseText .= $message;
+        }
       }
-    }
 
-    $assistantResponseText .= $this->messagesButtons->getRenderedButtons($this->buttons, $this->aiAssistantClient->getAssistant()->id(), $this->aiAssistantClient->getThreadsKey());
+      $assistantResponseText .= $this->messagesButtons->getRenderedButtons($this->buttons, $this->aiAssistantClient->getAssistant()->id(), $this->aiAssistantClient->getThreadsKey());
+    }
+    else {
+      // If its empty string, we return that a tool was used.
+      $agents = [];
+      foreach ($normalizedResponse->getTools() as $tool) {
+        $agents[$tool->getName()] = $this->functionCallPluginManager->getFunctionCallFromFunctionName($tool->getName())->getPluginDefinition()['name'] ?? $tool->getName();
+      }
+      $assistantResponseText = $this->t('Calling @tools', [
+        '@tools' => implode(', ', $agents),
+      ]) . $assistantResponseText;
+    }
 
     // Default to JSON response.
     return new JsonResponse([
       'html' => $assistantResponseText,
+      'should_continue' => !empty($normalizedResponse->getTools()),
     ]);
   }
 
