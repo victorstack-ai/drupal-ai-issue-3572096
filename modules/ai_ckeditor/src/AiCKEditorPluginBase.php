@@ -271,6 +271,9 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
       '#default_value' => '',
       '#allowed_formats' => [$editor_id],
       '#format' => $editor_id,
+      // Automatically enable the CKEditor5 sourceEditing plugin for the
+      // response text textarea, since various plugins require this.
+      '#ai_ckeditor_response' => TRUE,
     ];
 
     // Lower actions section for the submit button positioned at the bottom.
