@@ -213,6 +213,13 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
+  protected function needsSelectedText() {
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
 
   }
@@ -239,6 +246,7 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
     $storage = $form_state->getStorage();
     $form = parent::buildCkEditorModalForm($form, $form_state);
     unset($form['selected_text']);
+    unset($form['#markup']);
 
     // Something is wrong with the settings if we don't get the ids.
     if (!isset($settings['config_id']) || !isset($settings['editor_id']) || !isset($settings['plugin_id'])) {
@@ -314,7 +322,7 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
     ];
 
     // Get the inputs.
-    foreach ($plugin_config['inputs'] as $input) {
+    foreach ($plugin_config['inputs'] as $input => $value) {
       // Use the entity field.
       if (isset($fields[$input]) && in_array($fields[$input]->getType(), [
         'image',
@@ -359,7 +367,6 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
           break;
       }
     }
-
     $form['#attached']['library'][] = 'ai_automators/automator_ckeditor';
 
     return $form;
