@@ -599,6 +599,16 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
       }
       foreach ($entity->{$parts[0]} as $imageEntityWrapper) {
         $imageEntity = $imageEntityWrapper->entity;
+        // If the image entity is not available, it might be partially formed.
+        if (!$imageEntity) {
+          $values = $imageEntityWrapper->getValue();
+          // Try to load via the file ID.
+          // @phpstan-ignore-next-line
+          if (isset($values['target_id']) && $file = \Drupal::entityTypeManager()->getStorage('file')->load($values['target_id'])) {
+            $imageEntity = $file;
+          }
+        }
+
         if (isset($parts[1])) {
           foreach ($imageEntity->{$parts[1]} as $image) {
             $possibleImages[] = $image->entity;

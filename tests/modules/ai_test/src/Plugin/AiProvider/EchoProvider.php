@@ -166,6 +166,7 @@ class EchoProvider extends AiProviderClientBase implements
     if ($input instanceof ChatInput) {
       $normalized_input = $input->getMessages()[0]->getText();
     }
+
     if ($this->streamed) {
       $output[] = sprintf('Hello world! Input: %s. Config: %s.', $normalized_input ?? $input, json_encode($this->configuration));
       $iterator = new MockIterator($output);
@@ -221,7 +222,6 @@ class EchoProvider extends AiProviderClientBase implements
         }
       }
     }
-
     return new ChatOutput($message, $response, []);
   }
 
@@ -353,7 +353,6 @@ class EchoProvider extends AiProviderClientBase implements
     }
     // Get all the requests to test against.
     $requests = $this->getRequestsToTest($operation_type);
-
     foreach ($requests as $request) {
       $array = $input->toArray();
       if (isset($request['request']) && is_array($request['request']) && Json::encode($request['request']) === Json::encode($array)) {

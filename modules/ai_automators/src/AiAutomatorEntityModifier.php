@@ -72,11 +72,13 @@ class AiAutomatorEntityModifier {
    *   The entity to check for modifications.
    * @param bool $isInsert
    *   Is it an insert.
+   * @param string|null $specificField
+   *   If a specific field should be processed, this is the field name.
    *
    * @return \Drupal\Core\Entity\ContentEntityInterface|null
    *   The entity or NULL if no automator fields are found.
    */
-  public function saveEntity(EntityInterface $entity, $isInsert = FALSE) {
+  public function saveEntity(EntityInterface $entity, $isInsert = FALSE, $specificField = NULL) {
     // Only run on Content Interfaces.
     if (!($entity instanceof ContentEntityInterface)) {
       return NULL;
@@ -97,6 +99,17 @@ class AiAutomatorEntityModifier {
       }
       return 0;
     });
+
+    // If a specific field is set, only process that one.
+    if ($specificField) {
+      $configs = array_filter($configs, function ($config) use ($specificField) {
+        return $config['fieldDefinition']->getName() === $specificField;
+      });
+      // If no configs are found, return NULL.
+      if (!count($configs)) {
+        return NULL;
+      }
+    }
 
     // Get possible processes.
     $workerOptions = [];

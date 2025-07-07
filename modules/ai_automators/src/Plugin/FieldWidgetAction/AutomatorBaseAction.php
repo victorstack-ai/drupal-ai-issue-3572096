@@ -2,48 +2,36 @@
 
 namespace Drupal\ai_automators\Plugin\FieldWidgetAction;
 
-use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Extension\ModuleHandlerInterface;
-use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai_automators\AiAutomatorEntityModifier;
 use Drupal\ai_automators\PluginManager\AiAutomatorTypeManager;
-use Drupal\field_widget_actions\Attribute\FieldWidgetAction;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\field_widget_actions\FieldWidgetActionBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * The AltText action.
+ * This is an abstract base class for automator actions.
  */
-#[FieldWidgetAction(
-  id: 'automator_alt_text',
-  label: new TranslatableMarkup('Automator Alt Text'),
-  widget_types: ['image_image'],
-  field_types: ['image'],
-)]
-class AltText extends FieldWidgetActionBase {
+abstract class AutomatorBaseAction extends FieldWidgetActionBase {
 
   /**
-   * The AI provider plugins manager.
+   * If the values should be cleared from the entity.
    *
-   * @var \Drupal\ai\AiProviderPluginManager
+   * This is used to ensure that the field values are cleared before
+   * running the automator, so that it can populate the field with new values
+   * if its the base value.
+   *
+   * @var bool
    */
-  protected AiProviderPluginManager $aiProvider;
+  protected bool $clearEntity = TRUE;
 
   /**
-   * The module handler.
+   * The form element property to use for the automator.
    *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   * @var string
    */
-  protected ModuleHandlerInterface $moduleHandler;
-
-  /**
-   * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected EntityTypeManagerInterface $entityTypeManager;
+  public string $formElementProperty = 'value';
 
   /**
    * The automators plugin manager.
@@ -53,11 +41,37 @@ class AltText extends FieldWidgetActionBase {
   protected AiAutomatorTypeManager $automatorTypeManager;
 
   /**
-   * The entity modifier.
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected EntityTypeManagerInterface $entityTypeManager;
+
+  /**
+   * The entity modifier service.
    *
    * @var \Drupal\ai_automators\AiAutomatorEntityModifier
    */
   protected AiAutomatorEntityModifier $entityModifier;
+
+  /**
+   * The AI provider service.
+   *
+   * @var \Drupal\ai\AiProviderPluginManager
+   */
+  protected AiProviderPluginManager $aiProvider;
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
+    $instance->automatorTypeManager = $container->get('plugin.manager.ai_automator');
+    $instance->entityTypeManager = $container->get('entity_type.manager');
+    $instance->entityModifier = $container->get('ai_automator.entity_modifier');
+    $instance->aiProvider = $container->get('ai.provider');
+    return $instance;
+  }
 
   /**
    * {@inheritdoc}
@@ -68,19 +82,6 @@ class AltText extends FieldWidgetActionBase {
         'automator_id' => '',
       ],
     ] + parent::defaultConfiguration();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
-    $instance->aiProvider = $container->get('ai.provider');
-    $instance->moduleHandler = $container->get('module_handler');
-    $instance->entityTypeManager = $container->get('entity_type.manager');
-    $instance->automatorTypeManager = $container->get('plugin.manager.ai_automator');
-    $instance->entityModifier = $container->get('ai_automator.entity_modifier');
-    return $instance;
   }
 
   /**
@@ -121,21 +122,7 @@ class AltText extends FieldWidgetActionBase {
       '#empty_option' => $this->t('- Pick an automator -'),
       '#default_value' => $settings['automator_id'] ?? '',
     ];
-
-    $element['settings']['button'] = [
-      '#title' => $this->t('Button label'),
-      '#description' => $this->t('Button will appear near the form element. Default label is "AI Suggestions"'),
-      '#type' => 'textfield',
-      '#default_value' => $settings['button'] ?? '',
-    ];
     return $element;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getLibraries(): array {
-    return ['ai_content_suggestions/field_widget'];
   }
 
   /**
@@ -148,33 +135,30 @@ class AltText extends FieldWidgetActionBase {
   /**
    * {@inheritdoc}
    */
-  public function completeFormAlter(array &$form, FormStateInterface $form_state, array $context = []) {
-    if ($this->getAjaxCallback()) {
-      // Add wrapper.
-      $prefix = $form['#prefix'] ?? '';
-      $suffix = $form['#suffix'] ?? '';
-      $form['#prefix'] = '<div id="field-widget-action-' . $context['items']->getFieldDefinition()->getName() . '" class="field-widget-action-element-wrapper">' . $prefix;
-      $form['#suffix'] = $suffix . '</div>';
-    }
-    // We only do single for now.
-    $form['#attributes']['class'][] = 'ai-content-suggestions--enabled';
+  public function getLibraries(): array {
+    return [
+      'ai_automators/field_widget',
+    ];
   }
 
   /**
    * {@inheritdoc}
    */
-  public function singleElementFormAlter(array &$form, FormStateInterface $form_state, array $context = []) {
-    $this->actionButton($form, $form_state, $context);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getButtonLabel(): string {
-    if (!empty($this->configuration['settings']['button'])) {
-      return $this->configuration['settings']['button'];
+  protected function actionButton(array &$form, FormStateInterface $form_state, array $context = []) {
+    parent::actionButton($form, $form_state, $context);
+    $fieldName = $context['items']->getFieldDefinition()->getName();
+    if (!empty($context['action_id'])) {
+      $widgetId = $context['action_id'];
     }
-    return parent::getButtonLabel();
+    else {
+      $widgetId = $fieldName . '_field_widget_action_' . $this->getPluginId();
+    }
+    if (!empty($form['#delta'])) {
+      $widgetId .= '_' . $form['#delta'];
+    }
+    $form[$widgetId]['#attributes']['class'][] = 'button--small';
+    $form[$widgetId]['#attributes']['class'][] = 'btn-small';
+    $form[$widgetId]['#attributes']['class'][] = 'button-automator-ai';
   }
 
   /**
@@ -210,16 +194,11 @@ class AltText extends FieldWidgetActionBase {
     $automators = $this->automatorTypeManager->getDefinitions();
     $automator_rules = [];
     foreach ($automators as $id => $definition) {
-      if (in_array($definition['field_rule'], [
-        'text',
-        'string',
-        'image',
-      ])) {
-        $automator_rules[] = $id;
-      }
+      $automator_rules[] = $id;
     }
     $options = [];
     // Load all automator configurations.
+    /** @var \Drupal\ai_automators\Entity\AiAutomatorInterface[] $automator_configurations */
     $automator_configurations = $this->entityTypeManager->getStorage('ai_automator')->loadMultiple();
     foreach ($automator_configurations as $automator) {
       // Check so the entity type, bundle and rule match.
@@ -240,29 +219,71 @@ class AltText extends FieldWidgetActionBase {
   }
 
   /**
-   * Ajax handler for Automators.
+   * Function to populate values.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param string $form_key
+   *   The form key for the field.
+   * @param int|null $key
+   *   The key for the field item, used for multi-value fields.
    */
-  public function aiAutomatorsAjax(array &$form, FormStateInterface $form_state) {
-    // Get the triggering element, as it contains the settings.
-    $triggering_element = $form_state->getTriggeringElement();
-    $array_parents = $triggering_element['#array_parents'];
-    // @todo Best practice.
-    $form_key = $array_parents[0];
-    $key = $array_parents[2] ?? 0;
+  public function populateAutomatorValues(array &$form, FormStateInterface $form_state, string $form_key, ?int $key = NULL): array {
     // Get the content entity from form object.
     /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
     $entity = static::buildEntity($form, $form_state);
     // Delete all values from the field, so you can recreate.
-    $entity->{$form_key} = [];
+    if ($this->clearEntity) {
+      $entity->{$form_key} = [];
+    }
     // Run the automator for the entity.
-    $entity = $this->entityModifier->saveEntity($entity);
+    $entity = $this->entityModifier->saveEntity($entity, FALSE, $form_key);
     // Ensure the widget has enough elements for all values.
     $form[$form_key]['widget']['#items_count'] = count($entity->{$form_key});
 
-    if (isset($entity->{$form_key}[0])) {
-      $item = $entity->{$form_key}[0];
-      if ($item->value) {
-        $form[$form_key]['widget'][$key]['value']['#value'] = $item->value;
+    return $this->saveFormValues($form, $form_key, $entity, $key);
+  }
+
+  /**
+   * Function to save the form values.
+   *
+   * @param array $form
+   *   The form array.
+   * @param string $form_key
+   *   The form key for the field.
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   The entity being worked on.
+   * @param int|null $key
+   *   The key for the field item, used for multi-value fields.
+   *
+   * @return array
+   *   The updated form array with values populated.
+   */
+  protected function saveFormValues(array &$form, string $form_key, $entity, ?int $key = NULL): array {
+    if (is_null($key)) {
+      // If not key is provided, we should iterate through all items.
+      foreach ($entity->{$form_key} as $index => $item) {
+        $text_items = [];
+        if ($item->{$this->formElementProperty}) {
+          $form[$form_key]['widget']['target_id']['#default_value'][$index] = $item->entity;
+          $text_items[] = $item->entity->label() . ' (' . $item->entity->id() . ')';
+        }
+        $form[$form_key]['widget']['target_id']['#value'] = implode(', ', $text_items);
+      }
+    }
+    else {
+      if (isset($entity->{$form_key}[$key])) {
+        $item = NULL;
+        foreach ($entity->{$form_key} as $index => $item) {
+          if ($index === $key) {
+            break;
+          }
+        }
+        if ($item && $item->{$this->formElementProperty}) {
+          $form[$form_key]['widget'][$key][$this->formElementProperty]['#value'] = $item->{$this->formElementProperty};
+        }
       }
     }
 
