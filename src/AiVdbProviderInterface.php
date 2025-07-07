@@ -230,4 +230,12 @@ interface AiVdbProviderInterface extends PluginInspectionInterface {
     string $database = 'default',
   ): array;
 
+  /**
+   * Get the default database name.
+   *
+   * @return string
+   *   The default database name.
+   */
+  public function getDefaultDatabase(): string;
+
 }
