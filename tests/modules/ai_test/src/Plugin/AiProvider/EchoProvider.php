@@ -25,6 +25,7 @@ use Drupal\ai\OperationType\ImageClassification\ImageClassificationInput;
 use Drupal\ai\OperationType\ImageClassification\ImageClassificationInterface;
 use Drupal\ai\OperationType\ImageClassification\ImageClassificationItem;
 use Drupal\ai\OperationType\ImageClassification\ImageClassificationOutput;
+use Drupal\ai\OperationType\InputInterface;
 use Drupal\ai\OperationType\Moderation\ModerationInput;
 use Drupal\ai\OperationType\Moderation\ModerationInterface;
 use Drupal\ai\OperationType\Moderation\ModerationOutput;
@@ -41,6 +42,9 @@ use Drupal\ai\OperationType\TextToSpeech\TextToSpeechOutput;
 use Drupal\ai_test\OperationType\Echo\EchoInput;
 use Drupal\ai_test\OperationType\Echo\EchoInterface;
 use Drupal\ai_test\OperationType\Echo\EchoOutput;
+use Drupal\Component\Serialization\Json;
+use Drupal\Core\Extension\ModuleHandlerInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -59,6 +63,29 @@ class EchoProvider extends AiProviderClientBase implements
   ImageClassificationInterface,
   TextToImageInterface,
   EchoInterface {
+
+  /**
+   * The module handler interface.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected ModuleHandlerInterface $moduleHandler;
+
+  /**
+   * The variable for the sub directory to search in.
+   *
+   * @var string
+   */
+  public static string $requestTestSubDirectory = 'tests/resources/ai_test/requests';
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    $parent_instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
+    $parent_instance->moduleHandler = $container->get('module_handler');
+    return $parent_instance;
+  }
 
   /**
    * {@inheritdoc}
@@ -124,6 +151,16 @@ class EchoProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function chat(array|string|ChatInput $input, string $model_id, array $tags = []): ChatOutput {
+    // First try to match the request with the requests to test.
+    $matched_request = $this->getMatchingRequest('chat', $input);
+    if ($matched_request) {
+      if (!empty($matched_request['wait'])) {
+        // If there is a wait time, sleep for that time.
+        usleep($matched_request['wait'] * 1000);
+      }
+      // Return the response.
+      return ChatOutput::fromArray($matched_request['response']);
+    }
     $response = [];
     $normalized_input = '';
     if ($input instanceof ChatInput) {
@@ -295,6 +332,99 @@ class EchoProvider extends AiProviderClientBase implements
       $input = new EchoInput($input);
     }
     return new EchoOutput((string) $input, ['echo' => (string) $input], []);
+  }
+
+  /**
+   * Function to get a matching request from the modules.
+   *
+   * @param string $operation_type
+   *   The operation type to check.
+   * @param mixed $input
+   *   The input to check against.
+   *
+   * @return array|null
+   *   An array with the matching response, and wait microtime or NULL if no
+   *   match is found.
+   */
+  public function getMatchingRequest(string $operation_type, mixed $input): ?array {
+    // If its not an inputInterface, we cannot match it.
+    if (!$input instanceof InputInterface) {
+      return [];
+    }
+    // Get all the requests to test against.
+    $requests = $this->getRequestsToTest($operation_type);
+
+    foreach ($requests as $request) {
+      $array = $input->toArray();
+      if (isset($request['request']) && is_array($request['request']) && Json::encode($request['request']) === Json::encode($array)) {
+        // If the request matches, return the response.
+        if (isset($request['response']) && is_array($request['response'])) {
+          $response = $request['response'];
+          // If there is a wait time, set it.
+          $wait = isset($request['wait']) ? (int) $request['wait'] : 0;
+          return [
+            'response' => $response,
+            'wait' => $wait,
+          ];
+        }
+      }
+    }
+    return NULL;
+  }
+
+  /**
+   * Function that will check the modules for example tests.
+   *
+   * @param string $operation_type
+   *   The operation type to check.
+   *
+   * @return array
+   *   An array of all requests to try to match.
+   */
+  public function getRequestsToTest(string $operation_type = 'chat'): array {
+    // Verify that operation type is alphanumeric only.
+    if (!preg_match('/^[a-zA-Z0-9_]+$/', $operation_type)) {
+      throw new \InvalidArgumentException('Operation type must be alphanumeric only.');
+    }
+
+    // Key is based on module list and operation type.
+    $module_list = md5(implode('_', array_keys($this->moduleHandler->getModuleList())));
+    // Create a cache key based on the operation type and module list.
+    $cache_key = 'ai_test_requests_' . $operation_type . '_' . $module_list;
+    // Check if the cache is already set.
+    $cache = $this->cacheBackend->get($cache_key);
+    if ($cache) {
+      return $cache->data;
+    }
+
+    $requests = [];
+    foreach ($this->moduleHandler->getModuleList() as $extension) {
+      $path = $extension->getPath();
+      $path_to_explore = $path . '/' . self::$requestTestSubDirectory . '/' . $operation_type;
+      if (is_dir($path_to_explore)) {
+        $files = scandir($path_to_explore);
+        foreach ($files as $file) {
+          // Make sure its yaml or yml file.
+          if (preg_match('/\.(yaml|yml)$/', $file)) {
+            $file_path = $path_to_explore . '/' . $file;
+            if (is_file($file_path)) {
+              $file_contents = file_get_contents($file_path);
+              if ($file_contents !== FALSE) {
+                $data = Yaml::parse($file_contents);
+                if (!empty($data)) {
+                  $requests[] = $data;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Set the cache for the requests.
+    $this->cacheBackend->set($cache_key, $requests, (time() + 60));
+
+    return $requests;
   }
 
 }

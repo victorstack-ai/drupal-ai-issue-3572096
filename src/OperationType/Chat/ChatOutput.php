@@ -206,7 +206,7 @@ class ChatOutput implements OutputInterface {
    */
   public function toArray(): array {
     return [
-      'normalized' => $this->normalized,
+      'normalized' => $this->normalized->toArray(),
       'rawOutput' => $this->rawOutput,
       'metadata' => $this->metadata,
       'tokenUsage' => [
@@ -217,6 +217,41 @@ class ChatOutput implements OutputInterface {
         'cached' => $this->cachedTokensUsage,
       ],
     ];
+  }
+
+  /**
+   * Create an instance from an array.
+   *
+   * @param array $data
+   *   The data to create the instance from.
+   *
+   * @return \Drupal\ai\OperationType\Chat\ChatOutput
+   *   The output instance.
+   */
+  public static function fromArray(array $data): ChatOutput {
+    $normalized = $data['normalized'] ?? NULL;
+    $normalized = ChatMessage::fromArray($normalized);
+    $raw_output = $data['rawOutput'] ?? NULL;
+    $metadata = $data['metadata'] ?? NULL;
+    $output = new static($normalized, $raw_output, $metadata);
+    if (isset($data['tokenUsage'])) {
+      if (!empty($data['tokenUsage']['input'])) {
+        $output->setInputTokenUsage($data['tokenUsage']['input']);
+      }
+      if (!empty($data['tokenUsage']['output'])) {
+        $output->setOutputTokenUsage($data['tokenUsage']['output']);
+      }
+      if (!empty($data['tokenUsage']['total'])) {
+        $output->setTotalTokenUsage($data['tokenUsage']['total']);
+      }
+      if (!empty($data['tokenUsage']['reasoning'])) {
+        $output->setReasoningTokenUsage($data['tokenUsage']['reasoning']);
+      }
+      if (!empty($data['tokenUsage']['cached'])) {
+        $output->setCachedTokenUsage($data['tokenUsage']['cached']);
+      }
+    }
+    return $output;
   }
 
 }

@@ -74,7 +74,9 @@ nav:
     - Getting Started: contribute/index.md
     - Contribute Documentation: contribute/documentation.md
     - Contribute Bug Reports: contribute/bug_finding.md
-    - Contribute Testings: contribute/testing.md
+    - Contribute Testings:
+      - Getting Started: contribute/testing.md
+      - Spoof Provider Calls: contribute/testing/spoof_provider.md
     - Contribute Features: contribute/features.md
     - Developer Information: contribute/developer_information.md
   - Providers: providers/matris.md
