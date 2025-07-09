@@ -657,19 +657,26 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     if (empty($automatorConfig['ai_provider'])) {
       throw new AiAutomatorTypeNotRunnable('No provider set for the LLM type ' . $this->llmType);
     }
-    if ($automatorConfig['ai_provider'] == 'default_json') {
-      $automatorConfig['ai_provider'] = $this->aiPluginManager->getDefaultProviderForOperationType('chat_with_complex_json')['provider_id'];
+    $provider = $automatorConfig['ai_provider'];
+
+    if ($provider === 'default_json') {
+      $defaultProvider = $this->aiPluginManager->getDefaultProviderForOperationType('chat_with_complex_json');
+      $provider = $defaultProvider['provider_id'] ?? NULL;
     }
-    elseif ($automatorConfig['ai_provider'] == 'default_structured_response') {
-      $automatorConfig['ai_provider'] = $this->aiPluginManager->getDefaultProviderForOperationType('chat_with_complex_json')['provider_id'];
+    elseif ($provider === 'default_vision') {
+      $defaultProvider = $this->aiPluginManager->getDefaultProviderForOperationType('chat_with_image_vision');
+      $provider = $defaultProvider['provider_id'] ?? NULL;
     }
-    elseif ($automatorConfig['ai_provider'] == 'default_vision') {
-      $automatorConfig['ai_provider'] = $this->aiPluginManager->getDefaultProviderForOperationType('chat_with_image_vision')['provider_id'];
+    elseif ($provider === 'default') {
+      $defaultProvider = $this->aiPluginManager->getDefaultProviderForOperationType($this->llmType);
+      $provider = $defaultProvider['provider_id'] ?? NULL;
     }
-    elseif ($automatorConfig['ai_provider'] == 'default') {
-      $automatorConfig['ai_provider'] = $this->aiPluginManager->getDefaultProviderForOperationType($this->llmType)['provider_id'];
+
+    // Ensure provider is always a valid string.
+    if (empty($provider) || !is_string($provider)) {
+      throw new AiAutomatorTypeNotRunnable('Invalid or missing AI provider for LLM type: ' . $this->llmType);
     }
-    return $automatorConfig['ai_provider'];
+    return $provider;
   }
 
   /**
