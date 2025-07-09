@@ -31,12 +31,24 @@ final class VdbProvidersAccessChecker implements AccessInterface {
    *   the access check result.
    */
   public function access(AccountInterface $account): AccessResult {
+    // Fetch the list of providers.
     $providers = $this->aiVdbProvider->getProviders();
 
-    $result = AccessResult::allowedIf(!empty($providers) && $account->hasPermission('administer ai'));
-    $result->addCacheContexts(['ai_providers', 'user.permissions']);
+    // Allow access for admins even if no providers exist.
+    if ($account->hasPermission('administer ai')) {
+      return AccessResult::allowed()
+        ->addCacheableDependency($account)
+        ->addCacheContexts(['ai_providers', 'user.permissions']);
+    }
 
-    return $result;
+    // Allow access only if providers exist.
+    if (!empty($providers)) {
+      return AccessResult::allowed()
+        ->addCacheableDependency($account)
+        ->addCacheContexts(['ai_providers', 'user.permissions']);
+    }
+
+    return AccessResult::forbidden();
   }
 
 }
