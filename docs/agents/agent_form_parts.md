@@ -38,9 +38,9 @@ You may use tokens here.
 
 ## Default Information Tools
 
-The default information tools are tools that are loaded into the agent's memory for every loop without it having to take a decision about it. These tools are used to gather information that is relevant to the agent's capabilities. For example, if the agent is a Field Agent, it might have tools that list all field types, form widgets, and display widgets available on the site - these are interchanging between different websites, so the agent needs to be able to gather this information dynamically.
+Default information tools automatically load into the agent's memory on each loop, providing essential context without requiring agent decisions. These tools gather dynamic information about the capabilities that you want to custom-build into the agent. For example, a Field Agent might automatically receive lists of field types, form widgets, and display widgets specific to the current site. Remember that, because the specific nature of this data is likely to vary between different Drupal installations, it must be gathered dynamically.
 
-The raw data how you set this up is as a YAML array with the following structure:
+To set this up, define the raw data as a YAML array with the following structure:
 
 ```yaml
 [any_unique_key]:
@@ -52,19 +52,19 @@ The raw data how you set this up is as a YAML array with the following structure
   available_on_loop: 'An array of numbers that on which loops this tool should be available. Optional and should generally not be used without knowledge.`
 ```
 
-So say that we are an expert at the node type article and always need to know what fields are available on that node type, we could have the following:
+Say we need an AI agent that's an expert on the "article" node type and always needs to know what fields are available - we could configure the following:
 
 ```yaml
 article_node_fields:
   label: 'Article node fields'
   description: 'The fields available on the Article node type.'
-  tool: 'ai_agents_get_entity_field_information'
+  tool: 'ai_agent:get_entity_field_information'
   parameters:
     entity_type: 'node'
     bundle: 'article'
 ```
 
-Now the agent would know on any loop what fields are available on the Article node type and can use that information to answer questions about it. Loops are expensive and should be avoided, so this is a way to avoid having to run the same tool over and over again.
+Now the agent would know on any loop what fields are available on the Article node type and can use that information to answer questions about it. Since loops are expensive and should be avoided, this approach prevents having to run the same tool repeatedly.
 
 ## Tools
 
