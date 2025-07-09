@@ -2,6 +2,7 @@
 
 namespace Drupal\ai\Base;
 
+use Symfony\Component\Yaml\Yaml;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ImmutableConfig;
@@ -231,7 +232,10 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    * @return \Drupal\Core\Config\ImmutableConfig
    *   Configuration of module.
    */
-  abstract public function getConfig(): ImmutableConfig;
+  public function getConfig(): ImmutableConfig {
+    $module_name = $this->getPluginId();
+    return $this->configFactory->get($module_name . '.settings');
+  }
 
   /**
    * Returns array of API definition.
@@ -239,7 +243,28 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    * @return array
    *   The plugin configuration array.
    */
-  abstract public function getApiDefinition(): array;
+  public function getApiDefinition(): array {
+    $module_name = $this->getPluginId();
+    $module_path = $this->moduleHandler->getModule($module_name)->getPath();
+    $definition_file = $module_path . '/definitions/api_defaults.yml';
+
+    if (file_exists($definition_file)) {
+      try {
+        return Yaml::parseFile($definition_file);
+      }
+      catch (\Exception $e) {
+        $this->loggerFactory->get('ai')->error(
+          'Failed to parse API definition file @file: @message', [
+            '@file' => $definition_file,
+            '@message' => $e->getMessage(),
+          ]
+        );
+        return [];
+      }
+    }
+
+    return [];
+  }
 
   /**
    * Returns array of models custom settings.
