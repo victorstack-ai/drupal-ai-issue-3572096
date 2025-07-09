@@ -181,6 +181,12 @@ class ProviderProxy {
     $pre_generate_event = new PreGenerateResponseEvent($event_id, $this->plugin->getPluginId(), $operation_type, $this->plugin->configuration, $arguments[0], $arguments[1], $this->plugin->getTags(), $this->plugin->getDebugData());
 
     $this->eventDispatcher->dispatch($pre_generate_event, PreGenerateResponseEvent::EVENT_NAME);
+
+    // If a third party forces response output object, return it.
+    if ($pre_generate_event->getForcedOutputObject()) {
+      return $pre_generate_event->getForcedOutputObject();
+    }
+
     // Get the possible new auth, configuration and input from the event.
     $this->plugin->configuration = $pre_generate_event->getConfiguration();
     $arguments[0] = $pre_generate_event->getInput();

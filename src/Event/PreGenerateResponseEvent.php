@@ -3,6 +3,7 @@
 namespace Drupal\ai\Event;
 
 use Drupal\Component\EventDispatcher\Event;
+use Drupal\ai\OperationType\OutputInterface;
 
 /**
  * Changes or Exceptions before a AI request is triggered can be done here.
@@ -88,6 +89,19 @@ class PreGenerateResponseEvent extends Event {
    * @var array
    */
   protected array $metadata;
+
+  /**
+   * The output to force return.
+   *
+   * This is used if a third party wants to stop a request from being sent,
+   * gracefully with an expected response, instead of throwing an exception.
+   * Examples could be that you want to return a cached response, or a default
+   * response that the user does not have access to use AI.
+   *
+   * @var \Drupal\ai\OperationType\OutputInterface|null
+   *   The output.
+   */
+  protected ?OutputInterface $forcedOutputObject = NULL;
 
   /**
    * Constructs the object.
@@ -311,6 +325,26 @@ class PreGenerateResponseEvent extends Event {
    */
   public function setMetadata(string $key, mixed $value): void {
     $this->metadata[$key] = $value;
+  }
+
+  /**
+   * Gets the forced output object.
+   *
+   * @return \Drupal\ai\OperationType\OutputInterface|null
+   *   The output.
+   */
+  public function getForcedOutputObject(): ?OutputInterface {
+    return $this->forcedOutputObject;
+  }
+
+  /**
+   * Sets the forced output object.
+   *
+   * @param \Drupal\ai\OperationType\OutputInterface $forced_output_object
+   *   The output.
+   */
+  public function setForcedOutputObject(OutputInterface $forced_output_object): void {
+    $this->forcedOutputObject = $forced_output_object;
   }
 
 }
