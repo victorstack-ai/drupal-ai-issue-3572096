@@ -73,7 +73,7 @@ final class ModerationGenerator extends AiApiExplorerPluginBase {
           'flag' => [
             '#type' => 'html_tag',
             '#tag' => 'h4',
-            '#value' => t('Got flagged: :result', [
+            '#value' => $this->t('Got flagged: :result', [
               ':result' => $response->isFlagged() ? 'Yes' : 'No',
             ]),
           ],

@@ -50,7 +50,7 @@ class WorkflowAutocomplete extends ControllerBase {
     $found = 0;
     foreach ($allWorkflows as $key => $workflow) {
       if (strpos(strtolower($workflow), strtolower($input)) !== FALSE) {
-        $config = $this->entityTypeManager()->getStorage('automator_chain_type')->load($key);
+        $this->entityTypeManager()->getStorage('automator_chain_type')->load($key);
 
         $found++;
         $results[] = [

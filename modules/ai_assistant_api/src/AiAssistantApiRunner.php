@@ -313,7 +313,7 @@ class AiAssistantApiRunner {
     if ($this->assistant->get('ai_agent') && $this->moduleHandler->moduleExists('ai_agents')) {
       // Use the agent to run the task, kid of anti pattern in requirement.
       // @phpstan-ignore-next-line
-      return \Drupal::service('ai_assistant_api.agent_runner')->runAsAgent(
+      return \Drupal::service('ai_assistant_api.agent_runner')->runAsAgent( // phpcs:ignore
         $this->assistant->get('ai_agent'),
         $this->getMessageHistory(),
         $this->getProviderAndModel(),

@@ -13,6 +13,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai_automators\Service\Automate;
@@ -31,6 +32,8 @@ use Symfony\Component\HttpFoundation\RequestStack;
   module_dependencies: [],
 )]
 final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
+
+  use StringTranslationTrait;
 
   /**
    * The automate service.
@@ -330,8 +333,8 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
       ])) {
         $form[$input] = [
           '#type' => 'managed_file',
-          '#title' => t('Upload a file'),
-          '#description' => t('Allowed types: jpg, jpeg, png.'),
+          '#title' => $this->t('Upload a file'),
+          '#description' => $this->t('Allowed types: jpg, jpeg, png.'),
           '#upload_location' => 'public://uploads/',
         ];
       }
@@ -477,6 +480,7 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
       $url = $this->fileUrlGenerator->generateAbsoluteString($file->getFileUri());
       return '<img data-entity-uuid="' . $file->uuid() . '" data-entity-type="file" src="' . $url . '" width="' . $data['width'] . '" height="' . $data['height'] . '" />';
     }
+    return '';
   }
 
 }

@@ -213,7 +213,7 @@ class AiTranslateSettingsForm extends ConfigFormBase {
         2 => '2',
         5 => '5',
         10 => '10',
-        0 => 'Unlimited',
+        0 => $this->t('Unlimited'),
       ],
       '#default_value' => $config->get('entity_reference_depth'),
       '#title' => $this->t('Maximum Reference Depth'),

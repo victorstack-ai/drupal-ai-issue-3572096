@@ -19,6 +19,7 @@ abstract class BaseClassFunctionalJavascriptTests extends WebDriverTestBase {
    *
    * @var bool
    */
+  // phpcs:ignore
   protected $strictConfigSchema = FALSE;
 
   /**

@@ -15,7 +15,6 @@ use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai\Utility\CastUtility;
 use Drupal\ai_assistant_api\AiAssistantActionPluginManager;
 use Drupal\ai_assistant_api\Entity\AiAssistant;
-use Drupal\user\Entity\Role;
 
 /**
  * AI Assistant form.
@@ -395,7 +394,7 @@ final class AiAssistantForm extends EntityForm {
     $system_prompt = file_get_contents($this->extensionPathResolver->getPath('module', 'ai_assistant_api') . '/resources/system_prompt.txt');
 
     $options = [];
-    foreach (Role::loadMultiple() as $role) {
+    foreach ($this->entityTypeManager->getStorage('user_role')->loadMultiple() as $role) {
       $options[$role->id()] = $role->label();
     }
 

@@ -158,7 +158,7 @@ class ActionPluginDeriver extends DeriverBase implements ContainerDeriverInterfa
     if ($action_plugin instanceof ConfigurableInterface) {
       // Only validate if configuration exists.
       $config_schema_definition = NULL;
-      if ($configuration = $action_plugin->getConfiguration()) {
+      if ($action_plugin->getConfiguration()) {
         if ($this->typedConfigManager->hasConfigSchema('action.configuration.' . $action_plugin->getPluginId())) {
           $config_schema_definition = $this->typedConfigManager->getDefinition('action.configuration.' . $action_plugin->getPluginId());
         }

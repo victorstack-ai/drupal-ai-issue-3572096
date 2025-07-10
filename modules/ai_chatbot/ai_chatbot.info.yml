@@ -4,4 +4,4 @@ description: 'Provides a chatbot frontend for the AI Assistant API.'
 package: AI Tools
 core_version_requirement: ^10.4 || ^11
 dependencies:
-  - ai_assistant_api
+  - ai:ai_assistant_api

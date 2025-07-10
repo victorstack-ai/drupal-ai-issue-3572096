@@ -229,7 +229,7 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
 
     $all_disabled = TRUE;
     foreach ($config['plugins'] as $plugin_id => $plugin) {
-      $definition = $this->pluginManager->getDefinition($plugin_id);
+      $this->pluginManager->getDefinition($plugin_id);
       if ($all_disabled && $plugin['enabled']) {
         $all_disabled = FALSE;
       }
