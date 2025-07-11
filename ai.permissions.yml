@@ -6,3 +6,7 @@ administer ai providers:
   title: 'Administer LLM Providers'
   description: 'Administer the individual AI providers'
   restrict access: true
+access ai tools overview:
+  title: 'Access Overview of AI Tools'
+  description: 'With this permission the user will be able to access overview of all available AI Tools.'
+  restrict access: true

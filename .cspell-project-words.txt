@@ -232,3 +232,5 @@ agentic
 minikanban
 johansson
 RTBC
+cpath
+csvg

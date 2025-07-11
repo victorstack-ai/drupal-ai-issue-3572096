@@ -53,3 +53,11 @@ ai.ai_setup:
     _form: 'Drupal\ai\Form\AiSetupForm'
   requirements:
     _permission: 'administer ai'
+
+ai.tools_library:
+  path: '/admin/config/ai/tools'
+  defaults:
+    _controller: '\Drupal\ai\Controller\ToolsLibrary::overview'
+    _title: 'Tools Library'
+  requirements:
+    _permission: 'access ai tools overview'
