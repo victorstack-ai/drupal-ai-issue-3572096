@@ -98,8 +98,7 @@ class LbFieldExtractor implements FieldTextExtractorInterface, ContainerFactoryP
           $blockStorage = $this->entityTypeManager->getStorage('block_content');
         }
         if (!empty($blockConfig['block_serialized'])) {
-          // phpcs:ignore
-          $blockEntity = unserialize($blockConfig['block_serialized']);
+          $blockEntity = unserialize($blockConfig['block_serialized'], ['allowed_classes' => FALSE]);
         }
         elseif (!empty($blockConfig['block_revision_id'])) {
           $blockEntity = $blockStorage->loadRevision($blockConfig['block_revision_id']);
