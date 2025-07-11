@@ -2,11 +2,11 @@
 
 namespace Drupal\ai_automators\Plugin\FieldWidgetAction;
 
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai_automators\AiAutomatorEntityModifier;
 use Drupal\ai_automators\PluginManager\AiAutomatorTypeManager;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Form\FormStateInterface;
 use Drupal\field_widget_actions\FieldWidgetActionBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -267,12 +267,11 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
     if (is_null($key)) {
       // If not key is provided, we should iterate through all items.
       foreach ($entity->{$form_key} as $index => $item) {
-        $text_items = [];
         if ($item->{$this->formElementProperty}) {
-          $form[$form_key]['widget']['target_id']['#default_value'][$index] = $item->entity;
-          $text_items[] = $item->entity->label() . ' (' . $item->entity->id() . ')';
+          if ($item && $item->{$this->formElementProperty}) {
+            $form[$form_key]['widget'][$index][$this->formElementProperty]['#value'] = $item->{$this->formElementProperty};
+          }
         }
-        $form[$form_key]['widget']['target_id']['#value'] = implode(', ', $text_items);
       }
     }
     else {
