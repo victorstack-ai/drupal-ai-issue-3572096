@@ -14,6 +14,7 @@ use Drupal\field_widget_actions\Attribute\FieldWidgetAction;
   label: new TranslatableMarkup('Automator Text Suggestion'),
   widget_types: ['string_textfield', 'text_textfield'],
   field_types: ['string', 'text'],
+  category: new TranslatableMarkup('AI Automators'),
 )]
 class Text extends AutomatorBaseAction {
 

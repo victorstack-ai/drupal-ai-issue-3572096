@@ -15,6 +15,7 @@ use Drupal\field_widget_actions\Traits\ImageAltTextActionButtonTrait;
   label: new TranslatableMarkup('Automator Alt Text'),
   widget_types: ['image_image', 'image_focal_point'],
   field_types: ['image'],
+  category: new TranslatableMarkup('AI Automators'),
 )]
 class ImageAltText extends AutomatorBaseAction {
 

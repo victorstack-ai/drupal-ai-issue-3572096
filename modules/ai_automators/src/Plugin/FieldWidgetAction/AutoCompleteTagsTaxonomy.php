@@ -14,6 +14,7 @@ use Drupal\field_widget_actions\Attribute\FieldWidgetAction;
   label: new TranslatableMarkup('Automator Taxonomy'),
   widget_types: ['entity_reference_autocomplete_tags'],
   field_types: ['entity_reference'],
+  category: new TranslatableMarkup('AI Automators'),
 )]
 class AutoCompleteTagsTaxonomy extends AutomatorBaseAction {
 

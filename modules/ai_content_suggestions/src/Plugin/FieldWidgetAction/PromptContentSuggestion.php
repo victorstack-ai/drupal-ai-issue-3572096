@@ -32,6 +32,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
   label: new TranslatableMarkup('Content Suggestion with prompt'),
   widget_types: ['string_textfield', 'string_textarea', 'text_textarea', 'text_textarea_with_summary', 'text_textfield'],
   field_types: ['string', 'string_long', 'text', 'text_long', 'text_with_summary'],
+  category: new TranslatableMarkup('AI Content Suggestions'),
 )]
 class PromptContentSuggestion extends FieldWidgetActionBase {
 

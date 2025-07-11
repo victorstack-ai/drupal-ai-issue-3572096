@@ -65,7 +65,11 @@ class FieldWidgetAction {
       ];
       $options = [];
       foreach ($allowed_field_widget_actions as $plugin_id => $allowed_field_widget_action) {
-        $options[$plugin_id] = $allowed_field_widget_action['label'];
+        if (empty($allowed_field_widget_action['category'])) {
+          $allowed_field_widget_action['category'] = $this->t('Other');
+        }
+        $category = (string) $allowed_field_widget_action['category'];
+        $options[$category][$plugin_id] = $allowed_field_widget_action['label'];
       }
       $element['new'] = [
         '#tree' => TRUE,

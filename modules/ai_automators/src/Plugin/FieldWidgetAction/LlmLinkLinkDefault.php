@@ -14,6 +14,7 @@ use Drupal\field_widget_actions\Attribute\FieldWidgetAction;
   label: new TranslatableMarkup('LLM Link Generator'),
   widget_types: ['link_default'],
   field_types: ['link'],
+  category: new TranslatableMarkup('AI Automators'),
 )]
 class LlmLinkLinkDefault extends AutomatorBaseAction {
 

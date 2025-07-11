@@ -14,6 +14,7 @@ use Drupal\field_widget_actions\Attribute\FieldWidgetAction;
   label: new TranslatableMarkup('LLM Number Generator'),
   widget_types: ['number'],
   field_types: ['integer', 'float'],
+  category: new TranslatableMarkup('AI Automators'),
 )]
 class LlmNumberNumberDefault extends AutomatorBaseAction {
 
