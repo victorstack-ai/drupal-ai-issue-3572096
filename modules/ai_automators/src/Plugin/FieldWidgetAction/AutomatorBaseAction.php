@@ -238,6 +238,7 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
     if ($this->clearEntity) {
       $entity->{$form_key} = [];
     }
+    $form_state->setValue($form_key, NULL);
     // Run the automator for the entity.
     $entity = $this->entityModifier->saveEntity($entity, FALSE, $form_key);
     // Ensure the widget has enough elements for all values.
@@ -262,6 +263,7 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
    *   The updated form array with values populated.
    */
   protected function saveFormValues(array &$form, string $form_key, $entity, ?int $key = NULL): array {
+
     if (is_null($key)) {
       // If not key is provided, we should iterate through all items.
       foreach ($entity->{$form_key} as $index => $item) {

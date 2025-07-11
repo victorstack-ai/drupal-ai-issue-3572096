@@ -9,6 +9,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\ai_automators\Event\AutomatorConfigEvent;
 use Drupal\ai_automators\Event\ProcessFieldEvent;
+use Drupal\ai_automators\PluginInterfaces\AiAutomatorDirectProcessInterface;
 use Drupal\ai_automators\PluginInterfaces\AiAutomatorFieldProcessInterface;
 use Drupal\ai_automators\PluginManager\AiAutomatorFieldProcessManager;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -228,6 +229,12 @@ class AiAutomatorEntityModifier {
       return FALSE;
     }
     elseif (in_array(ProcessFieldEvent::FIELD_FORCE_PROCESS, $event->actions)) {
+      return $processor->modify($entity, $fieldDefinition, $automatorConfig);
+    }
+
+    // If the type is of AiAutomatorDirectProcessInterface, it checks first.
+    if ($processor instanceof AiAutomatorDirectProcessInterface && $processor->shouldProcessDirectly($entity, $fieldDefinition, $automatorConfig)) {
+      // If the processor wants to process directly, we do that.
       return $processor->modify($entity, $fieldDefinition, $automatorConfig);
     }
 
