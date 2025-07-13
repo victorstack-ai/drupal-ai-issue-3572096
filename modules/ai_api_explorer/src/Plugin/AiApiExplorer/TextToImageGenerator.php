@@ -9,14 +9,15 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\Url;
 use Drupal\ai\AiProviderInterface;
 use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\OperationType\TextToImage\TextToImageInput;
 use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai_api_explorer\AiApiExplorerPluginBase;
 use Drupal\ai_api_explorer\Attribute\AiApiExplorer;
 use Drupal\ai_api_explorer\ExplorerHelper;
-use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -150,7 +151,8 @@ final class TextToImageGenerator extends AiApiExplorerPluginBase {
       $provider = $this->aiProviderHelper->generateAiProviderFromFormSubmit($form, $form_state, 'text_to_image', 'image_generator');
 
       try {
-        $images = $provider->textToImage($form_state->getValue('prompt'), $form_state->getValue('image_generator_ai_model'), ['ai_api_explorer'])->getNormalized();
+        $input = new TextToImageInput($form_state->getValue('prompt'));
+        $images = $provider->textToImage($input, $form_state->getValue('image_generator_ai_model'), ['ai_api_explorer'])->getNormalized();
         $key = 0;
 
         /** @var \Drupal\ai\OperationType\GenericType\ImageFile $image */

@@ -48,6 +48,8 @@ class ChatInterfaceTest extends KernelTestBase {
     $this->installSchema('file', [
       'file_usage',
     ]);
+    $this->installConfig(['ai', 'ai_test']);
+    $this->installEntitySchema('ai_mock_provider_result');
   }
 
   /**

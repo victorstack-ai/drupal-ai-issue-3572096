@@ -2,7 +2,9 @@
 
 namespace Drupal\ai_test\Plugin\AiProvider;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Tests\ai\Mock\MockIterator;
 use Drupal\Tests\ai\Mock\MockStreamedChatIterator;
@@ -42,8 +44,6 @@ use Drupal\ai\OperationType\TextToSpeech\TextToSpeechOutput;
 use Drupal\ai_test\OperationType\Echo\EchoInput;
 use Drupal\ai_test\OperationType\Echo\EchoInterface;
 use Drupal\ai_test\OperationType\Echo\EchoOutput;
-use Drupal\Component\Serialization\Json;
-use Drupal\Core\Extension\ModuleHandlerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Yaml\Yaml;
 
@@ -72,6 +72,13 @@ class EchoProvider extends AiProviderClientBase implements
   protected ModuleHandlerInterface $moduleHandler;
 
   /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
    * The variable for the sub directory to search in.
    *
    * @var string
@@ -84,6 +91,7 @@ class EchoProvider extends AiProviderClientBase implements
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $parent_instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $parent_instance->moduleHandler = $container->get('module_handler');
+    $parent_instance->entityTypeManager = $container->get('entity_type.manager');
     return $parent_instance;
   }
 
@@ -222,6 +230,28 @@ class EchoProvider extends AiProviderClientBase implements
         }
       }
     }
+    // Mock an OpenAI response by default.
+    $response = [
+      'id' => 'chatcmpl-1234567890',
+      'object' => 'chat.completion',
+      'created' => time(),
+      'model' => $model_id,
+      'choices' => [
+        [
+          'index' => 0,
+          'message' => [
+            'role' => 'assistant',
+            'content' => $message instanceof ChatMessage ? $message->getText() : 'Hello world! This is a mock response.',
+          ],
+          'finish_reason' => 'stop',
+        ],
+      ],
+      'usage' => [
+        'prompt_tokens' => 10,
+        'completion_tokens' => 20,
+        'total_tokens' => 30,
+      ],
+    ];
     return new ChatOutput($message, $response, []);
   }
 
@@ -352,7 +382,8 @@ class EchoProvider extends AiProviderClientBase implements
       return [];
     }
     // Get all the requests to test against.
-    $requests = $this->getRequestsToTest($operation_type);
+    $requests = $this->dbRequestsToTest($operation_type);
+    $requests = array_merge($requests, $this->testRequestsToTest($operation_type));
     foreach ($requests as $request) {
       $array = $input->toArray();
       if (isset($request['request']) && is_array($request['request']) && Json::encode($request['request']) === Json::encode($array)) {
@@ -372,7 +403,7 @@ class EchoProvider extends AiProviderClientBase implements
   }
 
   /**
-   * Function that will check the modules for example tests.
+   * Function that will get all enabled tests.
    *
    * @param string $operation_type
    *   The operation type to check.
@@ -380,7 +411,47 @@ class EchoProvider extends AiProviderClientBase implements
    * @return array
    *   An array of all requests to try to match.
    */
-  public function getRequestsToTest(string $operation_type = 'chat'): array {
+  public function dbRequestsToTest(string $operation_type = 'chat'): array {
+    // Verify that operation type is alphanumeric only.
+    if (!preg_match('/^[a-zA-Z0-9_]+$/', $operation_type)) {
+      throw new \InvalidArgumentException('Operation type must be alphanumeric only.');
+    }
+
+    // Check so the entity type exists.
+    if (!$this->entityTypeManager->hasDefinition('ai_mock_provider_result')) {
+      return [];
+    }
+
+    // Load all the requests that are of operation type chat and enabled.
+    /** @var \Drupal\ai_test\AIMockProviderResultInterface[] $entities */
+    $entities = $this->entityTypeManager->getStorage('ai_mock_provider_result')
+      ->loadByProperties([
+        'operation_type' => $operation_type,
+        'mock_enabled' => TRUE,
+      ]);
+
+    $responses = [];
+    foreach ($entities as $entity) {
+      $responses[] = [
+        'request' => Yaml::parse($entity->get('request')->value),
+        'response' => Yaml::parse($entity->get('response')->value),
+        'wait' => $entity->get('sleep_time')->value,
+      ];
+    }
+
+    return $responses;
+  }
+
+  /**
+   * Function that will find the modules for example tests.
+   *
+   * @param string $operation_type
+   *   The operation type to check.
+   *
+   * @return array
+   *   An array of all requests to try to match.
+   */
+  public function testRequestsToTest(string $operation_type = 'chat'): array {
     // Verify that operation type is alphanumeric only.
     if (!preg_match('/^[a-zA-Z0-9_]+$/', $operation_type)) {
       throw new \InvalidArgumentException('Operation type must be alphanumeric only.');

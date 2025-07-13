@@ -49,6 +49,8 @@ abstract class AiActionTestBase extends KernelTestBase {
 
     $this->installEntitySchema('user');
     $this->installEntitySchema('file');
+    $this->enableModules(['ai_test']);
+    $this->installEntitySchema('ai_mock_provider_result');
     $this->installConfig(static::$modules);
 
     $this->actionManager = \Drupal::service('plugin.manager.action');

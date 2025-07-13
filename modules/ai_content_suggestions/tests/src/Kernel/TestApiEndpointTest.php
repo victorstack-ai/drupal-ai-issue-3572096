@@ -28,9 +28,11 @@ class TestApiEndpointTest extends KernelTestBase {
     $this->container->get('config.factory')
       ->getEditable('ai_content_suggestions.settings')
       ->set('plugins', [
-        'summarise' => 'echoai__default',
+        'summarise' => 'echoai__gpt-test',
       ])
       ->save();
+
+    $this->installEntitySchema('ai_mock_provider_result');
   }
 
   /**

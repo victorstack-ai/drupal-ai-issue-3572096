@@ -20,7 +20,7 @@ variables:
   # Until fixed in gitlab templates.
   SKIP_STYLELINT: 1
   # showdown.js is full of emoji words.
-  _CSPELL_IGNORE_PATHS: "'modules/ai_api_explorer/css', 'modules/ai_api_explorer/js', 'modules/ai_chatbot/js', 'modules/ai_chatbot/deepchat', 'modules/ai_chatbot/css', 'modules/ai_automators/tests/config', '.cspell-project-words.txt', 'grumphp.yml"
+  _CSPELL_IGNORE_PATHS: "'modules/*/tests/resources/ai_test/requests/*/*.yml', 'modules/ai_api_explorer/css', 'modules/ai_api_explorer/js', 'modules/ai_chatbot/js', 'modules/ai_chatbot/deepchat', 'modules/ai_chatbot/css', 'modules/ai_automators/tests/config', '.cspell-project-words.txt', 'grumphp.yml"
   COMPOSER_IGNORE_PLATFORM_REQS: 'ext-ffi'
 
 # Build JS artifacts as this can sometimes be forgotten.

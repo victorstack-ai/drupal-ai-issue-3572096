@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\ai_api_explorer\Plugin\AiApiExplorer;
 
-use Drupal\ai\OperationType\GenericType\DocumentFile;
 use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Form\FormStateInterface;
@@ -16,6 +15,7 @@ use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface;
 use Drupal\ai\OperationType\Chat\Tools\ToolsInput;
+use Drupal\ai\OperationType\GenericType\DocumentFile;
 use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\ai\Service\AiProviderFormHelper;
@@ -403,10 +403,13 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
   }
 
   /**
-   * {@inheritdoc}
+   * {@inheritDoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
-    $this->getResponse($form, $form_state);
+    // If its streamed, we trigger the function.
+    if ($form_state->getValue('streamed')) {
+      $this->getResponse($form, $form_state);
+    }
   }
 
   /**

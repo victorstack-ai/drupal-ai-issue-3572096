@@ -72,4 +72,18 @@ class TextToImageInput extends InputBase implements InputInterface {
     ];
   }
 
+  /**
+   * Create an instance from an array.
+   *
+   * @param array $data
+   *   The data to create the instance from.
+   *
+   * @return static
+   *   The created instance.
+   */
+  public static function fromArray(array $data): static {
+    $instance = new static($data['text'] ?? '');
+    return $instance;
+  }
+
 }

@@ -205,6 +205,9 @@ class ChatOutput implements OutputInterface {
    * {@inheritdoc}
    */
   public function toArray(): array {
+    if ($this->normalized instanceof StreamedChatMessageIteratorInterface) {
+      return [];
+    }
     return [
       'normalized' => $this->normalized->toArray(),
       'rawOutput' => $this->rawOutput,
