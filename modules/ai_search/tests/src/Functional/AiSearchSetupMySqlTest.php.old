@@ -226,7 +226,14 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
     $this->submitForm([
       'checker[entity]' => $this->nodes[0]->label() . ' (' . $this->nodes[0]->id() . ')',
     ], 'Save changes');
-    $this->assertSession()->pageTextContains('[Chocolate Cake](' . $this->nodes[0]->toUrl()->toString() . ')');
+
+    if (class_exists('League\CommonMark\CommonMarkConverter')) {
+      $this->assertSession()->pageTextContains('Chocolate Cake');
+    }
+    else {
+      $this->assertSession()->pageTextContains('[Chocolate Cake](' . $this->nodes[0]->toUrl()->toString() . ')');
+    }
+
     $this->assertSession()->pageTextContains('Title: Chocolate Cake');
 
     // Ignore the title and expect it to no longer show up.
@@ -238,7 +245,14 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
     $this->submitForm([
       'checker[entity]' => $this->nodes[0]->label() . ' (' . $this->nodes[0]->id() . ')',
     ], 'Save changes');
-    $this->assertSession()->pageTextContains('[Chocolate Cake](' . $this->nodes[0]->toUrl()->toString() . ')');
+
+    if (class_exists('League\CommonMark\CommonMarkConverter')) {
+      $this->assertSession()->pageTextContains('Chocolate Cake');
+    }
+    else {
+      $this->assertSession()->pageTextContains('[Chocolate Cake](' . $this->nodes[0]->toUrl()->toString() . ')');
+    }
+
     $this->assertSession()->pageTextNotContains('Title: Chocolate Cake');
 
     // Reset in case parallel test run.
