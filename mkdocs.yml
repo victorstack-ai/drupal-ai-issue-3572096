@@ -64,6 +64,7 @@ nav:
     - Develop a third-party module: developers/develop_third_party_module.md
     - Events: developers/events.md
     - DDEV: developers/ddev.md
+    - Mock a Provider: developers/virtual_provider.md
     - Develop for submodules:
         - AI Assistant API Action: developers/develop_api_assistant_action.md
         - Develop an AI API Explorer plugin: developers/ai_api_explorer.md
@@ -76,7 +77,7 @@ nav:
     - Contribute Bug Reports: contribute/bug_finding.md
     - Contribute Testings:
       - Getting Started: contribute/testing.md
-      - Spoof Provider Calls: contribute/testing/spoof_provider.md
+      - Mock Provider Calls: contribute/testing/spoof_provider.md
     - Contribute Features: contribute/features.md
     - Developer Information: contribute/developer_information.md
   - Providers: providers/matris.md
