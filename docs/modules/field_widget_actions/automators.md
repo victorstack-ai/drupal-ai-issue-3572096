@@ -14,6 +14,7 @@ operation. For more information on AI Providers and Operation Types, please see
 Configuring a «Generate tags» in the Article content type is a 2 steps process.
 
 Step #1: Manage fields
+
 1. Go to/admin/structure/types/manage/article/fields
 2. In the Operations column, click the Edit button of field_tags
 3. Check «Enable AI Automator»
@@ -28,6 +29,7 @@ Step #1: Manage fields
 6. Save settings
 
 Step #2: Manage form display
+
 1. Go to /admin/structure/types/manage/article/form-display
 2. Open up field_tags settings
 3. In the Field Widget Actions field-set
