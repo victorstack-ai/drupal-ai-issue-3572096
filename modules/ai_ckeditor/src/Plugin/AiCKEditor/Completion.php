@@ -52,11 +52,6 @@ final class Completion extends AiCKEditorPluginBase {
       '#title' => $this->t('Completion pre prompt'),
       '#default_value' => $prompt_complete ?? '',
       '#description' => $this->t('This prompt will be prepended before the user prompt. This field may be left empty too.'),
-      '#states' => [
-        'required' => [
-          ':input[name="editor[settings][plugins][ai_ckeditor_ai][plugins][ai_ckeditor_completion][enabled]"]' => ['checked' => TRUE],
-        ],
-      ],
     ];
 
     return $form;
