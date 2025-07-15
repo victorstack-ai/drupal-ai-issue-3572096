@@ -1,0 +1,7 @@
+langcode: en
+status: true
+dependencies: {  }
+id: suggest_tags
+label: 'Suggest tags'
+variables: {  }
+tokens: {  }

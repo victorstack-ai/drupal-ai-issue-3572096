@@ -1,0 +1,22 @@
+ai.ai_prompt.*:
+  type: config_entity
+  label: 'AI Prompt'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+    type:
+      type: string
+      label: 'Prompt Type ID'
+    prompt:
+      type: text
+      label: 'Prompt text'
+    deletion_protected:
+      type: boolean
+      label: 'Protected from deletion'
+    edit_protected:
+      type: boolean
+      label: 'Protected from editing'

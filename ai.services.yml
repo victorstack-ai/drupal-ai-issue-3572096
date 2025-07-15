@@ -10,6 +10,12 @@ services:
     class: Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoder
   ai.prompt_code_block_extractor:
     class: Drupal\ai\Service\PromptCodeBlockExtractor\PromptCodeBlockExtractor
+  ai.prompt_manager:
+    class: Drupal\ai\Service\AiPromptManager
+    arguments: ['@entity_type.manager', '@extension.path.resolver', '@logger.factory']
+  ai.prompt_subform:
+    class: Drupal\ai\Form\AiPromptSubform
+    arguments: ['@form_builder', '@entity_type.manager']
   ai.vdb_provider:
     class: Drupal\ai\AiVdbProviderPluginManager
     parent: default_plugin_manager

@@ -61,3 +61,95 @@ ai.tools_library:
     _title: 'Tools Library'
   requirements:
     _permission: 'access ai tools overview'
+
+# Prompt management.
+entity.ai_prompt.collection:
+  path: '/admin/config/ai/prompts'
+  defaults:
+    _entity_list: 'ai_prompt'
+    _title: 'AI Prompts'
+  requirements:
+    _permission: 'manage ai prompts'
+  options:
+    _admin_route: TRUE
+
+entity.ai_prompt.add_form:
+  path: '/admin/config/ai/prompts/add'
+  defaults:
+    _entity_form: 'ai_prompt.add'
+    _title: 'Add AI Prompt'
+  requirements:
+    _permission: 'manage ai prompts'
+  options:
+    _admin_route: TRUE
+
+entity.ai_prompt.add_type_form:
+  path: '/admin/config/ai/prompts/add/{ai_prompt_type}'
+  defaults:
+    _entity_form: 'ai_prompt.add'
+    _title_callback: '\Drupal\ai\Form\AiPromptForm::titleCallback'
+  requirements:
+    _permission: 'administer ai prompt types'
+  options:
+    _admin_route: TRUE
+
+entity.ai_prompt.edit_form:
+  path: '/admin/config/ai/prompts/{ai_prompt}'
+  defaults:
+    _entity_form: 'ai_prompt.edit'
+    _title: 'Edit AI Prompt'
+  requirements:
+    _permission: 'manage ai prompts'
+  options:
+    _admin_route: TRUE
+
+entity.ai_prompt.delete_form:
+  path: '/admin/config/ai/prompts/{ai_prompt}/delete'
+  defaults:
+    _entity_form: 'ai_prompt.delete'
+    _title: 'Delete AI Prompt'
+  requirements:
+    _permission: 'manage ai prompts'
+  options:
+    _admin_route: TRUE
+
+# Prompt type management.
+entity.ai_prompt_type.collection:
+  path: '/admin/config/ai/prompts/prompt-types'
+  defaults:
+    _entity_list: 'ai_prompt_type'
+    _title: 'AI Prompts types'
+  requirements:
+    _permission: 'administer ai prompt types'
+  options:
+    _admin_route: TRUE
+
+entity.ai_prompt_type.add_form:
+  path: '/admin/config/ai/prompts/prompt-types/add'
+  defaults:
+    _entity_form: 'ai_prompt_type.add'
+    _title: 'Add AI Prompt types'
+  requirements:
+    _permission: 'administer ai prompt types'
+  options:
+    _admin_route: TRUE
+
+entity.ai_prompt_type.edit_form:
+  path: '/admin/config/ai/prompts/prompt-types/{ai_prompt_type}'
+  defaults:
+    _entity_form: 'ai_prompt_type.edit'
+    _title: 'Edit AI Prompt type'
+  requirements:
+    _permission: 'administer ai prompt types'
+  options:
+    _admin_route: TRUE
+
+entity.ai_prompt_type.delete_form:
+  path: '/admin/config/ai/prompts/prompt-types/{ai_prompt_type}/delete'
+  defaults:
+    _entity_form: 'ai_prompt_type.delete'
+    _title: 'Delete AI Prompt type'
+  requirements:
+    _permission: 'administer ai prompt types'
+  options:
+    _admin_route: TRUE
