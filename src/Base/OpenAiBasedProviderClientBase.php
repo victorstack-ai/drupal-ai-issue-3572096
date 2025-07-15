@@ -156,7 +156,7 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
    * {@inheritdoc}
    */
   public function getConfig(): ImmutableConfig {
-    $module_name = str_replace('_provider', '', $this->getPluginId());
+    $module_name = $this->pluginDefinition['provider'];
     return $this->configFactory->get($module_name . '.settings');
   }
 
@@ -164,7 +164,7 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
    * {@inheritdoc}
    */
   public function getApiDefinition(): array {
-    $module_name = str_replace('_provider', '', $this->getPluginId());
+    $module_name = $this->pluginDefinition['provider'];
     $module_path = $this->moduleHandler->getModule($module_name)->getPath();
     $definition_file = $module_path . '/definitions/api_defaults.yml';
 

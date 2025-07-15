@@ -233,7 +233,7 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    *   Configuration of module.
    */
   public function getConfig(): ImmutableConfig {
-    $module_name = $this->getPluginId();
+    $module_name = $this->pluginDefinition['provider'];
     return $this->configFactory->get($module_name . '.settings');
   }
 
@@ -244,7 +244,7 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    *   The plugin configuration array.
    */
   public function getApiDefinition(): array {
-    $module_name = $this->getPluginId();
+    $module_name = $this->pluginDefinition['provider'];
     $module_path = $this->moduleHandler->getModule($module_name)->getPath();
     $definition_file = $module_path . '/definitions/api_defaults.yml';
 
