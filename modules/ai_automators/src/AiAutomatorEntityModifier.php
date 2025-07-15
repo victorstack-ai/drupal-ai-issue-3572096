@@ -75,11 +75,13 @@ class AiAutomatorEntityModifier {
    *   Is it an insert.
    * @param string|null $specificField
    *   If a specific field should be processed, this is the field name.
+   * @param bool $isAutomated
+   *   If this is an automated process or not.
    *
    * @return \Drupal\Core\Entity\ContentEntityInterface|null
    *   The entity or NULL if no automator fields are found.
    */
-  public function saveEntity(EntityInterface $entity, $isInsert = FALSE, $specificField = NULL) {
+  public function saveEntity(EntityInterface $entity, $isInsert = FALSE, $specificField = NULL, $isAutomated = TRUE) {
     // Only run on Content Interfaces.
     if (!($entity instanceof ContentEntityInterface)) {
       return NULL;
@@ -136,6 +138,10 @@ class AiAutomatorEntityModifier {
       }
       // Load the processor or load direct.
       $processor = $processes[$config['automatorConfig']['worker_type']] ?? $processes['direct'];
+      // If the processor is a dynamic process and its automatic, we skip it.
+      if ($isAutomated && $processor instanceof AiAutomatorDirectProcessInterface) {
+        continue;
+      }
       if (method_exists($processor, 'isImport') && $isInsert) {
         $this->markFieldForProcessing($entity, $config['fieldDefinition'], $config['automatorConfig'], $processor);
       }

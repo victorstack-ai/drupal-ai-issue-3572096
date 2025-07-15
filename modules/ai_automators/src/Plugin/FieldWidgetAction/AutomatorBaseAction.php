@@ -240,7 +240,7 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
     }
     $form_state->setValue($form_key, NULL);
     // Run the automator for the entity.
-    $entity = $this->entityModifier->saveEntity($entity, FALSE, $form_key);
+    $entity = $this->entityModifier->saveEntity($entity, FALSE, $form_key, FALSE);
     // Ensure the widget has enough elements for all values.
     $form[$form_key]['widget']['#items_count'] = count($entity->{$form_key});
 
