@@ -3,6 +3,7 @@
 namespace Drupal\ai\Base;
 
 use Drupal\ai\OperationType\Chat\OpenAiTypeStreamedChatMessageIterator;
+use Drupal\ai\Traits\OperationType\EmbeddingsTrait;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\ai\OperationType\Chat\ChatInput;
@@ -47,6 +48,8 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
   TextToSpeechInterface,
   SpeechToTextInterface,
   TextToImageInterface {
+
+  use EmbeddingsTrait;
 
   /**
    * The OpenAI Client.
