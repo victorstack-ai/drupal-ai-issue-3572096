@@ -234,3 +234,8 @@ johansson
 RTBC
 cpath
 csvg
+groq
+huggingface
+lmstudio
+milvus
+ollama
