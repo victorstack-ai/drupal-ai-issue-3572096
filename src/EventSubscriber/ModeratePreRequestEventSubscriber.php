@@ -1,18 +1,19 @@
 <?php
 
-namespace Drupal\ai_external_moderation\EventSubscriber;
+namespace Drupal\ai\EventSubscriber;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\Event\PreGenerateResponseEvent;
 use Drupal\ai\Exception\AiUnsafePromptException;
 use Drupal\ai\OperationType\InputInterface;
+use Drupal\Core\Config\ImmutableConfig;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * The event that is triggered after a response is generated.
  *
- * @package Drupal\ai_external_moderation\EventSubscriber
+ * @package Drupal\ai\EventSubscriber
  */
 class ModeratePreRequestEventSubscriber implements EventSubscriberInterface {
 
@@ -21,14 +22,14 @@ class ModeratePreRequestEventSubscriber implements EventSubscriberInterface {
    *
    * @var \Drupal\ai\AiProviderPluginManager
    */
-  protected $aiProvider;
+  protected AiProviderPluginManager $aiProvider;
 
   /**
    * The config factory.
    *
    * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
-  protected $configFactory;
+  protected ConfigFactoryInterface $configFactory;
 
   /**
    * Constructor.
@@ -55,8 +56,10 @@ class ModeratePreRequestEventSubscriber implements EventSubscriberInterface {
    *
    * @param \Drupal\ai\Event\PreGenerateResponseEvent $event
    *   The event to log.
+   *
+   * @throws \Drupal\ai\Exception\AiUnsafePromptException
    */
-  public function moderatePreRequest(PreGenerateResponseEvent $event) {
+  public function moderatePreRequest(PreGenerateResponseEvent $event): void {
     // Check the config if we should moderate the provider and type.
     $config = $this->getConfig()->get('moderations') ?? [];
     $configs = $this->matchConfigs($config, $event);
@@ -90,7 +93,6 @@ class ModeratePreRequestEventSubscriber implements EventSubscriberInterface {
         }
       }
     }
-
   }
 
   /**
@@ -119,6 +121,7 @@ class ModeratePreRequestEventSubscriber implements EventSubscriberInterface {
       }
       $new_configs[$key] = $config;
     }
+
     return $new_configs;
   }
 
@@ -128,8 +131,8 @@ class ModeratePreRequestEventSubscriber implements EventSubscriberInterface {
    * @return \Drupal\Core\Config\ImmutableConfig
    *   The config.
    */
-  protected function getConfig() {
-    return $this->configFactory->get('ai_external_moderation.settings');
+  protected function getConfig(): ImmutableConfig {
+    return $this->configFactory->get('ai.external_moderation');
   }
 
 }

@@ -64,6 +64,11 @@ services:
     arguments: ['@ai.provider', '@ai.vdb_provider']
     tags:
       - { name: cache.context }
+  ai.pre_request_subscriber:
+    class: '\Drupal\ai\EventSubscriber\ModeratePreRequestEventSubscriber'
+    arguments: ['@ai.provider', '@config.factory']
+    tags:
+      - { name: 'event_subscriber' }
   ai.tools_library.ui_builder:
     class: Drupal\ai\Service\AiToolsLibraryUiBuilder
     arguments: ['@plugin.manager.ai.function_groups', '@plugin.manager.ai.function_calls', '@module_handler', '@request_stack', '@form_builder']

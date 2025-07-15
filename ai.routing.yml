@@ -54,6 +54,13 @@ ai.ai_setup:
   requirements:
     _permission: 'administer ai'
 
+ai.external_moderation_settings:
+  path: '/admin/config/ai/ai-external-moderation'
+  defaults:
+    _form: '\Drupal\ai\Form\ModerationConfigurations'
+    _title: 'AI Moderation Settings'
+  requirements:
+    _permission: 'administer ai'
 ai.tools_library:
   path: '/admin/config/ai/tools'
   defaults:
