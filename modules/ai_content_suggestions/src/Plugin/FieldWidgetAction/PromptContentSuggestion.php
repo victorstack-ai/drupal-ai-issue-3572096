@@ -5,6 +5,7 @@ namespace Drupal\ai_content_suggestions\Plugin\FieldWidgetAction;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\OpenModalDialogCommand;
@@ -93,6 +94,13 @@ class PromptContentSuggestion extends FieldWidgetActionBase {
   protected LoggerInterface $logger;
 
   /**
+   * The prompt JSON decoder.
+   *
+   * @var \Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface
+   */
+  protected PromptJsonDecoderInterface $promptJsonDecoder;
+
+  /**
    * {@inheritdoc}
    */
   public function defaultConfiguration() {
@@ -100,6 +108,7 @@ class PromptContentSuggestion extends FieldWidgetActionBase {
       'settings' => [
         'model' => '',
         'prompt' => '',
+        'display_on_focus' => FALSE,
       ],
     ] + parent::defaultConfiguration();
   }
@@ -117,6 +126,7 @@ class PromptContentSuggestion extends FieldWidgetActionBase {
     $instance->renderer = $container->get('renderer');
     $instance->config = $container->get('config.factory')->get('ai_content_suggestions.settings');
     $instance->logger = $container->get('logger.channel.field_widget_actions');
+    $instance->promptJsonDecoder = $container->get('ai.prompt_json_decode');
     return $instance;
   }
 
@@ -173,6 +183,12 @@ class PromptContentSuggestion extends FieldWidgetActionBase {
         '#token_types' => [$field_entity_type],
       ];
     }
+    $element['display_on_focus'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Display the buttons when the form element is in focus'),
+      '#default_value' => $settings['display_on_focus'],
+      '#description' => $this->t('The buttons will be hidden by default and will be displayed only when the form element is focused. <b>Be aware that this is not good for accessibility</b>.'),
+    ];
     return $element;
   }
 
@@ -204,6 +220,10 @@ class PromptContentSuggestion extends FieldWidgetActionBase {
   public function completeFormAlter(array &$form, FormStateInterface $form_state, array $context = []) {
     parent::completeFormAlter($form, $form_state, $context);
     $form['#attributes']['class'][] = 'ai-content-suggestions--enabled';
+    $settings = $this->getConfiguration();
+    if ($settings['display_on_focus']) {
+      $form['#attributes']['class'][] = 'ai-content-suggestions--on-focus';
+    }
   }
 
   /**
@@ -249,6 +269,7 @@ class PromptContentSuggestion extends FieldWidgetActionBase {
       $prompt = $this->token->replace($prompt, [$entity->getEntityTypeId() => $entity], ['clear' => TRUE]);
       $prompt = $converter->convert($prompt);
     }
+    $suggestions = FALSE;
     /** @var \Drupal\ai\AiProviderInterface $ai_provider */
     $ai_provider = $provider_config['provider_id'];
     try {
@@ -261,12 +282,22 @@ class PromptContentSuggestion extends FieldWidgetActionBase {
         'field_widget_action',
         'ai_content_suggestions',
       ])->getNormalized();
+      $suggestions = $this->promptJsonDecoder->decode($response);
       $message = trim($response->getText()) ?? $this->t('No result could be generated.');
     }
     catch (\Exception $e) {
       $this->logger->error($e->getMessage());
       $message = $this->t('There was an error obtaining a response from the LLM.');
     }
+
+    if (is_array($suggestions)) {
+      $suggestions = array_column($suggestions, 'suggestion');
+      $message = [
+        '#theme' => 'ai_content_suggestions',
+        '#suggestions' => $suggestions,
+      ];
+    }
+
     $response = new AjaxResponse();
     if (!empty($selector)) {
       $response->addCommand(new SettingsCommand(['ai_cs_target' => ['target' => $selector]], TRUE));

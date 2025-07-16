@@ -1,0 +1,11 @@
+{% if suggestions %}
+<ol>
+  {% for suggestion in suggestions %}
+  <li>
+    <span class="ai-content-suggestion">
+      <button class="ai-use-cs" title="{{ 'Use suggestion'|t }}">{{ suggestion }}</button>
+    </span>
+  </li>
+  {% endfor %}
+</ol>
+{% endif %}
