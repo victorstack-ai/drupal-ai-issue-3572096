@@ -19,7 +19,7 @@ You can click on the links in the menu to see how to configure the processors fo
 
 * AI Automators
 * AI Content Suggestions
-* [ECA](https://ecaguide.org/plugins/eca/base/events/eca_base_eca_tool/)
+* [ECA](https://ecaguide.org/plugins/eca/base/events/eca_base_eca_field_widget/)
 * AI Agents
 
 ## How to configure a Field Widget Action
