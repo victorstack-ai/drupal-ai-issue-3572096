@@ -235,7 +235,7 @@ class AiAutomatorFieldConfig {
       // Create Options for base field.
       $baseFieldOptions = [];
       foreach ($fields as $fieldId => $fieldData) {
-        if (in_array($fieldData->getType(), $rule->allowedInputs()) && $fieldId != $fieldName) {
+        if (in_array($fieldData->getType(), $rule->allowedInputs())) {
           $baseFieldOptions[$fieldId] = $fieldData->getLabel();
         }
       }

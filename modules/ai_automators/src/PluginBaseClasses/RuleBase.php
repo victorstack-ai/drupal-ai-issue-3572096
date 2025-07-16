@@ -349,7 +349,6 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
       $prompts[] = \Drupal::service('ai_automator.prompt_helper')->renderTokenPrompt($automatorConfig['token'], $entity); /* @phpstan-ignore-line */
     }
     elseif ($this->needsPrompt()) {
-      // Run rule.
       foreach ($entity->get($automatorConfig['base_field'])->getValue() as $i => $item) {
         // Get tokens.
         $tokens = $this->generateTokens($entity, $fieldDefinition, $automatorConfig, $i);
