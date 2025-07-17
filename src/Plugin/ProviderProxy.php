@@ -62,6 +62,13 @@ class ProviderProxy {
   protected $uuid;
 
   /**
+   * The request parent id.
+   *
+   * @var string
+   */
+  protected $requestParentId;
+
+  /**
    * PluginLoggingProxy constructor.
    *
    * @param \Drupal\ai\Base\AiProviderClientBase $plugin
@@ -179,6 +186,10 @@ class ProviderProxy {
 
     // Invoke the pre generate response event.
     $pre_generate_event = new PreGenerateResponseEvent($event_id, $this->plugin->getPluginId(), $operation_type, $this->plugin->configuration, $arguments[0], $arguments[1], $this->plugin->getTags(), $this->plugin->getDebugData());
+    // Too not have breaking changes, it can't be in the constructor and check.
+    if (method_exists($pre_generate_event, 'setRequestParentId') && $this->requestParentId) {
+      $pre_generate_event->setRequestParentId($this->requestParentId);
+    }
 
     $this->eventDispatcher->dispatch($pre_generate_event, PreGenerateResponseEvent::EVENT_NAME);
 
@@ -249,6 +260,10 @@ class ProviderProxy {
 
     // Invoke the post generate response event.
     $post_generate_event = new PostGenerateResponseEvent($event_id, $this->plugin->getPluginId(), $operation_type, $this->plugin->configuration, $arguments[0], $arguments[1], $response, $this->plugin->getTags(), $this->plugin->getDebugData(), $pre_generate_event->getAllMetadata());
+    // Too not have breaking changes, it can't be in the constructor and check.
+    if (method_exists($post_generate_event, 'setRequestParentId') && $this->requestParentId) {
+      $post_generate_event->setRequestParentId($this->requestParentId);
+    }
     $this->eventDispatcher->dispatch($post_generate_event, PostGenerateResponseEvent::EVENT_NAME);
     // Get a potential new response from the event.
     $response = $post_generate_event->getOutput();
@@ -285,6 +300,26 @@ class ProviderProxy {
    */
   public function __set($name, $value) {
     $this->plugin->$name = $value;
+  }
+
+  /**
+   * Gets the parent id.
+   *
+   * @return string
+   *   The parent id.
+   */
+  public function getRequestParentId(): string {
+    return $this->requestParentId;
+  }
+
+  /**
+   * Sets the parent id.
+   *
+   * @param string $request_parent_id
+   *   The parent id.
+   */
+  public function setRequestParentId(string $request_parent_id) {
+    $this->requestParentId = $request_parent_id;
   }
 
   /**

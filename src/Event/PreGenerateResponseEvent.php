@@ -21,6 +21,13 @@ class PreGenerateResponseEvent extends Event {
   protected $requestThreadId;
 
   /**
+   * The request parent id.
+   *
+   * @var string
+   */
+  protected $requestParentId;
+
+  /**
    * The provider to process.
    *
    * @var string
@@ -148,6 +155,16 @@ class PreGenerateResponseEvent extends Event {
   }
 
   /**
+   * Gets the request parent id.
+   *
+   * @return string
+   *   The request parent id.
+   */
+  public function getRequestParentId() {
+    return $this->requestParentId;
+  }
+
+  /**
    * Gets the provider.
    *
    * @return string
@@ -225,6 +242,16 @@ class PreGenerateResponseEvent extends Event {
    */
   public function getDebugData() {
     return $this->debugData;
+  }
+
+  /**
+   * Sets the parent request id.
+   *
+   * @param string $request_parent_id
+   *   The parent request id.
+   */
+  public function setRequestParentId(string $request_parent_id): void {
+    $this->requestParentId = $request_parent_id;
   }
 
   /**
