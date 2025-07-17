@@ -2,6 +2,7 @@
 
 namespace Drupal\ai\Form;
 
+use Drupal\ai\Entity\AiPrompt;
 use Drupal\ai\Entity\AiPromptInterface;
 use Drupal\ai\Entity\AiPromptTypeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -127,6 +128,11 @@ class AiPromptSubform {
       '#description' => $this->t('Label for the AI Prompt.'),
     ];
     $form = $this->setFormElementName($form, 'label', $set_name);
+    $source = ['label'];
+
+    if (isset($form['#parents'])) {
+      $source = array_merge($form['#parents'], ['add_form', 'subform', 'label']);
+    }
 
     $form['id'] = [
       '#type' => 'machine_name',
@@ -134,8 +140,12 @@ class AiPromptSubform {
       '#default_value' => $this->aiPrompt->id(),
       '#machine_name' => [
         'exists' => [$this, 'exists'],
+        'source' => $source,
       ],
       '#disabled' => !$this->aiPrompt->isNew(),
+      '#attributes' => [
+        'data-prompt-type' => $this->aiPromptType->id(),
+      ],
     ];
     $form = $this->setFormElementName($form, 'id', $set_name);
 
@@ -210,19 +220,26 @@ class AiPromptSubform {
 
   /**
    * Helper function to check whether an AI Prompt entity exists.
+   *
+   * This is used as the 'exists' callback for the machine_name form element.
+   *
+   * @param string $id
+   *   The machine name value submitted by the user.
+   * @param array $element
+   *   The complete form element array for the machine name field.
+   *
+   * @return bool
+   *   TRUE if the machine name already exists, FALSE otherwise.
    */
-  public function exists($id) {
+  public function exists(string $id, array $element): bool {
     // Editing.
     if ($id === $this->aiPrompt->id()) {
       return FALSE;
     }
 
     // Prevent new from matching an existing.
-    $entity = $this->entityTypeManager->getStorage('ai_prompt')->getQuery()
-      ->condition('id', $id)
-      ->accessCheck()
-      ->execute();
-    return (bool) $entity;
+    $entity = AiPrompt::load($element['#attributes']['data-prompt-type'] . "__" . $id);
+    return !empty($entity);
   }
 
   /**
@@ -296,8 +313,8 @@ class AiPromptSubform {
     if (empty($values['id'])) {
       $form_state->setErrorByName($base_name . 'id', $this->t('Machine name is required.'));
     }
-    elseif ($this->exists($values['id'])) {
-      $form_state->setErrorByName($base_name . 'id', $this->t('Machine name is already in use.'));
+    elseif ($this->exists($values['id'], $form['id'])) {
+      $form_state->setErrorByName($base_name . 'id', $this->t('The machine-readable name is already in use. It must be unique.'));
     }
 
     // Validate prompt.

@@ -106,6 +106,8 @@ class AiPromptElementTest extends WebDriverTestBase {
     $this->getSession()->getPage()->pressButton('Create new prompt');
     $this->assertSession()->waitForText('New prompt details');
     $this->getSession()->getPage()->fillField('ai_prompt_subform[plugins][taxonomy_suggest][taxonomy_suggest_prompt_open][add_prompt][label]', 'Test 1');
+    $this->getSession()->getPage()->find('css', 'button[data-drupal-selector="edit-id-machine-name-admin-link"]')->click();
+    $this->getSession()->getPage()->fillField('ai_prompt_subform[plugins][taxonomy_suggest][taxonomy_suggest_prompt_open][add_prompt][id]', '');
     $this->getSession()->getPage()->pressButton('Save prompt');
 
     // Expect to see validation errors.
@@ -114,6 +116,7 @@ class AiPromptElementTest extends WebDriverTestBase {
     $this->assertSession()->pageTextContains('Please enter a prompt text.');
 
     // Fill in the rest.
+    $this->getSession()->getPage()->find('css', 'button[data-drupal-selector="edit-id-machine-name-admin-link"]')->click();
     $this->getSession()->getPage()->fillField('ai_prompt_subform[plugins][taxonomy_suggest][taxonomy_suggest_prompt_open][add_prompt][id]', 'test_1');
     $this->getSession()->getPage()->fillField('ai_prompt_subform[plugins][taxonomy_suggest][taxonomy_suggest_prompt_open][add_prompt][prompt]', 'Test 1 prompt text');
     $this->getSession()->getPage()->pressButton('Save prompt');
@@ -132,7 +135,6 @@ class AiPromptElementTest extends WebDriverTestBase {
     $this->getSession()->getPage()->pressButton('plugins[taxonomy_suggest][taxonomy_suggest_prompt_from_voc][open_add_prompt]');
     $this->assertSession()->waitForText('New prompt details');
     $this->getSession()->getPage()->fillField('ai_prompt_subform[plugins][taxonomy_suggest][taxonomy_suggest_prompt_from_voc][add_prompt][label]', 'Test 1 vocab');
-    $this->getSession()->getPage()->fillField('ai_prompt_subform[plugins][taxonomy_suggest][taxonomy_suggest_prompt_from_voc][add_prompt][id]', 'test_1_vocab');
     $this->getSession()->getPage()->fillField('ai_prompt_subform[plugins][taxonomy_suggest][taxonomy_suggest_prompt_from_voc][add_prompt][prompt]', 'Test 1 vocab prompt text');
     $this->getSession()->getPage()->pressButton('plugins[taxonomy_suggest][taxonomy_suggest_prompt_from_voc][save_prompt]');
 
@@ -140,6 +142,19 @@ class AiPromptElementTest extends WebDriverTestBase {
     $this->assertSession()->assertWaitOnAjaxRequest();
     $selected = $this->getSession()->getPage()->findField('plugins[taxonomy_suggest][taxonomy_suggest_prompt_from_voc][table]')->getValue();
     $this->assertSame('suggest_vocabulary__test_1_vocab', $selected);
+
+    // Check machine name unique required.
+    $this->getSession()->getPage()->pressButton('Create new prompt');
+    $this->assertSession()->waitForText('New prompt details');
+    $this->getSession()->getPage()->fillField('ai_prompt_subform[plugins][taxonomy_suggest][taxonomy_suggest_prompt_open][add_prompt][label]', 'Test 1');
+    $this->getSession()->getPage()->find('css', 'button[data-drupal-selector="edit-id-machine-name-admin-link"]')->click();
+    $this->getSession()->getPage()->fillField('ai_prompt_subform[plugins][taxonomy_suggest][taxonomy_suggest_prompt_open][add_prompt][id]', 'test_1');
+    $this->getSession()->getPage()->fillField('ai_prompt_subform[plugins][taxonomy_suggest][taxonomy_suggest_prompt_open][add_prompt][prompt]', 'Test 1 prompt text 2');
+    $this->getSession()->getPage()->pressButton('Save prompt');
+
+    // Expect to see validation error.
+    $this->assertSession()->assertWaitOnAjaxRequest();
+    $this->assertSession()->pageTextContains('The machine-readable name is already in use. It must be unique.');
 
     // Test cancel button.
     $this->drupalGet('admin/config/ai/suggestions');
@@ -194,7 +209,6 @@ class AiPromptElementTest extends WebDriverTestBase {
     $this->getSession()->getPage()->pressButton('Create new prompt');
     $this->assertSession()->waitForText('New prompt details');
     $this->getSession()->getPage()->fillField('ai_prompt_subform[plugins][taxonomy_suggest][taxonomy_suggest_prompt_open][add_prompt][label]', 'Test 2');
-    $this->getSession()->getPage()->fillField('ai_prompt_subform[plugins][taxonomy_suggest][taxonomy_suggest_prompt_open][add_prompt][id]', 'test_2');
     $this->getSession()->getPage()->fillField('ai_prompt_subform[plugins][taxonomy_suggest][taxonomy_suggest_prompt_open][add_prompt][prompt]', 'Test 2 prompt text');
     $this->getSession()->getPage()->pressButton('Save prompt');
 
