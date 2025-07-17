@@ -48,6 +48,15 @@ function ai_chatbot_theme(): array {
 }
 
 /**
+ * Implements hook_page_attachments().
+ */
+function ai_chatbot_page_attachments(array &$attachments) {
+  $theme = \Drupal::theme()->getActiveTheme()->getName();
+
+  $attachments['#attached']['drupalSettings']['theme'] = $theme;
+}
+
+/**
  * Implements preprocess function for ai_chatbot_message theme.
  */
 function template_preprocess_ai_chatbot_message(&$variables) {
