@@ -48,6 +48,7 @@ abstract class StreamedChatMessageIterator implements StreamedChatMessageIterato
     // Create a ChatMessage out of it all.
     $role = '';
     $message_text = '';
+    $metadata = [];
     foreach ($this->messages as $message) {
       if (!empty($message->getRole()) && empty($role)) {
         $role = $message->getRole();
@@ -55,10 +56,14 @@ abstract class StreamedChatMessageIterator implements StreamedChatMessageIterato
       if (!empty($message->getText())) {
         $message_text .= $message->getText();
       }
+      if (!empty($message->getMetadata())) {
+        $metadata = $message->getMetadata();
+      }
     }
     $message = [
       'role' => $role,
       'message' => $message_text,
+      'usage' => $metadata,
     ];
 
     // Dispatch the event.

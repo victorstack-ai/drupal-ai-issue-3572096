@@ -256,6 +256,9 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
 
     try {
       if ($this->canChatStream()) {
+        $payload['stream_options'] = [
+          'include_usage' => TRUE,
+        ];
         $response = $this->client->chat()->createStreamed($payload);
         $message = new OpenAiTypeStreamedChatMessageIterator($response);
       }

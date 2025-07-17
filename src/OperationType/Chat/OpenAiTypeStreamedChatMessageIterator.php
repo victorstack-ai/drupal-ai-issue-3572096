@@ -16,12 +16,14 @@ class OpenAiTypeStreamedChatMessageIterator extends StreamedChatMessageIterator 
    */
   public function getIterator(): \Generator {
     foreach ($this->iterator->getIterator() as $data) {
-      yield new StreamedChatMessage(
+      $metadata = $data->usage ? $data->usage->toArray() : [];
+      yield $this->createStreamedChatMessage(
         $data->choices[0]->delta->role ?? '',
         $data->choices[0]->delta->content ?? '',
-        ['usage' => $data->usage ?? []]
+        $metadata,
       );
     }
+    $this->triggerEvent();
   }
 
 }
