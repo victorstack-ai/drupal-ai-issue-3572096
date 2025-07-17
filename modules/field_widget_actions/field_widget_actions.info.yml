@@ -1,4 +1,4 @@
-name: Form Widget Actions
-description: Provides easy way to attach actions to form widgets, for example content suggestions.
+name: Field Widget Actions
+description: Provides easy way to attach actions to field widgets, for example for content suggestions.
 type: module
 core_version_requirement: ^10.3 || ^11.1
