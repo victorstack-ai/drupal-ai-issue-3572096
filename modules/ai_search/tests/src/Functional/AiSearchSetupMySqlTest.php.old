@@ -101,7 +101,7 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
     $this->drupalGet('admin/config/ai/settings');
     $this->submitForm([
       'operation__embeddings' => 'test_mysql_provider',
-    ], 'Save configuration');
+    ], 'Choose Model');
     $this->submitForm([
       'operation__embeddings' => 'test_mysql_provider',
       'model__embeddings' => 'mysql',
@@ -273,6 +273,7 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
       'label' => 'Test search view',
       'id' => 'test_search_view',
       'show[wizard_key]' => 'standard:search_api_index_test_mysql_vdb_index',
+      'page[title]' => 'Test Search View',
       'page[create]' => 1,
       'page[path]' => 'test-search-view',
     ], 'Save and edit');

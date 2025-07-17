@@ -7,10 +7,11 @@ ai.settings.menu:
     _permission: 'administer site configuration'
 
 ai.settings_form:
-  path: '/admin/config/ai/settings'
+  path: '/admin/config/ai/settings/{nojs}'
   defaults:
     _form: '\Drupal\ai\Form\AiSettingsForm'
     _title: 'AI Settings'
+    nojs: 'ajax'
   requirements:
     _permission: 'administer ai'
 
