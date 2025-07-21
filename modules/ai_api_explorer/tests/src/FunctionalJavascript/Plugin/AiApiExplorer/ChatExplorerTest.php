@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Tests\ai_api_explorer\FunctionalJavascriptTests\Plugin\AiApiExplorer;
+namespace Drupal\Tests\ai_api_explorer\FunctionalJavascript\Plugin\AiApiExplorer;
 
 use Drupal\Tests\ai\FunctionalJavascriptTests\BaseClassFunctionalJavascriptTests;
 

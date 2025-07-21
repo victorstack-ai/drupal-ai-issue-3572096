@@ -97,6 +97,13 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
   }
 
   /**
+   * {@inheritDoc}
+   */
+  public function isActive(): bool {
+    return $this->providerManager->hasProvidersForOperationType('chat');
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array {

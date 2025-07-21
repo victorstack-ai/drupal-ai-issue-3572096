@@ -49,16 +49,6 @@ services:
     factory: cache_factory:get
     tags:
       - { name: cache.bin }
-  access_check.ai.providers:
-    class: Drupal\ai\Access\ProvidersAccessChecker
-    arguments: ['@ai.provider']
-    tags:
-      - { name: access_check, applies_to: _providers }
-  access_check.ai.vdb_providers:
-    class: Drupal\ai\Access\VdbProvidersAccessChecker
-    arguments: ['@ai.vdb_provider']
-    tags:
-      - { name: access_check, applies_to: _vdb_providers }
   cache_context.ai_providers:
     class: Drupal\ai\Cache\Context\AIProvidersCacheContext
     arguments: ['@ai.provider', '@ai.vdb_provider']

@@ -21,7 +21,7 @@ ai.admin_providers:
     _controller: '\Drupal\ai\Controller\ProviderSetupList::list'
     _title: 'AI Providers'
   requirements:
-    _providers: 'TRUE'
+    _permission: 'administer ai providers'
 
 ai.admin_vdb_providers:
   path: '/admin/config/ai/vdb_providers'
@@ -29,7 +29,7 @@ ai.admin_vdb_providers:
     _controller: '\Drupal\ai\Controller\ProviderSetupList::list'
     _title: 'Vector Database Providers'
   requirements:
-    _vdb_providers: 'TRUE'
+    _permission: 'administer ai providers'
 
 ai.create_model_settings_form:
   path: '/admin/config/ai/providers/{operation_type}/{provider}'

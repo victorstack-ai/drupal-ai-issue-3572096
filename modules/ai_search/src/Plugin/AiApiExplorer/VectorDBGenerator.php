@@ -88,6 +88,11 @@ final class VectorDBGenerator extends AiApiExplorerPluginBase {
       // Ensure the method returns a value by catching any exceptions.
     }
 
+    // Also look for providers that support embeddings.
+    if (!$this->providerManager->hasProvidersForOperationType('embeddings')) {
+      $return = FALSE;
+    }
+
     return $return;
   }
 
