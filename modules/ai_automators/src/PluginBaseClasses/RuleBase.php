@@ -596,7 +596,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
       if (strpos($automatorConfig['configuration_image_field'], '--') !== FALSE) {
         $parts = explode('--', $automatorConfig['configuration_image_field']);
       }
-      foreach ($entity->{$parts[0]} as $imageEntityWrapper) {
+      foreach ($entity->get($parts[0]) as $imageEntityWrapper) {
         $imageEntity = $imageEntityWrapper->entity;
         // If the image entity is not available, it might be partially formed.
         if (!$imageEntity) {
@@ -609,7 +609,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
         }
 
         if (isset($parts[1])) {
-          foreach ($imageEntity->{$parts[1]} as $image) {
+          foreach ($imageEntity->get($parts[1]) as $image) {
             $possibleImages[] = $image->entity;
           }
         }

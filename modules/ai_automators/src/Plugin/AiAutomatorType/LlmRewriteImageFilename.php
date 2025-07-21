@@ -90,7 +90,7 @@ class LlmRewriteImageFilename extends RuleBase implements AiAutomatorTypeInterfa
    * {@inheritDoc}
    */
   public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
-    foreach ($entity->{$fieldDefinition->getName()} as $delta => $item) {
+    foreach ($entity->get($fieldDefinition->getName()) as $delta => $item) {
       // Check the original value to get the extension.
       /** @var \Drupal\file\FileInterface $file */
       $image = $item->entity;

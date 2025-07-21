@@ -82,7 +82,7 @@ class ImageAltText extends RuleBase {
    */
   public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     $items = [];
-    foreach ($entity->{$fieldDefinition->getName()} as $delta => $item) {
+    foreach ($entity->get($fieldDefinition->getName()) as $delta => $item) {
       $items[$delta] = $item->getValue();
       // Don't set the alt text if its already set.
       if (isset($items[$delta]['alt']) && !empty($items[$delta]['alt'])) {

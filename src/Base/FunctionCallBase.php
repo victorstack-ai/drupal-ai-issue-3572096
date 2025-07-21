@@ -166,6 +166,9 @@ abstract class FunctionCallBase extends PluginBase implements FunctionCallInterf
       $item = clone $child;
       foreach ($props as $prop => $value) {
         if (property_exists($child, $prop)) {
+          // Ensure the value is converted to the correct type, we ignore the
+          // type conversion here, as the child should handle it.
+          // @phpstan-ignore-next-line
           $item->$prop = $value;
         }
       }

@@ -236,13 +236,13 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
     $entity = static::buildEntity($form, $form_state);
     // Delete all values from the field, so you can recreate.
     if ($this->clearEntity) {
-      $entity->{$form_key} = [];
+      $entity->get($form_key)->filterEmptyItems();
     }
     $form_state->setValue($form_key, NULL);
     // Run the automator for the entity.
     $entity = $this->entityModifier->saveEntity($entity, FALSE, $form_key, FALSE);
     // Ensure the widget has enough elements for all values.
-    $form[$form_key]['widget']['#items_count'] = count($entity->{$form_key});
+    $form[$form_key]['widget']['#items_count'] = count($entity->get($form_key));
 
     return $this->saveFormValues($form, $form_key, $entity, $key);
   }
@@ -266,24 +266,24 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
 
     if (is_null($key)) {
       // If not key is provided, we should iterate through all items.
-      foreach ($entity->{$form_key} as $index => $item) {
-        if ($item->{$this->formElementProperty}) {
-          if ($item && $item->{$this->formElementProperty}) {
-            $form[$form_key]['widget'][$index][$this->formElementProperty]['#value'] = $item->{$this->formElementProperty};
+      foreach ($entity->get($form_key) as $index => $item) {
+        if ($item->get($this->formElementProperty)) {
+          if ($item && $item->get($this->formElementProperty)) {
+            $form[$form_key]['widget'][$index][$this->formElementProperty]['#value'] = $item->get($this->formElementProperty)->getValue();
           }
         }
       }
     }
     else {
-      if (isset($entity->{$form_key}[$key])) {
+      if (isset($entity->get($form_key)[$key])) {
         $item = NULL;
-        foreach ($entity->{$form_key} as $index => $item) {
+        foreach ($entity->get($form_key) as $index => $item) {
           if ($index === $key) {
             break;
           }
         }
-        if ($item && $item->{$this->formElementProperty}) {
-          $form[$form_key]['widget'][$key][$this->formElementProperty]['#value'] = $item->{$this->formElementProperty};
+        if ($item && $item->get($this->formElementProperty)) {
+          $form[$form_key]['widget'][$key][$this->formElementProperty]['#value'] = $item->get($this->formElementProperty)->getValue();
         }
       }
     }

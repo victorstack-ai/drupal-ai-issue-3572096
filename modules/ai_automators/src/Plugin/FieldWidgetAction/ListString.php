@@ -47,8 +47,8 @@ class ListString extends AutomatorBaseAction {
    */
   protected function saveFormValues(array &$form, string $form_key, $entity, ?int $key = NULL): array {
     // For list fields, get the first (and only) item.
-    if (isset($entity->{$form_key}[0]) && isset($entity->{$form_key}[0]->{$this->formElementProperty})) {
-      $value = $entity->{$form_key}[0]->{$this->formElementProperty};
+    if (isset($entity->get($form_key)->getValue()[0]) && isset($entity->get($form_key)->getValue()[0][$this->formElementProperty])) {
+      $value = $entity->get($form_key)->getValue()[0][$this->formElementProperty];
 
       // For both dropdown and radio buttons, set the default value.
       $form[$form_key]['widget']['#default_value'] = $value;

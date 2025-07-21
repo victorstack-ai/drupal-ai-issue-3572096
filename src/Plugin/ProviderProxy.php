@@ -287,6 +287,11 @@ class ProviderProxy {
    *   The property value.
    */
   public function __get($name) {
+    // We need to be able to access properties of the plugin using magic
+    // methods, so we proxy the call to the plugin.
+    // @todo In 2.0.0 change the architecture so we don't need to use magic
+    // methods.
+    // @phpstan-ignore-next-line
     return $this->plugin->$name;
   }
 
@@ -299,6 +304,11 @@ class ProviderProxy {
    *   The property value.
    */
   public function __set($name, $value) {
+    // We need to be able to access properties of the plugin using magic
+    // methods, so we proxy the call to the plugin.
+    // @todo In 2.0.0 change the architecture so we don't need to use magic
+    // methods.
+    // @phpstan-ignore-next-line
     $this->plugin->$name = $value;
   }
 

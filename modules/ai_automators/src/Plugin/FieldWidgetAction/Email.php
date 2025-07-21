@@ -43,18 +43,18 @@ class Email extends AutomatorBaseAction {
   protected function saveFormValues(array &$form, string $form_key, $entity, ?int $key = NULL): array {
     if (is_null($key)) {
       // If no key is provided, we should iterate through all items.
-      foreach ($entity->{$form_key} as $index => $item) {
-        if ($item->{$this->formElementProperty}) {
-          $form[$form_key]['widget'][$index][$this->formElementProperty]['#value'] = $item->{$this->formElementProperty};
+      foreach ($entity->get($form_key) as $index => $item) {
+        if ($item->get($this->formElementProperty)) {
+          $form[$form_key]['widget'][$index][$this->formElementProperty]['#value'] = $item->get($this->formElementProperty)->getValue();
         }
       }
     }
     else {
       // Handle specific key/index.
-      if (isset($entity->{$form_key}[$key])) {
-        $item = $entity->{$form_key}[$key];
-        if ($item && $item->{$this->formElementProperty}) {
-          $form[$form_key]['widget'][$key][$this->formElementProperty]['#value'] = $item->{$this->formElementProperty};
+      if (isset($entity->get($form_key)[$key])) {
+        $item = $entity->get($form_key)[$key];
+        if ($item && $item->get($this->formElementProperty)) {
+          $form[$form_key]['widget'][$key][$this->formElementProperty]['#value'] = $item->get($this->formElementProperty)->getValue();
         }
       }
     }

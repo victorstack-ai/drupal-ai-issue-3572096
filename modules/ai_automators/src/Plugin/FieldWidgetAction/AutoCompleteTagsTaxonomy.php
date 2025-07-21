@@ -44,8 +44,8 @@ class AutoCompleteTagsTaxonomy extends AutomatorBaseAction {
     if (is_null($key)) {
       // If not key is provided, we should iterate through all items.
       $text_items = [];
-      foreach ($entity->{$form_key} as $index => $item) {
-        if ($item->{$this->formElementProperty}) {
+      foreach ($entity->get($form_key) as $index => $item) {
+        if ($item->get($this->formElementProperty)) {
           $form[$form_key]['widget']['target_id']['#default_value'][$index] = $item->entity;
           $text_items[] = $item->entity->label() . ' (' . $item->entity->id() . ')';
         }
@@ -53,10 +53,10 @@ class AutoCompleteTagsTaxonomy extends AutomatorBaseAction {
       $form[$form_key]['widget']['target_id']['#value'] = implode(', ', $text_items);
     }
     else {
-      if (isset($entity->{$form_key}[0])) {
-        $item = $entity->{$form_key}[0];
+      if (isset($entity->get($form_key)[0])) {
+        $item = $entity->get($form_key)[0];
         $text_items = [];
-        if ($item->{$this->formElementProperty}) {
+        if ($item->get($this->formElementProperty)) {
           $form[$form_key]['widget']['target_id']['#default_value'][$key] = $item->entity;
           $text_items[] = $item->entity->label() . ' (' . $item->entity->id() . ')';
         }
