@@ -2,6 +2,7 @@
 
 namespace Drupal\ai\Base;
 
+use Drupal\ai\Exception\AiSetupFailureException;
 use Drupal\ai\OperationType\Chat\OpenAiTypeStreamedChatMessageIterator;
 use Drupal\ai\Traits\OperationType\EmbeddingsTrait;
 use Drupal\Component\Serialization\Json;
@@ -34,6 +35,7 @@ use Drupal\ai\Exception\AiRateLimitException;
 use Drupal\ai\Exception\AiResponseErrorException;
 use Drupal\ai\ProviderClient\OpenAiBasedProviderClientInterface;
 use Drupal\Core\File\FileExists;
+use Psr\Http\Client\ClientInterface;
 use OpenAI\Client;
 use Symfony\Component\Yaml\Yaml;
 
@@ -131,25 +133,70 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
   protected function loadClient(): void {
     if (empty($this->client)) {
       if (!$this->hasAuthentication()) {
-        $this->setAuthentication($this->loadApiKey());
+        try {
+          $this->setAuthentication($this->loadApiKey());
+        }
+        catch (AiSetupFailureException $e) {
+          throw new AiSetupFailureException('Failed to authenticate with AI provider: ' . $e->getMessage(), $e->getCode(), $e);
+        }
       }
 
-      $clientFactory = \OpenAI::factory();
-
-      // Only set the API key if it is not empty.
-      if ($this->hasAuthentication()) {
-        $clientFactory = $clientFactory->withApiKey($this->apiKey);
-      }
-
-      $client = $clientFactory->withHttpClient($this->httpClient);
-
-      // If the configuration has a custom endpoint, we set it.
-      if ($this->getEndpoint()) {
-        $client = $client->withBaseUri($this->getEndpoint());
-      }
-
-      $this->client = $client->make();
+      $this->client = $this->createClient();
     }
+  }
+
+  /**
+   * Sets a custom endpoint for the client.
+   *
+   * @param string $endpoint
+   *   The endpoint URL.
+   */
+  protected function setEndpoint(string $endpoint): void {
+    $this->endpoint = $endpoint;
+  }
+
+  /**
+   * Gets the current HTTP client.
+   *
+   * @return \Psr\Http\Client\ClientInterface
+   *   The HTTP client instance.
+   */
+  protected function getHttpClient(): ClientInterface {
+    return $this->httpClient;
+  }
+
+  /**
+   * Sets a custom HTTP client.
+   *
+   * @param \Psr\Http\Client\ClientInterface $httpClient
+   *   The HTTP client instance.
+   */
+  protected function setHttpClient(ClientInterface $httpClient): void {
+    $this->httpClient = $httpClient;
+  }
+
+  /**
+   * Creates the OpenAI client with proper configuration.
+   *
+   * @return \OpenAI\Client
+   *   The configured OpenAI client instance.
+   */
+  protected function createClient(): Client {
+    $clientFactory = \OpenAI::factory();
+
+    // Only set the API key if it is not empty.
+    if ($this->hasAuthentication()) {
+      $clientFactory = $clientFactory->withApiKey($this->apiKey);
+    }
+
+    $client = $clientFactory->withHttpClient($this->httpClient);
+
+    // If the configuration has a custom endpoint, we set it.
+    if ($this->getEndpoint()) {
+      $client = $client->withBaseUri($this->getEndpoint());
+    }
+
+    return $client->make();
   }
 
   /**
