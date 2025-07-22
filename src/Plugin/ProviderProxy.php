@@ -291,7 +291,6 @@ class ProviderProxy {
     // methods, so we proxy the call to the plugin.
     // @todo In 2.0.0 change the architecture so we don't need to use magic
     // methods.
-    // @phpstan-ignore-next-line
     return $this->plugin->$name;
   }
 
@@ -308,7 +307,6 @@ class ProviderProxy {
     // methods, so we proxy the call to the plugin.
     // @todo In 2.0.0 change the architecture so we don't need to use magic
     // methods.
-    // @phpstan-ignore-next-line
     $this->plugin->$name = $value;
   }
 
