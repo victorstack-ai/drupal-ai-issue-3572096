@@ -199,6 +199,9 @@ class DeepChatApi extends ControllerBase {
           $error_message = $assistant->get('specific_error_messages')['AiRequestErrorException'] ?? $error_message;
         }
 
+        // Log the error.
+        $this->getLogger('ai_chatbot')->error('The chatbot had an error: @message', ['@message' => $e->getMessage()]);
+
         // Otherwise use the default error message.
         return new JsonResponse([
           'error' => $error_message,
