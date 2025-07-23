@@ -4,6 +4,7 @@ namespace Drupal\ai_translate\Plugin\FieldTextExtractor;
 
 use Drupal\ai_translate\FieldTextExtractorPluginManager;
 use Drupal\Component\Uuid\UuidInterface;
+use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
@@ -22,6 +23,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * A field text extractor plugin for layout builder content.
+ *
+ * This plugin is only usable when the block_content module is enabled.
  *
  * The only supported section type is inline block.
  * Make sure that all content block fields displayed in layout builder
@@ -77,9 +80,9 @@ class LbFieldExtractor extends FieldExtractorBase implements ContainerFactoryPlu
   /**
    * The block content storage service.
    *
-   * @var \Drupal\Core\Entity\EntityStorageInterface
+   * @var \Drupal\Core\Entity\EntityStorageInterface|null
    */
-  protected EntityStorageInterface $blockStorage;
+  protected ?EntityStorageInterface $blockStorage = NULL;
 
   /**
    * The module handler service.
@@ -112,10 +115,16 @@ class LbFieldExtractor extends FieldExtractorBase implements ContainerFactoryPlu
     $instance->sectionStorageManager = $container->get('plugin.manager.layout_builder.section_storage');
     $instance->textExtractor = $container->get('ai_translate.text_extractor');
     $instance->extractorManager = $container->get('plugin.manager.text_extractor');
-    $instance->blockStorage = $container->get('entity_type.manager')?->getStorage('block_content');
     $instance->moduleHandler = $container->get('module_handler');
     $instance->logger = $container->get('logger.factory')?->get('ai_translate');
     $instance->uuid = $container->get('uuid');
+    try {
+      $instance->blockStorage = $instance->entityTypeManager
+        ->getStorage('block_content');
+    }
+    catch (PluginNotFoundException) {
+      return $instance;
+    }
     return $instance;
   }
 
@@ -123,6 +132,9 @@ class LbFieldExtractor extends FieldExtractorBase implements ContainerFactoryPlu
    * {@inheritdoc}
    */
   public function extract(ContentEntityInterface $entity, string $fieldName): array {
+    if (!isset($this->blockStorage)) {
+      return [];
+    }
     if ($entity->get($fieldName)->isEmpty()) {
       return [];
     }
@@ -182,8 +194,7 @@ class LbFieldExtractor extends FieldExtractorBase implements ContainerFactoryPlu
    * {@inheritdoc}
    */
   public function shouldExtract(ContentEntityInterface $entity, FieldConfigInterface $fieldDefinition): bool {
-    // Always translate layout builder. Is that correct?
-    return TRUE;
+    return isset($this->blockStorage);
   }
 
   /**
