@@ -126,6 +126,7 @@ class AiTranslateSettingsForm extends ConfigFormBase {
     $example_prompt = $config->get('prompt');
 
     $languages = $this->languageManager->getLanguages();
+    $language_settings = $config->get('language_settings') ?? [];
     $form['prompt'] = [
       '#title' => $this->t('Default translation prompt'),
       '#type' => 'textarea',
@@ -133,26 +134,26 @@ class AiTranslateSettingsForm extends ConfigFormBase {
       '#default_value' => $example_prompt ?? '',
     ];
     foreach ($languages as $langcode => $language) {
-      $form[$langcode] = [
+      $form['language_settings'][$langcode] = [
         '#type' => 'fieldset',
         '#title' => $this->t('Translate to @lang', ['@lang' => $language->getName()]),
         '#collapsible' => TRUE,
         '#collapsed' => FALSE,
       ];
-      $form[$langcode]['model'] = [
+      $form['language_settings'][$langcode]['model'] = [
         '#type' => 'select',
         '#options' => $chat_models,
         "#empty_option" => $this->t('-- Default from AI module (chat) --'),
         '#disabled' => count($chat_models) == 0,
-        '#default_value' => $config->get($langcode . '_model'),
+        '#default_value' => $language_settings[$langcode]['model'] ?? '',
         '#title' => $this->t('AI model used for translating to @lang', ['@lang' => $language->getName()]),
       ];
-      $form[$langcode]['prompt'] = [
+      $form['language_settings'][$langcode]['prompt'] = [
         '#title' => $this->t('Translation prompt for translating to @lang', ['@lang' => $language->getName()]),
         '#description' => $this->t('Leave empty to use the default translation prompt.'),
         '#type' => 'textarea',
         '#required' => FALSE,
-        '#default_value' => $config->get($langcode . '_prompt') ?? $example_prompt,
+        '#default_value' => $language_settings[$langcode]['prompt'] ?? $example_prompt,
       ];
     }
 
@@ -243,13 +244,13 @@ class AiTranslateSettingsForm extends ConfigFormBase {
     foreach ($this->languageManager->getLanguages() as $langcode => $language) {
       try {
         // Language-specific prompts are optional.
-        $langPrompt = $form_state->getValue([$langcode, 'prompt']);
+        $langPrompt = $form_state->getValue(['language_settings', $langcode, 'prompt']);
         if ($langPrompt && strlen($this->twig->renderInline($langPrompt, [
           'source_lang_name' => 'Test 1',
           'dest_lang_name' => 'Test 2',
           'input_text' => 'Text to translate',
-        ])) < self::MINIMAL_PROMPT_LENGTH) {
-          $form_state->setError($form[$langcode]['prompt'],
+        ])->__toString()) < self::MINIMAL_PROMPT_LENGTH) {
+          $form_state->setError($form['language_settings'][$langcode]['prompt'],
             $this->t('Prompt cannot be shorter than @num characters',
               ['@num' => self::MINIMAL_PROMPT_LENGTH]));
         }
@@ -277,11 +278,7 @@ class AiTranslateSettingsForm extends ConfigFormBase {
     $config->set('prompt', $form_state->getValue('prompt'));
     $config->set('entity_reference_depth', $form_state->getValue('entity_reference_depth'));
     $config->set('reference_defaults', array_keys(array_filter($form_state->getValue('reference_defaults'))));
-    $languages = $this->languageManager->getLanguages();
-    foreach ($languages as $langcode => $language) {
-      $config->set($langcode . '_model', $form_state->getValue([$langcode, 'model']));
-      $config->set($langcode . '_prompt', $form_state->getValue([$langcode, 'prompt']));
-    }
+    $config->set('language_settings', $form_state->getValue('language_settings'));
     $config->save();
 
     // Now rebuild the routes after config save since the route subscriber

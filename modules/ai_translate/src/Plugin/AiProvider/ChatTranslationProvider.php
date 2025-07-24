@@ -181,8 +181,8 @@ class ChatTranslationProvider extends AiProviderClientBase implements
       return new TranslateTextOutput('', '', '');
     }
 
-    $aiConfig = $this->configFactory->get('ai_translate.settings');
-    $prompt = $aiConfig->get($targetLanguage->getId() . '_prompt');
+    $aiConfig = $this->configFactory->get('ai_translate.settings')->get('language_settings') ?? [];
+    $prompt = $aiConfig[$targetLanguage->getId()]['prompt'] ?? '';
     if (empty($prompt)) {
       $prompt = $aiConfig->get('prompt');
     }
