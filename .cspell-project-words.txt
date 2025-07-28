@@ -234,6 +234,8 @@ webm
 Webform
 WHATWG
 whiteline
+wireframe
+wireframes
 womens
 XFALSE
 XTRUE
