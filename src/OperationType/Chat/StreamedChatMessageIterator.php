@@ -68,6 +68,27 @@ abstract class StreamedChatMessageIterator implements StreamedChatMessageIterato
 
     // Dispatch the event.
     $event = new PostStreamingResponseEvent($this->requestThreadId, $message, []);
+
+    // Extract and inject token data from streaming messages.
+    foreach ($this->messages as $streamedMessage) {
+      // Get the latest non-null token values from the streamed messages.
+      if ($streamedMessage->getTotalTokenUsage() !== NULL) {
+        $event->setTotalTokenUsage($streamedMessage->getTotalTokenUsage());
+      }
+      if ($streamedMessage->getInputTokenUsage() !== NULL) {
+        $event->setInputTokenUsage($streamedMessage->getInputTokenUsage());
+      }
+      if ($streamedMessage->getOutputTokenUsage() !== NULL) {
+        $event->setOutputTokenUsage($streamedMessage->getOutputTokenUsage());
+      }
+      if ($streamedMessage->getReasoningTokenUsage() !== NULL) {
+        $event->setReasoningTokenUsage($streamedMessage->getReasoningTokenUsage());
+      }
+      if ($streamedMessage->getCachedTokenUsage() !== NULL) {
+        $event->setCachedTokenUsage($streamedMessage->getCachedTokenUsage());
+      }
+    }
+
     $this->getEventDispatcher()->dispatch($event, PostStreamingResponseEvent::EVENT_NAME);
   }
 

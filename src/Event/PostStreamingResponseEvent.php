@@ -47,6 +47,31 @@ class PostStreamingResponseEvent extends Event {
   protected array $metadata;
 
   /**
+   * The amount of input tokens from the AI provider.
+   */
+  protected ?int $inputTokensUsage = NULL;
+
+  /**
+   * The amount of output tokens from the AI provider.
+   */
+  protected ?int $outputTokensUsage = NULL;
+
+  /**
+   * The amount of total tokens from the AI provider.
+   */
+  protected ?int $totalTokensUsage = NULL;
+
+  /**
+   * The amount of reasoning tokens from the AI provider.
+   */
+  protected ?int $reasoningTokensUsage = NULL;
+
+  /**
+   * The amount of cached tokens from the AI provider.
+   */
+  protected ?int $cachedTokensUsage = NULL;
+
+  /**
    * Constructs the object.
    *
    * @param string $request_thread_id
@@ -125,6 +150,106 @@ class PostStreamingResponseEvent extends Event {
    */
   public function setMetadata(string $key, mixed $value): void {
     $this->metadata[$key] = $value;
+  }
+
+  /**
+   * Set the total tokens used by the AI provider.
+   *
+   * @param int $tokens
+   *   The amount of tokens.
+   */
+  public function setTotalTokenUsage(int $tokens): void {
+    $this->totalTokensUsage = $tokens;
+  }
+
+  /**
+   * Set the input tokens used by the AI provider.
+   *
+   * @param int $tokens
+   *   The amount of tokens.
+   */
+  public function setInputTokenUsage(int $tokens): void {
+    $this->inputTokensUsage = $tokens;
+  }
+
+  /**
+   * Set the output tokens used by the AI provider.
+   *
+   * @param int $tokens
+   *   The amount of tokens.
+   */
+  public function setOutputTokenUsage(int $tokens): void {
+    $this->outputTokensUsage = $tokens;
+  }
+
+  /**
+   * Set the reasoning tokens used by the AI provider.
+   *
+   * @param int $tokens
+   *   The amount of tokens.
+   */
+  public function setReasoningTokenUsage(int $tokens): void {
+    $this->reasoningTokensUsage = $tokens;
+  }
+
+  /**
+   * Set the cached tokens used by the AI provider.
+   *
+   * @param int $tokens
+   *   The amount of tokens.
+   */
+  public function setCachedTokenUsage(int $tokens): void {
+    $this->cachedTokensUsage = $tokens;
+  }
+
+  /**
+   * Gets the total tokens used by the AI provider.
+   *
+   * @return int|null
+   *   The total token usage.
+   */
+  public function getTotalTokenUsage(): ?int {
+    return $this->totalTokensUsage;
+  }
+
+  /**
+   * Gets the input tokens used by the AI provider.
+   *
+   * @return int|null
+   *   The input token usage.
+   */
+  public function getInputTokenUsage(): ?int {
+    return $this->inputTokensUsage;
+  }
+
+  /**
+   * Gets the output tokens used by the AI provider.
+   *
+   * @return int|null
+   *   The output token usage.
+   */
+  public function getOutputTokenUsage(): ?int {
+    return $this->outputTokensUsage;
+  }
+
+  /**
+   * Gets the reasoning tokens used by the AI provider.
+   *
+   * @return int|null
+   *   The reasoning token usage.
+   */
+  public function getReasoningTokenUsage(): ?int {
+    return $this->reasoningTokensUsage;
+  }
+
+  /**
+   * Gets the cached tokens used by the AI provider.
+   *
+   * @return int|null
+   *   The cached token usage.
+   */
+  public function getCachedTokenUsage(): ?int {
+    return $this->cachedTokensUsage;
   }
 
 }
