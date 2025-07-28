@@ -75,6 +75,7 @@ nav:
         - Develop an AI Provider: developers/writing_an_ai_provider.md
   - Contribute:
     - Getting Started: contribute/index.md
+    - Issue Guidelines: contribute/issue_guidelines.md
     - Contribute Documentation: contribute/documentation.md
     - Contribute Bug Reports: contribute/bug_finding.md
     - Contribute Testings:

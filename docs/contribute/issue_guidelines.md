@@ -4,6 +4,10 @@ To facilitate collaboration among contributors within the Drupal AI ecosystem, i
 
 See the [List of issue fields](https://www.drupal.org/docs/develop/issues/fields-and-other-parts-of-an-issue/list-of-issue-fields) and [Creating or updating an issue report](https://www.drupal.org/community/contributor-guide/reference-information/quick-info/creating-or-updating-an-issue-report) for general Drupal issue guidelines.
 
+**Table of Contents**
+
+[TOC]
+
 ## Issue metadata
 
 ### Title
