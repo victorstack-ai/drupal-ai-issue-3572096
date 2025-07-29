@@ -2,11 +2,11 @@
 
 namespace Drupal\ai\Plugin\AiDataTypeConverter;
 
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\Attribute\AiDataTypeConverter;
 use Drupal\ai\Base\AiDataTypeConverterPluginBase;
 use Drupal\ai\DataTypeConverter\AppliesResult;
 use Drupal\ai\DataTypeConverter\AppliesResultInterface;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Plugin implementation of the ai_data_type_converter.

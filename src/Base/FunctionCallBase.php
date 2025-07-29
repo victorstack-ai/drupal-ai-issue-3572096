@@ -83,6 +83,9 @@ abstract class FunctionCallBase extends PluginBase implements FunctionCallInterf
     if (!$data_type_converter_manager instanceof AiDataTypeConverterPluginManager) {
       @trigger_error('FunctionCallBase::__construct() without the AiDataTypeConverterPluginManager argument is deprecated in ai:1.2.0 and will be required in ai:2.0.0. See https://www.drupal.org/project/ai/issues/3512100', E_USER_DEPRECATED);
     }
+    else {
+      $this->dataTypeConverterManager = $data_type_converter_manager;
+    }
 
   }
 

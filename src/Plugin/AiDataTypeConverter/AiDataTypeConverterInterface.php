@@ -19,8 +19,8 @@ interface AiDataTypeConverterInterface {
    * @param mixed $value
    *   The value.
    *
-   * @return bool
-   *   TRUE if the converter applies, FALSE otherwise.
+   * @return \Drupal\ai\DataTypeConverter\AppliesResultInterface
+   *   The result of the applicability check.
    */
   public function applies(string $data_type, mixed $value): AppliesResultInterface;
 
@@ -30,8 +30,8 @@ interface AiDataTypeConverterInterface {
    * @param string $data_type
    *   The data type.
    *
-   * @return bool
-   *   TRUE if the converter applies, FALSE otherwise.
+   * @return \Drupal\ai\DataTypeConverter\AppliesResultInterface
+   *   The result of the applicability check.
    */
   public function appliesToDataType(string $data_type): AppliesResultInterface;
 
@@ -46,8 +46,8 @@ interface AiDataTypeConverterInterface {
    * @param mixed $value
    *   The value.
    *
-   * @return bool
-   *   TRUE if the converter applies, FALSE otherwise.
+   * @return \Drupal\ai\DataTypeConverter\AppliesResultInterface
+   *   The result of the applicability check.
    */
   public function appliesToValue(string $data_type, mixed $value): AppliesResultInterface;
 

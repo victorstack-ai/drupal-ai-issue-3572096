@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Drupal\ai\PluginManager;
 
-use Drupal\ai\Plugin\AiDataTypeConverter\AiDataTypeConverterInterface;
 use Drupal\Component\Utility\SortArray;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
 use Drupal\ai\Attribute\AiDataTypeConverter;
+use Drupal\ai\Plugin\AiDataTypeConverter\AiDataTypeConverterInterface;
 
 /**
  * AiDataTypeConverter plugin manager.

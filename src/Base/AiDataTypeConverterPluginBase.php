@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Drupal\ai\Base;
 
-use Drupal\ai\Plugin\AiDataTypeConverter\AiDataTypeConverterInterface;
 use Drupal\Component\Plugin\PluginBase;
 use Drupal\ai\DataTypeConverter\AppliesResultInterface;
+use Drupal\ai\Plugin\AiDataTypeConverter\AiDataTypeConverterInterface;
 
 /**
  * Base class for ai_data_type_converter plugins.
