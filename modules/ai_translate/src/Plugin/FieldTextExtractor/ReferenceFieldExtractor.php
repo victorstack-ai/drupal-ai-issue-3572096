@@ -151,22 +151,24 @@ class ReferenceFieldExtractor extends FieldExtractorBase implements Configurable
       $referencedEntity = $referencedEntities[$delta];
 
       // Translate referenced entity.
-      $this->translateReferencedEntity($referencedEntity, $singleValue, $translationLanguage);
+      if ($referencedEntity->isTranslatable()) {
+        $this->translateReferencedEntity($referencedEntity, $singleValue, $translationLanguage);
 
-      try {
-        // Save the updated referenced entity.
-        $referencedEntity->save();
-      }
-      catch (\Throwable $e) {
-        $this->logger->error('Unexpected error while saving referenced entity @delta. Type: @type, Message: @message, File: @file, Line: @line', [
-          '@delta' => $referencedEntity->id(),
-          '@type' => get_class($e),
-          '@message' => $e->getMessage(),
-          '@file' => $e->getFile(),
-          '@line' => $e->getLine(),
-        ]);
+        try {
+          // Save the updated referenced entity.
+          $referencedEntity->save();
+        }
+        catch (\Throwable $e) {
+          $this->logger->error('Unexpected error while saving referenced entity @delta. Type: @type, Message: @message, File: @file, Line: @line', [
+            '@delta' => $referencedEntity->id(),
+            '@type' => get_class($e),
+            '@message' => $e->getMessage(),
+            '@file' => $e->getFile(),
+            '@line' => $e->getLine(),
+          ]);
 
-        continue;
+          continue;
+        }
       }
       $newValue[$delta] = ['entity' => $referencedEntity];
     }
