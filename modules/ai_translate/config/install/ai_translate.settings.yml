@@ -21,3 +21,5 @@ reference_defaults:
   paragraph: true
   taxonomy_term: true
   _fallback: true
+translation_status: keep_original
+redirect_after_create: list

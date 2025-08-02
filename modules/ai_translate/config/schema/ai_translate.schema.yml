@@ -20,6 +20,15 @@ ai_translate.settings:
       label: 'Language-specific settings'
       sequence:
         type: ai_translate.language_setting.[%key]
+    translation_status:
+      type: string
+      label: 'Translation status'
+      description: 'Controls how the publication status of translated content is handled'
+    redirect_after_create:
+      type: string
+      label: 'Action after creating a new translation'
+      description: 'Where to redirect after creating a new translation.'
+
 
 ai_translate.language_setting.*:
   type: mapping

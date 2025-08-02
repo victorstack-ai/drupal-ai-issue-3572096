@@ -123,6 +123,31 @@ class AiTranslateSettingsForm extends ConfigFormBase {
       '#description' => $this->t('When using this module on its own, keep this box checked. This allows AI Translate to take over the "Translate" tab when editing any entity. When this module is use as a translation framework for other translation mechanisms such as AI TMGMT; however, the default Drupal translation may be desired for the "Translate" tab.'),
     ];
 
+    // Add translation status setting.
+    $form['translation_status'] = [
+      '#type' => 'radios',
+      '#title' => $this->t('Translation status'),
+      '#description' => $this->t('Choose how to handle the published status of newly created translations.'),
+      '#options' => [
+        'keep_original' => $this->t('Keep the status of original entity'),
+        'create_draft' => $this->t('Create translation in draft status'),
+      ],
+      '#config_target' => static::CONFIG_NAME . ':translation_status',
+      '#required' => TRUE,
+    ];
+    // Add translation status setting.
+    $form['redirect_after_create'] = [
+      '#type' => 'radios',
+      '#title' => $this->t('Action after creating a new translation'),
+      '#description' => $this->t('Where to redirect after creating a new translation.'),
+      '#options' => [
+        'list' => $this->t('Return to the translation list.'),
+        'edit' => $this->t('Edit the new translation.'),
+      ],
+      '#config_target' => static::CONFIG_NAME . ':redirect_after_create',
+      '#required' => TRUE,
+    ];
+
     $example_prompt = $config->get('prompt');
 
     $languages = $this->languageManager->getLanguages();
@@ -275,6 +300,7 @@ class AiTranslateSettingsForm extends ConfigFormBase {
 
     // Save configuration settings.
     $config->set('use_ai_translate', $form_state->getValue('use_ai_translate'));
+    $config->set('translation_status', $form_state->getValue('translation_status'));
     $config->set('prompt', $form_state->getValue('prompt'));
     $config->set('entity_reference_depth', $form_state->getValue('entity_reference_depth'));
     $config->set('reference_defaults', array_keys(array_filter($form_state->getValue('reference_defaults'))));
