@@ -66,6 +66,7 @@ nav:
     - Develop a third-party module: developers/develop_third_party_module.md
     - Events: developers/events.md
     - DDEV: developers/ddev.md
+    - Prompt Management: developers/ai_prompt_management.md
     - Mock a Provider: developers/virtual_provider.md
     - Develop for submodules:
         - AI Assistant API Action: developers/develop_api_assistant_action.md
