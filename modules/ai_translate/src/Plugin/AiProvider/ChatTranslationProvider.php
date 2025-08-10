@@ -204,10 +204,10 @@ class ChatTranslationProvider extends AiProviderClientBase implements
     }
     $promptText = $this->twig->renderInline($prompt, $context);
     try {
-      $this->setChatSystemRole('You are a helpful translator.');
       $messages = new ChatInput([
         new chatMessage('user', $promptText),
       ]);
+      $messages->setSystemPrompt('You are a helpful translator.');
 
       $this->loadTranslator($messages);
       /** @var /Drupal\ai\OperationType\Chat\ChatOutput $message */

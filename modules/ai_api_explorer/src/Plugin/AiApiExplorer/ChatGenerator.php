@@ -315,7 +315,7 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
 
       // Check for system message.
       if ($form_state->getValue('system_message')) {
-        $provider->setChatSystemRole($form_state->getValue('system_message'));
+        $input->setSystemPrompt($form_state->getValue('system_message'));
       }
 
       if ($form_state->getValue('json_schema')) {
@@ -520,7 +520,7 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
       $code['code']['#value'] .= '$ai_provider->setChatStructuredJsonSchema(' . $form_state->getValue('json_schema') . ');<br>';
     }
     if ($form_state->getValue('system_message')) {
-      $code['code']['#value'] .= '$ai_provider->setChatSystemRole("' . Json::decode($form_state->getValue('system_message')) . '");<br>';
+      $code['code']['#value'] .= '$input->setSystemPrompt("' . Json::decode($form_state->getValue('system_message')) . '");<br>';
     }
     if ($form_state->getValue('streamed')) {
       $code['code']['#value'] .= "// If you want to stream the response normalized you have to make sure<br>";
@@ -589,9 +589,6 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
     $code['code']['#value'] .= '// Another way if you know you always will use ' . $provider->getPluginDefinition()['label'] . ' and want its way of doing stuff. Not recommended. <br>';
     $code['code']['#value'] .= $this->addProviderCodeExample($provider);
     $code['code']['#value'] .= "\$ai_provider = \Drupal::service('ai.provider')->createInstance('" . $form_state->getValue('chat_ai_provider') . '\');<br>';
-    if ($form_state->getValue('system_message')) {
-      $code['code']['#value'] .= '$ai_provider->setChatSystemRole("' . $form_state->getValue('system_message') . '");<br>';
-    }
     $code['code']['#value'] .= "\$ai_provider->setConfiguration(\$config);<br>";
     if (!empty($form_state->getValue('function_calls'))) {
       $code['code']['#value'] .= '// Some custom code for function calling per model.<br>';

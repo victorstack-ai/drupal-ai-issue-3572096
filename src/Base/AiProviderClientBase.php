@@ -2,7 +2,6 @@
 
 namespace Drupal\ai\Base;
 
-use Symfony\Component\Yaml\Yaml;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ImmutableConfig;
@@ -24,6 +23,7 @@ use Drupal\key\KeyRepositoryInterface;
 use Psr\Http\Client\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * Service to handle API requests server.
@@ -354,7 +354,14 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   }
 
   /**
-   * {@inheritdoc}
+   * Sets the chat system role.
+   *
+   * @param string $message
+   *   The system role message.
+   *
+   * @deprecated in ai:1.2.0 and is removed from ai:2.0.0. Please use
+   * setSystemPrompt() in the ChatInput class instead.
+   * @see https://www.drupal.org/project/ai/issues/3535820
    */
   public function setChatSystemRole(string $message): void {
     $this->chatSystemRole = $message;
@@ -362,7 +369,14 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
   }
 
   /**
-   * {@inheritdoc}
+   * Gets the chat system role.
+   *
+   * @deprecated in ai:1.2.0 and is removed from ai:2.0.0. Please use
+   * getSystemPrompt() in the ChatInput class instead.
+   * @see https://www.drupal.org/project/ai/issues/3535820
+   *
+   * @return string
+   *   The chat system role message.
    */
   public function getChatSystemRole(): string {
     return $this->chatSystemRole;

@@ -16,6 +16,7 @@ use Drupal\ai\Exception\AiRateLimitException;
 use Drupal\ai\Exception\AiRequestErrorException;
 use Drupal\ai\Exception\AiResponseErrorException;
 use Drupal\ai\Exception\AiUnsafePromptException;
+use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\InputInterface;
 use Drupal\ai\OperationType\OperationTypeInterface;
 use Psr\Http\Client\ClientExceptionInterface;
@@ -179,6 +180,16 @@ class ProviderProxy {
       foreach ($arguments[0]->getDebugData() as $key => $value) {
         $this->plugin->setDebugData($key, $value);
       }
+    }
+
+    // Temporary fix until 2.0.0, to move the system role into the input.
+    // And also do the reverse for the providers that might not have updated.
+    // @todo Remove in 2.0.0.
+    if (!empty($this->plugin->getChatSystemRole()) && isset($arguments[0]) && $arguments[0] instanceof ChatInput) {
+      $arguments[0]->setSystemPrompt($this->plugin->getChatSystemRole());
+    }
+    if (empty($this->plugin->getChatSystemRole()) && isset($arguments[0]) && $arguments[0] instanceof ChatInput && !empty($arguments[0]->getSystemPrompt())) {
+      $this->plugin->setChatSystemRole($arguments[0]->getSystemPrompt());
     }
 
     // Create a unique event id.

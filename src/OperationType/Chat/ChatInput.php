@@ -50,6 +50,13 @@ class ChatInput extends InputBase implements InputInterface {
   protected bool $chatStrictSchema = FALSE;
 
   /**
+   * The system prompt.
+   *
+   * @var string
+   */
+  protected string $systemPrompt = '';
+
+  /**
    * The constructor.
    *
    * @param array $messages
@@ -80,7 +87,31 @@ class ChatInput extends InputBase implements InputInterface {
   }
 
   /**
-   * {@inheritDoc}
+   * Set the system prompt.
+   *
+   * @param string $system_prompt
+   *   The system prompt.
+   */
+  public function setSystemPrompt(string $system_prompt): void {
+    $this->setDebugDataValue('system_prompt', $system_prompt);
+    $this->systemPrompt = $system_prompt;
+  }
+
+  /**
+   * Get the system prompt.
+   *
+   * @return string
+   *   The system prompt.
+   */
+  public function getSystemPrompt(): string {
+    return $this->systemPrompt;
+  }
+
+  /**
+   * Set the the structured JSON schema.
+   *
+   * @param array $schema
+   *   The structured JSON schema.
    */
   public function setChatStructuredJsonSchema(array $schema): void {
     $this->setDebugDataValue('chat_structured_json_schema', $schema);
@@ -88,14 +119,20 @@ class ChatInput extends InputBase implements InputInterface {
   }
 
   /**
-   * {@inheritDoc}
+   * Get the structured JSON schema.
+   *
+   * @return array
+   *   The structured JSON schema.
    */
   public function getChatStructuredJsonSchema(): array {
     return $this->chatStructuredJsonSchema;
   }
 
   /**
-   * {@inheritDoc}
+   * Set whether the chat should follow strict schema.
+   *
+   * @param bool $strict
+   *   Whether to follow strict schema.
    */
   public function setChatStrictSchema(bool $strict): void {
     $this->setDebugDataValue('chat_strict_schema', $strict);
@@ -103,14 +140,20 @@ class ChatInput extends InputBase implements InputInterface {
   }
 
   /**
-   * {@inheritDoc}
+   * Get whether the chat should follow strict schema.
+   *
+   * @return bool
+   *   Whether to follow strict schema.
    */
   public function getChatStrictSchema(): bool {
     return $this->chatStrictSchema;
   }
 
   /**
-   * {@inheritDoc}
+   * Sets the tools input.
+   *
+   * @param \Drupal\ai\OperationType\Chat\Tools\ToolsInputInterface $tools
+   *   The tools input to set.
    */
   public function setChatTools(ToolsInputInterface $tools): void {
     $this->setDebugDataValue('chat_tools', $tools);
@@ -118,7 +161,10 @@ class ChatInput extends InputBase implements InputInterface {
   }
 
   /**
-   * {@inheritDoc}
+   * Get the tools input.
+   *
+   * @return \Drupal\ai\OperationType\Chat\Tools\ToolsInputInterface|null
+   *   The tools input or NULL if not set.
    */
   public function getChatTools(): ?ToolsInputInterface {
     return $this->chatTools;

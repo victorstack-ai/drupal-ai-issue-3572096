@@ -276,7 +276,7 @@ class PromptContentSuggestion extends FieldWidgetActionBase {
       $messages = new ChatInput([
         new ChatMessage('user', $prompt),
       ]);
-      $ai_provider->setChatSystemRole($this->config->get('field_widget_prompt') ?? $this->t('You are helpful assistant.'));
+      $messages->setSystemPrompt($this->config->get('field_widget_prompt') ?? $this->t('You are helpful assistant.'));
       /** @var \Drupal\ai\OperationType\Chat\ChatMessage $response */
       $response = $ai_provider->chat($messages, $provider_config['model_id'], [
         'field_widget_action',

@@ -464,7 +464,6 @@ class AiAssistantApiRunner {
       $message = "No actions have been run, this means that you have done nothing since the last instruction.";
     }
     $assistant_message = $assistant_message . $message;
-    $provider->setChatSystemRole($assistant_message);
 
     $messages = [];
 
@@ -484,6 +483,7 @@ class AiAssistantApiRunner {
       $messages[] = new ChatMessage($message['role'], $message['message']);
     }
     $input = new ChatInput($messages);
+    $input->setSystemPrompt($assistant_message);
     // If its preprompt and function calling, we set the function calling.
     if ($pre_prompt && $this->assistant->get('use_function_calling')) {
       $tools = $this->assistantMessageBuilder->getFunctionCalls();
