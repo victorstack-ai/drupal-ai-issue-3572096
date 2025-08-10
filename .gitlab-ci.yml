@@ -136,23 +136,8 @@ phpstan:
 
 .phpunit-base:
   before_script:
-    # Install dependencies.
-    - apt-get update
-    - apt-get install -y --no-install-recommends $PHPIZE_DEPS libffi-dev
-    # Download and extract PHP source.
-    - curl -LS -o /usr/src/php.tar.xz "https://php.net/distributions/php-$(php -r 'echo PHP_VERSION;').tar.xz"
-    - docker-php-source extract
-    # Compile the FFI module.
-    - |-
-      (
-        cd /usr/src/php/ext/ffi
-        phpize
-        ./configure
-        make
-        make install
-      )
     # Enable the FFI module.
-    - echo "extension=ffi.so" > /usr/local/etc/php/conf.d/docker-php-ext-ffi.ini
+    - echo "extension=ffi" > /usr/local/etc/php/conf.d/docker-php-ext-ffi.ini
     - echo "ffi.enable=true" >> /usr/local/etc/php/conf.d/docker-php-ext-ffi.ini
     # Show the configuration for debugging purposes.
-    - php -i | grep ffi
+    - php --ri ffi
