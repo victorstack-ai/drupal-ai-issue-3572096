@@ -182,6 +182,16 @@ class ProviderProxy {
       }
     }
 
+    // Temporary fix until 2.0.0, to move the streamed chat into the input.
+    // And also do the reverse for the providers that might not have updated.
+    // @todo Remove in 2.0.0.
+    if (is_bool($this->plugin->isStreamedOutput()) && $this->plugin->isStreamedOutput() && isset($arguments[0]) && $arguments[0] instanceof ChatInput) {
+      $arguments[0]->setStreamedOutput($this->plugin->isStreamedOutput());
+    }
+    if ($this->plugin->isStreamedOutput() !== NULL && isset($arguments[0]) && $arguments[0] instanceof ChatInput && is_bool($arguments[0]->isStreamedOutput())) {
+      $this->plugin->streamedOutput($arguments[0]->isStreamedOutput());
+    }
+
     // Temporary fix until 2.0.0, to move the system role into the input.
     // And also do the reverse for the providers that might not have updated.
     // @todo Remove in 2.0.0.

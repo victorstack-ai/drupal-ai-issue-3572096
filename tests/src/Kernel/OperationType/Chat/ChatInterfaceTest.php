@@ -84,7 +84,7 @@ class ChatInterfaceTest extends KernelTestBase {
       new ChatMessage('user', $text),
     ]);
     // Set to streaming.
-    $provider->streamedOutput(TRUE);
+    $input->setStreamedOutput(TRUE);
     $chat_response = $provider->chat($input, 'test');
     // Should be a ChatOutput object.
     $this->assertInstanceOf(ChatOutput::class, $chat_response);

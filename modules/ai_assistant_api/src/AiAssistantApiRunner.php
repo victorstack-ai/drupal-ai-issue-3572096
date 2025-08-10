@@ -474,15 +474,16 @@ class AiAssistantApiRunner {
       }
     }
     $provider->setConfiguration($config);
-    if ($this->streaming) {
-      $provider->streamedOutput(TRUE);
-    }
+
     // Get the history.
     $history = $this->getMessageHistory();
     foreach ($history as $key => $message) {
       $messages[] = new ChatMessage($message['role'], $message['message']);
     }
     $input = new ChatInput($messages);
+    if ($this->streaming) {
+      $input->setStreamedOutput(TRUE);
+    }
     $input->setSystemPrompt($assistant_message);
     // If its preprompt and function calling, we set the function calling.
     if ($pre_prompt && $this->assistant->get('use_function_calling')) {

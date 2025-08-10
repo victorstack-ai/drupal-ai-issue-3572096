@@ -137,7 +137,7 @@ $input->setSystemPrompt('You are an expert at bananas.')
 
 ## Streaming Chat
 
-There is a way to output the chat as a stream, meaning that it outputs the words as they come in. For your third party provider to support it, you need to first turn this on (or have it as a config) via the method `$provider->streamedOutput(TRUE);`.
+There is a way to output the chat as a stream, meaning that it outputs the words as they come in. For your third party provider to support it, you need to first turn this on (or have it as a config) via the method `$input->setStreamedOutput(TRUE);` on the ChatInput object.
 
 When you have turned this on, its important to note that not all providers support this, so you have to add a check and respond correctly depending on how it works. This is an example of how to do this.
 

@@ -50,6 +50,13 @@ class ChatInput extends InputBase implements InputInterface {
   protected bool $chatStrictSchema = FALSE;
 
   /**
+   * If the output should be streamed or not.
+   *
+   * @var bool
+   */
+  protected bool $streamOutput = FALSE;
+
+  /**
    * The system prompt.
    *
    * @var string
@@ -84,6 +91,27 @@ class ChatInput extends InputBase implements InputInterface {
    */
   public function setMessages(array $messages) {
     $this->messages = $messages;
+  }
+
+  /**
+   * Get if the output should be streamed or not.
+   *
+   * @return bool
+   *   TRUE if the output should be streamed, FALSE otherwise.
+   */
+  public function isStreamedOutput(): bool {
+    return $this->streamOutput;
+  }
+
+  /**
+   * Set if the output should be streamed or not.
+   *
+   * @param bool $streamOutput
+   *   TRUE if the output should be streamed, FALSE otherwise.
+   */
+  public function setStreamedOutput(bool $streamOutput): void {
+    $this->setDebugDataValue('stream_output', $streamOutput);
+    $this->streamOutput = $streamOutput;
   }
 
   /**

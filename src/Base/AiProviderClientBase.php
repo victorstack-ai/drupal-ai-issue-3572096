@@ -556,11 +556,29 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
    *
    * @param bool $streamed
    *   Streamed output or not.
+   *
+   * @deprecated in ai:1.2.0 and is removed from ai:2.0.0. Use the method
+   * setStreamedOutput() on the ChatInput object instead.
+   * @see https://www.drupal.org/project/ai/issues/3535821
    */
   public function streamedOutput(bool $streamed = TRUE): void {
     $this->streamed = $streamed;
     // We add for debugging that its streamed.
     $this->setDebugData('is_streamed', $streamed);
+  }
+
+  /**
+   * Get if we should stream the output.
+   *
+   * @deprecated in ai:1.2.0 and is removed from ai:2.0.0. Use the method
+   * isStreamedOutput() on the ChatInput object instead.
+   * @see https://www.drupal.org/project/ai/issues/3535821
+   *
+   * @return bool
+   *   TRUE if the output should be streamed, FALSE otherwise.
+   */
+  public function isStreamedOutput(): bool {
+    return $this->streamed;
   }
 
   /**

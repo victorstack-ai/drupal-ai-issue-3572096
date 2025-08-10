@@ -327,7 +327,7 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
       try {
         // If we should stream.
         if ($form_state->getValue('streamed')) {
-          $provider->streamedOutput();
+          $input->setStreamedOutput(TRUE);
         }
         $response = $provider->chat($input, $form_state->getValue('chat_ai_model'), [
           'chat_generation',
@@ -524,7 +524,7 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
     }
     if ($form_state->getValue('streamed')) {
       $code['code']['#value'] .= "// If you want to stream the response normalized you have to make sure<br>";
-      $code['code']['#value'] .= "\$ai_provider->streamedOutput();<br>";
+      $code['code']['#value'] .= "\$input->setStreamedOutput(TRUE);<br>";
     }
     $code['code']['#value'] .= "// Normalized \$response will be a ChatMessage object.<br>";
     $code['code']['#value'] .= "\$response = \$ai_provider->chat(\$input, '" . $form_state->getValue('chat_ai_model') . '\', ["your_module_name"])->getNormalized();<br>';
