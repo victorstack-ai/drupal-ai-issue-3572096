@@ -51,7 +51,9 @@ nav:
     - Why base on the AI module?: developers/why_ai.md
     - Making AI Calls:
       - The Idea: developers/base_calls.md
-      - Chat Call: developers/call_chat.md
+      - Chat Call:
+        - Basic Chat Call: developers/call_chat.md
+        - Streaming Chat Call: developers/call_chat_streaming.md
       - Text-To-Image Call: developers/call_text_to_image.md
       - Text-To-Speech Call: developers/call_text_to_speech.md
       - Speech-To-Text Call: developers/call_speech_to_text.md

@@ -24,6 +24,38 @@ interface StreamedChatMessageInterface {
   public function setRole(string $role): void;
 
   /**
+   * Get the tools.
+   *
+   * @return array|null
+   *   The tools.
+   */
+  public function getTools(): ?array;
+
+  /**
+   * Set the tools.
+   *
+   * @param array|null $tools
+   *   The tools.
+   */
+  public function setTools(?array $tools): void;
+
+  /**
+   * Get raw data.
+   *
+   * @return array|null
+   *   The raw data.
+   */
+  public function getRaw(): ?array;
+
+  /**
+   * Set raw data.
+   *
+   * @param array|null $raw
+   *   The raw data.
+   */
+  public function setRaw(?array $raw): void;
+
+  /**
    * Get text.
    *
    * @return string

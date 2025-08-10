@@ -10,6 +10,26 @@ interface StreamedChatMessageIteratorInterface extends \IteratorAggregate {
   public function __construct(\IteratorAggregate $iterator);
 
   /**
+   * The getIterator method to return a generator.
+   *
+   * @deprecated in ai:1.2.0 and is removed from ai:2.0.0. Move all logic to
+   * doIterate() instead.
+   * @see https://www.drupal.org/project/ai/issues/3538341
+   *
+   * @return \Generator
+   *   A generator that yields streamed chat messages.
+   */
+  public function getIterator(): \Generator;
+
+  /**
+   * The actual implementation of the generator.
+   *
+   * @return \Generator
+   *   A generator that yields streamed chat messages.
+   */
+  public function doIterate(): \Generator;
+
+  /**
    * Set an request thread id.
    *
    * @param string $request_thread_id
@@ -34,11 +54,15 @@ interface StreamedChatMessageIteratorInterface extends \IteratorAggregate {
    *   The message.
    * @param array $metadata
    *   The metadata.
+   * @param array|null $tools
+   *   The tools.
+   * @param array|null $raw
+   *   The raw data.
    *
    * @return \Drupal\ai\OperationType\Chat\StreamedChatMessageInterface
    *   The streamed chat message.
    */
-  public function createStreamedChatMessage(string $role, string $message, array $metadata): StreamedChatMessageInterface;
+  public function createStreamedChatMessage(string $role, string $message, array $metadata, ?array $tools = NULL, ?array $raw = NULL,): StreamedChatMessageInterface;
 
   /**
    * Gets the stream chat messages.
@@ -52,5 +76,13 @@ interface StreamedChatMessageIteratorInterface extends \IteratorAggregate {
    * Trigger the event on streaming finished.
    */
   public function triggerEvent(): void;
+
+  /**
+   * Create a chat output from the streamed messages.
+   *
+   * @return \Drupal\ai\OperationType\Chat\ChatOutput
+   *   The chat output.
+   */
+  public function reconstructChatOutput(): ChatOutput;
 
 }

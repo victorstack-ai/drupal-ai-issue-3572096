@@ -33,9 +33,11 @@ class ToolsPropertyResult implements ToolsPropertyResultInterface {
   /**
    * {@inheritDoc}
    */
-  public function __construct(ToolsPropertyInput $inputProperty, $value = NULL) {
-    $this->setInputProperty($inputProperty);
-    $this->setName($inputProperty->getName());
+  public function __construct(?ToolsPropertyInput $inputProperty = NULL, $value = NULL) {
+    if ($inputProperty) {
+      $this->setInputProperty($inputProperty);
+      $this->setName($inputProperty->getName());
+    }
     $this->setValue($value);
   }
 
@@ -64,7 +66,7 @@ class ToolsPropertyResult implements ToolsPropertyResultInterface {
    * {@inheritDoc}
    */
   public function setValue($value) {
-    $this->value = $this->fixValue($value);
+    $this->value = $value;
   }
 
   /**
@@ -85,6 +87,11 @@ class ToolsPropertyResult implements ToolsPropertyResultInterface {
    * {@inheritDoc}
    */
   public function validate() {
+    // If the input property is not set, we cannot validate.
+    if ($this->inputProperty === NULL) {
+      return;
+    }
+
     // Do all basic validation we can do.
     $type = $this->inputProperty->getType();
     $name = $this->inputProperty->getName();

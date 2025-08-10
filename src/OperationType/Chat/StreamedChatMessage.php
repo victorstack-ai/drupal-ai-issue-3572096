@@ -29,6 +29,20 @@ class StreamedChatMessage implements StreamedChatMessageInterface {
   private array $metadata;
 
   /**
+   * The tools.
+   *
+   * @var array|null
+   */
+  private ?array $tools = NULL;
+
+  /**
+   * The raw data.
+   *
+   * @var array|null
+   */
+  private ?array $raw = NULL;
+
+  /**
    * The amount of input tokens from the AI provider.
    */
   private ?int $inputTokensUsage = NULL;
@@ -56,10 +70,16 @@ class StreamedChatMessage implements StreamedChatMessageInterface {
   /**
    * Constructor.
    */
-  public function __construct(string $role = "", string $text = "", array $metadata = []) {
+  public function __construct(string $role = "", string $text = "", array $metadata = [], ?array $tools = NULL, ?array $raw = NULL) {
     $this->role = $role;
     $this->text = $text;
     $this->metadata = $metadata;
+    if (!empty($tools)) {
+      $this->tools = $tools;
+    }
+    if (!empty($raw)) {
+      $this->raw = $raw;
+    }
   }
 
   /**
@@ -88,6 +108,34 @@ class StreamedChatMessage implements StreamedChatMessageInterface {
    */
   public function setRole(string $role): void {
     $this->role = $role;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getTools(): ?array {
+    return $this->tools;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setTools(?array $tools): void {
+    $this->tools = $tools;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getRaw(): ?array {
+    return $this->raw;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setRaw(?array $raw): void {
+    $this->raw = $raw;
   }
 
   /**
