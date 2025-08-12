@@ -8,7 +8,7 @@ use Drupal\Core\Field\FieldDefinitionInterface;
 /**
  * This is a base class that can be used for LLMs simple numeric rules.
  */
-class Numeric extends RuleBase {
+class NumericRule extends RuleBase {
 
   /**
    * {@inheritDoc}
