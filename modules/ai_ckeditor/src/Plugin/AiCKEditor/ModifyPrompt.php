@@ -78,14 +78,18 @@ final class ModifyPrompt extends AiCKEditorPluginBase {
   public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []): array {
     $form = parent::buildCkEditorModalForm($form, $form_state);
 
-    $form['modify_prompt'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('Your instructions'),
-      '#description' => $this->t('Describe how you want the AI to modify the selected text.'),
-      '#required' => TRUE,
-      '#rows' => 4,
-      '#weight' => 5,
-    ];
+    // Only add 'Your instructions' if selected text is available.
+    $storage = $form_state->getStorage();
+    if (!empty($storage['selected_text'])) {
+      $form['modify_prompt'] = [
+        '#type' => 'textarea',
+        '#title' => $this->t('Your instructions'),
+        '#description' => $this->t('Describe how you want the AI to modify the selected text.'),
+        '#required' => TRUE,
+        '#rows' => 4,
+        '#weight' => 5,
+      ];
+    }
 
     return $form;
   }
