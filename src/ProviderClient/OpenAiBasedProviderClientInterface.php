@@ -36,12 +36,4 @@ interface OpenAiBasedProviderClientInterface {
    */
   public function getClient(string $api_key = ''): Client;
 
-  /**
-   * Returns if the provider supports streaming for chat operations.
-   *
-   * @return bool
-   *   Returns TRUE if the provider supports chat streaming.
-   */
-  public function canChatStream(): bool;
-
 }

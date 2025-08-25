@@ -121,13 +121,6 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function canChatStream(): bool {
-    return $this->streamed;
-  }
-
-  /**
    * Loads the OpenAI Client with authentication if not initialized.
    */
   protected function loadClient(): void {
@@ -302,7 +295,7 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
     }
 
     try {
-      if ($this->canChatStream()) {
+      if ($this->streamed) {
         $payload['stream_options'] = [
           'include_usage' => TRUE,
         ];
