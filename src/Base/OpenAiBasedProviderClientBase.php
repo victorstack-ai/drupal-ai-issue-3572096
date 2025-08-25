@@ -333,6 +333,7 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
       $this->handleApiException($e);
       throw $e;
     }
+    return new ChatOutput($message, $response, []);
   }
 
   /**
