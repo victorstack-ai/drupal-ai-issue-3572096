@@ -327,7 +327,10 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
           }
         }
       }
-      return new ChatOutput($message, $response, []);
+      $chat_output = new ChatOutput($message, $response, []);
+      // Set the token usage on the output.
+      $chat_output = $this->setChatTokenUsage($chat_output, $response);
+      return $chat_output;
     }
     catch (\Exception $e) {
       $this->handleApiException($e);
@@ -513,6 +516,36 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
       throw new AiQuotaException($e->getMessage());
     }
     throw $e;
+  }
+
+  /**
+   * Helper function to set the token usage on chat output.
+   *
+   * @param \Drupal\ai\OperationType\Chat\ChatOutput $chat_output
+   *   The chat output to set the token usage on.
+   * @param array $response
+   *   The response array containing token usage.
+   *
+   * @return \Drupal\ai\OperationType\Chat\ChatOutput
+   *   The chat output with token usage set.
+   */
+  protected function setChatTokenUsage(ChatOutput $chat_output, array $response): ChatOutput {
+    if (isset($response['usage']['prompt_tokens'])) {
+      $chat_output->setInputTokenUsage($response['usage']['prompt_tokens']);
+    }
+    if (isset($response['usage']['completion_tokens'])) {
+      $chat_output->setOutputTokenUsage($response['usage']['completion_tokens']);
+    }
+    if (isset($response['usage']['total_tokens'])) {
+      $chat_output->setTotalTokenUsage($response['usage']['total_tokens']);
+    }
+    if (isset($response['usage']['prompt_tokens_details']['cached_tokens'])) {
+      $chat_output->setCachedTokenUsage($response['usage']['prompt_tokens_details']['cached_tokens']);
+    }
+    if (isset($response['usage']['completion_tokens_details']['reasoning_tokens'])) {
+      $chat_output->setReasoningTokenUsage($response['usage']['completion_tokens_details']['reasoning_tokens']);
+    }
+    return $chat_output;
   }
 
 }
