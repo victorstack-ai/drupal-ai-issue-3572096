@@ -44,3 +44,9 @@ There is a helper method when using the chat providers that makes it possible to
 If you install the AI API Explorer, you can go `configuration > AI > AI API Explorer > Chat Generation Explorer` under `/admin/config/ai/explorers/chat-generation` to test out different calls and see the code that you need for it.
 
 Here comes some examples of different type of levels you might want to integrate the module at. In these examples the code is loaded as a static, for best practice use Dependency Injection.
+
+### Running in Fibers
+Some of the providers supports running the requests in Fibers, meaning that you can run multiple requests in parallel. This is very useful when you have multiple calls that are not dependent on each other. There is a AiProviderCapability enum that you can check if the provider supports it.
+
+The providers that supports this will realize that they are running in a fiber and start a fiber for each request. See the tests/src/AiLlm/FiberTest.php for an example of how to do this.
+

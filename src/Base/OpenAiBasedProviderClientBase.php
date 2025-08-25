@@ -2,15 +2,19 @@
 
 namespace Drupal\ai\Base;
 
-use Drupal\ai\Exception\AiSetupFailureException;
-use Drupal\ai\OperationType\Chat\OpenAiTypeStreamedChatMessageIterator;
-use Drupal\ai\Traits\OperationType\EmbeddingsTrait;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\File\FileExists;
+use Drupal\ai\Enum\AiProviderCapability;
+use Drupal\ai\Exception\AiQuotaException;
+use Drupal\ai\Exception\AiRateLimitException;
+use Drupal\ai\Exception\AiResponseErrorException;
+use Drupal\ai\Exception\AiSetupFailureException;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatInterface;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\ChatOutput;
+use Drupal\ai\OperationType\Chat\OpenAiTypeStreamedChatMessageIterator;
 use Drupal\ai\OperationType\Chat\Tools\ToolsFunctionOutput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInterface;
@@ -30,13 +34,10 @@ use Drupal\ai\OperationType\TextToImage\TextToImageOutput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInterface;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechOutput;
-use Drupal\ai\Exception\AiQuotaException;
-use Drupal\ai\Exception\AiRateLimitException;
-use Drupal\ai\Exception\AiResponseErrorException;
 use Drupal\ai\ProviderClient\OpenAiBasedProviderClientInterface;
-use Drupal\Core\File\FileExists;
-use Psr\Http\Client\ClientInterface;
+use Drupal\ai\Traits\OperationType\EmbeddingsTrait;
 use OpenAI\Client;
+use Psr\Http\Client\ClientInterface;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -111,6 +112,16 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
    */
   public function hasAuthentication(): bool {
     return !empty($this->apiKey);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getSupportedCapabilities(): array {
+    return [
+      AiProviderCapability::StreamChatOutput,
+      AiProviderCapability::ChatFiberSupport,
+    ];
   }
 
   /**
@@ -295,12 +306,31 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
     }
 
     try {
-      if ($this->streamed) {
+      if ($this->streamed && in_array(AiProviderCapability::StreamChatOutput, $this->getSupportedCapabilities())) {
         $payload['stream_options'] = [
           'include_usage' => TRUE,
         ];
         $response = $this->client->chat()->createStreamed($payload);
         $message = new OpenAiTypeStreamedChatMessageIterator($response);
+      }
+      // If we are in a fibre, we will use a streamed response as the SDK
+      // doesn't support direct async.
+      elseif (\Fiber::getCurrent() && in_array(AiProviderCapability::StreamChatOutput, $this->getSupportedCapabilities())) {
+        $payload['stream_options'] = [
+          'include_usage' => TRUE,
+        ];
+        $response = $this->client->chat()->createStreamed($payload);
+        $stream = new OpenAiTypeStreamedChatMessageIterator($response);
+        // We consume the stream in a fiber.
+        foreach ($stream as $chunk) {
+          // Suspend fiber if we haven't finished yet.
+          if (empty($stream->getFinishReason()) && !empty($chunk)) {
+            \Fiber::suspend();
+          }
+        }
+
+        // Create the final message from accumulated data.
+        $message = $stream->reconstructChatOutput()->getNormalized();
       }
       else {
         $response = $this->client->chat()->create($payload)->toArray();
@@ -320,9 +350,13 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
           }
         }
       }
+
       $chat_output = new ChatOutput($message, $response, []);
-      // Set the token usage on the output.
-      $chat_output = $this->setChatTokenUsage($chat_output, $response);
+      $chat_output->setInputTokenUsage($response['usage']['prompt_tokens']);
+      $chat_output->setOutputTokenUsage($response['usage']['completion_tokens']);
+      $chat_output->setTotalTokenUsage($response['usage']['total_tokens']);
+      $chat_output->setCachedTokenUsage($response['usage']['prompt_tokens_details']['cached_tokens']);
+      $chat_output->setReasoningTokenUsage($response['usage']['completion_tokens_details']['reasoning_tokens']);
       return $chat_output;
     }
     catch (\Exception $e) {

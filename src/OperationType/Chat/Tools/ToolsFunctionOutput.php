@@ -45,7 +45,6 @@ class ToolsFunctionOutput implements ToolsFunctionOutputInterface {
   public function __construct(?ToolsFunctionInputInterface $input = NULL, string $tool_id = '', array $arguments = []) {
     $this->setToolId($tool_id);
     $this->setInputFunction($input);
-    $this->setName($input->getName());
     if ($input !== NULL) {
       $this->setName($input->getName());
     }

@@ -39,9 +39,9 @@ abstract class StreamedChatMessageIterator implements StreamedChatMessageIterato
   /**
    * The finish reason.
    *
-   * @var string
+   * @var string|null
    */
-  protected $finishReason;
+  protected $finishReason = NULL;
 
   /**
    * The tool calls used.
