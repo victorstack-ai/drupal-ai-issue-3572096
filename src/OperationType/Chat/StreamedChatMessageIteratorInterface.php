@@ -85,4 +85,20 @@ interface StreamedChatMessageIteratorInterface extends \IteratorAggregate {
    */
   public function reconstructChatOutput(): ChatOutput;
 
+  /**
+   * Set the finished reason.
+   *
+   * @param string $finish_reason
+   *   The finish reason.
+   */
+  public function setFinishReason(string $finish_reason): void;
+
+  /**
+   * Get the finished reason.
+   *
+   * @return string|null
+   *   The finish reason.
+   */
+  public function getFinishReason(): string|null;
+
 }

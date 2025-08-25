@@ -348,4 +348,18 @@ abstract class StreamedChatMessageIterator implements StreamedChatMessageIterato
     return $output;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function setFinishReason(string $finished_reason): void {
+    $this->finishReason = $finished_reason;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFinishReason(): ?string {
+    return $this->finishReason;
+  }
+
 }

@@ -31,6 +31,9 @@ class OpenAiTypeStreamedChatMessageIterator extends StreamedChatMessageIterator 
         $message->setReasoningTokenUsage($data->usage->completionTokenDetails->reasoningTokens ?? 0);
         $message->setCachedTokenUsage($data->usage->completionTokenDetails->cachedTokens ?? 0);
       }
+      if (isset($data->choices[0]->finishReason)) {
+        $this->setFinishReason($data->choices[0]->finishReason);
+      }
       yield $message;
     }
   }
