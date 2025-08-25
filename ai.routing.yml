@@ -4,7 +4,7 @@ ai.settings.menu:
     _title: 'AI'
     _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
   requirements:
-    _permission: 'administer site configuration'
+    _permission: 'administer ai'
 
 ai.settings_form:
   path: '/admin/config/ai/settings/{nojs}'
