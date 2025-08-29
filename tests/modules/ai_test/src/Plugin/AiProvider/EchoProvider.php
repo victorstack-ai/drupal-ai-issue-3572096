@@ -27,6 +27,9 @@ use Drupal\ai\OperationType\ImageClassification\ImageClassificationInput;
 use Drupal\ai\OperationType\ImageClassification\ImageClassificationInterface;
 use Drupal\ai\OperationType\ImageClassification\ImageClassificationItem;
 use Drupal\ai\OperationType\ImageClassification\ImageClassificationOutput;
+use Drupal\ai\OperationType\ImageToImage\ImageToImageInput;
+use Drupal\ai\OperationType\ImageToImage\ImageToImageInterface;
+use Drupal\ai\OperationType\ImageToImage\ImageToImageOutput;
 use Drupal\ai\OperationType\InputInterface;
 use Drupal\ai\OperationType\Moderation\ModerationInput;
 use Drupal\ai\OperationType\Moderation\ModerationInterface;
@@ -41,6 +44,7 @@ use Drupal\ai\OperationType\TextToImage\TextToImageOutput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInput;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechInterface;
 use Drupal\ai\OperationType\TextToSpeech\TextToSpeechOutput;
+use Drupal\ai\Traits\OperationType\ImageToImageTrait;
 use Drupal\ai_test\OperationType\Echo\EchoInput;
 use Drupal\ai_test\OperationType\Echo\EchoInterface;
 use Drupal\ai_test\OperationType\Echo\EchoOutput;
@@ -62,7 +66,10 @@ class EchoProvider extends AiProviderClientBase implements
   TextToSpeechInterface,
   ImageClassificationInterface,
   TextToImageInterface,
-  EchoInterface {
+  EchoInterface,
+  ImageToImageInterface {
+
+  use ImageToImageTrait;
 
   /**
    * The module handler interface.
@@ -332,6 +339,14 @@ class EchoProvider extends AiProviderClientBase implements
         $binary,
       ],
     ], []);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function imageToImage(string|array|ImageToImageInput $input, string $model_id, array $tags = []): ImageToImageOutput {
+    // Use the ImageToImageTrait to handle the image to image operation.
+    return new ImageToImageOutput([$input->getImageFile()], [], []);
   }
 
   /**

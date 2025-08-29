@@ -289,6 +289,13 @@ COSIM
 subprompt
 voiceovers
 amazee
+Outpaint
+outpaint
+Inpaint
+inpaint
+outpainting
+inpainting
+dreamstudio
 fontawesome
 glightbox
 autohide

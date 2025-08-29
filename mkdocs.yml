@@ -63,6 +63,7 @@ nav:
       - Speech-To-Speech Call: developers/call_speech_to_speech.md
       - Image Classification Call: developers/call_image_classification.md
       - Translate Text Call: developers/call_translate_text.md
+      - Image-To-Image Call: developers/call_image_to_image.md
     - Plugins:
       - Function Call Schema: developers/function_call_schema.md
     - Develop a third-party module: developers/develop_third_party_module.md
