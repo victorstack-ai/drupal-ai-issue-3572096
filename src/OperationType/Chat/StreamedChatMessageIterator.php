@@ -2,6 +2,7 @@
 
 namespace Drupal\ai\OperationType\Chat;
 
+use Drupal\ai\Dto\TokenUsageDto;
 use Drupal\Component\Serialization\Json;
 use Drupal\ai\Event\PostStreamingResponseEvent;
 use Drupal\ai\OperationType\Chat\Tools\ToolsFunctionOutput;
@@ -329,22 +330,13 @@ abstract class StreamedChatMessageIterator implements StreamedChatMessageIterato
    *   The chat output with the token usage set.
    */
   protected function setTokenUsageOnChatOutput(ChatOutput $output): ChatOutput {
-    if ($this->totalTokenUsage !== NULL) {
-      $output->setTotalTokenUsage($this->totalTokenUsage);
-    }
-    if ($this->inputTokenUsage !== NULL) {
-      $output->setInputTokenUsage($this->inputTokenUsage);
-    }
-    if ($this->outputTokenUsage !== NULL) {
-      $output->setOutputTokenUsage($this->outputTokenUsage);
-    }
-    if ($this->reasoningTokenUsage !== NULL) {
-      $output->setReasoningTokenUsage($this->reasoningTokenUsage);
-    }
-    if ($this->cachedTokenUsage !== NULL) {
-      $output->setCachedTokenUsage($this->cachedTokenUsage);
-    }
-
+    $output->setTokenUsage(new TokenUsageDto(
+      total: $this->totalTokenUsage,
+      input: $this->inputTokenUsage,
+      output: $this->outputTokenUsage,
+      reasoning: $this->reasoningTokenUsage,
+      cached: $this->cachedTokenUsage
+    ));
     return $output;
   }
 

@@ -100,11 +100,12 @@ class StreamedChatMessageIteratorTest extends TestCase {
     // Check so the text is the same as the output.
     $this->assertEquals(implode('', $this->output), $chat_message->getText());
     // Check so all tokens are set correctly.
-    $this->assertEquals(0, $output->getTotalTokenUsage());
-    $this->assertEquals(0, $output->getInputTokenUsage());
-    $this->assertEquals(0, $output->getOutputTokenUsage());
-    $this->assertEquals(0, $output->getCachedTokenUsage());
-    $this->assertEquals(0, $output->getReasoningTokenUsage());
+    $tokenUsage = $output->getTokenUsage();
+    $this->assertEquals(0, $tokenUsage->total);
+    $this->assertEquals(0, $tokenUsage->input);
+    $this->assertEquals(0, $tokenUsage->output);
+    $this->assertEquals(0, $tokenUsage->cached);
+    $this->assertEquals(0, $tokenUsage->reasoning);
   }
 
   /**
@@ -134,11 +135,12 @@ class StreamedChatMessageIteratorTest extends TestCase {
     // Check so its a ChatOutput object.
     $this->assertInstanceOf(ChatOutput::class, $output);
     // Check so all tokens are set correctly.
-    $this->assertEquals(100, $output->getTotalTokenUsage());
-    $this->assertEquals(80, $output->getInputTokenUsage());
-    $this->assertEquals(20, $output->getOutputTokenUsage());
-    $this->assertEquals(10, $output->getCachedTokenUsage());
-    $this->assertEquals(5, $output->getReasoningTokenUsage());
+    $tokenUsage = $output->getTokenUsage();
+    $this->assertEquals(100, $tokenUsage->total);
+    $this->assertEquals(80, $tokenUsage->input);
+    $this->assertEquals(20, $tokenUsage->output);
+    $this->assertEquals(10, $tokenUsage->cached);
+    $this->assertEquals(5, $tokenUsage->reasoning);
   }
 
 }

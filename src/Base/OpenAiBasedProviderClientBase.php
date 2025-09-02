@@ -5,6 +5,7 @@ namespace Drupal\ai\Base;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\File\FileExists;
+use Drupal\ai\Dto\TokenUsageDto;
 use Drupal\ai\Enum\AiProviderCapability;
 use Drupal\ai\Exception\AiQuotaException;
 use Drupal\ai\Exception\AiRateLimitException;
@@ -352,11 +353,7 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
       }
 
       $chat_output = new ChatOutput($message, $response, []);
-      $chat_output->setInputTokenUsage($response['usage']['prompt_tokens']);
-      $chat_output->setOutputTokenUsage($response['usage']['completion_tokens']);
-      $chat_output->setTotalTokenUsage($response['usage']['total_tokens']);
-      $chat_output->setCachedTokenUsage($response['usage']['prompt_tokens_details']['cached_tokens']);
-      $chat_output->setReasoningTokenUsage($response['usage']['completion_tokens_details']['reasoning_tokens']);
+      $chat_output = $this->setChatTokenUsage($chat_output, $response);
       return $chat_output;
     }
     catch (\Exception $e) {
@@ -557,21 +554,13 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
    *   The chat output with token usage set.
    */
   protected function setChatTokenUsage(ChatOutput $chat_output, array $response): ChatOutput {
-    if (isset($response['usage']['prompt_tokens'])) {
-      $chat_output->setInputTokenUsage($response['usage']['prompt_tokens']);
-    }
-    if (isset($response['usage']['completion_tokens'])) {
-      $chat_output->setOutputTokenUsage($response['usage']['completion_tokens']);
-    }
-    if (isset($response['usage']['total_tokens'])) {
-      $chat_output->setTotalTokenUsage($response['usage']['total_tokens']);
-    }
-    if (isset($response['usage']['prompt_tokens_details']['cached_tokens'])) {
-      $chat_output->setCachedTokenUsage($response['usage']['prompt_tokens_details']['cached_tokens']);
-    }
-    if (isset($response['usage']['completion_tokens_details']['reasoning_tokens'])) {
-      $chat_output->setReasoningTokenUsage($response['usage']['completion_tokens_details']['reasoning_tokens']);
-    }
+    $chat_output->setTokenUsage(new TokenUsageDto(
+      input: $response['usage']['prompt_tokens'] ?? NULL,
+      output: $response['usage']['completion_tokens'] ?? NULL,
+      total: $response['usage']['total_tokens'] ?? NULL,
+      reasoning: $response['usage']['completion_tokens_details']['reasoning_tokens'] ?? NULL,
+      cached: $response['usage']['prompt_tokens_details']['cached_tokens'] ?? NULL,
+    ));
     return $chat_output;
   }
 
