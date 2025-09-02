@@ -2,8 +2,8 @@
 
 namespace Drupal\ai\OperationType\Chat;
 
-use Drupal\ai\Dto\TokenUsageDto;
 use Drupal\Component\Serialization\Json;
+use Drupal\ai\Dto\TokenUsageDto;
 use Drupal\ai\Event\PostStreamingResponseEvent;
 use Drupal\ai\OperationType\Chat\Tools\ToolsFunctionOutput;
 use Drupal\ai\Traits\OperationType\EventDispatcherTrait;
@@ -94,10 +94,195 @@ abstract class StreamedChatMessageIterator implements StreamedChatMessageIterato
   protected $chatOutput = NULL;
 
   /**
+   * The original input data sent to the provider.
+   *
+   * Could be a string, array, or other structured input.
+   *
+   * @var mixed
+   */
+  protected $input;
+
+  /**
+   * General metadata.
+   *
+   * @var array
+   */
+  protected array $metadata = [];
+
+  /**
+   * The machine name of the provider used for this stream.
+   *
+   * Example: "openai", "gemini", etc.
+   *
+   * @var string|null
+   */
+  protected ?string $providerId = NULL;
+
+  /**
+   * The model identifier used for the request.
+   *
+   * Example: "gpt-4", "gpt-3.5-turbo", "gemini-pro".
+   *
+   * @var string|null
+   */
+  protected ?string $modelId = NULL;
+
+  /**
+   * The configuration array passed to the provider.
+   *
+   * Contains provider-specific options like temperature,
+   * max tokens, top_p, etc.
+   *
+   * @var array
+   */
+  protected array $providerConfiguration = [];
+
+  /**
+   * Tags associated with the stream.
+   *
+   * Used for categorization, debugging, or tracing events.
+   *
+   * @var array
+   */
+  protected array $tags = [];
+
+  /**
    * Constructor.
    */
   public function __construct(\Traversable $iterator) {
     $this->iterator = $iterator;
+  }
+
+  /**
+   * Sets the original input sent to the provider.
+   *
+   * @todo Add to constructor in 2.0.0.
+   *
+   * @param mixed $input
+   *   The input data for this request.
+   */
+  public function setInput($input): void {
+    $this->input = $input;
+  }
+
+  /**
+   * Gets the original input sent to the provider.
+   *
+   * @return mixed
+   *   The input data.
+   */
+  public function getInput() {
+    return $this->input;
+  }
+
+  /**
+   * Sets the provider machine name.
+   *
+   * @todo Add to constructor in 2.0.0.
+   *
+   * @param string $providerId
+   *   The provider identifier.
+   */
+  public function setProviderId(string $providerId): void {
+    $this->providerId = $providerId;
+  }
+
+  /**
+   * Gets the provider machine name.
+   *
+   * @return string|null
+   *   The provider identifier, or NULL if not set.
+   */
+  public function getProviderId(): ?string {
+    return $this->providerId;
+  }
+
+  /**
+   * Sets the model identifier.
+   *
+   * @todo Add to constructor in 2.0.0.
+   *
+   * @param string $modelId
+   *   The model ID.
+   */
+  public function setModelId(string $modelId): void {
+    $this->modelId = $modelId;
+  }
+
+  /**
+   * Gets the model identifier.
+   *
+   * @return string|null
+   *   The model ID, or NULL if not set.
+   */
+  public function getModelId(): ?string {
+    return $this->modelId;
+  }
+
+  /**
+   * Set the metadata.
+   *
+   * @todo Add to constructor in 2.0.0.
+   *
+   * @param array $metadata
+   *   An associative array of metadata.
+   */
+  public function setMetadata(array $metadata): void {
+    $this->metadata = $metadata;
+  }
+
+  /**
+   * Get the metadata.
+   *
+   * @return array
+   *   An associative array of metadata.
+   */
+  public function getMetadata(): array {
+    return $this->metadata;
+  }
+
+  /**
+   * Sets the provider configuration.
+   *
+   * @todo Add to constructor in 2.0.0.
+   *
+   * @param array $configuration
+   *   Provider-specific configuration options.
+   */
+  public function setProviderConfiguration(array $configuration): void {
+    $this->providerConfiguration = $configuration;
+  }
+
+  /**
+   * Gets the provider configuration.
+   *
+   * @return array
+   *   Provider configuration array.
+   */
+  public function getProviderConfiguration(): array {
+    return $this->providerConfiguration;
+  }
+
+  /**
+   * Sets tags for the stream.
+   *
+   * @todo Add to constructor in 2.0.0.
+   *
+   * @param array $tags
+   *   An array of tags.
+   */
+  public function setTags(array $tags): void {
+    $this->tags = $tags;
+  }
+
+  /**
+   * Gets tags for the stream.
+   *
+   * @return array
+   *   An array of tags.
+   */
+  public function getTags(): array {
+    return $this->tags;
   }
 
   /**

@@ -19,6 +19,7 @@ use Drupal\ai\Exception\AiUnsafePromptException;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\InputInterface;
 use Drupal\ai\OperationType\OperationTypeInterface;
+use Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface;
 use Psr\Http\Client\ClientExceptionInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -68,6 +69,26 @@ class ProviderProxy {
    * @var string
    */
   protected $requestParentId;
+
+  /**
+   * Attach metadata to streamed chat responses.
+   */
+  protected function attachStreamMetadata(
+    StreamedChatMessageIteratorInterface $streamed,
+    string $event_id,
+    $input = NULL,
+    ?string $provider_id = NULL,
+    ?string $model_id = NULL,
+    ?array $provider_configuration = NULL,
+    array $tags = [],
+  ) {
+    $streamed->setInput($input);
+    $streamed->setProviderId($provider_id);
+    $streamed->setModelId($model_id);
+    $streamed->setProviderConfiguration($provider_configuration);
+    $streamed->setTags($tags);
+    $streamed->setRequestThreadId($event_id);
+  }
 
   /**
    * PluginLoggingProxy constructor.
@@ -290,8 +311,16 @@ class ProviderProxy {
     $response = $post_generate_event->getOutput();
 
     // Since we need to attach events on streaming responses as well.
-    if ($response->getNormalized() instanceof \IteratorAggregate) {
-      $response->getNormalized()->setRequestThreadId($event_id);
+    if ($response->getNormalized() instanceof StreamedChatMessageIteratorInterface) {
+      $this->attachStreamMetadata(
+        $response->getNormalized(),
+        $arguments[0] ?? NULL,
+        $this->plugin->getPluginId(),
+        $arguments[1] ?? NULL,
+        $event_id,
+        $this->plugin->configuration ?? NULL,
+        $this->plugin->getTags() ?? []
+      );
     }
 
     // Return the response.

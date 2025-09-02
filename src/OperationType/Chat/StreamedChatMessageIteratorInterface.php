@@ -101,4 +101,100 @@ interface StreamedChatMessageIteratorInterface extends \IteratorAggregate {
    */
   public function getFinishReason(): string|null;
 
+  /**
+   * Gets the original input sent to the provider.
+   *
+   * @return mixed
+   *   The input.
+   */
+  public function getInput();
+
+  /**
+   * Sets the original input sent to the provider.
+   *
+   * @param mixed $input
+   *   The input.
+   */
+  public function setInput($input): void;
+
+  /**
+   * Gets the provider machine name.
+   *
+   * @return string|null
+   *   The provider id.
+   */
+  public function getProviderId(): ?string;
+
+  /**
+   * Sets the provider machine name.
+   *
+   * @param string $provider_id
+   *   The provider id.
+   */
+  public function setProviderId(string $provider_id): void;
+
+  /**
+   * Gets the model id used for the request.
+   *
+   * @return string|null
+   *   The model id.
+   */
+  public function getModelId(): ?string;
+
+  /**
+   * Sets the model id used for the request.
+   *
+   * @param string $model_id
+   *   The model id.
+   */
+  public function setModelId(string $model_id): void;
+
+  /**
+   * Gets the provider configuration array.
+   *
+   * @return array
+   *   The provider configuration.
+   */
+  public function getProviderConfiguration(): array;
+
+  /**
+   * Sets the provider configuration array.
+   *
+   * @param array $configuration
+   *   The provider configuration.
+   */
+  public function setProviderConfiguration(array $configuration): void;
+
+  /**
+   * Gets tags associated with this request/response.
+   *
+   * @return array
+   *   The tags.
+   */
+  public function getTags(): array;
+
+  /**
+   * Sets tags associated with this request/response.
+   *
+   * @param array $tags
+   *   The tags.
+   */
+  public function setTags(array $tags): void;
+
+  /**
+   * Gets the metadata associated with this request/response.
+   *
+   * @return array
+   *   The metadata.
+   */
+  public function getMetadata(): array;
+
+  /**
+   * Sets the metadata associated with this request/response.
+   *
+   * @param array $metadata
+   *   The metadata.
+   */
+  public function setMetadata(array $metadata): void;
+
 }
