@@ -329,4 +329,65 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
     $this->assertSession()->pageTextNotContains('Strawberry Cheese Cake');
   }
 
+  /**
+   * Tests that raw embedding vector is included in results when enabled.
+   */
+  public function testRawEmbeddingVectorInResults() {
+    $this->drupalLogin($this->adminUser);
+    $this->drupalGet('admin/config/search/search-api/server/test_mysql_vdb/edit');
+    $this->submitForm([
+      'backend_config[include_raw_embedding_vector]' => TRUE,
+    ], 'Save');
+
+    $this->drupalGet('admin/structure/views');
+    if (!$this->getSession()->getPage()->hasLink('Test raw vector view')) {
+      $this->drupalGet('admin/structure/views/add');
+      $this->submitForm([
+        'label' => 'Test raw vector view',
+        'id' => 'test_raw_vector_view',
+        'show[wizard_key]' => 'standard:search_api_index_test_mysql_vdb_index',
+        'page[title]' => 'Test Raw Vector View',
+        'page[create]' => 1,
+        'page[path]' => 'test-raw-vector-view',
+      ], 'Save and edit');
+
+      // Add a search exposed filter.
+      $this->drupalGet('admin/structure/views/nojs/add-handler/test_raw_vector_view/default/filter');
+      $this->submitForm([
+        'name[search_api_index_test_mysql_vdb_index.search_api_fulltext]' => 'search_api_index_test_mysql_vdb_index.search_api_fulltext',
+      ], 'Add and configure filter criteria');
+
+      // Expose the filter then save it.
+      $edit = [
+        'options[expose_button][checkbox][checkbox]' => 1,
+      ];
+      $this->submitForm($edit, 'Expose filter');
+      $edit = [
+        'options[expose_button][checkbox][checkbox]' => 1,
+        'options[group_button][radios][radios]' => 0,
+      ];
+      $this->submitForm($edit, 'Apply');
+      $this->submitForm([], 'Save');
+    }
+
+    // Go to the search view page.
+    $this->drupalGet('test-raw-vector-view');
+    $this->submitForm([
+      'search_api_fulltext' => 'chocolate',
+    ], 'Apply');
+
+    // Programmatically fetch Search API results for deeper inspection.
+    $index_storage = \Drupal::entityTypeManager()->getStorage('search_api_index');
+    $index = $index_storage->load('test_mysql_vdb_index');
+    $query = $index->query();
+    $query->keys('chocolate');
+    $results = $query->execute();
+
+    foreach ($results->getResultItems() as $item) {
+      $extra_data = $item->getExtraData();
+      $this->assertArrayHasKey('raw_vector', $extra_data, 'raw_vector is present in extra data');
+      $this->assertIsArray($extra_data['raw_vector'], 'raw_vector is an array');
+    }
+  }
+
 }

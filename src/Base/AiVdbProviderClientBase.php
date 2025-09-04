@@ -440,8 +440,8 @@ abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, AiVdbP
   /**
    * {@inheritdoc}
    */
-  public function getDefaultDatabase(): string {
-    return 'default';
+  public function getRawEmbeddingFieldName(): ?string {
+    return NULL;
   }
 
 }

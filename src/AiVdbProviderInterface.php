@@ -231,11 +231,17 @@ interface AiVdbProviderInterface extends PluginInspectionInterface {
   ): array;
 
   /**
-   * Get the default database name.
+   * Gets the field name used by this provider to store the embedding vector.
    *
-   * @return string
-   *   The default database name.
+   * Implementing this method signals that the provider can return raw
+   * embedding vectors. If implemented, it should return the exact string name
+   * of the field containing the vector (e.g., 'embedding', 'vector').
+   * If the provider does not support returning raw vectors or uses a
+   * different mechanism, it should return NULL.
+   *
+   * @return string|null
+   *   The field name for the raw embedding vector, or NULL if not supported.
    */
-  public function getDefaultDatabase(): string;
+  public function getRawEmbeddingFieldName(): ?string;
 
 }

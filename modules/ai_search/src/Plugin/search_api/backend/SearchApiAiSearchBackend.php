@@ -149,6 +149,8 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     if (!isset($config['embedding_strategy'])) {
       $config['embedding_strategy'] = NULL;
     }
+    // Add default for including raw embedding vector.
+    $config['include_raw_embedding_vector'] = FALSE;
     return $config;
   }
 
@@ -199,6 +201,14 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       '#default_value' => $this->configuration['chat_model'] ?? $default_model,
       '#options' => $this->tokenizer->getSupportedModels(),
       '#weight' => 2,
+    ];
+
+    $form['include_raw_embedding_vector'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Include raw embedding vector in results'),
+      '#description' => $this->t("If checked, the raw embedding vector will be fetched from the VDB and added to the search result item's extra data. This is useful for features like re-ranking but may have a minor performance impact."),
+      '#default_value' => $this->configuration['include_raw_embedding_vector'] ?? FALSE,
+      '#weight' => 2.5,
     ];
 
     $chosen_database = $this->configuration['database'] ?? NULL;
@@ -346,6 +356,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
   public function deleteItems(IndexInterface $index, array $item_ids): void {
+    /** @var \Drupal\ai\AiVdbProviderInterface $vdb_client */
     $vdb_client = $this->vdbProviderManager->createInstance($this->configuration['database']);
     $vdb_client->deleteIndexItems($this->configuration, $index, $item_ids);
   }
@@ -410,6 +421,18 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       'offset' => (int) $query->getOption('offset', 0),
     ];
 
+    // Check if we need to include the raw embedding vector.
+    if (!empty($this->configuration['include_raw_embedding_vector'])) {
+      /** @var \Drupal\ai\AiVdbProviderInterface $vdb_client */
+      $vdb_client = $this->getClient();
+      $raw_embedding_field_name = $vdb_client->getRawEmbeddingFieldName();
+      if (!empty($raw_embedding_field_name)) {
+        $params['output_fields'][] = $raw_embedding_field_name;
+        // Store for extractMetadata to use, without changing its signature.
+        $query->setOption('search_api_ai_retrieved_embedding_field_name', $raw_embedding_field_name);
+      }
+    }
+
     if ($filters = $this->getClient()->prepareFilters($query)) {
       $params['filters'] = $filters;
     }
@@ -429,7 +452,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       $id = $get_chunked ? $match['drupal_entity_id'] . ':' . $match['id'] : $match['drupal_entity_id'];
       $item = $this->getFieldsHelper()->createItem($index, $id);
       $item->setScore($match['distance'] ?? 1);
-      $this->extractMetadata($match, $item);
+      $this->extractMetadata($match, $item, $query);
 
       // Adding result items always overwrites, see the Result Set class in
       // Search API. Ensure that the items with the desired highest or lowest
@@ -567,13 +590,24 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    *   The result row.
    * @param \Drupal\search_api\Item\ItemInterface $item
    *   The item.
+   * @param \Drupal\search_api\Query\QueryInterface|null $query
+   *   The search query, or NULL if not available.
    */
-  public function extractMetadata(array $result_row, ItemInterface $item): void {
+  public function extractMetadata(array $result_row, ItemInterface $item, ?QueryInterface $query = NULL): void {
+    $raw_embedding_field_name = $query ? $query->getOption('search_api_ai_retrieved_embedding_field_name') : NULL;
+
     foreach ($result_row as $key => $value) {
-      if ($key === 'vector' || $key === 'id' || $key === 'distance') {
+      // Skip default fields and the dynamically retrieved raw embedding field.
+      if ($key === 'vector' || $key === 'id' || $key === 'distance' || ($raw_embedding_field_name && $key === $raw_embedding_field_name)) {
         continue;
       }
       $item->setExtraData($key, $value);
+    }
+
+    // If a raw embedding field name was configured and,
+    // its data exists in the result, add it.
+    if ($raw_embedding_field_name && isset($result_row[$raw_embedding_field_name])) {
+      $item->setExtraData('raw_vector', $result_row[$raw_embedding_field_name]);
     }
   }
 
