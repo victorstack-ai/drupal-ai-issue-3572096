@@ -26,7 +26,7 @@ class PostStreamingResponseEventTest extends TestCase {
    */
   public function testResponse(): void {
     $event = $this->getEvent();
-    $this->assertEquals('test', $event->getOutput());
+    $this->assertEquals('It sure is!', $event->getOutput());
   }
 
   /**
@@ -36,9 +36,17 @@ class PostStreamingResponseEventTest extends TestCase {
    *   The event.
    */
   public function getEvent(): PostStreamingResponseEvent {
-    return new PostStreamingResponseEvent('unique_id', 'test', [
-      'test' => 'test',
-    ]);
+    return new PostStreamingResponseEvent('unique_id', 'test', 'chat', [
+      'test' => 'testing',
+    ],
+      'This is a test',
+      'model1',
+      'It sure is!',
+      ['ai-test'],
+      [
+        'streamed' => TRUE,
+      ],
+    );
   }
 
 }

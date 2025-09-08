@@ -314,8 +314,19 @@ abstract class StreamedChatMessageIterator implements StreamedChatMessageIterato
    */
   public function triggerEvent(): void {
     // Dispatch the event.
-    $event = new PostStreamingResponseEvent($this->requestThreadId ?? '', $this->chatOutput, []);
-    $event = $this->setTokenUsageOnEvent($event);
+    $event = new PostStreamingResponseEvent(
+      requestThreadId: $this->requestThreadId ?? '',
+      providerId: $this->providerId ?? '',
+      operationType: $this->operationType ?? '',
+      configuration: $this->configuration ?? [],
+      input: $this->input ?? '',
+      modelId: $this->modelId ?? '',
+      output: $this->chatOutput,
+      tags: $this->tags ?? [],
+      debugData: $this->debugData ?? [],
+      metadata: $this->metadata ?? []
+    );
+
     $this->getEventDispatcher()->dispatch($event, PostStreamingResponseEvent::EVENT_NAME);
   }
 
@@ -450,35 +461,6 @@ abstract class StreamedChatMessageIterator implements StreamedChatMessageIterato
     }
 
     return $tools;
-  }
-
-  /**
-   * Helper function to set the token usage on the event.
-   *
-   * @param \Drupal\ai\Event\PostStreamingResponseEvent $event
-   *   The event to set the token usage on.
-   *
-   * @return \Drupal\ai\Event\PostStreamingResponseEvent
-   *   The event with the token usage set.
-   */
-  protected function setTokenUsageOnEvent(PostStreamingResponseEvent $event): PostStreamingResponseEvent {
-    if ($this->totalTokenUsage !== NULL) {
-      $event->setTotalTokenUsage($this->totalTokenUsage);
-    }
-    if ($this->inputTokenUsage !== NULL) {
-      $event->setInputTokenUsage($this->inputTokenUsage);
-    }
-    if ($this->outputTokenUsage !== NULL) {
-      $event->setOutputTokenUsage($this->outputTokenUsage);
-    }
-    if ($this->reasoningTokenUsage !== NULL) {
-      $event->setReasoningTokenUsage($this->reasoningTokenUsage);
-    }
-    if ($this->cachedTokenUsage !== NULL) {
-      $event->setCachedTokenUsage($this->cachedTokenUsage);
-    }
-
-    return $event;
   }
 
   /**

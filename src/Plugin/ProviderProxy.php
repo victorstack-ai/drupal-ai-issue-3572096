@@ -227,7 +227,16 @@ class ProviderProxy {
     $event_id = $this->uuid->generate();
 
     // Invoke the pre generate response event.
-    $pre_generate_event = new PreGenerateResponseEvent($event_id, $this->plugin->getPluginId(), $operation_type, $this->plugin->configuration, $arguments[0], $arguments[1], $this->plugin->getTags(), $this->plugin->getDebugData());
+    $pre_generate_event = new PreGenerateResponseEvent(
+      requestThreadId: $event_id,
+      providerId: $this->plugin->getPluginId(),
+      operationType: $operation_type,
+      configuration: $this->plugin->configuration,
+      input: $arguments[0],
+      modelId: $arguments[1],
+      tags: $this->plugin->getTags(),
+      debugData: $this->plugin->getDebugData()
+    );
     // Too not have breaking changes, it can't be in the constructor and check.
     if (method_exists($pre_generate_event, 'setRequestParentId') && $this->requestParentId) {
       $pre_generate_event->setRequestParentId($this->requestParentId);
@@ -301,7 +310,18 @@ class ProviderProxy {
     }
 
     // Invoke the post generate response event.
-    $post_generate_event = new PostGenerateResponseEvent($event_id, $this->plugin->getPluginId(), $operation_type, $this->plugin->configuration, $arguments[0], $arguments[1], $response, $this->plugin->getTags(), $this->plugin->getDebugData(), $pre_generate_event->getAllMetadata());
+    $post_generate_event = new PostGenerateResponseEvent(
+      requestThreadId: $event_id,
+      providerId: $this->plugin->getPluginId(),
+      operationType: $operation_type,
+      configuration: $this->plugin->configuration,
+      input: $arguments[0],
+      modelId: $arguments[1],
+      output: $response,
+      tags: $this->plugin->getTags(),
+      debugData: $this->plugin->getDebugData(),
+      metadata: $pre_generate_event->getAllMetadata()
+    );
     // Too not have breaking changes, it can't be in the constructor and check.
     if (method_exists($post_generate_event, 'setRequestParentId') && $this->requestParentId) {
       $post_generate_event->setRequestParentId($this->requestParentId);
@@ -313,13 +333,13 @@ class ProviderProxy {
     // Since we need to attach events on streaming responses as well.
     if ($response->getNormalized() instanceof StreamedChatMessageIteratorInterface) {
       $this->attachStreamMetadata(
-        $response->getNormalized(),
-        $arguments[0] ?? NULL,
-        $this->plugin->getPluginId(),
-        $arguments[1] ?? NULL,
-        $event_id,
-        $this->plugin->configuration ?? NULL,
-        $this->plugin->getTags() ?? []
+        streamed: $response->getNormalized(),
+        event_id: $event_id,
+        input: $arguments[0] ?? NULL,
+        provider_id: $this->plugin->getPluginId(),
+        model_id: $arguments[1] ?? NULL,
+        provider_configuration: $this->plugin->configuration ?? NULL,
+        tags: $this->plugin->getTags() ?? []
       );
     }
 
@@ -469,7 +489,8 @@ class ProviderProxy {
           // Get the parent interface.
           foreach ($interface->getInterfaces() as $parentInterface) {
             // Only run if its the actual trigger method name of the interface.
-            if (isset($parentInterface->name) && OperationTypeInterface::class === $parentInterface->name &&
+            if (
+              isset($parentInterface->name) && OperationTypeInterface::class === $parentInterface->name &&
               str_replace('interface', '', strtolower($interface->getShortName())) == strtolower($methodName)) {
               $methodInterfaces[] = $methodName;
             }
