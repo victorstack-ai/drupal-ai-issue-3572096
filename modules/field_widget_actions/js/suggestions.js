@@ -2,9 +2,9 @@
 
   'use strict';
 
-  Drupal.behaviors.aiContentSuggestionsFieldWidget = {
+  Drupal.behaviors.suggestionsFieldWidgetActions = {
     attach: function (context, settings) {
-      const suggestions = context.querySelectorAll('.ai-use-cs');
+      const suggestions = context.querySelectorAll('.fwa-use-suggestion');
       if (suggestions.length === 0) {
         return;
       }
@@ -13,7 +13,7 @@
           event.target.classList.toggle('active');
           setTimeout(function() {
             const text = event.target.parentElement.innerText;
-            const target = document.querySelector('[data-drupal-selector="' + settings.ai_cs_target.target + '"]');
+            const target = document.querySelector('[data-drupal-selector="' + settings.fwa_suggestion_target.target + '"]');
             if (target) {
               if (target.classList.contains('form-textarea')) {
                 const domEditableElement = target.parentElement.querySelector('.ck-editor__editable')

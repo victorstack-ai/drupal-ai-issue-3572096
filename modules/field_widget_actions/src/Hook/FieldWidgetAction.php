@@ -12,7 +12,6 @@ use Drupal\Core\Hook\Attribute\Hook;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\field_widget_actions\FieldWidgetActionInterface;
 use Drupal\field_widget_actions\FieldWidgetActionManagerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Class for hooks from field_widget_actions module.
@@ -30,11 +29,24 @@ class FieldWidgetAction {
    *   The uuid service.
    */
   public function __construct(
-    #[Autowire(service: 'plugin.manager.field_widget_actions')]
     protected FieldWidgetActionManagerInterface $fieldWidgetActionManager,
     protected UuidInterface $uuid,
   ) {
 
+  }
+
+  /**
+   * Implements hook_theme().
+   */
+  #[Hook('theme')]
+  public function theme() {
+    return [
+      'field_widget_actions_suggestions' => [
+        'variables' => [
+          'suggestions' => [],
+        ],
+      ],
+    ];
   }
 
   /**

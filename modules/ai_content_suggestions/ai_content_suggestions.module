@@ -46,16 +46,3 @@ function ai_content_suggestions_alter_form(array &$form, FormStateInterface $for
     $form['#cache']['contexts'][] = 'ai_providers';
   }
 }
-
-/**
- * Implements hook_theme().
- */
-function ai_content_suggestions_theme() {
-  return [
-    'ai_content_suggestions' => [
-      'variables' => [
-        'suggestions' => [],
-      ],
-    ],
-  ];
-}

@@ -2,10 +2,16 @@
 
 namespace Drupal\field_widget_actions;
 
+use Drupal\Component\Utility\NestedArray;
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\MessageCommand;
+use Drupal\Core\Ajax\OpenModalDialogCommand;
+use Drupal\Core\Ajax\SettingsCommand;
 use Drupal\Core\Entity\ContentEntityFormInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\WidgetInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Plugin\PluginBase;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -38,11 +44,20 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
   protected ?FieldDefinitionInterface $fieldDefinition = NULL;
 
   /**
-   * {@inheritdoc}
+   * Constructs FieldWidgetActionBase instance.
+   *
+   * @param array $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin id.
+   * @param mixed $plugin_definition
+   *   The plugin definition.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger service.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, MessengerInterface $messenger) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-
+    $this->messenger = $messenger;
     $this->setConfiguration($configuration);
   }
 
@@ -50,7 +65,12 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static($configuration, $plugin_id, $plugin_definition);
+    return new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
+      $container->get('messenger')
+    );
   }
 
   /**
@@ -281,8 +301,12 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
         'data-wrapper-id' => 'field-widget-action-' . $fieldName,
         'data-widget-id' => $this->getPluginId(),
         'data-widget-field' => $fieldName,
+        'data-widget-delta' => $context['delta'] ?? '',
         'data-widget-settings' => json_encode($this->getConfiguration()),
       ],
+      '#field_widget_action_field_name' => $fieldName,
+      // When called from hook_field_widget_complete_form, delta is not present.
+      '#field_widget_action_field_delta' => $context['delta'] ?? NULL,
       '#field_widget_action_settings' => $this->getConfiguration(),
     ];
     if ($this->getAjaxCallback()) {
@@ -299,6 +323,128 @@ abstract class FieldWidgetActionBase extends PluginBase implements FieldWidgetAc
       $form[$widgetId]['#attached']['library'] = [];
     }
     $form[$widgetId]['#attached']['library'] = array_merge($form[$widgetId]['#attached']['library'], $this->getLibraries());
+  }
+
+  /**
+   * Returns the target css selector for suggestions.
+   *
+   * @param array $form
+   *   The form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return string
+   *   The css selector to fill in with the selected suggestion.
+   */
+  protected function getSuggestionsTarget(array &$form, FormStateInterface $form_state) {
+    $target_element = $this->getTargetElement($form, $form_state);
+    return $target_element ? $target_element['#attributes']['data-drupal-selector'] : '';
+  }
+
+  /**
+   * Returns the target form element this action is attached to.
+   *
+   * @param array $form
+   *   The form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array
+   *   The form element.
+   */
+  protected function getTargetElement(array &$form, FormStateInterface $form_state) {
+    // Get the triggering element, the button is inside the same field widget.
+    $triggering_element = $form_state->getTriggeringElement();
+    $array_parents = $triggering_element['#array_parents'];
+    array_pop($array_parents);
+    $array_parents[] = static::FORM_ELEMENT_PROPERTY;
+    return NestedArray::getValue($form, $array_parents);
+  }
+
+  /**
+   * Gets the delta of form element.
+   *
+   * @param array $form
+   *   The form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return int|null
+   *   The delta of the form element or null if it is attached to the complete
+   *   widget form.
+   */
+  protected function getTargetElementDelta(array &$form, FormStateInterface $form_state) {
+    $triggering_element = $form_state->getTriggeringElement();
+    return $triggering_element['#field_widget_action_field_delta'] ?? NULL;
+  }
+
+  /**
+   * Gets the field name that corresponds to form element.
+   *
+   * @param array $form
+   *   The form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return string
+   *   The field name for the form element.
+   */
+  protected function getTargetElementFieldName(array &$form, FormStateInterface $form_state) {
+    $triggering_element = $form_state->getTriggeringElement();
+    return $triggering_element['#field_widget_action_field_name'] ?? '';
+  }
+
+  /**
+   * Returns suggestions in a dialog.
+   *
+   * @param array|string $suggestions
+   *   The content to display in a dialog.
+   * @param string $selector
+   *   The selector for inserting a suggestion.
+   *
+   * @return \Drupal\Core\Ajax\AjaxResponse
+   *   The response object.
+   */
+  protected function returnSuggestions(array|string $suggestions, $selector = '') {
+    $message = '';
+    // If it is empty string or empty array, no suggestions were actually
+    // provided, so the dialog should not show anything selectable.
+    if (!empty($suggestions)) {
+      if (!is_array($suggestions)) {
+        $suggestions = [$suggestions];
+      }
+      $message = [
+        '#theme' => 'field_widget_actions_suggestions',
+        '#suggestions' => $suggestions,
+        '#attached' => [
+          'library' => [
+            'field_widget_actions/suggestions',
+          ],
+        ],
+      ];
+    }
+
+    $response = new AjaxResponse();
+    // Collect all messages emitted so far. In case of validation errors we need
+    // to display them as well right away.
+    foreach ($this->messenger->all() as $type => $items) {
+      foreach ($items as $item) {
+        $response->addCommand(new MessageCommand($item, NULL, ['type' => $type]));
+      }
+    }
+    // Remove all messages, as they will be displayed with ajax commands.
+    $this->messenger->deleteAll();
+    if (!empty($selector)) {
+      $response->addCommand(new SettingsCommand(['fwa_suggestion_target' => ['target' => $selector]], TRUE));
+    }
+    if (empty($message)) {
+      $message = $this->t('Unfortunately no suggestions were provided.');
+    }
+    $response->addCommand(new OpenModalDialogCommand($this->t('Suggestions'), $message, [
+      'width' => '80%',
+      'dialogClass' => 'ui-dialog-fwa-suggestions',
+    ]));
+    return $response;
   }
 
 }

@@ -34,3 +34,11 @@ function field_widget_actions_field_widget_complete_form_alter(array &$field_wid
 function field_widget_actions_field_widget_single_element_form_alter(array &$element, FormStateInterface $form_state, array $context) {
   \Drupal::service(FieldWidgetAction::class)->fieldWidgetSingleElementFormAlter($element, $form_state, $context);
 }
+
+/**
+ * Implements hook_theme().
+ */
+#[LegacyHook]
+function field_widget_actions_theme() {
+  \Drupal::service(FieldWidgetAction::class)->theme();
+}

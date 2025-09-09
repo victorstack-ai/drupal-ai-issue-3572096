@@ -13,60 +13,6 @@
   background-image: url("../../../icons/ai_spark_icon_purple.svg");
 }
 
-/* Suggestions Dialog */
-.ui-dialog-ai-suggestions .ui-dialog-content {
-  padding: 16px;
-}
-
-.ui-dialog-ai-suggestions ol {
-  list-style-type: none;
-}
-
-.ui-dialog-ai-suggestions li {
-  position: relative;
-  margin-bottom: 8px;
-  border-bottom: 1px solid lightgray;
-  padding-bottom: 8px;
-}
-.ui-dialog-ai-suggestions li:last-child {
-  border-bottom: none;
-}
-
-.ui-dialog-ai-suggestions .ai-content-suggestion {
-  display: block;
-  font-size: 18px;
-  position: relative;
-}
-.ui-dialog-ai-suggestions li:hover .ai-content-suggestion {
-  background: #01004326;
-  border-radius: 8px;
-}
-.ui-dialog-ai-suggestions .ai-content-suggestion::after {
-  content: "";
-  display: block;
-  width: 32px;
-  height: 32px;
-  position: absolute;
-  top: 0;
-  right: 16px;
-  bottom: 0;
-  background-image: url("../../../icons/caret-right.svg");
-  background-repeat: no-repeat;
-  align-self: center;
-  pointer-events: none;
-}
-
-.ui-dialog-ai-suggestions .ai-use-cs {
-  cursor: pointer;
-  padding: 8px 50px 8px 8px;
-  line-height: normal;
-  appearance: none;
-  background: inherit;
-  border: none;
-  text-align: left;
-  width: 100%;
-}
-
 /* Long text */
 .field--type-text-long.ai-content-suggestions--enabled .form-textarea-wrapper {
   position: relative;

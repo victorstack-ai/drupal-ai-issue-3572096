@@ -2,10 +2,6 @@
 
 namespace Drupal\ai_content_suggestions\Plugin\FieldWidgetAction;
 
-use Drupal\Component\Utility\NestedArray;
-use Drupal\Core\Ajax\AjaxResponse;
-use Drupal\Core\Ajax\OpenModalDialogCommand;
-use Drupal\Core\Ajax\SettingsCommand;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -183,10 +179,10 @@ class PromptContentSuggestion extends FieldWidgetActionBase {
         '#token_types' => [$field_entity_type],
       ];
     }
-    $element['display_on_focus'] = [
+    $element['settings']['display_on_focus'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Display the buttons when the form element is in focus'),
-      '#default_value' => $settings['display_on_focus'],
+      '#default_value' => $settings['display_on_focus'] ?? FALSE,
       '#description' => $this->t('The buttons will be hidden by default and will be displayed only when the form element is focused. <b>Be aware that this is not good for accessibility</b>.'),
     ];
     return $element;
@@ -221,7 +217,7 @@ class PromptContentSuggestion extends FieldWidgetActionBase {
     parent::completeFormAlter($form, $form_state, $context);
     $form['#attributes']['class'][] = 'ai-content-suggestions--enabled';
     $settings = $this->getConfiguration();
-    if ($settings['display_on_focus']) {
+    if (!empty($settings['settings']['display_on_focus'])) {
       $form['#attributes']['class'][] = 'ai-content-suggestions--on-focus';
     }
   }
@@ -232,11 +228,8 @@ class PromptContentSuggestion extends FieldWidgetActionBase {
   public function aiContentSuggestionsAjax(array &$form, FormStateInterface $form_state) {
     // Get the triggering element, as it contains the settings.
     $triggering_element = $form_state->getTriggeringElement();
-    $array_parents = $triggering_element['#array_parents'];
-    array_pop($array_parents);
-    $array_parents[] = static::FORM_ELEMENT_PROPERTY;
-    $target_element = NestedArray::getValue($form, $array_parents);
-    $selector = $target_element ? $target_element['#attributes']['data-drupal-selector'] : '';
+    // Get the element selector that should have the selected suggestion.
+    $selector = $this->getSuggestionsTarget($form, $form_state);
     // Set provider for AI Suggestions.
     $provider_config = $this->aiProvider->getSetProvider('chat', $triggering_element['#field_widget_action_settings']['settings']['model']);
     $prompt = $triggering_element['#field_widget_action_settings']['settings']['prompt'];
@@ -269,7 +262,7 @@ class PromptContentSuggestion extends FieldWidgetActionBase {
       $prompt = $this->token->replace($prompt, [$entity->getEntityTypeId() => $entity], ['clear' => TRUE]);
       $prompt = $converter->convert($prompt);
     }
-    $suggestions = FALSE;
+    $suggestions = '';
     /** @var \Drupal\ai\AiProviderInterface $ai_provider */
     $ai_provider = $provider_config['provider_id'];
     try {
@@ -282,31 +275,20 @@ class PromptContentSuggestion extends FieldWidgetActionBase {
         'field_widget_action',
         'ai_content_suggestions',
       ])->getNormalized();
-      $suggestions = $this->promptJsonDecoder->decode($response);
-      $message = trim($response->getText()) ?? $this->t('No result could be generated.');
+      $suggestion_candidates = $this->promptJsonDecoder->decode($response);
+      // In case json is not found, the result of decoding will be a stream or a
+      // chat message. We do not want to display a raw response to LLM, so the
+      // suggestions will be left empty, so the default error message could be
+      // displayed instead.
+      if (is_array($suggestion_candidates)) {
+        $suggestions = array_column($suggestion_candidates, 'suggestion');
+      }
     }
     catch (\Exception $e) {
       $this->logger->error($e->getMessage());
-      $message = $this->t('There was an error obtaining a response from the LLM.');
     }
 
-    if (is_array($suggestions)) {
-      $suggestions = array_column($suggestions, 'suggestion');
-      $message = [
-        '#theme' => 'ai_content_suggestions',
-        '#suggestions' => $suggestions,
-      ];
-    }
-
-    $response = new AjaxResponse();
-    if (!empty($selector)) {
-      $response->addCommand(new SettingsCommand(['ai_cs_target' => ['target' => $selector]], TRUE));
-    }
-    $response->addCommand(new OpenModalDialogCommand($this->t('AI Suggestions'), $message, [
-      'width' => '80%',
-      'dialogClass' => 'ui-dialog-ai-suggestions',
-    ]));
-    return $response;
+    return $this->returnSuggestions($suggestions, $selector);
   }
 
 }
