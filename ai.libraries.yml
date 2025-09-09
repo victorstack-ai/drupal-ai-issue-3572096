@@ -30,3 +30,12 @@ tools_library_form_element:
     - core/jquery
     - core/once
     - core/drupal.dialog.ajax
+
+chat_history_element:
+  js:
+    assets/js/chat_history_element.js: {}
+  dependencies:
+    - core/once
+  css:
+    theme:
+      assets/css/chat_history_element.css: {}

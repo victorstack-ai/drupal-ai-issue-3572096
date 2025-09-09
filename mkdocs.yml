@@ -66,6 +66,8 @@ nav:
       - Image-To-Image Call: developers/call_image_to_image.md
     - Plugins:
       - Function Call Schema: developers/function_call_schema.md
+    - Helper Services:
+      - Chat History Form Element: developers/chat_history_element.md
     - Develop a third-party module: developers/develop_third_party_module.md
     - Events: developers/events.md
     - DDEV: developers/ddev.md
