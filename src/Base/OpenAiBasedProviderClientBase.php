@@ -313,6 +313,7 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
         ];
         $response = $this->client->chat()->createStreamed($payload);
         $message = new OpenAiTypeStreamedChatMessageIterator($response);
+        $chat_output = new ChatOutput($message, $response, []);
       }
       // If we are in a fibre, we will use a streamed response as the SDK
       // doesn't support direct async.
@@ -332,6 +333,7 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
 
         // Create the final message from accumulated data.
         $message = $stream->reconstructChatOutput()->getNormalized();
+        $chat_output = new ChatOutput($message, $response, []);
       }
       else {
         $response = $this->client->chat()->create($payload)->toArray();
@@ -350,10 +352,10 @@ abstract class OpenAiBasedProviderClientBase extends AiProviderClientBase implem
             $message->setTools($tools);
           }
         }
+        $chat_output = new ChatOutput($message, $response, []);
+        $chat_output = $this->setChatTokenUsage($chat_output, $response);
       }
 
-      $chat_output = new ChatOutput($message, $response, []);
-      $chat_output = $this->setChatTokenUsage($chat_output, $response);
       return $chat_output;
     }
     catch (\Exception $e) {
