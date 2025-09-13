@@ -102,6 +102,9 @@ class ContextDefinitionNormalizer {
       if ($definition->getDataType() === 'list') {
         $property->setType('array');
         $property->setItems(['type' => 'string']);
+        if ($property->isRequired()) {
+          $property->setMinItems(1);
+        }
       }
 
       // Simple lists.
@@ -118,8 +121,21 @@ class ContextDefinitionNormalizer {
         // We only care about parameters.
         $property->setItems($normalized['parameters'] ?? []);
       }
-      // @todo Map pattern, format, custom_values and items.
-      $properties[] = $property;
+
+      // If multiple, wrap in array.
+      if ($definition->isMultiple()) {
+        $array_property = new ToolsPropertyInput($key);
+        $array_property->setType('array');
+        $array_property->setDescription($property->getDescription());
+        $array_property->setItems($property->renderPropertyArray());
+        if ($property->isRequired()) {
+          $array_property->setMinItems(1);
+        }
+        $properties[] = $array_property;
+      }
+      else {
+        $properties[] = $property;
+      }
     }
     return $properties;
   }
