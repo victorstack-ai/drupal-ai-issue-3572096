@@ -130,7 +130,7 @@ final class ModifyPrompt extends AiCKEditorPluginBase {
       return $response;
     }
     catch (\Exception $e) {
-      $this->logger->error('There was an error in the Modify with a prompt AI plugin for CKEditor: @error', ['@error' => $e->getMessage()]);
+      $this->loggerFactory->get('ai_ckeditor')->error("There was an error in the 'Modify with a prompt' AI plugin for CKEditor: @error", ['@error' => $e->getMessage()]);
       return $form['plugin_config']['response_text']['#value'] = 'There was an error processing your request. Please try again.';
     }
   }
