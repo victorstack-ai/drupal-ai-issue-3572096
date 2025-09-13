@@ -517,7 +517,7 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
       $code['code']['#value'] .= "\$ai_provider->setConfiguration(\$config);<br>";
     }
     if ($form_state->getValue('json_schema')) {
-      $code['code']['#value'] .= '$ai_provider->setChatStructuredJsonSchema(' . $form_state->getValue('json_schema') . ');<br>';
+      $code['code']['#value'] .= '$input->setChatStructuredJsonSchema(' . $form_state->getValue('json_schema') . ');<br>';
     }
     if ($form_state->getValue('system_message')) {
       $code['code']['#value'] .= '$input->setSystemPrompt("' . Json::decode($form_state->getValue('system_message')) . '");<br>';
