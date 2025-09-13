@@ -156,7 +156,16 @@ abstract class FunctionCallBase extends PluginBase implements FunctionCallInterf
    * {@inheritdoc}
    */
   public function setContextValue($name, $value) {
-    $value = $this->dataTypeConverterManager()->convert($this->getContextDefinition($name)->getDataType(), $value);
+    // If multiple, convert the value based on list, then convert each item.
+    if ($this->getContextDefinition($name)->isMultiple()) {
+      $value = $this->dataTypeConverterManager()->convert('list', $value);
+      foreach ($value as $delta => $item) {
+        $value[$delta] = $this->dataTypeConverterManager()->convert($this->getContextDefinition($name)->getDataType(), $item);
+      }
+    }
+    else {
+      $value = $this->dataTypeConverterManager()->convert($this->getContextDefinition($name)->getDataType(), $value);
+    }
     return $this->traitSetContextValue($name, $value);
   }
 
