@@ -509,10 +509,6 @@ class AiAssistantApiRunner {
     if (method_exists($values, 'getTools')) {
       // Output the tools if they exist.
       $tools = $values->getTools();
-      if ($tools) {
-        print_r($tools);
-        exit;
-      }
     }
     $response = $this->promptJsonDecoder->decode($values, 20);
 

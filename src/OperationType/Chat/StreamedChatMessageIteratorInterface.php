@@ -78,6 +78,22 @@ interface StreamedChatMessageIteratorInterface extends \IteratorAggregate {
   public function triggerEvent(): void;
 
   /**
+   * Get the tools used.
+   *
+   * @return array
+   *   The tools used.
+   */
+  public function getTools(): array;
+
+  /**
+   * Add a callback to run after the stream is finished.
+   *
+   * @param callable $callback
+   *   The callback to run.
+   */
+  public function addCallback(callable $callback): void;
+
+  /**
    * Create a chat output from the streamed messages.
    *
    * @return \Drupal\ai\OperationType\Chat\ChatOutput

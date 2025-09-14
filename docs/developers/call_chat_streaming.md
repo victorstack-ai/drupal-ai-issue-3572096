@@ -37,6 +37,32 @@ echo $output->getTotalTokenUsage();
 $messages = $output->getMessage();
 ```
 
+## Working with callbacks
+
+If for instance you want tool calls to trigger after streaming, when the whole tool call message is available, you can register a callback on the StreamedChatMessageIterator object using the `addCallback()` method.
+
+This will give you a normal ChatMessage object when the message is complete, and you can then check if it contains a tool call, and if so, you can trigger the tool call. Or anything else you want to do with a normal message.
+
+You may also return a new StreamedChatMessageIteratorInterface object from the callback, and that will be yielded as well, if the output buffers are flushed correctly.
+
+Example of a minor logging implementation:
+```
+$stream = $response->getNormalized();
+$stream->addCallback('my_module_callback_function');
+ob_start();
+foreach ($stream as $message) {
+  // Do something with the message.
+  echo $message->getText();
+}
+ob_end_flush();
+
+function my_module_callback_function(ChatMessage $message) {
+  if ($message->getText()) {
+    file_put_contents('/tmp/ai_log.txt', $message->getText() . "\n", FILE_APPEND);
+  }
+}
+```
+
 ## Event Dispatching
 
 There also exists an event that is dispatched after the streaming is done. This event is called `PostStreamingResponseEvent` and it contains the request thread ID, the ChatOutput object, and any additional data that you want to pass along.

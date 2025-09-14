@@ -26,9 +26,9 @@ class ToolsPropertyResult implements ToolsPropertyResultInterface {
   /**
    * The input property.
    *
-   * @var \Drupal\ai\OperationType\Chat\Tools\ToolsPropertyInputInterface
+   * @var \Drupal\ai\OperationType\Chat\Tools\ToolsPropertyInputInterface|null
    */
-  private ToolsPropertyInputInterface $inputProperty;
+  private ?ToolsPropertyInputInterface $inputProperty = NULL;
 
   /**
    * {@inheritDoc}
@@ -91,7 +91,6 @@ class ToolsPropertyResult implements ToolsPropertyResultInterface {
     if ($this->inputProperty === NULL) {
       return;
     }
-
     // Do all basic validation we can do.
     $type = $this->inputProperty->getType();
     $name = $this->inputProperty->getName();

@@ -52,6 +52,20 @@ abstract class StreamedChatMessageIterator implements StreamedChatMessageIterato
   protected $toolCalls = [];
 
   /**
+   * The callbacks to run after the stream is finished.
+   *
+   * @var callable[]
+   */
+  protected $callbacks = [];
+
+  /**
+   * The Chat Message once set.
+   *
+   * @var \Drupal\ai\OperationType\Chat\ChatMessage|null
+   */
+  protected $chatMessage = NULL;
+
+  /**
    * Total token usage.
    *
    * @var int|null
@@ -294,6 +308,18 @@ abstract class StreamedChatMessageIterator implements StreamedChatMessageIterato
     }
     $this->reconstructChatOutput();
     $this->triggerEvent();
+
+    foreach ($this->callbacks as $callback) {
+      if (is_callable($callback)) {
+        $return = $callback($this->chatMessage);
+        // If the callback return a streamed chat message, we yield it.
+        if ($return instanceof StreamedChatMessageIteratorInterface) {
+          foreach ($return as $streamed_message) {
+            yield $streamed_message;
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -369,6 +395,13 @@ abstract class StreamedChatMessageIterator implements StreamedChatMessageIterato
   /**
    * {@inheritdoc}
    */
+  public function addCallback(callable $callback): void {
+    $this->callbacks[] = $callback;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function setStreamChatMessages(array $messages): void {
     $this->messages = $messages;
   }
@@ -402,6 +435,9 @@ abstract class StreamedChatMessageIterator implements StreamedChatMessageIterato
 
     $message = new ChatMessage($role, $message_text);
     $message->setTools($this->assembleToolCalls());
+
+    // Set the chat message.
+    $this->chatMessage = $message;
 
     $output = new ChatOutput($message, $raw, []);
     // Set the token usage on the output.
