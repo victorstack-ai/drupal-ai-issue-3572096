@@ -142,7 +142,7 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
     // Rendered html.
     $page->pressButton('edit-4');
     $this->submitForm([
-      'view_mode[entity:node][:default]' => 'full',
+      'view_mode[entity:node][:default]' => 'default',
     ], 'Save');
     // Title.
     $this->drupalGet('admin/config/search/search-api/index/test_mysql_vdb_index/fields/add/nojs');
