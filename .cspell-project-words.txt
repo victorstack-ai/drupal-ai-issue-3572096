@@ -289,6 +289,7 @@ COSIM
 subprompt
 voiceovers
 amazee
+amazeeio
 Outpaint
 outpaint
 Inpaint
