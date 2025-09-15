@@ -214,6 +214,12 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
   public function indexContent(): void {
     $cron_service = \Drupal::service('cron');
     $cron_service->run();
+  }
+
+  /**
+   * Test the content indexing has completed.
+   */
+  public function testContentIndexingCompleted(): void {
     $this->drupalGet('admin/config/search/search-api/index/test_mysql_vdb_index');
     $this->assertSession()->elementTextContains('css', '.progress__percentage', '100%');
   }
