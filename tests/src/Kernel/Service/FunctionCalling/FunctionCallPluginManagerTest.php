@@ -7,14 +7,12 @@ namespace Drupal\Tests\ai\Kernel\Service\FunctionCalling;
 use Drupal\ai\OperationType\Chat\Tools\ToolsFunctionOutput;
 use Drupal\ai_test\Plugin\AiFunctionCall\Calculator;
 use Drupal\KernelTests\KernelTestBase;
-use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests for the FunctionCallPluginManagerTest class.
  *
  * @group ai
  */
-#[Group('ai')]
 final class FunctionCallPluginManagerTest extends KernelTestBase {
 
   /**
