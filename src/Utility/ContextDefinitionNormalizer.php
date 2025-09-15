@@ -4,6 +4,7 @@ namespace Drupal\ai\Utility;
 
 use Drupal\ai\OperationType\Chat\Tools\ToolsPropertyInput;
 use Drupal\ai\Traits\Utility\FunctionCallTrait;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Symfony\Component\Validator\Constraints\Choice;
 
 /**
@@ -12,6 +13,15 @@ use Symfony\Component\Validator\Constraints\Choice;
 class ContextDefinitionNormalizer {
 
   use FunctionCallTrait;
+
+  /**
+   * Constructs Context Definition Normalizer service.
+   *
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
+   *   The module handler.
+   */
+  public function __construct(protected readonly ModuleHandlerInterface $moduleHandler) {
+  }
 
   /**
    * Normalize the context definition.
@@ -121,6 +131,9 @@ class ContextDefinitionNormalizer {
         // We only care about parameters.
         $property->setItems($normalized['parameters'] ?? []);
       }
+
+      // Add a hook alter here to allow other modules to modify the property.
+      $this->moduleHandler->alter('ai_tools_property', $property, $definition);
 
       // If multiple, wrap in array.
       if ($definition->isMultiple()) {

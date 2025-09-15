@@ -24,6 +24,7 @@ services:
     arguments: ['@ai.provider']
   ai.context_definition_normalizer:
     class: Drupal\ai\Utility\ContextDefinitionNormalizer
+    arguments: ['@module_handler']
   ai.text_chunker:
     class: Drupal\ai\Utility\TextChunker
     arguments: ['@ai.tokenizer']
