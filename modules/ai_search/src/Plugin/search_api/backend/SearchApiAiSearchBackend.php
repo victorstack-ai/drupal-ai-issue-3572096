@@ -272,6 +272,15 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    */
   public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
     $values = $form_state->getValues();
+
+    // Check whether Vector DB providers are available.
+    if (empty($this->vdbProviderManager->getSearchApiProviders(TRUE))) {
+      $form_state->setError($form, $this->t('No Vector DB providers are installed or setup for search in vectors, please %install and %configure one first.', [
+        '%install' => Link::createFromRoute($this->t('install'), 'system.modules_list')->toString(),
+        '%configure' => Link::createFromRoute($this->t('configure'), 'ai.admin_vdb_providers')->toString(),
+      ]));
+    }
+
     if (
       !empty($values['embeddings_engine'])
       && isset($values['embeddings_engine_configuration']['dimensions'])
