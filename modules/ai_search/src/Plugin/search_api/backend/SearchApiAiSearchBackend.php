@@ -317,6 +317,35 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
   /**
    * {@inheritdoc}
    */
+  public function isAvailable() {
+    $is_configured = FALSE;
+    $client_available = FALSE;
+    try {
+      $client = $this->getClient();
+      $is_configured = $client->isSetup();
+      $client_available = $client->ping();
+
+      return $is_configured && $client_available;
+    }
+    catch (\Exception $exception) {
+      $this->logException($exception);
+      // If any exception was thrown we consider the server to be unavailable.
+      return FALSE;
+    }
+    finally {
+      if ($is_configured && !$client_available) {
+        $this->messenger
+          ->addWarning($this->t('Server %server is configured, but the configured collection %core is not available.', [
+            '%server' => $this->getServer()->label(),
+            '%core' => $this->configuration['database_settings']['collection'] ?? 'n/a',
+          ]));
+      }
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function supportsDataType($type) {
     if ($type === 'embeddings') {
       return TRUE;
@@ -347,6 +376,17 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     $this->setConfiguration($form_state->getValues());
     /*$vdb_client = $this->vdbProviderManager->createInstance($this->configuration['database']);
     $vdb_client->submitSettingsForm($form, $form_state);*/
+    if (!$this->ensureCollectionExists()) {
+      $this->messenger()->addError($this->t('Could not create the collection.'));
+    }
+  }
+
+  /**
+   * Ensure that the backend collection has been created.
+   */
+  protected function ensureCollectionExists() {
+    $client = $this->getClient();
+    return $this->vdbProviderManager->ensureCollectionExists($client, $this->configuration);
   }
 
   /**
@@ -670,7 +710,77 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    * {@inheritdoc}
    */
   public function viewSettings(): array {
-    return $this->getClient()->viewIndexSettings($this->configuration['database_settings']);
+    $info = [];
+
+    $database_settings = $this->configuration['database_settings'];
+    $vdb_provider_status = NULL;
+    if ($this->vdbProviderManager->hasDefinition($this->configuration['database'])) {
+      $vdb_provider = $this->vdbProviderManager->createInstance($this->configuration['database']);
+      $vdb_provider_label = $vdb_provider->getPluginDefinition()['label'];
+      if ($vdb_provider->isSetup()) {
+        $vdb_info = $vdb_provider_label;
+      }
+      else {
+        $vdb_info = $this->t('The %provider vector database provider has not been fully setup.', [
+          '%provider' => $vdb_provider_label,
+        ]);
+        $vdb_provider_status = 'warning';
+      }
+    }
+    else {
+      $vdb_info = $this->t('The %provider vector database provider is not currently available.', [
+        '%provider' => $this->configuration['database'],
+      ]);
+      $vdb_provider_status = 'error';
+    }
+    $info[] = [
+      'label' => $this->t('Vector Database'),
+      'info' => $vdb_info,
+      'status' => $vdb_provider_status,
+    ];
+
+    $client = $this->getClient();
+    $info[] = [
+      'label' => $this->t('Database name'),
+      'info' => $database_settings['database_name'],
+    ];
+    $info[] = [
+      'label' => $this->t('Collection name'),
+      'info' => $database_settings['collection'],
+    ];
+    $collections = $this->ensureCollectionExists();
+    $collection_status = [
+      'label' => $this->t('Collection status'),
+    ];
+    if ($collections) {
+      $collection_status['info'] = $this->t('Successfully connected');
+    }
+    else {
+      $collection_status['info'] = $this->t('The collection %collection could not be connected to or created.', [
+        '%collection' => $database_settings['collection'],
+      ]);
+      $collection_status['status'] = 'error';
+      $this->messenger()->addWarning($collection_status['info']);
+    }
+    $info[] = $collection_status;
+    $supported_models = $this->tokenizer->getSupportedModels();
+    $info[] = [
+      'label' => $this->t('Chat model'),
+      'info' => $supported_models[$this->configuration['chat_model']] ?? $this->t('Could not resolve the %chat_model chat model.', [
+        '%chat_model' => $this->configuration['chat_model'],
+      ]),
+      'status' => !isset($supported_models[$this->configuration['chat_model']]) ? 'error' : NULL,
+    ];
+    $embedding_options = $this->getEmbeddingEnginesOptions();
+    $info[] = [
+      'label' => $this->t('Embeddings engine'),
+      'info' => $embedding_options[$this->configuration['embeddings_engine']] ?? $this->t('Could not resolve the %embeddings_engine embeddings engine.', [
+        '%embeddings_engine' => $this->configuration['embeddings_engine'],
+      ]),
+      'status' => !isset($embedding_options[$this->configuration['embeddings_engine']]) ? 'error' : NULL,
+    ];
+
+    return array_merge($info, $client->viewIndexSettings($this->configuration['database_settings']));
   }
 
 }
