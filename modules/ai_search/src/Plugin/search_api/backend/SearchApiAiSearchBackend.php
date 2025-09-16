@@ -15,6 +15,7 @@ use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 use Drupal\ai\Utility\TokenizerInterface;
 use Drupal\ai_search\Backend\AiSearchBackendPluginBase;
 use Drupal\ai_search\EmbeddingStrategyPluginManager;
+use Drupal\search_api\Backend\BackendSpecificInterface;
 use Drupal\search_api\IndexInterface;
 use Drupal\search_api\Item\ItemInterface;
 use Drupal\search_api\Query\QueryInterface;
@@ -29,7 +30,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   description = @Translation("Index items on Vector DB.")
  * )
  */
-class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements PluginFormInterface {
+class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements PluginFormInterface, BackendSpecificInterface {
 
   /**
    * The AI VDB Provider.
