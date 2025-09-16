@@ -97,6 +97,9 @@ nav:
     - Building an Agent: agents/build_agent.md
     - Agent Form Parts: agents/agent_form_parts.md
     - Security Considerations: agents/security.md
+    - Running Agents:
+      - Getting Started: agents/running/index.md
+      - Poll/Progress Service: agents/running/polling.md
     - Testing Agents:
       - Agent Explorer: agents/testing/agent_explorer.md
       - AI Agent Test:
