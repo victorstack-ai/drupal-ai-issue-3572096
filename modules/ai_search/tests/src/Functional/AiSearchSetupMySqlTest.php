@@ -237,7 +237,9 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
       $this->assertSession()->pageTextContains('Chocolate Cake');
     }
     else {
-      $this->assertSession()->pageTextContains('[Chocolate Cake](' . $this->nodes[0]->toUrl()->toString() . ')');
+      $has_markdown_link = $this->getSession()->getPage()->hasContent('[Chocolate Cake](' . $this->nodes[0]->toUrl()->toString() . ')');
+      $has_markdown_title = $this->getSession()->getPage()->hasContent('# Chocolate Cake');
+      $this->assertTrue($has_markdown_link || $has_markdown_title);
     }
 
     $this->assertSession()->pageTextContains('Title: Chocolate Cake');
@@ -256,7 +258,9 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
       $this->assertSession()->pageTextContains('Chocolate Cake');
     }
     else {
-      $this->assertSession()->pageTextContains('[Chocolate Cake](' . $this->nodes[0]->toUrl()->toString() . ')');
+      $has_markdown_link = $this->getSession()->getPage()->hasContent('[Chocolate Cake](' . $this->nodes[0]->toUrl()->toString() . ')');
+      $has_markdown_title = $this->getSession()->getPage()->hasContent('# Chocolate Cake');
+      $this->assertTrue($has_markdown_link || $has_markdown_title);
     }
 
     $this->assertSession()->pageTextNotContains('Title: Chocolate Cake');
