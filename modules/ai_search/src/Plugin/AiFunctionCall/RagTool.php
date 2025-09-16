@@ -126,6 +126,8 @@ class RagTool extends FunctionCallBase implements StructuredExecutableFunctionCa
       $query = $index->query([
         'limit' => $amount,
       ]);
+      // We want to get chunks rather than full entities.
+      $query->setOption('search_api_ai_get_chunks_result', TRUE);
       $queries = $this->searchString;
       $query->keys($queries);
       $results = $query->execute();
