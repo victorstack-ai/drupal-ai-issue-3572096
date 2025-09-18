@@ -2,7 +2,6 @@
 
 namespace Drupal\ai\Plugin\DataType;
 
-use Drupal\Core\Serialization\Attribute\JsonSchema;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\Attribute\DataType;
 use Drupal\Core\TypedData\TypedData;
@@ -19,7 +18,6 @@ class Json extends TypedData {
   /**
    * {@inheritdoc}
    */
-  #[JsonSchema(['type' => 'string'])]
   public function getCastedValue() {
     return $this->getString();
   }

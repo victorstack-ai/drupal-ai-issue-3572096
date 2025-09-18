@@ -11,7 +11,6 @@ use Drupal\ai\OperationType\Chat\Tools\ToolsFunctionInput;
 use Drupal\ai\OperationType\Chat\Tools\ToolsFunctionOutput;
 use Drupal\ai\OperationType\Chat\Tools\ToolsInput;
 use Drupal\ai\OperationType\Chat\Tools\ToolsPropertyInput;
-use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Tests Fiber-based concurrent haiku generation with AiLlm providers.
@@ -37,8 +36,9 @@ class FiberTest extends AiProviderTestBase {
 
   /**
    * Tests concurrent haiku generation using Fibers.
+   *
+   * @dataProvider modelProvider
    */
-  #[DataProvider('modelProvider')]
   public function testFiberHaikuGeneration(string $provider_id, string $model): void {
     /** @var \Drupal\ai\OperationType\Chat\ChatInterface $provider */
     $provider = $this->getProvider($provider_id, $model);
@@ -112,8 +112,9 @@ class FiberTest extends AiProviderTestBase {
 
   /**
    * Tests that tool calls still work as expected in Fibers.
+   *
+   * @dataProvider modelProvider
    */
-  #[DataProvider('modelProvider')]
   public function testFiberToolCall(string $provider_id, string $model): void {
     /** @var \Drupal\ai\OperationType\Chat\ChatInterface $provider */
     $provider = $this->getProvider($provider_id, $model);

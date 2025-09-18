@@ -174,6 +174,10 @@ class VerifySetupAiTest extends KernelTestBase {
    * Test if a vdb server is set up.
    */
   public function testVdbServerSetup(): void {
+    // Flush the caches to ensure the settings are reloaded.
+    \Drupal::service('cache.render')->deleteAll();
+    \Drupal::service('cache.discovery')->deleteAll();
+    \Drupal::service('cache.config')->deleteAll();
     // This should not throw an error because the vdb server is set up.
     $this->action->apply('ai.settings', [
       'vdb_provider_is_setup' => [

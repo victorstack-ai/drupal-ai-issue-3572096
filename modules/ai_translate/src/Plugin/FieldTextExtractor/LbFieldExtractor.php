@@ -7,7 +7,6 @@ use Drupal\Component\Uuid\UuidInterface;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Entity\ContentEntityInterface;
-use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Field\FieldConfigInterface;
@@ -16,6 +15,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai_translate\Attribute\FieldTextExtractor;
 use Drupal\ai_translate\TextExtractorInterface;
+use Drupal\Core\Entity\RevisionableStorageInterface;
 use Drupal\layout_builder\Plugin\Block\InlineBlock;
 use Drupal\layout_builder\SectionStorage\SectionStorageManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -80,9 +80,9 @@ class LbFieldExtractor extends FieldExtractorBase implements ContainerFactoryPlu
   /**
    * The block content storage service.
    *
-   * @var \Drupal\Core\Entity\EntityStorageInterface|null
+   * @var \Drupal\Core\Entity\RevisionableStorageInterface|null
    */
-  protected ?EntityStorageInterface $blockStorage = NULL;
+  protected ?RevisionableStorageInterface $blockStorage = NULL;
 
   /**
    * The module handler service.

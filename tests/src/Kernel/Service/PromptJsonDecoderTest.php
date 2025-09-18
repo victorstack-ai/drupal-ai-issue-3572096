@@ -4,18 +4,16 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\ai\Kernel\Service;
 
-use Drupal\ai\OperationType\Chat\ChatMessage;
-use Drupal\ai\OperationType\Chat\StreamedChatMessage;
-use Drupal\ai\OperationType\Chat\ReplayedChatMessageIterator;
 use Drupal\KernelTests\KernelTestBase;
-use PHPUnit\Framework\Attributes\Group;
+use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai\OperationType\Chat\ReplayedChatMessageIterator;
+use Drupal\ai\OperationType\Chat\StreamedChatMessage;
 
 /**
  * Tests the PromptJsonDecoder service.
  *
  * @group ai
  */
-#[Group('ai')]
 class PromptJsonDecoderTest extends KernelTestBase {
 
   /**

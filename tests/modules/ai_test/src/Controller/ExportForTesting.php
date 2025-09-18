@@ -10,7 +10,7 @@ use Symfony\Component\Yaml\Yaml;
 /**
  * Controller for exporting test data.
  */
-class ExportToTest extends ControllerBase {
+class ExportForTesting extends ControllerBase {
 
   /**
    * Exports test data to a file.

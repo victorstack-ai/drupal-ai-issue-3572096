@@ -9,7 +9,7 @@ ai_test.export_file:
   path: '/admin/config/ai/providers/ai-test/export/{result}'
   defaults:
     _title: 'Export AI Test Provider'
-    _controller: '\Drupal\ai_test\Controller\ExportToTest::export'
+    _controller: '\Drupal\ai_test\Controller\ExportForTesting::export'
   requirements:
     _permission: 'administer ai providers'
   options:

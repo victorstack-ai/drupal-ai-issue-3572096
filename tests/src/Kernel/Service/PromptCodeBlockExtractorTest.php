@@ -8,15 +8,12 @@ use Drupal\KernelTests\KernelTestBase;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\ReplayedChatMessageIterator;
 use Drupal\ai\OperationType\Chat\StreamedChatMessage;
-use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests the PromptCodeBlockExtractor service.
  *
  * @group ai
  */
-#[Group('ai')]
 final class PromptCodeBlockExtractorTest extends KernelTestBase {
 
   /**
@@ -46,7 +43,6 @@ final class PromptCodeBlockExtractorTest extends KernelTestBase {
    *
    * @dataProvider payloadDataProvider
    */
-  #[DataProvider('payloadDataProvider')]
   public function testExtractPayload($input, $code_block_type, $expected): void {
     $result = $this->extractor->extractPayload($input, $code_block_type);
     self::assertEquals($expected, $result);
@@ -71,7 +67,6 @@ final class PromptCodeBlockExtractorTest extends KernelTestBase {
    *
    * @dataProvider chatMessageDataProvider
    */
-  #[DataProvider('chatMessageDataProvider')]
   public function testExtractChatMessage($role, $text, $code_block_type, $expected): void {
     $chat_message = new ChatMessage($role, $text);
     $result = $this->extractor->extract($chat_message, $code_block_type);
@@ -100,7 +95,6 @@ final class PromptCodeBlockExtractorTest extends KernelTestBase {
    *
    * @dataProvider stringDataProvider
    */
-  #[DataProvider('stringDataProvider')]
   public function testExtractString($input, $code_block_type, $expected): void {
     $result = $this->extractor->extract($input, $code_block_type);
 
@@ -131,7 +125,6 @@ final class PromptCodeBlockExtractorTest extends KernelTestBase {
    *
    * @dataProvider streamingDataProvider
    */
-  #[DataProvider('streamingDataProvider')]
   public function testExtractStreamingInput($input, $code_block_type, $expected): void {
     // Create a mock StreamedChatMessageIterator and populate it
     // with StreamedChatMessage.
