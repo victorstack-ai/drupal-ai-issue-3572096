@@ -132,9 +132,9 @@ class ToolsFunctionOutput implements ToolsFunctionOutputInterface {
   public function getOutputRenderArray(): array {
     $output['id'] = $this->getToolId();
     $output['type'] = 'function';
-    $args = [];
+    $args = new \stdClass();
     foreach ($this->arguments as $argument) {
-      $args[$argument->getName()] = $argument->getValue();
+      $args->{$argument->getName()} = $argument->getValue();
     }
     $output['function'] = [
       'name' => $this->getName(),
