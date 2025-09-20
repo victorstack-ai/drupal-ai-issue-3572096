@@ -184,7 +184,7 @@ class ReferenceFieldExtractor extends FieldExtractorBase implements Configurable
 
     // Check if the entity has the translation, create it if not.
     if (!$entity->hasTranslation($language)) {
-      $translatedEntity = $entity->addTranslation($language);
+      $translatedEntity = $entity->addTranslation($language, $entity->toArray());
     }
     else {
       $translatedEntity = $entity->getTranslation($language);

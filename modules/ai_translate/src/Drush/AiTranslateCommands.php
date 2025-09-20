@@ -120,7 +120,7 @@ class AiTranslateCommands extends DrushCommands {
           $translated_text_item = html_entity_decode($translated_text_item);
         }
       }
-      $translation = $entity->addTranslation($langTo);
+      $translation = $entity->addTranslation($langTo, $entity->toArray());
       $this->textExtractor->insertTextMetadata($translation,
         $textMetadata);
       try {

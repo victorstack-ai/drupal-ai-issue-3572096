@@ -212,7 +212,7 @@ class LbFieldExtractor extends FieldExtractorBase implements ContainerFactoryPlu
       // @todo Decide if/when we should update existing translation.
       $blockEntity = $blockEntity->hasTranslation($translationLanguage)
         ? $blockEntity->getTranslation($translationLanguage)
-        : $blockEntity->addTranslation($translationLanguage);
+        : $blockEntity->addTranslation($translationLanguage, $blockEntity->toArray());
 
       foreach ($textMeta[$blockEntity->uuid()] as $subFieldName => $subValue) {
         $field = $blockEntity->get($subFieldName);
