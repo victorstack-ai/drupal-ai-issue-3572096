@@ -173,7 +173,8 @@ final class Taxonomy extends AiContentSuggestionsPluginBase {
         $terms_json = $this->getTermsJson($source_vocabulary, $use_source_vocabulary_hierarchy);
 
         // Build our prompt.
-        $tax_prompt = $this->promptConfig->get($this->getPluginId() . '_from_voc');
+        $tax_prompt_id = $this->promptConfig->get($this->getPluginId() . '_from_voc');
+        $tax_prompt = AiPrompt::load($tax_prompt_id)->getPrompt();
         $prompt = '';
         if (!empty($tax_prompt)) {
           $prompt = $tax_prompt;
