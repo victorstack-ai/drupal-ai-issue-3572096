@@ -1,0 +1,88 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the ai_eca module.
+ *
+ * @deprecated in ai:1.2.0 and is removed from ai:2.0.0. This is replaced by the
+ * ai_integration_eca module.
+ *
+ * @see https://www.drupal.org/project/ai/issues/3503947
+ */
+
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+
+/**
+ * Checks to ensure a smooth migration from AI submodule to external module.
+ */
+function ai_eca_update_11001(): TranslatableMarkup {
+  $submodule = 'ai_eca';
+  $external_module = 'ai_integration_eca';
+
+  // phpcs:disable
+  // Scenarios are:
+  // 1. Old submodule is not enabled -> we have nothing to do.
+  // 2. Old submodule is enabled:
+  //   1. New module exists but is not yet installed -> install it.
+  //   2. New module does not exist and is therefor not installed -> Tell
+  //      the user to composer require it and retry the update hook.
+  //   3. New module exists and is installed (yet the old is still enabled,
+  //      see (1)) -> Since the new module should uninstall the old, this
+  //      should never happen. Throw an error.
+  // phpcs:enable
+
+  // If the new module is already enabled, it should have uninstalled the
+  // old module. The 'moduleExists' method checks if the module is actually
+  // enabled too.
+  /** @var \Drupal\Core\Extension\ModuleHandlerInterface $handler */
+  $handler = \Drupal::service('module_handler');
+  if (!$handler->moduleExists($submodule)) {
+    return t('@submodule has already been uninstalled.', [
+      '@submodule' => $submodule,
+    ]);
+  }
+
+  // If the new module exists but is not yet installed, enable it. The 'list'
+  // service exists method only checks that the module is in the file system,
+  // but does not care if its enabled or not.
+  /** @var \Drupal\Core\Extension\ModuleExtensionList $list */
+  $list = \Drupal::service('extension.list.module');
+  if ($list->exists($external_module) && !$handler->moduleExists($external_module)) {
+    /** @var \Drupal\Core\Extension\ModuleInstallerInterface $installer */
+    $installer = \Drupal::service('module_installer');
+    // No try-catch, we want a failure to throw an error.
+    $installer->install([$external_module]);
+
+    return t('@external_module has been installed.', [
+      '@external_module' => $external_module,
+    ]);
+  }
+
+  // If the new module does not exist but the old submodule is enabled,
+  // we need to tell the user to composer require it. We will then fail this
+  // update hook so that we can try it again later after they have carried out
+  // the composer install.
+  if (!$list->exists($external_module)) {
+    $message = t('@submodule has moved from the AI Core to a separate module. Please run `composer require drupal/@external_module` then run the update again.', [
+      '@submodule' => $submodule,
+      '@external_module' => $external_module,
+    ]);
+    throw new \Exception((string) $message);
+  }
+
+  // New module is installed but so is the old submodule. Uninstall the old.
+  if ($handler->moduleExists($external_module)) {
+    /** @var \Drupal\Core\Extension\ModuleInstallerInterface $installer */
+    $installer = \Drupal::service('module_installer');
+    $installer->uninstall([$submodule]);
+
+    return t('@submodule has been uninstalled.', [
+      '@submodule' => $submodule,
+    ]);
+  }
+
+  return t('@submodule-module moving to contributed @external_module-module has been completed.', [
+    '@submodule' => $submodule,
+    '@external_module' => $external_module,
+  ]);
+}
