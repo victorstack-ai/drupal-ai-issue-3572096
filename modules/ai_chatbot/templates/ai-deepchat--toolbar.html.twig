@@ -1,0 +1,26 @@
+{{ attach_library('ai_chatbot/toolbar-chatbot') }}
+
+<div class="{{ current_theme }} ai-deepchat chat-container {{ settings.placement }}" data-chat-id="bot1">
+  <div class="sidebar-header">
+    <div class="sidebar-header--title">
+     Assistant
+    </div>
+
+    <button title="{{ 'Close chat'|t }}" class="sidebar-header--icon toolbar-button close" aria-label="{{ 'Close chat'|t }}" data-action="close-chat">
+    </button>
+  </div>
+
+    <deep-chat
+    {% for key, value in deepchat_settings %}{{ key }}='{{ value|raw }}'
+    {% endfor %}
+    >
+      <div class="chat-header">
+        <div class="chat-title">
+          {{ 'Hello'|t }} 👋
+          <br />
+          <span>{{ 'How can I help you today'|t }}</span>
+        </div>
+      </div>
+    </deep-chat>
+	</div>
+</div>
