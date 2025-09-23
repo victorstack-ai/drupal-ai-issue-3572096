@@ -40,34 +40,33 @@ class JsonDeserializerTest extends KernelTestBase {
     $this->assertTrue($converter->appliesToDataType('json_as_string')->applies());
     $converter_result = $converter->appliesToDataType('string');
     $this->assertFalse($converter_result->applies());
-    $this->assertEquals($converter_result->getReason(), 'The data type is not JSON.');
-    $converter_result = $converter->appliesToDataType('array');
-    $this->assertFalse($converter_result->applies());
-    $this->assertEquals($converter_result->getReason(), 'The data type is not JSON.');
+    $this->assertEquals($converter_result->getReason(), '"string" data types should not be parsed as json');
+    $converter_result = $converter->appliesToDataType('list');
+    $this->assertTrue($converter_result->applies());
 
     // Check so it applied to value.
-    $this->assertTrue($converter->appliesToValue('json_as_string', json_encode(['test']))->applies());
-    $this->assertTrue($converter->appliesToValue('json_as_string', json_encode([
+    $this->assertTrue($converter->appliesToValue('list', json_encode(['test']))->applies());
+    $this->assertTrue($converter->appliesToValue('list', json_encode([
       'hello' => 'there',
       'obi-wan' => 'kenobi',
     ]))->applies());
-    $converter_result = $converter->appliesToValue('json_as_string', 'string');
+    $converter_result = $converter->appliesToValue('string', 'string');
     $this->assertFalse($converter_result->valid());
     $this->assertEquals($converter_result->getReason(), 'The value is not valid JSON');
-    $converter_result = $converter->appliesToValue('string', json_encode(['test']));
+    $converter_result = $converter->appliesToValue('list', json_encode(['test']));
     $this->assertTrue($converter_result->valid());
 
     // Check so it converts.
-    $array = $converter->convert('json_as_string', json_encode(['test']));
+    $array = $converter->convert('list', json_encode(['test']));
     $this->assertIsArray($array);
     $this->assertEquals($array, ['test']);
-    $object = $converter->convert('json_as_string', json_encode([
+    $object = $converter->convert('list', json_encode([
       'hello' => 'there',
       'obi-wan' => 'kenobi',
     ]));
-    $this->assertIsObject($object);
-    $this->assertEquals($object->hello, 'there');
-    $this->assertEquals($object->{'obi-wan'}, 'kenobi');
+    $this->assertIsArray($object);
+    $this->assertEquals($object['hello'], 'there');
+    $this->assertEquals($object['obi-wan'], 'kenobi');
   }
 
 }

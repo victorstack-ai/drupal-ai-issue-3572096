@@ -39,21 +39,23 @@ class ListConverter extends AiDataTypeConverterPluginBase {
     if (is_array($value) && (empty($value) || isset($value[0]))) {
       return AppliesResult::notApplicable('The value is already an indexed array.');
     }
-    // If json, and json returns an indexed array, defer to JSON deserializer.
-    $decoded = json_decode($value, TRUE);
-    if (json_last_error() === JSON_ERROR_NONE) {
-      if (empty($decoded) || isset($decoded[0])) {
-        return AppliesResult::notApplicable('The value is JSON and should be handled by the JSON deserializer.');
+    if (is_string($value)) {
+      // If json, and json returns an indexed array, defer to JSON deserializer.
+      $decoded = json_decode($value, TRUE);
+      if (json_last_error() === JSON_ERROR_NONE) {
+        if (empty($decoded) || isset($decoded[0])) {
+          return AppliesResult::notApplicable('The value is JSON and should be handled by the JSON deserializer.');
+        }
       }
-    }
-    // If YAML, and YAML returns an indexed array, defer to YAML deserializer.
-    try {
-      $parsed = Yaml::parse($value);
-      if (is_array($parsed) && (empty($parsed) || isset($parsed[0]))) {
-        return AppliesResult::notApplicable('The value is YAML and should be handled by the YAML deserializer.');
+      // If YAML, and YAML returns an indexed array, defer to YAML deserializer.
+      try {
+        $parsed = Yaml::parse($value);
+        if (is_array($parsed) && (empty($parsed) || isset($parsed[0]))) {
+          return AppliesResult::notApplicable('The value is YAML and should be handled by the YAML deserializer.');
+        }
       }
-    }
-    catch (ParseException $e) {
+      catch (ParseException $e) {
+      }
     }
     return AppliesResult::applicable();
   }

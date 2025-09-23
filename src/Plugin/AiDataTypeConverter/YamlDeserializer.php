@@ -25,8 +25,8 @@ class YamlDeserializer extends AiDataTypeConverterPluginBase {
    * {@inheritdoc}
    */
   public function appliesToDataType(string $data_type): AppliesResultInterface {
-    if ($data_type !== 'yaml_as_string') {
-      return AppliesResult::notApplicable('The data type is not YAML.');
+    if ($data_type === 'string') {
+      return AppliesResult::notApplicable('"string" data types should not be parsed as yaml');
     }
     return AppliesResult::applicable();
   }
