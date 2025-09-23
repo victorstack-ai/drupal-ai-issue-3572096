@@ -64,8 +64,9 @@ nav:
       - Image Classification Call: developers/call_image_classification.md
       - Translate Text Call: developers/call_translate_text.md
       - Image-To-Image Call: developers/call_image_to_image.md
-    - Plugins:
+    - Plugins/Managers:
       - Function Call Schema: developers/function_call_schema.md
+      - Short-Term Memory: developers/short_term_memory.md
     - Helper Services:
       - Chat History Form Element: developers/chat_history_element.md
     - Develop a third-party module: developers/develop_third_party_module.md

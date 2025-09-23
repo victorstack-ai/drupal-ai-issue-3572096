@@ -65,3 +65,6 @@ services:
     arguments: ['@plugin.manager.ai.function_groups', '@plugin.manager.ai.function_calls', '@module_handler', '@request_stack', '@form_builder']
   ai_tools_library.opener.form_element:
     class: Drupal\ai\AiToolsLibraryFormElementOpener
+  plugin.manager.ai.short_term_memory:
+    class: Drupal\ai\PluginManager\AiShortTermMemoryPluginManager
+    parent: default_plugin_manager
