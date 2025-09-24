@@ -101,6 +101,14 @@
         // Add retry on error
         deepchatElement.addEventListener('error', handleError);
 
+        deepchatElement.loadHistory = (index) => {
+          // Add the history to the chat.
+          if (index === 0 && drupalSettings.ai_deepchat.messages.length > 0) {
+            return drupalSettings.ai_deepchat.messages;
+          }
+          return [];
+        }
+
         // We need to know if we should automatically continuer to agent.
         deepchatElement.responseInterceptor = (response) => {
           Drupal.behaviors.deepChatToggle.shouldContinue = response.should_continue || false;
@@ -230,12 +238,6 @@
                 let text = event.target.closest('.message-bubble').innerText;
                 navigator.clipboard.writeText(text);
               }
-            }
-          }
-          // Add the history to the chat.
-          if (drupalSettings.ai_deepchat.messages.length > 0) {
-            for (let message of drupalSettings.ai_deepchat.messages) {
-              deepchatElement.addMessage(message);
             }
           }
 
