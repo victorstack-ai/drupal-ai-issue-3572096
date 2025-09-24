@@ -15,7 +15,6 @@ use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
 use Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface;
 use Drupal\ai\OperationType\Chat\Tools\ToolsInput;
-use Drupal\ai\OperationType\GenericType\DocumentFile;
 use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\Plugin\ProviderProxy;
 use Drupal\ai\Service\AiProviderFormHelper;
@@ -262,39 +261,34 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
    */
   public function getResponse(array &$form, FormStateInterface $form_state): array {
     // This runs on streamed.
-    $provider = $this->aiProviderHelper->generateAiProviderFromFormSubmit($form, $form_state, 'chat', 'chat');
-    $values = $form_state->getValues();
-    $prompt_message = $values['message_1'];
+    try {
+      $provider = $this->aiProviderHelper->generateAiProviderFromFormSubmit($form, $form_state, 'chat', 'chat');
+      $values = $form_state->getValues();
+      $prompt_message = $values['message_1'];
 
-    // Get the messages.
-    $messages = [];
-    // Get potential files.
-    $files = $this->getRequest()->files->all();
-    if (!empty($prompt_message)) {
-      foreach ($values as $key => $value) {
-        if (str_starts_with($key, 'role_')) {
-          $index = substr($key, 5);
-          $role = $value;
-          $message = $values['message_' . $index];
-          // Load the file.
-          $attachment = "";
-          if (isset($files['files']['image_' . $index])) {
-            $file = $files['files']['image_' . $index];
-            $raw_file = file_get_contents($file->getPathname());
-            if (str_starts_with($file->getClientMimeType(), 'image')) {
-              $attachment = new ImageFile($raw_file, $file->getClientMimeType(), $file->getClientOriginalName());
+      // Get the messages.
+      $messages = [];
+      // Get potential files.
+      $files = $this->getRequest()->files->all();
+      if (!empty($prompt_message)) {
+        foreach ($values as $key => $value) {
+          if (str_starts_with($key, 'role_')) {
+            $index = substr($key, 5);
+            $role = $value;
+            $message = $values['message_' . $index];
+            // Load the file.
+            $image = "";
+            if (isset($files['files']['image_' . $index])) {
+              $raw_file = file_get_contents($files['files']['image_' . $index]->getPathname());
+              $image = new ImageFile($raw_file, $files['files']['image_' . $index]->getClientMimeType(), $files['files']['image_' . $index]->getClientOriginalName());
             }
-            elseif ($file->getClientMimeType() === 'application/pdf') {
-              $attachment = new DocumentFile($raw_file, $file->getClientMimeType(), $file->getClientOriginalName());
+            if ($role && $message) {
+              $images = [];
+              if ($image) {
+                $images[] = $image;
+              }
+              $messages[] = new ChatMessage($role, $message, $images);
             }
-            // @todo support also other file types.
-          }
-          if ($role && $message) {
-            $images = [];
-            if ($attachment) {
-              $images[] = $attachment;
-            }
-            $messages[] = new ChatMessage($role, $message, $images);
           }
         }
       }
@@ -319,7 +313,7 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
       }
 
       if ($form_state->getValue('json_schema')) {
-        $input->setChatStructuredJsonSchema(Json::decode($form_state->getValue('json_schema')));
+        $provider->setChatStructuredJsonSchema(Json::decode($form_state->getValue('json_schema')));
       }
 
       $message = NULL;
@@ -333,6 +327,9 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
           'chat_generation',
           'ai_api_explorer',
         ])->getNormalized();
+      }
+      catch (\TypeError $e) {
+        $message = $this->t('The AI provider could not be used. Please make sure a model is selected and the provider is properly configured.');
       }
       catch (\Exception $e) {
         $message = $this->explorerHelper->renderException($e);
@@ -400,10 +397,66 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
         $form_state->setResponse($http_response);
       }
       else {
-        $form['middle']['response']['#context']['ai_response']['#markup'] = $message;
+        $form['middle']['response']['#context']['ai_response'] = [
+          'heading' => [
+            '#type' => 'html_tag',
+            '#tag' => 'h3',
+            '#value' => $message ? $this->t('Error') : $this->t('Response will appear here.'),
+          ],
+        ];
+
+        if ($message) {
+          $form['middle']['response']['#context']['ai_response']['message'] = [
+            '#type' => 'html_tag',
+            '#tag' => 'div',
+            '#value' => $message,
+            '#attributes' => [
+              'class' => ['ai-text-response', 'ai-error-message'],
+            ],
+          ];
+        }
+
         $form_state->setRebuild();
         return $form['middle'];
       }
+    }
+    catch (\TypeError $e) {
+      $form['middle']['response']['#context']['ai_response'] = [
+        'heading' => [
+          '#type' => 'html_tag',
+          '#tag' => 'h3',
+          '#value' => $this->t('Configuration Error'),
+        ],
+        'message' => [
+          '#type' => 'html_tag',
+          '#tag' => 'div',
+          '#value' => $this->t('The AI provider could not be used. Please make sure a model is selected and the provider is properly configured.'),
+          '#attributes' => [
+            'class' => ['ai-text-response', 'ai-error-message'],
+          ],
+        ],
+      ];
+      $form_state->setRebuild();
+      return $form['middle'];
+    }
+    catch (\Exception $e) {
+      $form['middle']['response']['#context']['ai_response'] = [
+        'heading' => [
+          '#type' => 'html_tag',
+          '#tag' => 'h3',
+          '#value' => $this->t('Error'),
+        ],
+        'message' => [
+          '#type' => 'html_tag',
+          '#tag' => 'div',
+          '#value' => $this->explorerHelper->renderException($e),
+          '#attributes' => [
+            'class' => ['ai-text-response', 'ai-error-message'],
+          ],
+        ],
+      ];
+      $form_state->setRebuild();
+      return $form['middle'];
     }
 
     return $form['middle'] ?? [];
