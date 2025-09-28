@@ -4,7 +4,6 @@ namespace Drupal\ai_translate\Form;
 
 use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Entity\ContentEntityTypeInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -29,13 +28,6 @@ class AiTranslateSettingsForm extends ConfigFormBase {
    * Config settings.
    */
   const CONFIG_NAME = 'ai_translate.settings';
-
-  /**
-   * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
    * Twig engine.
@@ -77,7 +69,6 @@ class AiTranslateSettingsForm extends ConfigFormBase {
    */
   public static function create(ContainerInterface $container) {
     $instance = parent::create($container);
-    $instance->entityTypeManager = $container->get('entity_type.manager');
     $instance->twig = $container->get('twig');
     $instance->moduleHandler = $container->get('module_handler');
     $instance->languageManager = $container->get('language_manager');
@@ -218,17 +209,10 @@ class AiTranslateSettingsForm extends ConfigFormBase {
           ['id' => 'ai_translate.references'])
         : $this->t('Enable <em>@module</em> module to read more', ['@module' => 'help']),
     ];
-    $options = [];
-    foreach ($this->entityTypeManager->getDefinitions() as $entityTypeId => $entityType) {
-      if (!($entityType instanceof ContentEntityTypeInterface)) {
-        continue;
-      }
-      $options[$entityTypeId] = $entityType->getLabel();
-    }
     $form['reference_defaults']['reference_defaults'] = [
       '#type' => 'checkboxes',
       '#title' => $this->t('These entity types will be translated by default when referencing entity is translated'),
-      '#options' => $options,
+      '#options' => self::getReferencingEntityTypes(TRUE),
       '#description' => $this->t('This setting can be overriden in entity reference field settings.'),
       '#default_value' => $config->get('reference_defaults'),
     ];
@@ -314,6 +298,31 @@ class AiTranslateSettingsForm extends ConfigFormBase {
     }
 
     parent::submitForm($form, $form_state);
+  }
+
+  /**
+   * Get list of valid entity types for the reference_default setting.
+   *
+   * @param bool $option_list
+   *   Whether to return as list of entity type IDs, or an option list.
+   *
+   * @return array
+   *   Valid entity types that can be used for the reference_default setting.
+   */
+  public static function getReferencingEntityTypes(bool $option_list = FALSE): array {
+    $options = [];
+    foreach (\Drupal::entityTypeManager()->getDefinitions() as $entityTypeId => $entityType) {
+      if (!($entityType instanceof ContentEntityTypeInterface)) {
+        continue;
+      }
+      if ($option_list) {
+        $options[$entityTypeId] = $entityType->getLabel();
+      }
+      else {
+        $options[] = $entityTypeId;
+      }
+    }
+    return $options;
   }
 
 }

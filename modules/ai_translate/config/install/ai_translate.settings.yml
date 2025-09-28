@@ -1,4 +1,5 @@
 use_ai_translate: true
+reference_defaults: { }
 prompt: >1
   You are a helpful translator that can translate text and understand context when translating.
   You will be given a context text to {% if source_lang_name %} translate from the source language {{ source_lang_name }} {% else %}guess the source language and translate {% endif %} to the target language {{ dest_lang_name }}.
@@ -14,12 +15,7 @@ prompt: >1
   7. You may change HTML if it makes sense when moving from a LTR (left-to-right) language such as German to a RTL (right-to-left) language like Persian.
   8. Only respond with the actual translation and nothing else. No greeting or any other pleasantries, if there are any cultural references or idioms, please provide a suitable equivalent.
   The context text ``` {{ input_text }} ```
-reference_defaults:
-  block_content: true
-  entity_reference_depth: 1
-  node: false
-  paragraph: true
-  taxonomy_term: true
-  _fallback: true
+entity_reference_depth: 1
+language_settings: { }
 translation_status: keep_original
 redirect_after_create: list
