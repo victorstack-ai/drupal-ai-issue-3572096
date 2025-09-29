@@ -1,6 +1,9 @@
 langcode: en
 status: true
-dependencies: {  }
+dependencies:
+  enforced:
+    module:
+      - ai_content_suggestions
 id: suggest_vocabulary__suggest_vocabulary_default
 label: 'Default prompt for suggest vocabulary'
 type: suggest_vocabulary

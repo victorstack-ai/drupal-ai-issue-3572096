@@ -1,6 +1,9 @@
 langcode: en
 status: true
-dependencies: {  }
+dependencies:
+  enforced:
+    module:
+      - ai_content_suggestions
 id: suggest_tags__suggest_tags_default
 label: 'Default prompt for suggest tags'
 type: suggest_tags

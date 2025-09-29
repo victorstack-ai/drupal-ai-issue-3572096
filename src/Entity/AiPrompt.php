@@ -11,7 +11,7 @@ use Drupal\Core\Entity\EntityStorageInterface;
  * @ConfigEntityType(
  *   id = "ai_prompt",
  *   module = "ai",
- *   label = @Translation("AI Prompt type"),
+ *   label = @Translation("AI Prompt"),
  *   label_collection = @Translation("AI Prompts"),
  *   label_singular = @Translation("AI Prompt"),
  *   label_plural = @Translation("AI Prompts"),
