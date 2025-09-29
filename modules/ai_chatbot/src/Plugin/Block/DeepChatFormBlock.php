@@ -555,7 +555,10 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
 
     $deepchat['class'] = 'deepchat-element';
     $deepchat['intromessage']['text'] = $this->configuration['first_message'];
-    $deepchat['names']['ai']['text'] = $this->configuration['bot_name'];
+    // @todo remove this in 2.0.0, its just for BC.
+    if ($this->configuration['placement'] == 'toolbar') {
+      $deepchat['names']['ai']['text'] = $this->configuration['bot_name'];
+    }
 
     $deepchat['htmlClassUtilities']['chat-button']['styles']['default']['width'] = '25px';
     $deepchat['htmlClassUtilities']['chat-button']['styles']['default']['height'] = '25px';
