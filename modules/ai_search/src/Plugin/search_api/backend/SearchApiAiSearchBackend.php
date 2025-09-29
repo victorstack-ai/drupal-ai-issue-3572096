@@ -8,6 +8,7 @@ use Drupal\Core\Entity\TranslatableInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformStateInterface;
 use Drupal\Core\Link;
+use Drupal\Core\Plugin\PluginDependencyTrait;
 use Drupal\Core\Plugin\PluginFormInterface;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\AiVdbProviderPluginManager;
@@ -31,6 +32,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * )
  */
 class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements PluginFormInterface, BackendSpecificInterface {
+
+  use PluginDependencyTrait;
 
   /**
    * The AI VDB Provider.
@@ -782,6 +785,17 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     ];
 
     return array_merge($info, $client->viewIndexSettings($this->configuration['database_settings']));
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function calculateDependencies() {
+    $client = $this->getClient();
+    // @todo This ignore next line can be removed after Search API 2.0.x is
+    // released.
+    // @phpstan-ignore-next-line
+    return $this->getPluginDependencies($client);
   }
 
 }
