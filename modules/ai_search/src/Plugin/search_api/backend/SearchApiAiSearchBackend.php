@@ -583,7 +583,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
           $search_words = implode(' ', $search_words);
         }
         $input = new EmbeddingsInput($search_words);
-        $params['vector_input'] = $embedding_llm->embeddings($input, $model_id)->getNormalized();
+        $params['vector_input'] = $embedding_llm->embeddings($input, $model_id, ['ai_search'])->getNormalized();
       }
       $params['query'] = $query;
       $response = $this->getClient()->vectorSearch(...$params);
