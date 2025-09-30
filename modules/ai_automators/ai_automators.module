@@ -5,6 +5,7 @@
  * Hooks for AI Automator.
  */
 
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\field\Entity\FieldConfig;
@@ -64,6 +65,22 @@ function ai_automators_entity_delete(EntityInterface $entity) {
   if ($entity instanceof FieldConfig && ai_automators_entity_can_save_toggle() && ai_automators_can_import_toggle()) {
     \Drupal::service('ai_automator.status_field')->modifyStatusField($entity->get('entity_type'), $entity->get('bundle'));
   }
+}
+
+/**
+ * Implements hook_entity_predelete().
+ *
+ * Clean up field widget actions when an AI automator is deleted.
+ */
+function ai_automators_entity_predelete(EntityInterface $entity) {
+  // Only act on AI Automator entities being deleted.
+  if (!($entity instanceof AiAutomatorInterface)) {
+    return;
+  }
+
+  // Clean up related field widget actions.
+  \Drupal::service('ai_automators.cleanup')
+    ->cleanupActionsForAutomator($entity);
 }
 
 /**

@@ -9,6 +9,7 @@ use Drupal\ai_automators\AiAutomatorEntityModifier;
 use Drupal\ai_automators\PluginManager\AiAutomatorTypeManager;
 use Drupal\field_widget_actions\FieldWidgetActionBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 
 /**
  * This is an abstract base class for automator actions.
@@ -62,6 +63,13 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
   protected AiProviderPluginManager $aiProvider;
 
   /**
+   * The logger channel factory.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
+   */
+  protected LoggerChannelFactoryInterface $loggerFactory;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
@@ -70,6 +78,7 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
     $instance->entityTypeManager = $container->get('entity_type.manager');
     $instance->entityModifier = $container->get('ai_automator.entity_modifier');
     $instance->aiProvider = $container->get('ai.provider');
+    $instance->loggerFactory = $container->get('logger.factory');
     return $instance;
   }
 
@@ -234,6 +243,20 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
     // Get the content entity from form object.
     /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
     $entity = static::buildEntity($form, $form_state);
+
+    // Check if automator still exists.
+    $automator_id = $this->getConfiguration()['settings']['automator_id'] ?? NULL;
+    if ($automator_id) {
+      $automator = $this->entityTypeManager->getStorage('ai_automator')->load($automator_id);
+      if (!$automator) {
+        // Log the issue and return gracefully instead of causing fatal error.
+        $this->loggerFactory->get('ai_automators')->warning('Automator @automator_id not found for field widget action. The automator may have been deleted.', [
+          '@automator_id' => $automator_id,
+        ]);
+        return $form[$form_key] ?? [];
+      }
+    }
+
     // Delete all values from the field, so you can recreate.
     if ($this->clearEntity) {
       $entity->get($form_key)->filterEmptyItems();
