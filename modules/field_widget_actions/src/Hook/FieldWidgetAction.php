@@ -10,8 +10,10 @@ use Drupal\Core\Field\WidgetInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Hook\Attribute\Hook;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\field_widget_actions\FieldWidgetActionInterface;
 use Drupal\field_widget_actions\FieldWidgetActionManagerInterface;
+use Drupal\field_widget_actions\Plugin\ConfigAction\SetupFieldWidgetAction;
 
 /**
  * Class for hooks from field_widget_actions module.
@@ -316,6 +318,24 @@ class FieldWidgetAction {
         $context['action_id'] = $action_id;
         $field_widget_action->singleElementFormAlter($element, $form_state, $context);
       }
+    }
+  }
+
+  /**
+   * Implements hook_config_actions_alter().
+   */
+  #[Hook('config_action_alter')]
+  public function configActionAlter(array &$definitions) {
+    if (empty($definitions['setComponentThirdPartySetting'])) {
+      $definitions['setComponentThirdPartySetting'] = [
+        'class' => SetupFieldWidgetAction::class,
+        'provider' => 'field_widget_actions',
+        'id' => 'setComponentThirdPartySetting',
+        'admin_label' => new TranslatableMarkup('Setup Field Widget Actions'),
+        'entity_types' => [
+          'entity_form_display',
+        ],
+      ];
     }
   }
 
