@@ -211,7 +211,7 @@ class ChatTranslationProvider extends AiProviderClientBase implements
 
       $this->loadTranslator($messages);
       /** @var /Drupal\ai\OperationType\Chat\ChatOutput $message */
-      $message = $this->realTranslator->chat($messages, $this->chatConfiguration['model_id']);
+      $message = $this->realTranslator->chat($messages, $this->chatConfiguration['model_id'], ['ai_translate']);
     }
     catch (GuzzleException $exception) {
       // Error handling for the API call.
