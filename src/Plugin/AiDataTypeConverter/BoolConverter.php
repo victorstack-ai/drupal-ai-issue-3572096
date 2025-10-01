@@ -2,11 +2,11 @@
 
 namespace Drupal\ai\Plugin\AiDataTypeConverter;
 
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\Attribute\AiDataTypeConverter;
 use Drupal\ai\Base\AiDataTypeConverterPluginBase;
 use Drupal\ai\DataTypeConverter\AppliesResult;
 use Drupal\ai\DataTypeConverter\AppliesResultInterface;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Plugin implementation of the ai_data_type_converter.
@@ -36,7 +36,7 @@ class BoolConverter extends AiDataTypeConverterPluginBase {
     if (is_bool($value) || (is_string($value) && in_array(strtolower($value), ['true', 'false', '1', '0'], TRUE))) {
       return AppliesResult::applicable();
     }
-    return AppliesResult::notApplicable('The value cannot be converted to a string');
+    return AppliesResult::notApplicable('The value cannot be converted to a boolean');
   }
 
   /**

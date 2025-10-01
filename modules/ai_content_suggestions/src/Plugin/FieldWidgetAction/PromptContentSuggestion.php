@@ -2,13 +2,6 @@
 
 namespace Drupal\ai_content_suggestions\Plugin\FieldWidgetAction;
 
-use Drupal\ai\AiProviderPluginManager;
-use Drupal\ai\OperationType\Chat\ChatInput;
-use Drupal\ai\OperationType\Chat\ChatMessage;
-use Drupal\Component\Utility\NestedArray;
-use Drupal\Core\Ajax\AjaxResponse;
-use Drupal\Core\Ajax\OpenModalDialogCommand;
-use Drupal\Core\Ajax\SettingsCommand;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -18,6 +11,10 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Drupal\Core\Utility\Token;
+use Drupal\ai\AiProviderPluginManager;
+use Drupal\ai\OperationType\Chat\ChatInput;
+use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface;
 use Drupal\field_widget_actions\Attribute\FieldWidgetAction;
 use Drupal\field_widget_actions\FieldWidgetActionBase;
 use League\HTMLToMarkdown\HtmlConverter;
@@ -32,6 +29,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
   label: new TranslatableMarkup('Content Suggestion with prompt'),
   widget_types: ['string_textfield', 'string_textarea', 'text_textarea', 'text_textarea_with_summary', 'text_textfield'],
   field_types: ['string', 'string_long', 'text', 'text_long', 'text_with_summary'],
+  category: new TranslatableMarkup('AI Content Suggestions'),
 )]
 class PromptContentSuggestion extends FieldWidgetActionBase {
 
@@ -92,6 +90,13 @@ class PromptContentSuggestion extends FieldWidgetActionBase {
   protected LoggerInterface $logger;
 
   /**
+   * The prompt JSON decoder.
+   *
+   * @var \Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface
+   */
+  protected PromptJsonDecoderInterface $promptJsonDecoder;
+
+  /**
    * {@inheritdoc}
    */
   public function defaultConfiguration() {
@@ -99,6 +104,7 @@ class PromptContentSuggestion extends FieldWidgetActionBase {
       'settings' => [
         'model' => '',
         'prompt' => '',
+        'display_on_focus' => FALSE,
       ],
     ] + parent::defaultConfiguration();
   }
@@ -116,6 +122,7 @@ class PromptContentSuggestion extends FieldWidgetActionBase {
     $instance->renderer = $container->get('renderer');
     $instance->config = $container->get('config.factory')->get('ai_content_suggestions.settings');
     $instance->logger = $container->get('logger.channel.field_widget_actions');
+    $instance->promptJsonDecoder = $container->get('ai.prompt_json_decode');
     return $instance;
   }
 
@@ -172,6 +179,12 @@ class PromptContentSuggestion extends FieldWidgetActionBase {
         '#token_types' => [$field_entity_type],
       ];
     }
+    $element['settings']['display_on_focus'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Display the buttons when the form element is in focus'),
+      '#default_value' => $settings['display_on_focus'] ?? FALSE,
+      '#description' => $this->t('The buttons will be hidden by default and will be displayed only when the form element is focused. <b>Be aware that this is not good for accessibility</b>.'),
+    ];
     return $element;
   }
 
@@ -203,6 +216,10 @@ class PromptContentSuggestion extends FieldWidgetActionBase {
   public function completeFormAlter(array &$form, FormStateInterface $form_state, array $context = []) {
     parent::completeFormAlter($form, $form_state, $context);
     $form['#attributes']['class'][] = 'ai-content-suggestions--enabled';
+    $settings = $this->getConfiguration();
+    if (!empty($settings['settings']['display_on_focus'])) {
+      $form['#attributes']['class'][] = 'ai-content-suggestions--on-focus';
+    }
   }
 
   /**
@@ -211,11 +228,8 @@ class PromptContentSuggestion extends FieldWidgetActionBase {
   public function aiContentSuggestionsAjax(array &$form, FormStateInterface $form_state) {
     // Get the triggering element, as it contains the settings.
     $triggering_element = $form_state->getTriggeringElement();
-    $array_parents = $triggering_element['#array_parents'];
-    array_pop($array_parents);
-    $array_parents[] = static::FORM_ELEMENT_PROPERTY;
-    $target_element = NestedArray::getValue($form, $array_parents);
-    $selector = $target_element ? $target_element['#attributes']['data-drupal-selector'] : '';
+    // Get the element selector that should have the selected suggestion.
+    $selector = $this->getSuggestionsTarget($form, $form_state);
     // Set provider for AI Suggestions.
     $provider_config = $this->aiProvider->getSetProvider('chat', $triggering_element['#field_widget_action_settings']['settings']['model']);
     $prompt = $triggering_element['#field_widget_action_settings']['settings']['prompt'];
@@ -248,33 +262,33 @@ class PromptContentSuggestion extends FieldWidgetActionBase {
       $prompt = $this->token->replace($prompt, [$entity->getEntityTypeId() => $entity], ['clear' => TRUE]);
       $prompt = $converter->convert($prompt);
     }
+    $suggestions = '';
     /** @var \Drupal\ai\AiProviderInterface $ai_provider */
     $ai_provider = $provider_config['provider_id'];
     try {
       $messages = new ChatInput([
         new ChatMessage('user', $prompt),
       ]);
-      $ai_provider->setChatSystemRole($this->config->get('field_widget_prompt') ?? $this->t('You are helpful assistant.'));
+      $messages->setSystemPrompt($this->config->get('field_widget_prompt') ?? $this->t('You are helpful assistant.'));
       /** @var \Drupal\ai\OperationType\Chat\ChatMessage $response */
       $response = $ai_provider->chat($messages, $provider_config['model_id'], [
         'field_widget_action',
         'ai_content_suggestions',
       ])->getNormalized();
-      $message = trim($response->getText()) ?? $this->t('No result could be generated.');
+      $suggestion_candidates = $this->promptJsonDecoder->decode($response);
+      // In case json is not found, the result of decoding will be a stream or a
+      // chat message. We do not want to display a raw response to LLM, so the
+      // suggestions will be left empty, so the default error message could be
+      // displayed instead.
+      if (is_array($suggestion_candidates)) {
+        $suggestions = array_column($suggestion_candidates, 'suggestion');
+      }
     }
     catch (\Exception $e) {
       $this->logger->error($e->getMessage());
-      $message = $this->t('There was an error obtaining a response from the LLM.');
     }
-    $response = new AjaxResponse();
-    if (!empty($selector)) {
-      $response->addCommand(new SettingsCommand(['ai_cs_target' => ['target' => $selector]], TRUE));
-    }
-    $response->addCommand(new OpenModalDialogCommand($this->t('AI Suggestions'), $message, [
-      'width' => '80%',
-      'dialogClass' => 'ui-dialog-ai-suggestions',
-    ]));
-    return $response;
+
+    return $this->returnSuggestions($suggestions, $selector);
   }
 
 }

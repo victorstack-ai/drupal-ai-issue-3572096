@@ -229,7 +229,7 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
 
     $all_disabled = TRUE;
     foreach ($config['plugins'] as $plugin_id => $plugin) {
-      $definition = $this->pluginManager->getDefinition($plugin_id);
+      $this->pluginManager->getDefinition($plugin_id);
       if ($all_disabled && $plugin['enabled']) {
         $all_disabled = FALSE;
       }
@@ -250,11 +250,13 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
 
     }
 
-    foreach ($static_plugin_config['ai_ckeditor_ai']['plugins'] as $plugin_id => $plugin) {
-      if ($plugin_id == 'ai_ckeditor_help') {
-        unset($static_plugin_config['ai_ckeditor_ai']['plugins'][$plugin_id]);
-        $static_plugin_config['ai_ckeditor_ai']['plugins'][$plugin_id] = $plugin;
-        break;
+    if (isset($static_plugin_config['ai_ckeditor_ai']['plugins'])) {
+      foreach ($static_plugin_config['ai_ckeditor_ai']['plugins'] as $plugin_id => $plugin) {
+        if ($plugin_id == 'ai_ckeditor_help') {
+          unset($static_plugin_config['ai_ckeditor_ai']['plugins'][$plugin_id]);
+          $static_plugin_config['ai_ckeditor_ai']['plugins'][$plugin_id] = $plugin;
+          break;
+        }
       }
     }
 

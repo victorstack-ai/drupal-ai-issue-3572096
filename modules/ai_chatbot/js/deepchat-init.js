@@ -10,21 +10,17 @@
     agentUsageIsOpen: false,
     processing: false,
     attach: function (context, settings) {
+      once('ai-deepchat', 'deep-chat', context).forEach(($deepChat) => {
+
       if (Drupal.behaviors.deepChatToggle.initialized) {
         return;
       }
+
       // Select all chat containers within the current context
       const chatContainers = context.querySelectorAll('.chat-container');
-      const dropDownMenu = context.querySelector('.chat-dropdown');
-      // If its not found, return.
-      if (!dropDownMenu) {
-        return;
-      }
+
       // Mark as initialized to prevent re-processing
       Drupal.behaviors.deepChatToggle.initialized = true;
-      const chevron = context.querySelector('.chevron-icon');
-      const menuButton = dropDownMenu.querySelector('.chat-dropdown-button');
-      const clearHistory = dropDownMenu.querySelector('.clear-history');
 
       let pendingRenders = chatContainers.length;
       chatContainers.forEach((container) => {
@@ -43,25 +39,9 @@
           return;
         }
 
-        // Select the header element within the container
-        const header = container.querySelector('.ai-deepchat--header');
-        if (!header) {
-          console.warn('Header with class .ai-deepchat--header not found in container:', container);
-          return;
-        }
-
-        // Select the chat element within the container
-        const chatElement = container.querySelector('.chat-element');
-        if (!chatElement) {
-          console.warn('Chat element with class .chat-element not found in container:', container);
-          return;
-        }
-
-        // Optional: Select the toggle icon if present
-        const toggleIcon = header.querySelector('.toggle-icon');
-
         // Select the actual deepchat element
         const deepchatElement = container.querySelector('.deepchat-element');
+
         Drupal.behaviors.deepChatToggle.chats.push(deepchatElement);
 
         // Function to set thread_id.
@@ -75,38 +55,6 @@
 
         // Assign thread_id to chat.
         setThreadId(drupalSettings.ai_deepchat.thread_id);
-
-        // Function to update toggle icon (optional)
-        const updateToggleIcon = (isOpen) => {
-          if (toggleIcon) {
-            toggleIcon.classList.toggle('is-opened', !isOpen);
-            toggleIcon.classList.toggle('is-closed', isOpen);
-          }
-        };
-
-        // Function to open the chat
-        const openChat = () => {
-          container.classList.add('chat-open');
-          container.classList.remove('chat-collapsed');
-          container.classList.remove('chat-collapsed-minimal');
-          header.classList.add('active');
-          header.setAttribute('aria-expanded', 'true');
-          if (toggleIcon) updateToggleIcon(true);
-          localStorage.setItem(`deepChatState_${chatId}`, 'open');
-        };
-
-        // Function to close the chat
-        const closeChat = () => {
-          container.classList.add('chat-collapsed');
-          if (drupalSettings.ai_deepchat.collapse_minimal) {
-            container.classList.add('chat-collapsed-minimal');
-          }
-          container.classList.remove('chat-open');
-          header.classList.remove('active');
-          header.setAttribute('aria-expanded', 'false');
-          if (toggleIcon) updateToggleIcon(false);
-          localStorage.removeItem(`deepChatState_${chatId}`);
-        };
 
         // Function to clear messages
         const clearMessages = (event) => {
@@ -135,10 +83,6 @@
             // Unset connection to force rerendering.
             delete deepchatElement._activeService;
             deepchatElement.onRender();
-            deepchatElement.addMessage({
-              role: 'assistant',
-              text: drupalSettings.ai_deepchat.first_message,
-            });
           });
         }
 
@@ -154,45 +98,16 @@
           });
         }
 
-        // Toggle function
-        const toggleChat = () => {
-          if (container.classList.contains('chat-open')) {
-            closeChat();
-          } else {
-            openChat();
-          }
-        };
-
-        // Toggle menu
-        const toggleMenu = (event) => {
-          // Don't run parent event
-          event.stopPropagation();
-          // Toggle it
-          dropDownMenu.classList.toggle('active');
-          chevron.classList.toggle('rotate');
-        }
-
-        // Attach click event listener to the header
-        header.addEventListener('click', toggleChat);
-
-        // Attach keypress event listener for accessibility (e.g., Enter or Space keys)
-        header.addEventListener('keypress', (event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            toggleChat();
-          }
-        });
-
-        // Initialize state from localStorage
-        const savedState = localStorage.getItem(`deepChatState_${chatId}`);
-        if (savedState === 'open') {
-          openChat();
-        } else {
-          closeChat();
-        }
-
         // Add retry on error
         deepchatElement.addEventListener('error', handleError);
+
+        deepchatElement.loadHistory = (index) => {
+          // Add the history to the chat.
+          if (index === 0 && drupalSettings.ai_deepchat.messages.length > 0) {
+            return drupalSettings.ai_deepchat.messages;
+          }
+          return [];
+        }
 
         // We need to know if we should automatically continuer to agent.
         deepchatElement.responseInterceptor = (response) => {
@@ -325,12 +240,6 @@
               }
             }
           }
-          // Add the history to the chat.
-          if (drupalSettings.ai_deepchat.messages.length > 0) {
-            for (let message of drupalSettings.ai_deepchat.messages) {
-              deepchatElement.addMessage(message);
-            }
-          }
 
           // When all chatbots are rendered.
           if (pendingRenders === 0) {
@@ -344,13 +253,8 @@
             document.dispatchEvent(event);
           }
         })
-
-        // Toggle the menu
-        menuButton.addEventListener('click', toggleMenu);
-
-        // Menu items
-        clearHistory.addEventListener('click', clearMessages);
       });
+    })
     },
     getSession: async function () {
       return new Promise((resolve, reject) => {

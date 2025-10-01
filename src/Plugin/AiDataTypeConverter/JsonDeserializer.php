@@ -2,11 +2,12 @@
 
 namespace Drupal\ai\Plugin\AiDataTypeConverter;
 
+use Drupal\Component\Serialization\Json;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\Attribute\AiDataTypeConverter;
 use Drupal\ai\Base\AiDataTypeConverterPluginBase;
 use Drupal\ai\DataTypeConverter\AppliesResult;
 use Drupal\ai\DataTypeConverter\AppliesResultInterface;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Plugin implementation of the ai_data_type_converter.
@@ -23,6 +24,9 @@ class JsonDeserializer extends AiDataTypeConverterPluginBase {
    * {@inheritdoc}
    */
   public function appliesToDataType(string $data_type): AppliesResultInterface {
+    if ($data_type === 'string') {
+      return AppliesResult::notApplicable('"string" data types should not be parsed as json');
+    }
     return AppliesResult::applicable();
   }
 
@@ -34,7 +38,7 @@ class JsonDeserializer extends AiDataTypeConverterPluginBase {
       return AppliesResult::notApplicable('The value is not valid JSON');
     }
     // @todo Replace with json_validate after PHP 8.3
-    json_decode($value);
+    Json::decode($value);
     if (json_last_error() === JSON_ERROR_NONE) {
       return AppliesResult::applicable();
     }
@@ -45,7 +49,7 @@ class JsonDeserializer extends AiDataTypeConverterPluginBase {
    * {@inheritdoc}
    */
   public function convert(string $data_type, mixed $value): mixed {
-    return json_decode($value);
+    return Json::decode($value);
   }
 
 }

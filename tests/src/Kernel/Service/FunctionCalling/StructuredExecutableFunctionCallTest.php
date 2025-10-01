@@ -8,14 +8,12 @@ use Drupal\KernelTests\KernelTestBase;
 use Drupal\ai\Service\FunctionCalling\StructuredExecutableFunctionCallInterface;
 use Drupal\ai_test\Plugin\AiFunctionCall\Calculator;
 use Drupal\ai_test\Plugin\AiFunctionCall\Weather;
-use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tests for the StructuredExecutableFunctionCallTest class.
  *
  * @group ai
  */
-#[Group('ai')]
 final class StructuredExecutableFunctionCallTest extends KernelTestBase {
 
   /**

@@ -45,9 +45,9 @@ class ChatMessage {
   /**
    * The tool id if any.
    *
-   * @var string
+   * @var string|null
    */
-  private string $toolId = "";
+  private ?string $toolId = NULL;
 
   /**
    * The constructor.
@@ -185,10 +185,10 @@ class ChatMessage {
   /**
    * Get the tool id.
    *
-   * @return string
+   * @return string|null
    *   The tool id.
    */
-  public function getToolsId(): string {
+  public function getToolsId(): string|null {
     return $this->toolId;
   }
 
@@ -267,8 +267,43 @@ class ChatMessage {
       // @todo find out if this can be changed to 'files'
       'images' => $images,
       'tools' => $this->tools ? $this->getRenderedTools() : NULL,
-      'tool_id' => $this->toolId,
+      'tool_id' => $this->toolId ?? NULL,
     ];
+  }
+
+  /**
+   * Create an instance from an array.
+   *
+   * @param array $data
+   *   The data to create the instance from.
+   *
+   * @return static
+   *   The created instance.
+   */
+  public static function fromArray(array $data): static {
+    $instance = new static($data['role'] ?? '', $data['text'] ?? '', []);
+    if (isset($data['images'])) {
+      foreach ($data['images'] as $imageData) {
+        $instance->setImage(ImageFile::fromArray($imageData));
+      }
+    }
+    if (isset($data['tools'])) {
+      $instance->setTools(array_map(
+        fn($toolData) => \Drupal::service('plugin.manager.ai.chat_tools')->createInstance($toolData['type'], $toolData),
+        $data['tools']
+      ));
+    }
+    if (isset($data['tool_id'])) {
+      $instance->setToolsId($data['tool_id']);
+    }
+    if (isset($data['text'])) {
+      $instance->setText($data['text']);
+    }
+    if (isset($data['role'])) {
+      $instance->setRole($data['role']);
+    }
+    // @todo Files.
+    return $instance;
   }
 
 }

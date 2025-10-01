@@ -13,7 +13,10 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\file\Element\ManagedFile;
+use Drupal\file\Entity\File;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai_automators\Service\Automate;
 use Drupal\ai_ckeditor\AiCKEditorPluginBase;
@@ -31,6 +34,8 @@ use Symfony\Component\HttpFoundation\RequestStack;
   module_dependencies: [],
 )]
 final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
+
+  use StringTranslationTrait;
 
   /**
    * The automate service.
@@ -213,6 +218,13 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
+  protected function needsSelectedText() {
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
 
   }
@@ -235,10 +247,11 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
    * {@inheritdoc}
    */
   public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []) {
-    $form_state->setCached(FALSE);
+    $form_state->disableCache();
     $storage = $form_state->getStorage();
     $form = parent::buildCkEditorModalForm($form, $form_state);
     unset($form['selected_text']);
+    unset($form['#markup']);
 
     // Something is wrong with the settings if we don't get the ids.
     if (!isset($settings['config_id']) || !isset($settings['editor_id']) || !isset($settings['plugin_id'])) {
@@ -314,7 +327,7 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
     ];
 
     // Get the inputs.
-    foreach ($plugin_config['inputs'] as $input) {
+    foreach ($plugin_config['inputs'] as $input => $value) {
       // Use the entity field.
       if (isset($fields[$input]) && in_array($fields[$input]->getType(), [
         'image',
@@ -322,9 +335,11 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
       ])) {
         $form[$input] = [
           '#type' => 'managed_file',
-          '#title' => t('Upload a file'),
-          '#description' => t('Allowed types: jpg, jpeg, png.'),
+          '#title' => $this->t('Upload a file'),
+          '#description' => $this->t('Allowed types: jpg, jpeg, png.'),
           '#upload_location' => 'public://uploads/',
+          '#value_callback' => [self::class, 'fileValueCallback'],
+          '#submit' => [[self::class, 'saveUploadedFile']],
         ];
       }
       elseif (isset($fields[$input])) {
@@ -359,10 +374,43 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
           break;
       }
     }
-
     $form['#attached']['library'][] = 'ai_automators/automator_ckeditor';
 
     return $form;
+  }
+
+  /**
+   * Static value callback for managed_file.
+   */
+  public static function fileValueCallback(&$element, $input, FormStateInterface $form_state) {
+    // Use default managed_file value callback to handle initial processing.
+    $value = ManagedFile::valueCallback($element, $input, $form_state);
+
+    // If a file was uploaded, save it and return only the file ID.
+    if (!empty($value) && is_array($value) && !empty($value[0])) {
+      return [$value[0]];
+    }
+
+    return $value;
+  }
+
+  /**
+   * Static submit handler to save uploaded files and store only file IDs.
+   */
+  public static function saveUploadedFile(array &$form, FormStateInterface $form_state) {
+    $values = $form_state->getValue('plugin_config');
+    $input = $form_state->getTriggeringElement()['#name'];
+    if (!empty($values[$input]) && is_array($values[$input]) && !empty($values[$input][0])) {
+      // Load the file entity from the file ID.
+      $file = File::load($values[$input][0]);
+      if ($file) {
+        // Ensure the file is permanent and saved.
+        $file->setPermanent();
+        $file->save();
+        // Update form state with only the file ID.
+        $form_state->setValue(['plugin_config', $input], [$file->id()]);
+      }
+    }
   }
 
   /**
@@ -393,14 +441,17 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
         'response_wrapper',
         'config_id',
       ])) {
-        if (isset($fields[$key]) && in_array($fields[$key]->getType(), [
-          'image',
-          'file',
-        ])) {
-          $inputs[$key] = $value[0] ?? '';
-        }
-        else {
-          $inputs[$key] = $value;
+        // Only add fields that exist in the entity type.
+        if (isset($fields[$key])) {
+          if (in_array($fields[$key]->getType(), [
+            'image',
+            'file',
+          ])) {
+            $inputs[$key] = $value[0] ?? '';
+          }
+          else {
+            $inputs[$key] = $value;
+          }
         }
       }
     }
@@ -470,6 +521,7 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
       $url = $this->fileUrlGenerator->generateAbsoluteString($file->getFileUri());
       return '<img data-entity-uuid="' . $file->uuid() . '" data-entity-type="file" src="' . $url . '" width="' . $data['width'] . '" height="' . $data['height'] . '" />';
     }
+    return '';
   }
 
 }

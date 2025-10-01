@@ -14,7 +14,7 @@ use Drupal\ai_automators\Attribute\AiAutomatorProcessRule;
 use Drupal\ai_automators\Exceptions\AiAutomatorRequestErrorException;
 use Drupal\ai_automators\Exceptions\AiAutomatorResponseErrorException;
 use Drupal\ai_automators\Exceptions\AiAutomatorRuleNotFoundException;
-use Drupal\ai_automators\PluginInterfaces\AiAutomatorFieldProcessInterface;
+use Drupal\ai_automators\PluginInterfaces\AiAutomatorDirectProcessInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -25,7 +25,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
   title: new TranslatableMarkup('Field Widget'),
   description: new TranslatableMarkup('Processes the widget when the user takes action. This will not save the entity, only add values to the form.'),
 )]
-class FieldWidgetProcessing implements AiAutomatorFieldProcessInterface, ContainerFactoryPluginInterface {
+class FieldWidgetProcessing implements AiAutomatorDirectProcessInterface, ContainerFactoryPluginInterface {
 
   /**
    * Constructor.
@@ -102,6 +102,14 @@ class FieldWidgetProcessing implements AiAutomatorFieldProcessInterface, Contain
   public function processorIsAllowed(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition) {
     // Only is available if the Form Widget Actions module is enabled.
     return $this->moduleHandler->moduleExists('field_widget_actions');
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function shouldProcessDirectly(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig): bool {
+    // This processor always processes directly.
+    return TRUE;
   }
 
 }

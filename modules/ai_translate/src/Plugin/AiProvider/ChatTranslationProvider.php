@@ -18,7 +18,6 @@ use Drupal\ai\OperationType\TranslateText\TranslateTextInput;
 use Drupal\ai\OperationType\TranslateText\TranslateTextInterface;
 use Drupal\ai\OperationType\TranslateText\TranslateTextOutput;
 use Drupal\ai\Plugin\ProviderProxy;
-use Drupal\language\Entity\ConfigurableLanguage;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -68,12 +67,21 @@ class ChatTranslationProvider extends AiProviderClientBase implements
   protected TwigEnvironment $twig;
 
   /**
+   * The Entity Type Manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->manager = $container->get('ai.provider');
     $instance->twig = $container->get('twig');
+    $instance->configFactory = $container->get('config.factory');
+    $instance->entityTypeManager = $container->get('entity_type.manager');
     return $instance;
   }
 
@@ -162,7 +170,8 @@ class ChatTranslationProvider extends AiProviderClientBase implements
     $text = $input->getText();
 
     // We can guess source, but not target language.
-    $targetLanguage = ConfigurableLanguage::load($input->getTargetLanguage());
+    /** @var \Drupal\language\Entity\ConfigurableLanguage $targetLanguage */
+    $targetLanguage = $this->entityTypeManager->getStorage('configurable_language')->load($input->getTargetLanguage());
     if (!$targetLanguage) {
       // @todo TranslateText-specific exception, documented in
       // TranslateTextInterface::translateText() docblock.
@@ -172,8 +181,8 @@ class ChatTranslationProvider extends AiProviderClientBase implements
       return new TranslateTextOutput('', '', '');
     }
 
-    $aiConfig = $this->configFactory->get('ai_translate.settings');
-    $prompt = $aiConfig->get($targetLanguage->getId() . '_prompt');
+    $aiConfig = $this->configFactory->get('ai_translate.settings')->get('language_settings') ?? [];
+    $prompt = $aiConfig[$targetLanguage->getId()]['prompt'] ?? '';
     if (empty($prompt)) {
       $prompt = $aiConfig->get('prompt');
     }
@@ -183,7 +192,8 @@ class ChatTranslationProvider extends AiProviderClientBase implements
       'input_text' => $text,
     ];
     try {
-      $sourceLanguage = ConfigurableLanguage::load($input->getSourceLanguage());
+      /** @var \Drupal\language\Entity\ConfigurableLanguage $sourceLanguage */
+      $sourceLanguage = $this->entityTypeManager->getStorage('configurable_language')->load($input->getSourceLanguage());
       if ($sourceLanguage) {
         $context['source_lang'] = $sourceLanguage->getId();
         $context['source_lang_name'] = $sourceLanguage->getName();
@@ -194,10 +204,10 @@ class ChatTranslationProvider extends AiProviderClientBase implements
     }
     $promptText = $this->twig->renderInline($prompt, $context);
     try {
-      $this->setChatSystemRole('You are a helpful translator.');
       $messages = new ChatInput([
         new chatMessage('user', $promptText),
       ]);
+      $messages->setSystemPrompt('You are a helpful translator.');
 
       $this->loadTranslator($messages);
       /** @var /Drupal\ai\OperationType\Chat\ChatOutput $message */

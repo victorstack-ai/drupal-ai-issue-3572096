@@ -5,7 +5,8 @@
     "require": {
         "drupal/key": "^1.18",
         "league/html-to-markdown": "^5.1",
-        "yethee/tiktoken": "^0.5.1"
+        "yethee/tiktoken": "^0.5.1",
+        "openai-php/client": ">=v0.10.1"
     },
     "require-dev": {
         "drupal/eca": "^2.0",
@@ -13,6 +14,7 @@
         "drupal/search_api": "^1.x-dev",
         "drupal/search_api_solr": "^4.0",
         "drupal/token": "^1.14",
+        "drush/drush": "^12|^13",
         "allanpichardo/mysql-vector": "^2.0"
     },
     "suggest": {

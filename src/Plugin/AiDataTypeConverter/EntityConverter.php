@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Drupal\ai\Plugin\AiDataTypeConverter;
 
-use Drupal\ai\Base\AiDataTypeConverterPluginBase;
-use Drupal\ai\DataTypeConverter\AppliesResult;
-use Drupal\ai\DataTypeConverter\AppliesResultInterface;
-use Drupal\ai\Service\FunctionCalling\FunctionCallInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\Attribute\AiDataTypeConverter;
+use Drupal\ai\Base\AiDataTypeConverterPluginBase;
+use Drupal\ai\DataTypeConverter\AppliesResult;
+use Drupal\ai\DataTypeConverter\AppliesResultInterface;
+use Drupal\ai\Service\FunctionCalling\FunctionCallInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -105,6 +105,7 @@ class EntityConverter extends AiDataTypeConverterPluginBase implements Container
       }
     }
 
+    /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
     $entity = $this->entityTypeManager->getStorage($entity_type_id)->load($id);
 
     if (!$entity) {
@@ -126,6 +127,7 @@ class EntityConverter extends AiDataTypeConverterPluginBase implements Container
     [$entity_type_id, $id] = $parts;
     $langcode = count($parts) === 3 ? $parts[2] : NULL;
 
+    /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
     $entity = $this->entityTypeManager->getStorage($entity_type_id)->load($id);
     if ($langcode !== NULL) {
       return $entity->getTranslation($langcode);

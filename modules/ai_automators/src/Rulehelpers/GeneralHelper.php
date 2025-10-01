@@ -368,7 +368,7 @@ class GeneralHelper {
     ];
     $joiners = array_merge_recursive($joiners, $extraJoiners);
     $storage = $this->entityTypeManager->getStorage('ai_automator');
-    $fields = $storage->loadByProperties([
+    $storage->loadByProperties([
       'entity_type' => $entity->getEntityTypeId(),
       'bundle' => $entity->bundle(),
     ]);

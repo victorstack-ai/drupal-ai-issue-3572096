@@ -25,6 +25,8 @@ class FieldWidgetAction extends Plugin {
    *   The list of widget types to work on.
    * @param array $field_types
    *   The list of field types to work on.
+   * @param \Drupal\Core\StringTranslation\TranslatableMarkup|null $category
+   *   The plugin category.
    * @param bool $multiple
    *   If TRUE, the button will be shown for each element of multivalue field.
    * @param class-string|null $deriver
@@ -37,6 +39,7 @@ class FieldWidgetAction extends Plugin {
     public readonly TranslatableMarkup $label,
     public readonly array $widget_types,
     public readonly array $field_types,
+    public readonly ?TranslatableMarkup $category = NULL,
     public readonly bool $multiple = TRUE,
     public readonly ?string $deriver = NULL,
     public readonly ?TranslatableMarkup $description = NULL,

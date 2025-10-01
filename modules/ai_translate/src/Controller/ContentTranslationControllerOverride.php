@@ -117,6 +117,7 @@ class ContentTranslationControllerOverride extends ContentTranslationController 
 
       $entity = $route_match->getParameter($entity_type_id);
       $entity_id = $entity->id();
+      /** @var Drupal\Core\Entity\RevisionableStorageInterface $storage */
       $storage = $this->entityTypeManager()->getStorage($entity_type_id);
       $default_revision = $storage->load($entity_id);
       $entity_type = $entity->getEntityType();
@@ -162,7 +163,7 @@ class ContentTranslationControllerOverride extends ContentTranslationController 
           $ai_model = FALSE;
           $additional = '';
           if ($lang_from !== $langcode && !$entity->hasTranslation($langcode)) {
-            $model = $config->get($langcode . '_model') ?? '';
+            $model = $config->get('language_settings')[$langcode]['model'] ?? '';
             $parts = explode('__', $model);
             if ($model == "" || empty($parts[0])) {
               $default_model = $this->providerManager->getSimpleDefaultProviderOptions('translate_text');

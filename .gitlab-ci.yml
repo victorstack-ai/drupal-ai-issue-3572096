@@ -1,3 +1,4 @@
+# Use the Drupal GitLab CI template.
 include:
   - project: $_GITLAB_TEMPLATES_REPO
     ref: $_GITLAB_TEMPLATES_REF
@@ -7,21 +8,46 @@ include:
       - '/includes/include.drupalci.workflows.yml'
 
 variables:
-  _TARGET_DRUPAL: 11.0
-  _TARGET_PHP: 8.3
+  # Give more verbose PHPUnit output.
   _PHPUNIT_EXTRA: --verbose
+  # Opt into the relevant versions.
   OPT_IN_TEST_PREVIOUS_MAJOR: 1
-  OPT_IN_TEST_PREVIOUS_MINOR: 0
+  OPT_IN_TEST_PREVIOUS_MINOR: 1
   OPT_IN_TEST_NEXT_MINOR: 1
-  #OPT_IN_TEST_NEXT_MAJOR: 1
+  OPT_IN_TEST_NEXT_MAJOR: 1
   OPT_IN_TEST_MAX_PHP: 1
+  # Use runtests.sh which gives better output.
   _PHPUNIT_CONCURRENT: 1
+  # Configured skipped tests.
   SKIP_ESLINT: 1
-  # Until fixed in gitlab templates.
-  SKIP_STYLELINT: 1
+  SKIP_STYLELINT: 1   # Until fixed in gitlab templates.
   # showdown.js is full of emoji words.
-  _CSPELL_IGNORE_PATHS: "'modules/ai_api_explorer/css', 'modules/ai_api_explorer/js', 'modules/ai_chatbot/js', 'modules/ai_chatbot/deepchat', 'modules/ai_chatbot/css', '.cspell-project-words.txt', 'grumphp.yml"
+  _CSPELL_IGNORE_PATHS: "'assets/js/chat_history_element.js', 'modules/*/tests/resources/ai_test/requests/*/*.yml', 'modules/ai_api_explorer/css', 'modules/ai_api_explorer/js', 'modules/ai_chatbot/js', 'modules/ai_chatbot/deepchat', 'modules/ai_chatbot/css', 'modules/ai_automators/tests/config', '.cspell-project-words.txt', 'grumphp.yml"
   COMPOSER_IGNORE_PLATFORM_REQS: 'ext-ffi'
+
+phpunit (previous major):
+  before_script:
+    # We need to build 8.1 with the FFI extension enabled.
+    # Install dependencies.
+    - apt-get update
+    - apt-get install -y --no-install-recommends $PHPIZE_DEPS libffi-dev
+    # Download and extract PHP source.
+    - curl -LS -o /usr/src/php.tar.xz "https://php.net/distributions/php-$(php -r 'echo PHP_VERSION;').tar.xz"
+    - docker-php-source extract
+    # Compile the FFI module.
+    - |-
+      (
+        cd /usr/src/php/ext/ffi
+        phpize
+        ./configure
+        make
+        make install
+      )
+    # Enable the FFI module.
+    - echo "extension=ffi.so" > /usr/local/etc/php/conf.d/docker-php-ext-ffi.ini
+    - echo "ffi.enable=true" >> /usr/local/etc/php/conf.d/docker-php-ext-ffi.ini
+    # Show the configuration for debugging purposes.
+    - php -i | grep ffi
 
 # Build JS artifacts as this can sometimes be forgotten.
 js_build:
@@ -131,71 +157,12 @@ phpcs:
   allow_failure: false
 phpstan:
   allow_failure: false
-  before_script:
-    - composer require --dev drush/drush
 
-# Add in the FFI extension for the AI Search end-to-end test.
-# See /docs/modules/ai_search/index.md for more details.
-phpunit:
-  extends: .phpunit-base
-  needs:
-  - job: composer
-    artifacts: true
-  - job: js_build
-    artifacts: true
+.phpunit-base:
   before_script:
-    # Update and install build tools (needed for compilation), libffi-dev, and wget.
-    - apt-get update && apt-get install -y --no-install-recommends $PHPIZE_DEPS libffi-dev wget
-    # Download and extract PHP source code (PHP 8.3 for this job).
-    # Ensure this URL points to the PHP version matching your Docker image if 8.3.0 is not exact.
-    - wget -qO /usr/src/php.tar.xz https://www.php.net/distributions/php-8.3.0.tar.xz
-    - mkdir -p /usr/src/php
-    - tar -xf /usr/src/php.tar.xz -C /usr/src/php --strip-components=1
-    # Manually compile FFI from the bundled source to avoid PECL fallback.
-    - |
-      cd /usr/src/php/ext/ffi \
-      && phpize \
-      && ./configure \
-      && make \
-      && make install
-    # Create INI file to load ffi.so and set ffi.enable=true.
-    # The 'make install' step should place ffi.so in the correct extension directory.
-    - |
-      echo "extension=ffi.so" > /usr/local/etc/php/conf.d/docker-php-ext-ffi.ini; \
-      echo "ffi.enable=true" >> /usr/local/etc/php/conf.d/docker-php-ext-ffi.ini
-    # Debug output to check FFI is enabled.
-    - php -i | grep ffi
+    # Enable the FFI module.
+    - echo "extension=ffi" > /usr/local/etc/php/conf.d/docker-php-ext-ffi.ini
+    - echo "ffi.enable=true" >> /usr/local/etc/php/conf.d/docker-php-ext-ffi.ini
+    # Show the configuration for debugging purposes.
+    - php --ri ffi
 
-phpunit (max PHP version):
-  extends: .phpunit-base
-  needs:
-  - job: composer
-    artifacts: true
-  - job: js_build
-    artifacts: true
-  before_script:
-    # Update and install build tools (needed for compilation), libffi-dev, and wget.
-    - apt-get update && apt-get install -y --no-install-recommends $PHPIZE_DEPS libffi-dev wget
-    # Download and extract PHP source code (PHP 8.4 for this job).
-    # Ensure this URL points to the PHP version matching your Docker image if 8.4.0 is not exact.
-    - wget -qO /usr/src/php.tar.xz https://www.php.net/distributions/php-8.4.0.tar.xz
-    - mkdir -p /usr/src/php
-    - tar -xf /usr/src/php.tar.xz -C /usr/src/php --strip-components=1
-    # Manually compile FFI from the bundled source to avoid PECL fallback.
-    - |
-      cd /usr/src/php/ext/ffi \
-      && phpize \
-      && ./configure \
-      && make \
-      && make install
-    # Create INI file to load ffi.so and set ffi.enable=true.
-    # The 'make install' step should place ffi.so in the correct extension directory.
-    - |
-      echo "extension=ffi.so" > /usr/local/etc/php/conf.d/docker-php-ext-ffi.ini; \
-      echo "ffi.enable=true" >> /usr/local/etc/php/conf.d/docker-php-ext-ffi.ini
-    # Debug output to check FFI is enabled.
-    - php -i | grep ffi
-
-# Revert to Drupal Gitlab CI default template.
-phpunit (previous major):
-  extends: .phpunit-base

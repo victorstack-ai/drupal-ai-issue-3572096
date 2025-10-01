@@ -59,3 +59,6 @@ field_widget_action.plugin.prompt_content_suggestion:
         prompt:
           type: text
           label: 'Prompt'
+        display_on_focus:
+          type: boolean
+          label: 'Display buttons on focus'

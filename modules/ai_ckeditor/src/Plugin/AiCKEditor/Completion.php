@@ -52,11 +52,6 @@ final class Completion extends AiCKEditorPluginBase {
       '#title' => $this->t('Completion pre prompt'),
       '#default_value' => $prompt_complete ?? '',
       '#description' => $this->t('This prompt will be prepended before the user prompt. This field may be left empty too.'),
-      '#states' => [
-        'required' => [
-          ':input[name="editor[settings][plugins][ai_ckeditor_ai][plugins][ai_ckeditor_completion][enabled]"]' => ['checked' => TRUE],
-        ],
-      ],
     ];
 
     return $form;
@@ -84,10 +79,6 @@ final class Completion extends AiCKEditorPluginBase {
    */
   public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []): array {
     $form = parent::buildCkEditorModalForm($form, $form_state);
-
-    // Automatically enable the CKEditor5 sourceEditing plugin for the response
-    // text textarea, since the Completion plugin requires this.
-    $form['response_wrapper']['response_text']['#ai_ckeditor_response'] = TRUE;
 
     $form['text_to_submit'] = [
       '#type' => 'textarea',

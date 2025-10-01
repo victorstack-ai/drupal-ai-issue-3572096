@@ -101,7 +101,7 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
     $this->drupalGet('admin/config/ai/settings');
     $this->submitForm([
       'operation__embeddings' => 'test_mysql_provider',
-    ], 'Save configuration');
+    ], 'Choose Model');
     $this->submitForm([
       'operation__embeddings' => 'test_mysql_provider',
       'model__embeddings' => 'mysql',
@@ -142,7 +142,7 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
     // Rendered html.
     $page->pressButton('edit-4');
     $this->submitForm([
-      'view_mode[entity:node][:default]' => 'full',
+      'view_mode[entity:node][:default]' => 'default',
     ], 'Save');
     // Title.
     $this->drupalGet('admin/config/search/search-api/index/test_mysql_vdb_index/fields/add/nojs');
@@ -214,6 +214,12 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
   public function indexContent(): void {
     $cron_service = \Drupal::service('cron');
     $cron_service->run();
+  }
+
+  /**
+   * Test the content indexing has completed.
+   */
+  public function testContentIndexingCompleted(): void {
     $this->drupalGet('admin/config/search/search-api/index/test_mysql_vdb_index');
     $this->assertSession()->elementTextContains('css', '.progress__percentage', '100%');
   }
@@ -226,7 +232,16 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
     $this->submitForm([
       'checker[entity]' => $this->nodes[0]->label() . ' (' . $this->nodes[0]->id() . ')',
     ], 'Save changes');
-    $this->assertSession()->pageTextContains('[Chocolate Cake](' . $this->nodes[0]->toUrl()->toString() . ')');
+
+    if (class_exists('League\CommonMark\CommonMarkConverter')) {
+      $this->assertSession()->pageTextContains('Chocolate Cake');
+    }
+    else {
+      $has_markdown_link = $this->getSession()->getPage()->hasContent('[Chocolate Cake](' . $this->nodes[0]->toUrl()->toString() . ')');
+      $has_markdown_title = $this->getSession()->getPage()->hasContent('# Chocolate Cake');
+      $this->assertTrue($has_markdown_link || $has_markdown_title);
+    }
+
     $this->assertSession()->pageTextContains('Title: Chocolate Cake');
 
     // Ignore the title and expect it to no longer show up.
@@ -238,7 +253,16 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
     $this->submitForm([
       'checker[entity]' => $this->nodes[0]->label() . ' (' . $this->nodes[0]->id() . ')',
     ], 'Save changes');
-    $this->assertSession()->pageTextContains('[Chocolate Cake](' . $this->nodes[0]->toUrl()->toString() . ')');
+
+    if (class_exists('League\CommonMark\CommonMarkConverter')) {
+      $this->assertSession()->pageTextContains('Chocolate Cake');
+    }
+    else {
+      $has_markdown_link = $this->getSession()->getPage()->hasContent('[Chocolate Cake](' . $this->nodes[0]->toUrl()->toString() . ')');
+      $has_markdown_title = $this->getSession()->getPage()->hasContent('# Chocolate Cake');
+      $this->assertTrue($has_markdown_link || $has_markdown_title);
+    }
+
     $this->assertSession()->pageTextNotContains('Title: Chocolate Cake');
 
     // Reset in case parallel test run.
@@ -259,6 +283,7 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
       'label' => 'Test search view',
       'id' => 'test_search_view',
       'show[wizard_key]' => 'standard:search_api_index_test_mysql_vdb_index',
+      'page[title]' => 'Test Search View',
       'page[create]' => 1,
       'page[path]' => 'test-search-view',
     ], 'Save and edit');
@@ -312,6 +337,67 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
     ], 'Apply');
     $rows = $this->cssSelect('.views-row');
     $this->assertSession()->pageTextNotContains('Strawberry Cheese Cake');
+  }
+
+  /**
+   * Tests that raw embedding vector is included in results when enabled.
+   */
+  public function testRawEmbeddingVectorInResults() {
+    $this->drupalLogin($this->adminUser);
+    $this->drupalGet('admin/config/search/search-api/server/test_mysql_vdb/edit');
+    $this->submitForm([
+      'backend_config[include_raw_embedding_vector]' => TRUE,
+    ], 'Save');
+
+    $this->drupalGet('admin/structure/views');
+    if (!$this->getSession()->getPage()->hasLink('Test raw vector view')) {
+      $this->drupalGet('admin/structure/views/add');
+      $this->submitForm([
+        'label' => 'Test raw vector view',
+        'id' => 'test_raw_vector_view',
+        'show[wizard_key]' => 'standard:search_api_index_test_mysql_vdb_index',
+        'page[title]' => 'Test Raw Vector View',
+        'page[create]' => 1,
+        'page[path]' => 'test-raw-vector-view',
+      ], 'Save and edit');
+
+      // Add a search exposed filter.
+      $this->drupalGet('admin/structure/views/nojs/add-handler/test_raw_vector_view/default/filter');
+      $this->submitForm([
+        'name[search_api_index_test_mysql_vdb_index.search_api_fulltext]' => 'search_api_index_test_mysql_vdb_index.search_api_fulltext',
+      ], 'Add and configure filter criteria');
+
+      // Expose the filter then save it.
+      $edit = [
+        'options[expose_button][checkbox][checkbox]' => 1,
+      ];
+      $this->submitForm($edit, 'Expose filter');
+      $edit = [
+        'options[expose_button][checkbox][checkbox]' => 1,
+        'options[group_button][radios][radios]' => 0,
+      ];
+      $this->submitForm($edit, 'Apply');
+      $this->submitForm([], 'Save');
+    }
+
+    // Go to the search view page.
+    $this->drupalGet('test-raw-vector-view');
+    $this->submitForm([
+      'search_api_fulltext' => 'chocolate',
+    ], 'Apply');
+
+    // Programmatically fetch Search API results for deeper inspection.
+    $index_storage = \Drupal::entityTypeManager()->getStorage('search_api_index');
+    $index = $index_storage->load('test_mysql_vdb_index');
+    $query = $index->query();
+    $query->keys('chocolate');
+    $results = $query->execute();
+
+    foreach ($results->getResultItems() as $item) {
+      $extra_data = $item->getExtraData();
+      $this->assertArrayHasKey('raw_vector', $extra_data, 'raw_vector is present in extra data');
+      $this->assertIsArray($extra_data['raw_vector'], 'raw_vector is an array');
+    }
   }
 
 }

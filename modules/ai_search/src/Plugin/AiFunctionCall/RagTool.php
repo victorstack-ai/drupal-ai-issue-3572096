@@ -10,7 +10,6 @@ use Drupal\ai\Attribute\FunctionCall;
 use Drupal\ai\Base\FunctionCallBase;
 use Drupal\ai\Service\FunctionCalling\FunctionCallInterface;
 use Drupal\ai\Service\FunctionCalling\StructuredExecutableFunctionCallInterface;
-use Drupal\ai\Utility\ContextDefinitionNormalizer;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -83,7 +82,7 @@ class RagTool extends FunctionCallBase implements StructuredExecutableFunctionCa
       $configuration,
       $plugin_id,
       $plugin_definition,
-      new ContextDefinitionNormalizer(),
+      $container->get('ai.context_definition_normalizer'),
     );
     $instance->entityTypeManager = $container->get('entity_type.manager');
     $instance->entityFieldManager = $container->get('entity_field.manager');
@@ -127,6 +126,8 @@ class RagTool extends FunctionCallBase implements StructuredExecutableFunctionCa
       $query = $index->query([
         'limit' => $amount,
       ]);
+      // We want to get chunks rather than full entities.
+      $query->setOption('search_api_ai_get_chunks_result', TRUE);
       $queries = $this->searchString;
       $query->keys($queries);
       $results = $query->execute();

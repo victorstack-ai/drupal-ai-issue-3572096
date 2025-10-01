@@ -1,5 +1,5 @@
 admin_ui:
-  version: VERSION
+  version: 1.2.0
   css:
     theme:
       css/admin.css: {  }
@@ -9,3 +9,14 @@ admin_ui:
     - core/once
     - core/sortable
     - core/drupal
+
+suggestions:
+  version: 1.2.0
+  js:
+    js/suggestions.js: {  }
+  css:
+    theme:
+      css/suggestions.css: {  }
+  dependencies:
+    - core/drupal.dialog.ajax
+    - core/drupalSettings
