@@ -128,13 +128,13 @@ class AiPromptTypeForm extends EntityForm {
       $form['variables_wrapper']['variables'][$i]['remove'] = [
         '#type' => 'submit',
         '#value' => $this->t('Remove'),
-        '#name' => $i,
+        '#name' => 'remove_variable_' . $i,
         '#submit' => ['::removeVariableCallback'],
         '#ajax' => [
           'callback' => '::variablesCallback',
           'wrapper' => 'js-variables-wrapper',
         ],
-        '#limit_validation_errors' => TRUE,
+        '#limit_validation_errors' => [],
       ];
     }
     $form['variables_wrapper']['add_variable'] = [
@@ -218,13 +218,13 @@ class AiPromptTypeForm extends EntityForm {
       $form['tokens_wrapper']['tokens'][$i]['remove'] = [
         '#type' => 'submit',
         '#value' => $this->t('Remove'),
-        '#name' => $i,
+        '#name' => 'remove_token_' . $i,
         '#submit' => ['::removeTokenCallback'],
         '#ajax' => [
           'callback' => '::tokensCallback',
           'wrapper' => 'js-tokens-wrapper',
         ],
-        '#limit_validation_errors' => TRUE,
+        '#limit_validation_errors' => [],
       ];
     }
     $form['tokens_wrapper']['add_token'] = [
@@ -262,11 +262,11 @@ class AiPromptTypeForm extends EntityForm {
    * Remove a variable.
    */
   public function removeVariableCallback(array &$form, FormStateInterface $form_state) {
-    $trigger = $form_state->getTriggeringElement();
 
     // Determine the row to remove.
     $trigger = $form_state->getTriggeringElement();
-    $index_to_remove = $trigger['#name'];
+    $name = (string) $trigger['#name'];
+    $index_to_remove = str_starts_with($name, 'remove_variable_') ? (int) substr($name, strlen('remove_variable_')) : NULL;
 
     // Remove the row from the current user input.
     $user_input = $form_state->getUserInput();
@@ -308,7 +308,8 @@ class AiPromptTypeForm extends EntityForm {
 
     // Determine the row to remove.
     $trigger = $form_state->getTriggeringElement();
-    $index_to_remove = $trigger['#name'];
+    $name = (string) $trigger['#name'];
+    $index_to_remove = str_starts_with($name, 'remove_token_') ? (int) substr($name, strlen('remove_token_')) : NULL;
 
     // Remove the row from the current user input.
     $user_input = $form_state->getUserInput();

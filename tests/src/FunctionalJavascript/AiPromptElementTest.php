@@ -64,6 +64,7 @@ class AiPromptElementTest extends WebDriverTestBase {
     $this->aiAdmin = $this->drupalCreateUser([
       'administer ai',
       'manage ai prompts',
+      'administer ai prompt types',
     ]);
     $this->manageAiPrompts = $this->drupalCreateUser([
       'manage ai prompts',
@@ -220,6 +221,65 @@ class AiPromptElementTest extends WebDriverTestBase {
     // Ensure access denied on creating prompt type.
     $this->drupalGet('admin/config/ai/prompts/prompt-types');
     $this->assertSession()->pageTextContains('You are not authorized to access this page.');
+  }
+
+  /**
+   * Test the AI prompt types with adding and removing tokens.
+   */
+  public function testAiPromptElementTokens(): void {
+    $this->drupalLogin($this->aiAdmin);
+    $this->drupalGet('admin/config/ai/prompts/prompt-types/add');
+    $this->getSession()->getPage()->fillField('edit-label', 'Test Type');
+    $this->getSession()->getPage()->pressButton('Tokens');
+    // Add one token.
+    $this->getSession()->getPage()->fillField('tokens[0][name]', 'token:1');
+    $this->getSession()->getPage()->fillField('tokens[0][help_text]', 'Token 1 Description');
+    $this->getSession()->getPage()->checkField('tokens[0][required]');
+    // Add another token.
+    $this->getSession()->getPage()->pressButton('add_token');
+    // Wait for the AJAX to complete.
+    $this->assertSession()->waitForField('tokens[1][name]', 5000);
+    $this->getSession()->getPage()->fillField('tokens[1][name]', 'token:2');
+    $this->getSession()->getPage()->fillField('tokens[1][help_text]', 'Token 2 Description');
+    // Save the form.
+    $this->getSession()->getPage()->pressButton('Save');
+    // Reload the edit page.
+    $this->drupalGet('admin/config/ai/prompts/prompt-types/test_type');
+    // Remove the first token.
+    $this->getSession()->getPage()->pressButton('edit-tokens-0-remove', 0);
+    // Wait for the AJAX to complete.
+    $this->assertSession()->waitForElementRemoved('css', 'input[name="tokens[0][name]"][value="token:1"]', 5000);
+    // Make sure that token 1 is removed and token 2 is now in the first row.
+    $this->assertSession()->fieldValueEquals('tokens[0][name]', 'token:2');
+    $this->assertSession()->fieldValueEquals('tokens[0][help_text]', 'Token 2 Description');
+    $this->assertSession()->checkboxNotChecked('tokens[0][required]');
+    // Do not save, to make sure removal doesn't work without saving.
+    // Visit the listings page.
+    $this->drupalGet('admin/config/ai/prompts/prompt-types');
+    // Check that both token names are there.
+    $this->assertSession()->pageTextContains('token:1');
+    $this->assertSession()->pageTextContains('token:2');
+    // Now visit the edit page again.
+    $this->drupalGet('admin/config/ai/prompts/prompt-types/test_type');
+    $this->getSession()->wait(5000, 'document.readyState === "complete"');
+    // Remove the first token.
+    $this->getSession()->getPage()->pressButton('edit-tokens-0-remove', 0);
+    // Wait for the AJAX to complete.
+    $this->assertSession()->waitForElementRemoved('css', 'input[name="tokens[0][name]"][value="token:1"]', 5000);
+    // Make sure that token 1 is removed and token 2 is now in the first row.
+    $this->assertSession()->fieldValueEquals('tokens[0][name]', 'token:2');
+    $this->assertSession()->fieldValueEquals('tokens[0][help_text]', 'Token 2 Description');
+    $this->assertSession()->checkboxNotChecked('tokens[0][required]');
+    // Save the form.
+    $this->getSession()->getPage()->pressButton('Save');
+    // Visit the listings page.
+    $this->drupalGet('admin/config/ai/prompts/prompt-types');
+    // Wait for page to fully load and ensure DOM is stable.
+    $this->getSession()->wait(5000, 'document.readyState === "complete"');
+    $this->assertSession()->waitForText('token:2', 5000);
+    // Check that only token 2 name is there.
+    $this->assertSession()->pageTextNotContains('token:1');
+    $this->assertSession()->pageTextContains('token:2');
   }
 
 }
