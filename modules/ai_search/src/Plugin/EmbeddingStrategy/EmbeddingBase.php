@@ -43,8 +43,8 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
     IndexInterface $index,
   ): array {
     $this->init($embedding_engine, $chat_model, $configuration);
-    [$title, $contextual_content, $main_content] = $this->groupFieldData($fields, $index);
-    $chunks = $this->getChunks($title, $main_content, $contextual_content);
+    [$title, $contextual_content, $main_content, $title_in_contextual] = $this->groupFieldData($fields, $index, $search_api_item);
+    $chunks = $this->getChunks($title, $main_content, $contextual_content, $title_in_contextual, $index);
     $metadata = $this->buildBaseMetadata($fields, $index);
     $raw_embeddings = $this->getRawEmbeddings($chunks);
     $embeddings = [];
@@ -135,20 +135,76 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
    *   The Search API fields.
    * @param \Drupal\search_api\IndexInterface $index
    *   The Search API index.
+   * @param \Drupal\search_api\Item\ItemInterface|null $search_api_item
+   *   The Search API item.
    *
    * @return array
    *   The title, contextual content, and main content.
    */
-  public function groupFieldData(array $fields, IndexInterface $index): array {
+  public function groupFieldData(array $fields, IndexInterface $index, ?ItemInterface $search_api_item = NULL): array {
     $title = '';
     $contextual_content = '';
     $main_content = '';
+    $title_in_contextual = FALSE;
     $index_config = $this->configFactory->get('ai_search.index.' . $index->id())->getRawData();
     $indexing_options = $index_config['indexing_options'] ?? [];
     $allowed_options = [
       EmbeddingStrategyIndexingOptions::MainContent->getKey(),
       EmbeddingStrategyIndexingOptions::ContextualContent->getKey(),
     ];
+
+    // Get the label key for this entity type and extract title from entity.
+    $label_key = '';
+    $entity_type_id = '';
+    foreach ($fields as $field) {
+      if ($field instanceof FieldInterface) {
+        $datasource = $field->getDatasource();
+        if ($datasource) {
+          $entity_type_id = $datasource->getEntityTypeId();
+          $entity_type = $this->entityTypeManager->getDefinition($entity_type_id);
+          $label_key = $entity_type->getKey('label');
+          break;
+        }
+      }
+    }
+
+    // Get the entity from the Search API item and extract title.
+    if ($search_api_item !== NULL && $label_key) {
+      try {
+        $entity = $search_api_item->getOriginalObject()->getValue();
+        if ($entity instanceof EntityInterface) {
+          $title_value = $entity->get($label_key)->value ?? $entity->label();
+          if (!empty($title_value)) {
+            $title = is_string($title_value) ? $title_value : (string) $title_value;
+          }
+        }
+      }
+      catch (\Exception $e) {
+        // If we can't get the entity, the title will remain empty.
+        // This can happen if the entity is not available or the label field
+        // doesn't exist. The title will be extracted from fields if available.
+        $this->loggerChannelFactory->get('ai_search')->warning(
+          'Unable to extract title from entity for indexing: @message',
+          ['@message' => $e->getMessage()]
+        );
+      }
+    }
+
+    // Check if title field is explicitly added as contextual content.
+    foreach ($fields as $field) {
+      if (
+        $field instanceof FieldInterface
+        && $label_key
+        && $field->getFieldIdentifier() == $label_key
+        && isset($indexing_options[$field->getFieldIdentifier()]['indexing_option'])
+        && $indexing_options[$field->getFieldIdentifier()]['indexing_option'] === EmbeddingStrategyIndexingOptions::ContextualContent->getKey()
+      ) {
+        $title_in_contextual = TRUE;
+        break;
+      }
+    }
+
+    // Process main content and contextual content fields.
     foreach ($fields as $field) {
 
       // The fields original comes from the Search API
@@ -162,24 +218,11 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
       ) {
         continue;
       }
-      $label_key = '';
-
-      // Get the label field.
-      $entity = $field->getDatasource();
-      if ($entity) {
-        $entity_type = $this->entityTypeManager->getDefinition($entity->getEntityTypeId());
-        $label_key = $entity_type->getKey('label');
-      }
 
       // Get and flatten the value to prepare for conversion to vector.
       $value = $this->getValue($field, TRUE);
       if (is_array($value)) {
         $value = implode(', ', $value);
-      }
-
-      // The title field.
-      if ($field->getFieldIdentifier() == $label_key) {
-        $title = $value;
       }
 
       // Determine whether this is the main content to be chunked or the
@@ -195,10 +238,12 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
           break;
       }
     }
+
     return [
       $title,
       $contextual_content,
       $main_content,
+      $title_in_contextual,
     ];
   }
 
@@ -211,11 +256,17 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
    *   The main field content.
    * @param string $contextual_content
    *   The contextual content.
+   * @param bool $title_in_contextual
+   *   Whether title is explicitly added as contextual content.
+   * @param \Drupal\search_api\IndexInterface|null $index
+   *   The Search API index.
    *
    * @return string[]
    *   The array of chunks from the text chunker.
+   *
+   * @throws \Exception
    */
-  protected function getChunks(string $title, string $main_content, string $contextual_content): array {
+  protected function getChunks(string $title, string $main_content, string $contextual_content, bool $title_in_contextual = FALSE, ?IndexInterface $index = NULL): array {
 
     // This determines the available space in each chunk used by contextual
     // content vs the main fields. See the description for
@@ -226,7 +277,7 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
     if (strlen($title . $main_content . $contextual_content) <= $this->chunkSize) {
       // Ideal situation, all fits min single embedding.
       $chunks = $this->textChunker->chunkText(
-        $this->prepareChunkText($title, $main_content, $contextual_content),
+        $this->prepareChunkText($title, $main_content, $contextual_content, $title_in_contextual, $index),
         $this->chunkSize,
         $this->chunkMinOverlap
       );
@@ -238,18 +289,18 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
         // content, it is fine.
         $main_chunks = $this->textChunker->chunkText(
           $main_content,
-          intval($this->chunkSize * $max_main_fields),
+          (int) ($this->chunkSize * $max_main_fields),
           $this->chunkMinOverlap
         );
         foreach ($main_chunks as $main_chunk) {
-          $chunks[] = $this->prepareChunkText($title, $main_chunk, $contextual_content);
+          $chunks[] = $this->prepareChunkText($title, $main_chunk, $contextual_content, $title_in_contextual, $index);
         }
       }
       else {
         // Both contextual content and main fields need chunking.
         $available_chunk_size = $this->chunkSize - strlen($title);
-        $contextual_chunk_size = intval($available_chunk_size * $max_contextual_content);
-        $main_chunk_size = intval($available_chunk_size * $max_main_fields);
+        $contextual_chunk_size = (int) ($available_chunk_size * $max_contextual_content);
+        $main_chunk_size = (int) ($available_chunk_size * $max_main_fields);
         $contextual_chunks = $this->textChunker->chunkText(
           $contextual_content,
           $contextual_chunk_size,
@@ -262,7 +313,7 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
         );
         foreach ($main_chunks as $main_chunk) {
           foreach ($contextual_chunks as $contextual_chunk) {
-            $chunks[] = $this->prepareChunkText($title, $main_chunk, $contextual_chunk);
+            $chunks[] = $this->prepareChunkText($title, $main_chunk, $contextual_chunk, $title_in_contextual, $index);
           }
         }
       }
@@ -279,14 +330,27 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
    *   The main field content.
    * @param string $contextual_chunk
    *   The contextual content.
+   * @param bool $title_in_contextual
+   *   Whether title is explicitly added as contextual content.
+   * @param \Drupal\search_api\IndexInterface|null $index
+   *   The Search API index.
    *
    * @return string
    *   The rendered chunk.
    */
-  protected function prepareChunkText(string $title, string $main_chunk, string $contextual_chunk): string {
+  protected function prepareChunkText(string $title, string $main_chunk, string $contextual_chunk, bool $title_in_contextual = FALSE, ?IndexInterface $index = NULL): string {
     $parts = [];
-    // Only render the title if it is not empty.
-    if (!empty($title)) {
+    $exclude_title = FALSE;
+    if ($index !== NULL) {
+      $index_config = $this->configFactory->get('ai_search.index.' . $index->id())->getRawData();
+      $exclude_title = $index_config['exclude_title'] ?? FALSE;
+    }
+
+    // Auto-add title header if:
+    // 1. Title is not empty
+    // 2. Title is NOT explicitly added as contextual content
+    // 3. exclude_title option is NOT enabled.
+    if (!empty($title) && !$title_in_contextual && !$exclude_title) {
       $parts[] = '# ' . strtoupper($title);
     }
     $parts[] = $main_chunk;

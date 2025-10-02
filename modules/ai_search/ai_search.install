@@ -243,3 +243,31 @@ function ai_search_update_10005() {
     '@number' => $updated_servers,
   ]);
 }
+
+/**
+ * Update AI Search indexes to include exclude_title setting.
+ */
+function ai_search_update_10006() {
+  $config_factory = \Drupal::configFactory();
+  $indexes = $config_factory->listAll('ai_search.index.');
+  if (empty($indexes)) {
+    return t('No AI Search index configurations found.');
+  }
+
+  $updated_indexes = 0;
+  foreach ($indexes as $index) {
+    $config_object = $config_factory->getEditable($index);
+    $config = $config_object->getRawData();
+
+    // Add the new exclude_title setting if it doesn't exist.
+    if (!isset($config['exclude_title'])) {
+      $config_object->set('exclude_title', FALSE);
+      $config_object->save();
+      $updated_indexes++;
+    }
+  }
+
+  return t('AI Search indexes updated with exclude_title setting: @number.', [
+    '@number' => $updated_indexes,
+  ]);
+}

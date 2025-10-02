@@ -288,28 +288,15 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
    * Test the field main and contextual indexing options.
    */
   public function testFieldIndexingOptions() {
-    $this->drupalGet('admin/config/search/search-api/index/test_mysql_vdb_index/fields');
-    $this->submitForm([
-      'checker[entity]' => $this->nodes['chocolate_cake']->label() . ' (' . $this->nodes['chocolate_cake']->id() . ')',
-    ], 'Save changes');
-
-    if (class_exists('League\CommonMark\CommonMarkConverter')) {
-      $this->assertSession()->pageTextContains('Chocolate Cake');
-    }
-    else {
-      $has_markdown_link = $this->getSession()->getPage()->hasContent('[Chocolate Cake](' . $this->nodes['chocolate_cake']->toUrl()->toString() . ')');
-      $has_markdown_title = $this->getSession()->getPage()->hasContent('# Chocolate Cake');
-      $this->assertTrue($has_markdown_link || $has_markdown_title);
-    }
-
-    $this->assertSession()->pageTextContains('Title: Chocolate Cake');
-
-    // Ignore the title and expect it to no longer show up.
+    // Test Case 1: Title NOT in contextual content + exclude_title FALSE.
+    // Expected: Title IS auto-added as "# CHOCOLATE CAKE".
     $this->drupalGet('admin/config/search/search-api/index/test_mysql_vdb_index/fields');
     $this->submitForm([
       'fields[rendered_item][indexing_option]' => 'main_content',
       'fields[title][indexing_option]' => 'ignore',
     ], 'Save changes');
+
+    $this->drupalGet('admin/config/search/search-api/index/test_mysql_vdb_index/fields');
     $this->submitForm([
       'checker[entity]' => $this->nodes['chocolate_cake']->label() . ' (' . $this->nodes['chocolate_cake']->id() . ')',
     ], 'Save changes');
@@ -319,17 +306,65 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
     }
     else {
       $has_markdown_link = $this->getSession()->getPage()->hasContent('[Chocolate Cake](' . $this->nodes['chocolate_cake']->toUrl()->toString() . ')');
-      $has_markdown_title = $this->getSession()->getPage()->hasContent('# Chocolate Cake');
+      $has_markdown_title = $this->getSession()->getPage()->hasContent('# CHOCOLATE CAKE');
       $this->assertTrue($has_markdown_link || $has_markdown_title);
     }
-
+    // Title should NOT appear in contextual content format.
     $this->assertSession()->pageTextNotContains('Title: Chocolate Cake');
 
-    // Reset in case parallel test run.
+    // Test Case 2: Title IS in contextual content + exclude_title FALSE.
+    // Expected: Title NOT auto-added (to avoid duplication).
     $this->drupalGet('admin/config/search/search-api/index/test_mysql_vdb_index/fields');
     $this->submitForm([
       'fields[rendered_item][indexing_option]' => 'main_content',
       'fields[title][indexing_option]' => 'contextual_content',
+    ], 'Save changes');
+    $this->drupalGet('admin/config/search/search-api/index/test_mysql_vdb_index/fields');
+    $this->submitForm([
+      'checker[entity]' => $this->nodes['chocolate_cake']->label() . ' (' . $this->nodes['chocolate_cake']->id() . ')',
+    ], 'Save changes');
+    // Title should appear in contextual content format.
+    $this->assertSession()->pageTextContains('Title: Chocolate Cake');
+    // Title should NOT be auto-added as header.
+    if (class_exists('League\CommonMark\CommonMarkConverter')) {
+      // Content may still contain the title in other forms, so we check for
+      // the specific uppercase header format.
+      $this->assertSession()->pageTextNotContains('# CHOCOLATE CAKE');
+    }
+    else {
+      $this->assertSession()->pageTextNotContains('# CHOCOLATE CAKE');
+    }
+
+    // Test Case 3: Title NOT in contextual content + exclude_title TRUE.
+    // Expected: Title NOT auto-added.
+    $this->drupalGet('admin/config/search/search-api/index/test_mysql_vdb_index/fields');
+    $this->submitForm([
+      'fields[rendered_item][indexing_option]' => 'main_content',
+      'fields[title][indexing_option]' => 'ignore',
+      'advanced[exclude_title]' => TRUE,
+    ], 'Save changes');
+    $this->drupalGet('admin/config/search/search-api/index/test_mysql_vdb_index/fields');
+    $this->submitForm([
+      'checker[entity]' => $this->nodes['chocolate_cake']->label() . ' (' . $this->nodes['chocolate_cake']->id() . ')',
+    ], 'Save changes');
+    // Title should NOT appear at all.
+    if (class_exists('League\CommonMark\CommonMarkConverter')) {
+      $this->assertSession()->elementNotContains('css', 'h1', 'CHOCOLATE CAKE');
+    }
+    else {
+      $has_markdown_link = $this->getSession()->getPage()->hasContent('[Chocolate Cake](' . $this->nodes['chocolate_cake']->toUrl()->toString() . ')');
+      $has_markdown_title = $this->getSession()->getPage()->hasContent('# CHOCOLATE CAKE');
+      $this->assertTrue($has_markdown_link);
+      $this->assertFalse($has_markdown_title);
+    }
+    $this->assertSession()->pageTextNotContains('Title: Chocolate Cake');
+
+    // Reset to default state for parallel test runs.
+    $this->drupalGet('admin/config/search/search-api/index/test_mysql_vdb_index/fields');
+    $this->submitForm([
+      'fields[rendered_item][indexing_option]' => 'main_content',
+      'fields[title][indexing_option]' => 'contextual_content',
+      'advanced[exclude_title]' => FALSE,
     ], 'Save changes');
   }
 
