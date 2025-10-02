@@ -20,6 +20,7 @@ use Drupal\ai_search\Plugin\Exception\EmbeddingStrategyException;
 use Drupal\key\KeyRepositoryInterface;
 use Drupal\search_api\IndexInterface;
 use Drupal\search_api\Item\FieldInterface;
+use Drupal\search_api\Query\QueryInterface;
 use Drupal\search_api\ServerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -435,6 +436,33 @@ abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, AiVdbP
       }
     }
     return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function supportsGrouping(): bool {
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function vectorSearchWithGrouping(
+    string $collection_name,
+    array $vector_input,
+    array $output_fields,
+    QueryInterface $query,
+    mixed $filters = '',
+    int $limit = 10,
+    int $offset = 0,
+    string $group_by_field = 'drupal_entity_id',
+    int $group_size = 1,
+    bool $strict_group_size = FALSE,
+    string $database = 'default',
+    array $excluded_entity_ids = [],
+  ): array {
+    throw new \Exception('Grouping search is not supported by this VDB provider.');
   }
 
   /**

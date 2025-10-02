@@ -244,4 +244,50 @@ interface AiVdbProviderInterface extends PluginInspectionInterface {
    */
   public function getRawEmbeddingFieldName(): ?string;
 
+  /**
+   * Conduct vector search with grouping by drupal_entity_id.
+   *
+   * @param string $collection_name
+   *   The name of the collection.
+   * @param array $vector_input
+   *   The vector input.
+   * @param array $output_fields
+   *   The output fields.
+   * @param \Drupal\search_api\Query\QueryInterface $query
+   *   The query.
+   * @param mixed $filters
+   *   The filters as prepared by the VDB provider in ::prepareFilters().
+   * @param int $limit
+   *   The limit.
+   * @param int $offset
+   *   The offset.
+   * @param string $group_by_field
+   *   The field to group by (default: 'drupal_entity_id').
+   * @param int $group_size
+   *   The number of entities to return per group (default: 1).
+   * @param bool $strict_group_size
+   *   Whether to strictly enforce group size (default: FALSE).
+   * @param string $database
+   *   The database name.
+   * @param array $excluded_entity_ids
+   *   Entity IDs to exclude from results.
+   *
+   * @return array
+   *   The results.
+   */
+  public function vectorSearchWithGrouping(
+    string $collection_name,
+    array $vector_input,
+    array $output_fields,
+    QueryInterface $query,
+    mixed $filters = '',
+    int $limit = 10,
+    int $offset = 0,
+    string $group_by_field = 'drupal_entity_id',
+    int $group_size = 1,
+    bool $strict_group_size = FALSE,
+    string $database = 'default',
+    array $excluded_entity_ids = [],
+  ): array;
+
 }

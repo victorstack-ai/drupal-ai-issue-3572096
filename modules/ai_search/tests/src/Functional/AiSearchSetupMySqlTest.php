@@ -2,7 +2,10 @@
 
 namespace Drupal\Tests\ai_search\Functional;
 
+use Drupal\node\NodeInterface;
 use Drupal\Tests\BrowserTestBase;
+use Drupal\user\Entity\Role;
+use Drupal\user\Entity\User;
 
 /**
  * Contains AI Search UI setup functional tests.
@@ -38,6 +41,13 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
    * @var \Drupal\user\UserInterface
    */
   protected $adminUser;
+
+  /**
+   * A user with restricted access for testing.
+   *
+   * @var \Drupal\user\UserInterface
+   */
+  protected $restrictedUser;
 
   /**
    * Nodes for testing the indexing.
@@ -84,6 +94,22 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
       'administer views',
     ]);
 
+    // Create a role and user for access control testing.
+    $restricted_role = Role::create([
+      'id' => 'restricted_user',
+      'label' => 'Restricted User',
+    ]);
+    $restricted_role->grantPermission('access content');
+    $restricted_role->save();
+
+    $this->restrictedUser = User::create([
+      'name' => 'restricted',
+      'pass' => 'restricted',
+      'status' => 1,
+    ]);
+    $this->restrictedUser->addRole($restricted_role->id());
+    $this->restrictedUser->save();
+
     $this->setupServerAndIndex();
     $this->createSampleContent();
     $this->indexContent();
@@ -96,6 +122,13 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
    */
   public function setupServerAndIndex(): void {
     $this->drupalLogin($this->adminUser);
+
+    // Keep the indexed content minimal since the MySQL Vector embedding has
+    // low accuracy in the tests.
+    $this->drupalGet('admin/structure/types/manage/article');
+    $this->submitForm([
+      'display_submitted' => FALSE,
+    ], 'Save');
 
     // Set the embedding default provider as the test MySQL one.
     $this->drupalGet('admin/config/ai/settings');
@@ -143,6 +176,8 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
     $page->pressButton('edit-4');
     $this->submitForm([
       'view_mode[entity:node][:default]' => 'default',
+      // Render the content items as admin so unpublished content gets shown.
+      'roles' => [$this->adminUser->getRoles()[0]],
     ], 'Save');
     // Title.
     $this->drupalGet('admin/config/search/search-api/index/test_mysql_vdb_index/fields/add/nojs');
@@ -165,43 +200,65 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
    * Create sample content to check index.
    */
   public function createSampleContent(): void {
-    $this->nodes[] = $this->drupalCreateNode([
+
+    // Unpublished items to be able to test iterative retrieval.
+    $this->nodes['strawberry_cake'] = $this->drupalCreateNode([
+      'type' => 'article',
+      'title' => 'Strawberry Cheese Cake',
+      'body' => [
+        'value' => 'A sweet cheese based dessert make with strawberries on a pie-like crust.',
+        'format' => 'plain_text',
+      ],
+      'status' => NodeInterface::NOT_PUBLISHED,
+    ]);
+    $this->nodes['blueberry_cream_roll'] = $this->drupalCreateNode([
+      'type' => 'article',
+      'title' => 'Blueberry Cream Roll',
+      'body' => [
+        'value' => 'Filled homemade sponge cake with a whipped cream and blueberry filling.',
+        'format' => 'plain_text',
+      ],
+      'status' => NodeInterface::NOT_PUBLISHED,
+    ]);
+    $this->nodes['cornmeal_cake'] = $this->drupalCreateNode([
+      'type' => 'article',
+      'title' => 'Cornmeal Cake',
+      'body' => [
+        'value' => 'A gluten free cake alternative.',
+        'format' => 'plain_text',
+      ],
+      'status' => NodeInterface::NOT_PUBLISHED,
+    ]);
+
+    // Published items.
+    $this->nodes['chocolate_cake'] = $this->drupalCreateNode([
       'type' => 'article',
       'title' => 'Chocolate Cake',
-      'field_body' => [
+      'body' => [
         'value' => 'A delicious chocolate dessert made with cocoa powder and dark chocolate.',
         'format' => 'plain_text',
       ],
     ]);
-    $this->nodes[] = $this->drupalCreateNode([
-      'type' => 'article',
-      'title' => 'Strawberry Cheese Cake',
-      'field_body' => [
-        'value' => 'A sweet cheese based dessert make with strawberries on a pie-like crust.',
-        'format' => 'plain_text',
-      ],
-      'status' => 0,
-    ]);
-    $this->nodes[] = $this->drupalCreateNode([
+    $this->nodes['vanilla_ice_cream'] = $this->drupalCreateNode([
       'type' => 'article',
       'title' => 'Vanilla Ice Cream',
-      'field_body' => [
+      'body' => [
         'value' => 'A creamy vanilla dessert made with milk, cream, and vanilla extract.',
         'format' => 'plain_text',
       ],
     ]);
-    $this->nodes[] = $this->drupalCreateNode([
+    $this->nodes['tomato_soup'] = $this->drupalCreateNode([
       'type' => 'article',
       'title' => 'Tomato Soup',
-      'field_body' => [
+      'body' => [
         'value' => 'A warm starter made with fresh tomatoes, garlic, and basil.',
         'format' => 'plain_text',
       ],
     ]);
-    $this->nodes[] = $this->drupalCreateNode([
+    $this->nodes['grilled_chicken_breast'] = $this->drupalCreateNode([
       'type' => 'article',
       'title' => 'Grilled Chicken Breast',
-      'field_body' => [
+      'body' => [
         'value' => 'A savory main course made with marinated chicken breast, grilled to perfection.',
         'format' => 'plain_text',
       ],
@@ -213,6 +270,9 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
    */
   public function indexContent(): void {
     $cron_service = \Drupal::service('cron');
+
+    // Run cron twice since we are in batches of 5 per run.
+    $cron_service->run();
     $cron_service->run();
   }
 
@@ -230,14 +290,14 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
   public function testFieldIndexingOptions() {
     $this->drupalGet('admin/config/search/search-api/index/test_mysql_vdb_index/fields');
     $this->submitForm([
-      'checker[entity]' => $this->nodes[0]->label() . ' (' . $this->nodes[0]->id() . ')',
+      'checker[entity]' => $this->nodes['chocolate_cake']->label() . ' (' . $this->nodes['chocolate_cake']->id() . ')',
     ], 'Save changes');
 
     if (class_exists('League\CommonMark\CommonMarkConverter')) {
       $this->assertSession()->pageTextContains('Chocolate Cake');
     }
     else {
-      $has_markdown_link = $this->getSession()->getPage()->hasContent('[Chocolate Cake](' . $this->nodes[0]->toUrl()->toString() . ')');
+      $has_markdown_link = $this->getSession()->getPage()->hasContent('[Chocolate Cake](' . $this->nodes['chocolate_cake']->toUrl()->toString() . ')');
       $has_markdown_title = $this->getSession()->getPage()->hasContent('# Chocolate Cake');
       $this->assertTrue($has_markdown_link || $has_markdown_title);
     }
@@ -251,14 +311,14 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
       'fields[title][indexing_option]' => 'ignore',
     ], 'Save changes');
     $this->submitForm([
-      'checker[entity]' => $this->nodes[0]->label() . ' (' . $this->nodes[0]->id() . ')',
+      'checker[entity]' => $this->nodes['chocolate_cake']->label() . ' (' . $this->nodes['chocolate_cake']->id() . ')',
     ], 'Save changes');
 
     if (class_exists('League\CommonMark\CommonMarkConverter')) {
       $this->assertSession()->pageTextContains('Chocolate Cake');
     }
     else {
-      $has_markdown_link = $this->getSession()->getPage()->hasContent('[Chocolate Cake](' . $this->nodes[0]->toUrl()->toString() . ')');
+      $has_markdown_link = $this->getSession()->getPage()->hasContent('[Chocolate Cake](' . $this->nodes['chocolate_cake']->toUrl()->toString() . ')');
       $has_markdown_title = $this->getSession()->getPage()->hasContent('# Chocolate Cake');
       $this->assertTrue($has_markdown_link || $has_markdown_title);
     }
@@ -287,6 +347,12 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
       'page[create]' => 1,
       'page[path]' => 'test-search-view',
     ], 'Save and edit');
+
+    // Set quantity to 3.
+    $this->drupalGet('admin/structure/views/nojs/display/test_search_view/default/pager_options');
+    $this->submitForm([
+      'pager_options[items_per_page]' => 3,
+    ], 'Apply');
 
     // Add a search exposed filter.
     $this->drupalGet('admin/structure/views/nojs/add-handler/test_search_view/default/filter');
@@ -321,22 +387,38 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
     $this->submitForm([], 'Remove');
     $this->submitForm([], 'Save');
 
-    // Check results when logged in.
+    // Check results when logged in as admin (can see unpublished content).
     $this->drupalGet('test-search-view');
     $this->submitForm([
-      'search_api_fulltext' => 'Strawberry',
+      'search_api_fulltext' => 'Strawberry Cheese',
     ], 'Apply');
-    $rows = $this->cssSelect('.views-row');
-    $this->assertStringContainsString('Strawberry Cheese Cake', $rows[0]->getText(), 'Row 1 contains "cake".');
+    $this->assertSession()->pageTextContains('Strawberry Cheese Cake');
 
     // Now logged out: Ensure the unpublished item does not exist.
     $this->drupalLogout();
     $this->drupalGet('test-search-view');
     $this->submitForm([
-      'search_api_fulltext' => 'Strawberry',
+      'search_api_fulltext' => 'Strawberry Cheese',
     ], 'Apply');
-    $rows = $this->cssSelect('.views-row');
     $this->assertSession()->pageTextNotContains('Strawberry Cheese Cake');
+
+    // Iterative should retrieve 3 rows.
+    $rows = $this->cssSelect('.views-row');
+    $this->assertCount(3, $rows);
+
+    // Test the iterative search logic with a logged-in but restricted user.
+    $this->drupalLogin($this->restrictedUser);
+    $this->drupalGet('test-search-view');
+    $this->submitForm([
+      'search_api_fulltext' => 'Strawberry Cheese',
+    ], 'Apply');
+    $this->assertSession()->pageTextNotContains('Strawberry Cheese Cake');
+
+    // Iterative check again, and in this case, other nodes would have been
+    // so the iteration should have occurred as unpublished items were dropped
+    // from the results.
+    $rows = $this->cssSelect('.views-row');
+    $this->assertCount(3, $rows);
   }
 
   /**
