@@ -171,7 +171,7 @@ interface AiVdbProviderInterface extends PluginInspectionInterface {
   public function querySearch(
     string $collection_name,
     array $output_fields,
-    string $filters = '',
+    mixed $filters = '',
     int $limit = 10,
     int $offset = 0,
     string $database = 'default',
@@ -205,7 +205,7 @@ interface AiVdbProviderInterface extends PluginInspectionInterface {
     array $vector_input,
     array $output_fields,
     QueryInterface $query,
-    string $filters = '',
+    mixed $filters = '',
     int $limit = 10,
     int $offset = 0,
     string $database = 'default',
