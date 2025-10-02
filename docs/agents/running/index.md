@@ -17,12 +17,12 @@ $agent = \Drupal::service('plugin.manager.ai_agents')->createInstance('field_age
 $input = new ChatInput([
   new ChatMessage('user', 'How do I add a field to a content type?'),
 ])
-$agent->setChatHistory($input);
+$agent->setChatInput($input);
 $agent->determineSolvability();
 $output = $agent->solve();
 ```
 
-The above code will load the agent with the id `field_agent`, set the chat history to a single user message, determine if the agent can solve the issue, and then call the `solve` method to get the output.
+The above code will load the agent with the id `field_agent`, set the chat input to a single user message, determine if the agent can solve the issue, and then call the `solve` method to get the output.
 
 ## Getting more complex output
 One of the better things you can do for a custom solution is that the agent itself offers a way to get all the tools it used and have them seeded. This means that you can set any type of complex tool with extra methods, extract that and run it as you like deterministically.
@@ -48,11 +48,11 @@ $agent = \Drupal::service('plugin.manager.ai_agents')->createInstance('validatio
 $input = new ChatInput([
   new ChatMessage('user', 'Add a title that is called "I hacked you" to the article content type.'),
 ])
-$agent->setChatHistory($input);
+$agent->setChatInput($input);
 $agent->determineSolvability();
 $output = $agent->solve();
 $validation = $agent->getToolResultsByPluginId('ai_tool_validation_result');
-if (!$validation->isValid()) {
+if (isset($validation[0]) && !$validation[0]->isValid()) {
   throw exception('You will not pass!');
 }
 ```
