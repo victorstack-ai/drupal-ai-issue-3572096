@@ -3,7 +3,6 @@
 namespace Drupal\ai;
 
 use Drupal\Component\Plugin\PluginInspectionInterface;
-use Drupal\Core\Config\ImmutableConfig;
 use Drupal\ai\Enum\VdbSimilarityMetrics;
 use Drupal\search_api\Query\QueryInterface;
 
@@ -23,14 +22,6 @@ interface AiVdbProviderInterface extends PluginInspectionInterface {
    *   Configuration of client.
    */
   public function setCustomConfig(array $config): void;
-
-  /**
-   * Gets the configuration of the database.
-   *
-   * @return \Drupal\Core\Config\ImmutableConfig
-   *   The configuration.
-   */
-  public function getConfig(): ImmutableConfig;
 
   /**
    * Ping to check so the service/server is available.

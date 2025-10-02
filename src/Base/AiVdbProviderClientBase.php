@@ -223,14 +223,7 @@ abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, AiVdbP
 
     // Ensure the vector database selected has already been configured to
     // avoid a fatal error.
-    $config = $this->getConfig()->getRawData();
-    if (isset($config['_core'])) {
-      unset($config['_core']);
-    }
-    $config = array_filter($config);
-    if (empty($config)) {
-
-      // Explain to the user where to configure the vector database first.
+    if (!$this->isSetup()) {
       $form_state->setErrorByName('database_settings][database', $this->t('The selected vector database has not yet been configured. <a href="@url">Please configure it first</a>.', [
         '@url' => Url::fromRoute('ai.admin_vdb_providers')->toString(),
       ]));
