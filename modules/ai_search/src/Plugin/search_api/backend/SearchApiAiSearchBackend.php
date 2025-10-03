@@ -750,8 +750,6 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       $params['offset'] = $start_offset + ($iteration * $start_limit * 2);
     }
 
-    $search_words = $query->getKeys();
-
     try {
       $client = $this->getClient();
     }
@@ -766,22 +764,9 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       ];
     }
 
-    if (!empty($search_words)) {
-      [$provider_id, $model_id] = explode('__', $this->configuration['embeddings_engine']);
-      $embedding_llm = $this->aiProviderManager->createInstance($provider_id);
-      // We don't have to redo this.
-      if (!isset($params['vector_input'])) {
-        // Handle complex search queries, but we just normalize to string.
-        // It makes no sense to do Boolean or other complex searches on vectors.
-        if (is_array($search_words)) {
-          if (isset($search_words['#conjunction'])) {
-            unset($search_words['#conjunction']);
-          }
-          $search_words = implode(' ', $search_words);
-        }
-        $input = new EmbeddingsInput($search_words);
-        $params['vector_input'] = $embedding_llm->embeddings($input, $model_id, ['ai_search'])->getNormalized();
-      }
+    $vector_input = $this->getSearchVectorInput($query, $params);
+    if (!empty($vector_input)) {
+      $params['vector_input'] = $vector_input;
       $params['query'] = $query;
       $response = $client->vectorSearch(...$params);
     }
@@ -854,6 +839,58 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     }
 
     return $this->doSearchWithIteration($query, $params, $bypass_access, $results, $start_limit, $start_offset, $iteration + 1, $combined_excluded_ids);
+  }
+
+  /**
+   * Get the Vector Input for the search.
+   *
+   * @param \Drupal\search_api\Query\QueryInterface $query
+   *   The Search API Query.
+   * @param array $params
+   *   The params being prepared for passing to the VDB Provider client.
+   *
+   * @return array
+   *   The vector input to search on. The array could be empty if unable to
+   *   generate embeddings from the content input.
+   */
+  protected function getSearchVectorInput(QueryInterface $query, array $params): array {
+    // If we already have vector input set via iteration, no need to get it
+    // again.
+    if (isset($params['vector_input']) && !empty($params['vector_input'])) {
+      return $params['vector_input'];
+    }
+
+    // Allow developers to provide the input prior to calling the AI Search
+    // back-end. This could be done for example in a Views Filter Handler.
+    if ($vector_input = $query->getOption('vector_input', FALSE)) {
+      return $vector_input;
+    }
+
+    // Fall back to generating new vector input based on the search terms
+    // provided.
+    $search_words = $query->getKeys();
+    if (!empty($search_words) && is_array($search_words)) {
+
+      // Search words are sent to Search API as separate terms. For semantic
+      // vector search however, we want to just pass the full input as a string
+      // to retrieve a single vector input based on the complete input content.
+      if (isset($search_words['#conjunction'])) {
+        unset($search_words['#conjunction']);
+      }
+      // Final check that its still not empty after removing conjunction, as
+      // embeddings input must receive a string.
+      if (!empty($search_words)) {
+        $search_words = implode(' ', $search_words);
+
+        // Convert the search terms to vector input.
+        [$provider_id, $model_id] = explode('__', $this->configuration['embeddings_engine']);
+        $embedding_llm = $this->aiProviderManager->createInstance($provider_id);
+        $input = new EmbeddingsInput($search_words);
+        return $embedding_llm->embeddings($input, $model_id)->getNormalized();
+      }
+    }
+
+    return [];
   }
 
   /**

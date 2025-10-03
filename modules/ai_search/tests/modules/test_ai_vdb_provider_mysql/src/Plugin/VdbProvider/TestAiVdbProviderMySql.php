@@ -394,7 +394,10 @@ class TestAiVdbProviderMySql extends AiVdbProviderClientBase implements Containe
       str_replace('_vectors', '', $vectorTable->getVectorTableName()),
       384
     );
-    $vector_input = reset($vector_input);
+    $maybe_nested_vector_input = reset($vector_input);
+    if ($maybe_nested_vector_input !== FALSE && !is_float($maybe_nested_vector_input)) {
+      $vector_input = $maybe_nested_vector_input;
+    }
     $results = $testVectorTable->search($vector_input, $limit, $query);
     if (!$results) {
       return [];

@@ -517,4 +517,58 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
     }
   }
 
+  /**
+   * Tests searching by passing a raw vector directly to the query.
+   */
+  public function testSearchByVectorInputOption(): void {
+    $this->drupalLogin($this->adminUser);
+
+    // First, we need a known vector to test with. We'll get the vector for
+    // the "Chocolate Cake" node by performing a regular search for it and
+    // extracting the vector from the results.
+    $index_storage = $this->container->get('entity_type.manager')->getStorage('search_api_index');
+    /** @var \Drupal\search_api\IndexInterface $index */
+    $index = $index_storage->load('test_mysql_vdb_index');
+
+    // Enable the setting to include the raw vector in results and re-index.
+    $server = $index->getServerInstance();
+    $backend_config = $server->getBackendConfig();
+    $backend_config['include_raw_embedding_vector'] = TRUE;
+    $server->setBackendConfig($backend_config);
+    $server->save();
+    $index->reindex();
+    $index->indexItems();
+
+    // Execute a query to get the "Chocolate Cake" vector.
+    $query_for_vector = $index->query();
+    $query_for_vector->keys('Chocolate Cake');
+    $query_for_vector->range(0, 1);
+    $results_for_vector = $query_for_vector->execute();
+
+    $result_items = $results_for_vector->getResultItems();
+    $this->assertNotEmpty($result_items, 'Successfully retrieved an item to get a source vector.');
+    $chocolate_cake_item = reset($result_items);
+    $this->assertSame('entity:node/' . $this->nodes['chocolate_cake']->id() . ':en', $chocolate_cake_item->getExtraData('drupal_entity_id'), 'Item found is sample item 1 "Chocolate Cake".');
+    $chocolate_cake_vector = $chocolate_cake_item->getExtraData('normalized_vector');
+    $this->assertIsArray($chocolate_cake_vector, 'Successfully extracted a known vector for "Chocolate Cake".');
+    $this->assertNotEmpty($chocolate_cake_vector, 'The extracted vector is not empty.');
+
+    // Now, perform a new search, passing the known vector directly via the
+    // 'vector_input' query option.
+    $query_by_vector = $index->query();
+    $query_by_vector->setOption('vector_input', $chocolate_cake_vector);
+    $results_by_vector = $query_by_vector->execute();
+    $result_items = $results_by_vector->getResultItems();
+
+    // The most similar item should be itself (in real-world scenario, a
+    // condition to exclude itself should be used e.g. for a similarity search).
+    $this->assertNotEmpty($result_items, 'Search by vector option returned results.');
+    $top_result = array_shift($result_items);
+    $this->assertSame('entity:node/' . $this->nodes['chocolate_cake']->id() . ':en', $top_result->getExtraData('drupal_entity_id'), 'Item found is sample item 1 "Chocolate Cake".');
+    if (!empty($result_items)) {
+      $second_result = array_shift($result_items);
+      $this->assertNotSame('entity:node/' . $this->nodes['chocolate_cake']->id() . ':en', $second_result->getExtraData('drupal_entity_id'), 'Item found is not sample item 1 "Chocolate Cake".');
+    }
+  }
+
 }
