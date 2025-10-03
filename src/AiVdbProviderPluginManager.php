@@ -118,11 +118,20 @@ final class AiVdbProviderPluginManager extends DefaultPluginManager {
       if (is_array($collections) && in_array($configuration['database_settings']['collection'], $collections)) {
         return TRUE;
       }
+
+      // Check if the metric is defined, if not, use cosine similarity.
+      if (isset($configuration['database_settings']['metric'])) {
+        $metric = VdbSimilarityMetrics::from($configuration['database_settings']['metric']);
+      }
+      else {
+        $metric = VdbSimilarityMetrics::CosineSimilarity;
+      }
+
       // Otherwise create the collection.
       $provider->createCollection(
         $configuration['database_settings']['collection'],
         $configuration['embeddings_engine_configuration']['dimensions'],
-        VdbSimilarityMetrics::from($configuration['database_settings']['metric']),
+        $metric,
         $configuration['database_settings']['database_name'],
       );
       return TRUE;
