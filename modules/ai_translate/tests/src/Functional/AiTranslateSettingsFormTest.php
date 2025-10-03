@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\ai_translate\Functional;
 
+use Drupal\ai\Entity\AiPromptInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Drupal\language\Entity\ConfigurableLanguage;
 use Drupal\Tests\BrowserTestBase;
@@ -13,6 +15,8 @@ use Drupal\Tests\BrowserTestBase;
  * @covers \Drupal\ai_translate\Form\AiTranslateSettingsForm
  */
 class AiTranslateSettingsFormTest extends BrowserTestBase {
+
+  use StringTranslationTrait;
 
   /**
    * {@inheritdoc}
@@ -39,6 +43,27 @@ class AiTranslateSettingsFormTest extends BrowserTestBase {
   protected $adminUser;
 
   /**
+   * The default AI prompt.
+   *
+   * @var \Drupal\ai\Entity\AiPromptInterface|null
+   */
+  protected ?AiPromptInterface $shortPrompt = NULL;
+
+  /**
+   * The default AI prompt.
+   *
+   * @var \Drupal\ai\Entity\AiPromptInterface|null
+   */
+  protected ?AiPromptInterface $defaultPrompt = NULL;
+
+  /**
+   * The French AI prompt.
+   *
+   * @var \Drupal\ai\Entity\AiPromptInterface|null
+   */
+  protected ?AiPromptInterface $frenchPrompt = NULL;
+
+  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
@@ -46,6 +71,33 @@ class AiTranslateSettingsFormTest extends BrowserTestBase {
 
     // Add a second language to test language-specific settings.
     ConfigurableLanguage::createFromLangcode('fr')->save();
+
+    // Add AI prompts for testing.
+    /** @var \Drupal\ai\Service\AiPromptManager $prompt_manager */
+    $promptManager = \Drupal::service('ai.prompt_manager');
+    // Add the short prompt.
+    $this->shortPrompt = $promptManager->upsertPrompt([
+      'id' => 'ai_translate__ai_translate_test_short',
+      'label' => $this->t('AI Translation prompt: Too short'),
+      'prompt' => '{destLangName} {inputText}',
+      'type' => 'ai_translate',
+    ]);
+
+    // Add the default prompt.
+    $this->defaultPrompt = $promptManager->upsertPrompt([
+      'id' => 'ai_translate__ai_translate_test_default',
+      'label' => $this->t('AI Translation prompt: Default'),
+      'prompt' => 'This is the new default prompt for translation. It must be over 50 characters long to pass validation. Source: {sourceLangName}, Destination: {destLangName}. Text: {inputText}',
+      'type' => 'ai_translate',
+    ]);
+
+    // Add the French-specific prompt.
+    $this->frenchPrompt = $promptManager->upsertPrompt([
+      'id' => 'ai_translate__ai_translate_test_fr',
+      'label' => $this->t('AI Translation prompt: French'),
+      'prompt' => 'Ceci est le prompt spécifique pour le français. Il doit également faire plus de 50 caractères. Source: {sourceLangName}, Destination: {destLangName}. Texte: {inputText}',
+      'type' => 'ai_translate',
+    ]);
 
     // Create a user with permission to manage ai translation prompts.
     $this->adminUser = $this->drupalCreateUser(['manage ai translation prompts']);
@@ -66,38 +118,35 @@ class AiTranslateSettingsFormTest extends BrowserTestBase {
     $session->pageTextContains('AI Translate Settings');
 
     $session->fieldExists('use_ai_translate');
-    $session->fieldExists('prompt');
+    $session->fieldExists('prompt[table]');
     $session->fieldExists('reference_defaults[node]');
     $session->fieldExists('entity_reference_depth');
     $session->pageTextContains('Translate to English');
-    $session->fieldExists('language_settings[en][prompt]');
+    $session->fieldExists('language_settings[en][prompt][table]');
     $session->pageTextContains('Translate to French');
-    $session->fieldExists('language_settings[fr][prompt]');
+    $session->fieldExists('language_settings[fr][prompt][table]');
     $session->checkboxChecked('use_ai_translate');
 
     // 2. Test form validation.
     // 2a. Test default prompt is too short.
-    $this->submitForm(['prompt' => 'This is too short.'], 'Save configuration');
+    $this->submitForm(['prompt[table]' => 'ai_translate__ai_translate_test_short'], 'Save configuration');
     $session->pageTextContains('Prompt cannot be shorter than 50 characters');
 
     // 2b. Test language-specific prompt is too short.
     $edit = [
-      'prompt' => 'Translate the following text from {{ source_lang_name }} to {{ dest_lang_name }}. The text to translate is: {{ input_text }}',
-      'language_settings[fr][prompt]' => 'Translate to French.',
+      'prompt[table]' => 'ai_translate__ai_translate_test_default',
+      'language_settings[fr][prompt][table]' => 'ai_translate__ai_translate_test_short',
     ];
     $this->submitForm($edit, 'Save configuration');
     $session->pageTextContains('Prompt cannot be shorter than 50 characters');
-    $this->assertNotNull($page->find('css', '#edit-language-settings-fr-prompt.error'));
+    $this->assertNotNull($page->find('css', '#edit-language-settings-fr-prompt-table-ai-translate-ai-translate-test-fr.error'));
 
     // 3. Test successful form submission and config saving.
-    $default_prompt = 'This is the new default prompt for translation. It must be over 50 characters long to pass validation. Source: {{ source_lang_name }}, Destination: {{ dest_lang_name }}. Text: {{ input_text }}';
-    $french_prompt = 'Ceci est le prompt spécifique pour le français. Il doit également faire plus de 50 caractères. Source: {{ source_lang_name }}, Destination: {{ dest_lang_name }}. Texte: {{ input_text }}';
-
     $edit = [
       'use_ai_translate' => FALSE,
-      'prompt' => $default_prompt,
-      'language_settings[fr][prompt]' => $french_prompt,
-      'language_settings[en][prompt]' => '',
+      'prompt[table]' => 'ai_translate__ai_translate_test_default',
+      'language_settings[fr][prompt][table]' => 'ai_translate__ai_translate_test_fr',
+      'language_settings[en][prompt][table]' => 'ai_translate__ai_translate_test_default',
       'reference_defaults[node]' => TRUE,
       'reference_defaults[user]' => FALSE,
       'entity_reference_depth' => '5',
@@ -108,9 +157,9 @@ class AiTranslateSettingsFormTest extends BrowserTestBase {
     // 4. Verify that the configuration was saved correctly.
     $config = $this->config('ai_translate.settings');
     $this->assertFalse($config->get('use_ai_translate'), 'The "use_ai_translate" setting was saved correctly.');
-    $this->assertEquals($default_prompt, $config->get('prompt'), 'The default prompt was saved correctly.');
-    $this->assertEquals($french_prompt, $config->get('language_settings.fr.prompt'), 'The French-specific prompt was saved correctly.');
-    $this->assertEmpty($config->get('language_settings.en.prompt'), 'The empty English-specific prompt was saved correctly.');
+    $this->assertEquals('ai_translate__ai_translate_test_default', $config->get('prompt'), 'The default prompt was saved correctly.');
+    $this->assertEquals('ai_translate__ai_translate_test_fr', $config->get('language_settings.fr.prompt'), 'The French-specific prompt was saved correctly.');
+    $this->assertEquals('ai_translate__ai_translate_test_default', $config->get('language_settings.en.prompt'), 'The English-specific prompt was saved correctly to the default value.');
     $this->assertEquals(['node'], $config->get('reference_defaults'), 'The entity reference defaults were saved correctly.');
     $this->assertEquals('5', $config->get('entity_reference_depth'), 'The entity reference depth was saved correctly.');
   }

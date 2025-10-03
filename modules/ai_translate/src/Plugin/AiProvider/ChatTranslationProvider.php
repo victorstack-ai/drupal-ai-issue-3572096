@@ -182,27 +182,46 @@ class ChatTranslationProvider extends AiProviderClientBase implements
     }
 
     $aiConfig = $this->configFactory->get('ai_translate.settings')->get('language_settings') ?? [];
-    $prompt = $aiConfig[$targetLanguage->getId()]['prompt'] ?? '';
-    if (empty($prompt)) {
-      $prompt = $aiConfig->get('prompt');
+    $prompt = NULL;
+    // Get target language-specific prompt, if it exists.
+    if ($aiConfig[$targetLanguage->getId()]['prompt']) {
+      $promptId = $aiConfig[$targetLanguage->getId()]['prompt'];
+      if ($languageSpecificPrompt = $this->configFactory->get('ai.ai_prompt.' . $promptId)->get('prompt')) {
+        $prompt = $languageSpecificPrompt;
+      }
     }
-    $context = [
-      'dest_lang' => $targetLanguage->getId(),
-      'dest_lang_name' => $targetLanguage->getName(),
-      'input_text' => $text,
+
+    // If no language-specific prompt config exists, fall back to the default.
+    if (!$prompt) {
+      $promptId = $this->configFactory->get('ai_translate.settings')->get('prompt');
+      $prompt = $this->configFactory->get('ai.ai_prompt.' . $promptId)->get('prompt');
+    }
+
+    // Define replacement variables.
+    $twigContext = [];
+    $replacements = [
+      '{destLang}' => $targetLanguage->getId(),
+      '{destLangName}' => $targetLanguage->getName(),
+      '{inputText}' => $text,
     ];
     try {
       /** @var \Drupal\language\Entity\ConfigurableLanguage $sourceLanguage */
       $sourceLanguage = $this->entityTypeManager->getStorage('configurable_language')->load($input->getSourceLanguage());
       if ($sourceLanguage) {
-        $context['source_lang'] = $sourceLanguage->getId();
-        $context['source_lang_name'] = $sourceLanguage->getName();
+        $twigContext['sourceLang'] = $sourceLanguage->getId();
+        $replacements['{sourceLang}'] = $sourceLanguage->getId();
+        $twigContext['sourceLangName'] = $sourceLanguage->getName();
+        $replacements['{sourceLangName}'] = $sourceLanguage->getName();
       }
     }
     // Ignore failure to load source language.
     catch (\AssertionError) {
     }
-    $promptText = $this->twig->renderInline($prompt, $context);
+    // Only use Twig for conditional logic. We only need source lang Twig
+    // variables for this use case. Other variables are replaced via AI prompts
+    // replacement logic.
+    $promptText = (string) $this->twig->renderInline($prompt, $twigContext);
+    $promptText = strtr($promptText, $replacements);
     try {
       $messages = new ChatInput([
         new chatMessage('user', $promptText),
