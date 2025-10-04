@@ -332,13 +332,13 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    */
   public function isAvailable() {
     $is_configured = FALSE;
-    $client_available = FALSE;
+    $vdb_client_available = FALSE;
     try {
-      $client = $this->getClient();
-      $is_configured = $client->isSetup();
-      $client_available = $client->ping();
+      $vdb_client = $this->getVectorDb();
+      $is_configured = $vdb_client->isSetup();
+      $vdb_client_available = $vdb_client->ping();
 
-      return $is_configured && $client_available;
+      return $is_configured && $vdb_client_available;
     }
     catch (\Exception $exception) {
       $this->logException($exception);
@@ -346,7 +346,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       return FALSE;
     }
     finally {
-      if ($is_configured && !$client_available) {
+      if ($is_configured && !$vdb_client_available) {
         $this->messenger
           ->addWarning($this->t('Server %server is configured, but the configured collection %core is not available.', [
             '%server' => $this->getServer()->label(),
@@ -387,8 +387,6 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state): void {
     $this->setConfiguration($form_state->getValues());
-    /*$vdb_client = $this->vdbProviderManager->createInstance($this->configuration['database']);
-    $vdb_client->submitSettingsForm($form, $form_state);*/
     if (!$this->ensureCollectionExists()) {
       $this->messenger()->addError($this->t('Could not create the collection.'));
     }
@@ -398,8 +396,8 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    * Ensure that the backend collection has been created.
    */
   protected function ensureCollectionExists() {
-    $client = $this->getClient();
-    return $this->vdbProviderManager->ensureCollectionExists($client, $this->configuration);
+    $vdb_client = $this->getVectorDb();
+    return $this->vdbProviderManager->ensureCollectionExists($vdb_client, $this->configuration);
   }
 
   /**
@@ -409,7 +407,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    */
   public function indexItems(IndexInterface $index, array $items): array {
     $embedding_strategy = $this->embeddingStrategyProviderManager->createInstance($this->configuration['embedding_strategy']);
-    return $this->getClient()->indexItems($this->configuration, $index, $items, $embedding_strategy);
+    return $this->getVectorDb()->indexItems($this->configuration, $index, $items, $embedding_strategy);
   }
 
   /**
@@ -419,7 +417,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    */
   public function deleteItems(IndexInterface $index, array $item_ids): void {
     /** @var \Drupal\ai\AiVdbProviderInterface $vdb_client */
-    $vdb_client = $this->vdbProviderManager->createInstance($this->configuration['database']);
+    $vdb_client = $this->getVectorDb();
     $vdb_client->deleteIndexItems($this->configuration, $index, $item_ids);
   }
 
@@ -429,7 +427,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
   public function deleteAllIndexItems(IndexInterface $index, $datasource_id = NULL): void {
-    $vdb_client = $this->vdbProviderManager->createInstance($this->configuration['database']);
+    $vdb_client = $this->getVectorDb();
     $vdb_client->deleteAllIndexItems($this->configuration, $index, $datasource_id);
   }
 
@@ -483,10 +481,11 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       'offset' => (int) $query->getOption('offset', 0),
     ];
 
+    /** @var \Drupal\ai\AiVdbProviderInterface $vdb_client */
+    $vdb_client = $this->getVectorDb();
+
     // Check if we need to include the raw embedding vector.
     if (!empty($this->configuration['include_raw_embedding_vector'])) {
-      /** @var \Drupal\ai\AiVdbProviderInterface $vdb_client */
-      $vdb_client = $this->getClient();
       $raw_embedding_field_name = $vdb_client->getRawEmbeddingFieldName();
       if (!empty($raw_embedding_field_name)) {
         $params['output_fields'][] = $raw_embedding_field_name;
@@ -495,7 +494,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       }
     }
 
-    if ($filters = $this->getClient()->prepareFilters($query)) {
+    if ($filters = $vdb_client->prepareFilters($query)) {
       $params['filters'] = $filters;
     }
 
@@ -590,7 +589,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     $params['collection_name'] = $this->configuration['database_settings']['collection'];
 
     try {
-      $client = $this->getClient();
+      $vdb_client = $this->getVectorDb();
     }
     catch (PluginException $e) {
       $this->logger->error('Failed to get VDB client: @message', ['@message' => $e->getMessage()]);
@@ -603,7 +602,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     }
 
     $get_chunked = $query->getOption('search_api_ai_get_chunks_result', FALSE);
-    $use_grouping = !$bypass_access && !$get_chunked && method_exists($client, 'supportsGrouping') && $client->supportsGrouping();
+    $use_grouping = !$bypass_access && !$get_chunked && method_exists($vdb_client, 'supportsGrouping') && $vdb_client->supportsGrouping();
 
     // Prepare search parameters.
     $search_words = $query->getKeys();
@@ -627,10 +626,10 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     // Use grouping if supported and entity-level results wanted.
     if ($use_grouping) {
       if (!empty($params['vector_input'])) {
-        $response = $client->vectorSearchWithGrouping(...$params);
+        $response = $vdb_client->vectorSearchWithGrouping(...$params);
       }
       else {
-        $response = $client->querySearch(...$params);
+        $response = $vdb_client->querySearch(...$params);
       }
 
       return $this->processResults($response, $query, $bypass_access, $results, $start_limit, $start_offset);
@@ -751,7 +750,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     }
 
     try {
-      $client = $this->getClient();
+      $vdb_client = $this->getVectorDb();
     }
     catch (PluginException $e) {
       // Log the error and return empty results with error metadata.
@@ -768,10 +767,10 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     if (!empty($vector_input)) {
       $params['vector_input'] = $vector_input;
       $params['query'] = $query;
-      $response = $client->vectorSearch(...$params);
+      $response = $vdb_client->vectorSearch(...$params);
     }
     else {
-      $response = $client->querySearch(...$params);
+      $response = $vdb_client->querySearch(...$params);
     }
 
     // Obtain results.
@@ -877,7 +876,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       if (isset($search_words['#conjunction'])) {
         unset($search_words['#conjunction']);
       }
-      // Final check that its still not empty after removing conjunction, as
+      // Final check that it's still not empty after removing conjunction, as
       // embeddings input must receive a string.
       if (!empty($search_words)) {
         $search_words = implode(' ', $search_words);
@@ -929,7 +928,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    *
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
-  private function getClient(): object {
+  private function getVectorDb(): object {
     if (empty($this->vdbClient)) {
       $this->vdbClient = $this->vdbProviderManager->createInstance($this->configuration['database']);
     }
@@ -976,9 +975,9 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     $database_settings = $this->configuration['database_settings'];
     $vdb_provider_status = NULL;
     if ($this->vdbProviderManager->hasDefinition($this->configuration['database'])) {
-      $vdb_provider = $this->vdbProviderManager->createInstance($this->configuration['database']);
-      $vdb_provider_label = $vdb_provider->getPluginDefinition()['label'];
-      if ($vdb_provider->isSetup()) {
+      $vdb_client = $this->getVectorDb();
+      $vdb_provider_label = $vdb_client->getPluginDefinition()['label'];
+      if ($vdb_client->isSetup()) {
         $vdb_info = $vdb_provider_label;
       }
       else {
@@ -1000,7 +999,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       'status' => $vdb_provider_status,
     ];
 
-    $client = $this->getClient();
+    $vdb_client = $this->getVectorDb();
     $info[] = [
       'label' => $this->t('Database name'),
       'info' => $database_settings['database_name'],
@@ -1041,18 +1040,18 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       'status' => !isset($embedding_options[$this->configuration['embeddings_engine']]) ? 'error' : NULL,
     ];
 
-    return array_merge($info, $client->viewIndexSettings($this->configuration['database_settings']));
+    return array_merge($info, $vdb_client->viewIndexSettings($this->configuration['database_settings']));
   }
 
   /**
    * {@inheritdoc}
    */
   public function calculateDependencies() {
-    $client = $this->getClient();
+    $vdb_client = $this->getVectorDb();
     // @todo This ignore next line can be removed after Search API 2.0.x is
     // released.
     // @phpstan-ignore-next-line
-    return $this->getPluginDependencies($client);
+    return $this->getPluginDependencies($vdb_client);
   }
 
 }
