@@ -16,6 +16,7 @@ enum AiModelCapability: string {
   case ChatJsonOutput = 'chat_json_output';
   case ChatStructuredResponse = 'chat_structured_response';
   case ChatTools = 'chat_tools';
+  case ChatCombinedToolsAndStructuredResponse = 'chat_combined_tools_and_structured_response';
 
   // Image to Image capabilities.
   case ImageToImageUpscale = 'image_to_image_upscale';
@@ -39,6 +40,7 @@ enum AiModelCapability: string {
     return match ($this) {
       self::ChatStructuredResponse,
       self::ChatTools,
+      self::ChatCombinedToolsAndStructuredResponse,
       self::ChatWithImageVision,
       self::ChatWithAudio,
       self::ChatWithVideo,
@@ -62,6 +64,7 @@ enum AiModelCapability: string {
       self::ChatJsonOutput => 'Chat JSON Output',
       self::ChatStructuredResponse => 'Chat Structured Response',
       self::ChatTools => 'Chat with Tools/Function Calling',
+      self::ChatCombinedToolsAndStructuredResponse => 'Chat with Tools and Structured Response',
       self::ImageToImageOutpaint => 'Image to Image Outpaint',
       self::ImageToImageInpaint => 'Image to Image Inpaint',
       self::ImageToImageErase => 'Image to Image Erase',
@@ -83,6 +86,7 @@ enum AiModelCapability: string {
       self::ChatJsonOutput => 'Is set if the chat model can do flawless complex JSON output.',
       self::ChatStructuredResponse => 'Is set if the chat model can do structured responses.',
       self::ChatTools => 'Is set if the chat model can use tools or function calling.',
+      self::ChatCombinedToolsAndStructuredResponse => 'Is set if the chat model can use tools and do structured responses in the same request.',
       self::ImageToImageOutpaint => 'Is set if the image model can do outpainting.',
       self::ImageToImageInpaint => 'Is set if the image model can do inpainting.',
       self::ImageToImageErase => 'Is set if the image model can do erasing.',
