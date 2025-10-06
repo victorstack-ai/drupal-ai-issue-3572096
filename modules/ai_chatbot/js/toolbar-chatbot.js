@@ -12,7 +12,6 @@
       };
 
       once('ai-chatbot', '.button--ai-chatbot', context).forEach(($toolbarIcon) => {
-
         $toolbarIcon.classList.remove('hidden');
 
         if ($toolbarIcon.classList.contains('button--primary')) {
@@ -28,11 +27,31 @@
         });
       });
 
-      once('ai-chatbot-close', '.sidebar-header--icon.toolbar-button.close', context).forEach(($closeIcon) => {
-        $closeIcon.addEventListener('click', (e) => {
+      once('ai-chatbot-toolbar', '.ai-deepchat.toolbar', context).forEach(($chatContainer) => {
+        const $dropdownMenu = $chatContainer.querySelector('.chat-dropdown');
+        const $menuButton = $chatContainer.querySelector('.chat-dropdown-button');
+        const $clearHistoryButton = $chatContainer.querySelector('.clear-history');
+
+        const $closeButton = $chatContainer.querySelector('.toolbar-button.close')
+
+        const toggleMenu = (event) => {
+          // Don't run parent event
+          event.stopPropagation();
+          // Toggle it
+          $dropdownMenu.classList.toggle('active');
+        }
+
+        $menuButton.addEventListener('click', toggleMenu)
+        // Menu items
+        $clearHistoryButton.addEventListener('click', (e) => {
+          Drupal.clearDeepchatMessages(e);
+          toggleMenu(e);
+        });
+
+        $closeButton.addEventListener('click', (e) => {
           toggleChatbot(false);
         });
-      });
+      })
     }
   };
 

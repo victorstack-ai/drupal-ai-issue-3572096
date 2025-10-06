@@ -46,7 +46,7 @@
 
         // Function to set thread_id.
         const setThreadId = (thread_id) => {
-          let connect = JSON.parse(deepchatElement.getAttribute('connect'));
+          const connect = JSON.parse(deepchatElement.getAttribute('connect'));
           connect.additionalBodyProps.thread_id = thread_id;
           deepchatElement.setAttribute('connect', JSON.stringify(connect));
           // Reset thread_id in Drupal setting in case of rerendering.
@@ -57,11 +57,9 @@
         setThreadId(drupalSettings.ai_deepchat.thread_id);
 
         // Function to clear messages
-        const clearMessages = (event) => {
+        Drupal.clearDeepchatMessages = (event) => {
           // Don't run parent event
           event.stopPropagation();
-          // Close the menu
-          toggleMenu(event);
           // Make a request to clear the history.
           let url = drupalSettings.path.baseUrl + 'ajax/chatbot/reset-session/' + drupalSettings.ai_deepchat.assistant_id + '/' + drupalSettings.ai_deepchat.thread_id;
           fetch(url, {
