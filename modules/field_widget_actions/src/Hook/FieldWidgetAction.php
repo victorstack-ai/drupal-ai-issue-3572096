@@ -93,6 +93,7 @@ class FieldWidgetAction {
             'field-widget-actions-add-new',
           ],
         ],
+        '#parents' => [],
       ];
       $element['new']['action'] = [
         '#type' => 'select',
