@@ -18,37 +18,6 @@
         const clearHistory = dropDownMenu.querySelector('.clear-history');
 
         chatContainers.forEach((container) => {
-          const deepchatElement = container.querySelector('.deepchat-element');
-
-          const clearMessages = (event) => {
-            // Don't run parent event
-            event.stopPropagation();
-            // Close the menu
-            toggleMenu(event);
-            // Make a request to clear the history.
-            let url = drupalSettings.path.baseUrl + 'ajax/chatbot/reset-session/' + drupalSettings.ai_deepchat.assistant_id + '/' + drupalSettings.ai_deepchat.thread_id;
-            fetch(url, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            }).then(response => {
-              if (!response.ok) {
-                throw new Error('Failed to clear the chat history.');
-              }
-              return response.json();
-            }).then(data => {
-              setThreadId(data.thread_id);
-              // Clear the messages from the drupal setting so they are not
-              // rerendered.
-              drupalSettings.ai_deepchat.messages = [];
-              deepchatElement.clearMessages(false);
-              // Unset connection to force rerendering.
-              delete deepchatElement._activeService;
-              deepchatElement.onRender();
-            });
-          }
-
         // Retrieve the unique chat ID
           const chatId = container.getAttribute('data-chat-id');
           if (!chatId) {
@@ -146,7 +115,10 @@
         menuButton.addEventListener('click', toggleMenu);
 
         // Menu items
-        clearHistory.addEventListener('click', clearMessages);
+        clearHistory.addEventListener('click', (e) => {
+          Drupal.clearDeepchatMessages(e);
+          toggleMenu(e);
+        });
       })
       });
     }

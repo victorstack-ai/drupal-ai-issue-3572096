@@ -2,6 +2,8 @@
 
 namespace Drupal\ai\OperationType\Chat;
 
+use Drupal\Component\Serialization\Json;
+use Drupal\ai\OperationType\Chat\Tools\ToolsFunctionOutput;
 use Drupal\ai\OperationType\GenericType\FileBaseInterface;
 use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\Traits\File\FileMimeTypeTrait;
@@ -38,7 +40,7 @@ class ChatMessage {
   /**
    * The tools.
    *
-   * @var \Drupal\ai\OperationType\Chat\Tools\ToolsOutputInterface[]|null
+   * @var \Drupal\ai\OperationType\Chat\Tools\ToolsFunctionOutputInterface[]|null
    */
   private ?array $tools = NULL;
 
@@ -149,7 +151,7 @@ class ChatMessage {
   /**
    * Get the tools.
    *
-   * @return \Drupal\ai\OperationType\Chat\Tools\ToolsOutputInterface[]|null
+   * @return \Drupal\ai\OperationType\Chat\Tools\ToolsFunctionOutputInterface[]|null
    *   The tools.
    */
   public function getTools(): ?array {
@@ -159,7 +161,7 @@ class ChatMessage {
   /**
    * Set the tools.
    *
-   * @param \Drupal\ai\OperationType\Chat\Tools\ToolsOutputInterface[] $tools
+   * @param \Drupal\ai\OperationType\Chat\Tools\ToolsFunctionOutputInterface[] $tools
    *   The tools.
    */
   public function setTools(array $tools): void {
@@ -288,10 +290,17 @@ class ChatMessage {
       }
     }
     if (isset($data['tools'])) {
-      $instance->setTools(array_map(
-        fn($toolData) => \Drupal::service('plugin.manager.ai.chat_tools')->createInstance($toolData['type'], $toolData),
-        $data['tools']
-      ));
+      $tools = [];
+      $function_call_manager = \Drupal::service('plugin.manager.ai.function_calls');
+      foreach ($data['tools'] as $tool_data) {
+        // Get the real actual plugin.
+        $tool = $function_call_manager->getFunctionCallFromFunctionName($tool_data['function']['name']);
+        // Set a new ToolsFunctionOutput.
+        $input = $tool->normalize();
+        $tools[] = new ToolsFunctionOutput($input, $tool_data['id'], Json::decode($tool_data['function']['arguments']));
+      }
+      // Now we set it all.
+      $instance->setTools($tools);
     }
     if (isset($data['tool_id'])) {
       $instance->setToolsId($data['tool_id']);

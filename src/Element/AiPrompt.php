@@ -5,6 +5,7 @@ namespace Drupal\ai\Element;
 use Drupal\ai\Entity\AiPrompt as AiPromptEntity;
 use Drupal\ai\Entity\AiPromptInterface;
 use Drupal\ai\Entity\AiPromptType;
+use Drupal\Component\Utility\Html;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformState;
@@ -552,7 +553,7 @@ class AiPrompt extends FormElementBase {
           // Add the row.
           $element['table']['#options'][$prompt->id()] = [
             'prompt_label' => $prompt->label(),
-            'prompt' => Markup::create(nl2br($prompt->getPrompt())),
+            'prompt' => Markup::create(nl2br(Html::escape($prompt->getPrompt()))),
             'edit' => $link,
           ];
         }
