@@ -19,6 +19,74 @@ function ai_eca_update_11001(): TranslatableMarkup {
   $submodule = 'ai_eca';
   $external_module = 'ai_integration_eca';
 
+  // Define module migrations for ECA configuration updates.
+  $module_migrations = [
+    'ai_eca' => 'ai_integration_eca',
+    'ai_eca_agents' => 'ai_integration_eca_agents',
+  ];
+
+  /** @var \Drupal\Component\Plugin\PluginManagerInterface $action_manager */
+  $action_manager = \Drupal::service('plugin.manager.eca.action');
+
+  /** @var \Drupal\Core\Extension\ModuleInstallerInterface $installer */
+  $installer = \Drupal::service('module_installer');
+
+  // Clean up old ECA configurations and migrate them to external modules.
+  foreach (\Drupal::entityTypeManager()->getStorage('eca')->loadMultiple() as $eca) {
+    $config = \Drupal::configFactory()->getEditable('eca.eca.' . $eca->id());
+    $module_dependencies = $config->get('dependencies.module');
+    $config_updated = FALSE;
+
+    // Migrate module dependencies.
+    foreach ($module_migrations as $old_module => $new_module) {
+      $key = array_search($old_module, $module_dependencies);
+      if ($key !== FALSE) {
+        $module_dependencies[$key] = $new_module;
+        $config_updated = TRUE;
+      }
+    }
+
+    if ($config_updated) {
+      $config->set('dependencies.module', $module_dependencies);
+
+      // Update plugin IDs from ai_eca_* to ai_integration_eca_*.
+      $actions = $config->get('actions');
+      if ($actions) {
+        $update = FALSE;
+        foreach ($actions as $action_id => &$action) {
+          if (isset($action['plugin']) && str_starts_with($action['plugin'], 'ai_eca_')) {
+            $update = TRUE;
+            $new_plugin_id = str_replace('ai_eca_', 'ai_integration_eca_', $action['plugin']);
+
+            // Check if the new plugin exists and log a warning if not.
+            if (!$action_manager->hasDefinition($new_plugin_id)) {
+              \Drupal::logger('ai_eca')->warning(
+                'ECA configuration @eca_id references plugin @plugin_id that does not exist in @external_module. Removing action @action_id.',
+                [
+                  '@eca_id' => $eca->id(),
+                  '@plugin_id' => $new_plugin_id,
+                  '@external_module' => 'ai_integration_eca',
+                  '@action_id' => $action_id,
+                ]
+              );
+              unset($actions[$action_id]);
+            }
+            else {
+              // Update the plugin ID to the new one.
+              $action['plugin'] = $new_plugin_id;
+            }
+          }
+        }
+        // Update the actions in the config.
+        if ($update) {
+          $config->set('actions', $actions);
+        }
+      }
+      // Save the updated config.
+      $config->save();
+    }
+  }
+
   // phpcs:disable
   // Scenarios are:
   // 1. Old submodule is not enabled -> we have nothing to do.
@@ -48,8 +116,6 @@ function ai_eca_update_11001(): TranslatableMarkup {
   /** @var \Drupal\Core\Extension\ModuleExtensionList $list */
   $list = \Drupal::service('extension.list.module');
   if ($list->exists($external_module) && !$handler->moduleExists($external_module)) {
-    /** @var \Drupal\Core\Extension\ModuleInstallerInterface $installer */
-    $installer = \Drupal::service('module_installer');
     // No try-catch, we want a failure to throw an error.
     $installer->install([$external_module]);
 
@@ -72,8 +138,6 @@ function ai_eca_update_11001(): TranslatableMarkup {
 
   // New module is installed but so is the old submodule. Uninstall the old.
   if ($handler->moduleExists($external_module)) {
-    /** @var \Drupal\Core\Extension\ModuleInstallerInterface $installer */
-    $installer = \Drupal::service('module_installer');
     $installer->uninstall([$submodule]);
 
     return t('@submodule has been uninstalled.', [
