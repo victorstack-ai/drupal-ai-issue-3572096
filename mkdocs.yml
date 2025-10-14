@@ -120,7 +120,7 @@ plugins:
   - mike:
       alias_type: redirect
       # This is for SEO reasons, not redirects.
-      canonical_version: 1.1.0
+      canonical_version: 1.2.0
       version_selector: true
       deploy_prefix: "mkdocs"
 extra:
