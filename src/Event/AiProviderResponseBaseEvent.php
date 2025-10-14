@@ -2,6 +2,8 @@
 
 namespace Drupal\ai\Event;
 
+use Drupal\ai\OperationType\OutputInterface;
+
 /**
  * Base abstract class for AI provider response events.
  *
@@ -70,20 +72,20 @@ abstract class AiProviderResponseBaseEvent extends AiProviderRequestBaseEvent {
   /**
    * Gets the output.
    *
-   * @return mixed
+   * @return \Drupal\ai\OperationType\OutputInterface
    *   The output.
    */
-  public function getOutput(): mixed {
+  public function getOutput(): OutputInterface {
     return $this->output;
   }
 
   /**
    * Sets the output.
    *
-   * @param mixed $output
+   * @param \Drupal\ai\OperationType\OutputInterface $output
    *   The output.
    */
-  public function setOutput(mixed $output): void {
+  public function setOutput(OutputInterface $output): void {
     $this->output = $output;
   }
 

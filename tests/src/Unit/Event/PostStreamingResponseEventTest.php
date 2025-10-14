@@ -3,6 +3,8 @@
 namespace Drupal\Tests\ai\Unit\Event;
 
 use Drupal\ai\Event\PostStreamingResponseEvent;
+use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai\OperationType\Chat\ChatOutput;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -26,7 +28,7 @@ class PostStreamingResponseEventTest extends TestCase {
    */
   public function testResponse(): void {
     $event = $this->getEvent();
-    $this->assertEquals('It sure is!', $event->getOutput());
+    $this->assertEquals('It sure is!', $event->getOutput()->getNormalized()->getText());
   }
 
   /**
@@ -36,12 +38,19 @@ class PostStreamingResponseEventTest extends TestCase {
    *   The event.
    */
   public function getEvent(): PostStreamingResponseEvent {
+    $output = new ChatOutput(
+      new ChatMessage('Assistant', 'It sure is!'),
+      [
+        'text' => 'It sure is!',
+      ],
+      [],
+    );
     return new PostStreamingResponseEvent('unique_id', 'test', 'chat', [
       'test' => 'testing',
     ],
       'This is a test',
       'model1',
-      'It sure is!',
+      $output,
       ['ai-test'],
       [
         'streamed' => TRUE,

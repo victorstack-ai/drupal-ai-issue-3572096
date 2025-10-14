@@ -1,6 +1,9 @@
 langcode: en
 status: true
-dependencies: {  }
+dependencies:
+  enforced:
+    module:
+      - ai_translate
 id: ai_translate__ai_translate_default
 label: 'Default prompt for AI translation'
 type: ai_translate
