@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_search\Base;
 
+use Drupal\ai\Utility\TokenizerInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManager;
 use Drupal\Core\Extension\ModuleExtensionList;
@@ -82,6 +83,8 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
    *   The logger factory.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger.
+   * @param \Drupal\ai\Utility\TokenizerInterface $tokenizer
+   *   The tokenizer.
    */
   final public function __construct(
     protected string $pluginId,
@@ -94,6 +97,7 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
     protected ConfigFactoryInterface $configFactory,
     protected LoggerChannelFactoryInterface $loggerChannelFactory,
     protected MessengerInterface $messenger,
+    protected TokenizerInterface $tokenizer,
   ) {
     // Set the default converter settings.
     $this->converter->getConfig()->setOption('strip_tags', TRUE);
@@ -143,6 +147,8 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
     $ai_provider = $container->get('ai.provider');
     /** @var \Drupal\ai\Utility\TextChunker $text_chunker */
     $text_chunker = $container->get('ai.text_chunker');
+    /** @var \Drupal\ai\Utility\TokenizerInterface $ai_tokenizer */
+    $ai_tokenizer = $container->get('ai.tokenizer');
     return new static(
       $plugin_id,
       $plugin_definition,
@@ -154,6 +160,7 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
       $container->get('config.factory'),
       $container->get('logger.factory'),
       $container->get('messenger'),
+      $ai_tokenizer,
     );
   }
 
