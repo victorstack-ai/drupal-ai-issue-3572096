@@ -12,7 +12,7 @@ interface ExecutableFunctionCallInterface extends FunctionCallInterface, Executa
   /**
    * Get readable output.
    *
-   * This is a normalized way that you can provider a readable output for a LLM
+   * This is a normalized way that you can provide a readable output for a LLM
    * to read and in certain cases take another actions.
    *
    * @return string
