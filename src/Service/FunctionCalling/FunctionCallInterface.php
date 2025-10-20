@@ -3,13 +3,14 @@
 namespace Drupal\ai\Service\FunctionCalling;
 
 use Drupal\Component\Plugin\PluginInspectionInterface;
+use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\ai\OperationType\Chat\Tools\ToolsFunctionInput;
 use Drupal\ai\OperationType\Chat\Tools\ToolsFunctionOutput;
 
 /**
  * Defines an interface for AI function calling services.
  */
-interface FunctionCallInterface extends PluginInspectionInterface {
+interface FunctionCallInterface extends PluginInspectionInterface, ContextAwarePluginInterface {
 
   /**
    * Gets the assigned tools id, if any.
