@@ -263,48 +263,60 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
    *
    * @return string[]
    *   The array of chunks from the text chunker.
-   *
-   * @throws \Exception
    */
   protected function getChunks(string $title, string $main_content, string $contextual_content, bool $title_in_contextual = FALSE, ?IndexInterface $index = NULL): array {
-
     // This determines the available space in each chunk used by contextual
     // content vs the main fields. See the description for
     // contextual content max percentage for more details.
     $max_contextual_content = $this->contextualContentMaxPercentage / 100;
     $max_main_fields = 1 - $max_contextual_content;
 
-    if (strlen($title . $main_content . $contextual_content) <= $this->chunkSize) {
-      // Ideal situation, all fits min single embedding.
-      $chunks = $this->textChunker->chunkText(
-        $this->prepareChunkText($title, $main_content, $contextual_content, $title_in_contextual, $index),
-        $this->chunkSize,
-        $this->chunkMinOverlap
-      );
+    // Empty the title if it is specifically meant to be excluded OR it is
+    // already in the contextual content. In these cases we do not want it
+    // being part of the calculation for chunking.
+    $exclude_title = FALSE;
+    if ($index !== NULL) {
+      $index_config = $this->configFactory->get('ai_search.index.' . $index->id())->getRawData();
+      $exclude_title = $index_config['exclude_title'] ?? FALSE;
+    }
+    if ($title_in_contextual || $exclude_title) {
+      $title = '';
+    }
+
+    $full_text = $this->prepareChunkText($title, $main_content, $contextual_content, $index);
+    $total_tokens = $this->tokenizer->countTokens($full_text);
+    if ($total_tokens <= $this->chunkSize) {
+      // Ideal situation, all fits in a single embedding.
+      $chunks = [$full_text];
     }
     else {
       $chunks = [];
-      if ((strlen($title . $contextual_content) / $this->chunkSize) < $max_contextual_content) {
-        // Arbitrarily suppose that if 30% of embedding content is contextual
-        // content, it is fine.
+      $contextual_text = $this->prepareChunkText($title, '', $contextual_content, $index);
+      $contextual_tokens = $this->tokenizer->countTokens($contextual_text);
+
+      if ($contextual_tokens < ($this->chunkSize * $max_contextual_content)) {
+        // Contextual content is small enough. Chunk only the main content.
         $main_chunks = $this->textChunker->chunkText(
           $main_content,
           (int) ($this->chunkSize * $max_main_fields),
           $this->chunkMinOverlap
         );
         foreach ($main_chunks as $main_chunk) {
-          $chunks[] = $this->prepareChunkText($title, $main_chunk, $contextual_content, $title_in_contextual, $index);
+          $chunks[] = $this->prepareChunkText($title, $main_chunk, $contextual_content, $index);
         }
       }
       else {
         // Both contextual content and main fields need chunking.
-        $available_chunk_size = $this->chunkSize - strlen($title);
+        $title_tokens = !empty($title) ? $this->tokenizer->countTokens($title) : 0;
+        $available_chunk_size = $this->chunkSize - $title_tokens;
         $contextual_chunk_size = (int) ($available_chunk_size * $max_contextual_content);
         $main_chunk_size = (int) ($available_chunk_size * $max_main_fields);
+        $contextual_min_overlap = max(1, intval($this->chunkMinOverlap * $max_contextual_content));
+
         $contextual_chunks = $this->textChunker->chunkText(
           $contextual_content,
           $contextual_chunk_size,
-          $this->chunkMinOverlap
+          $contextual_min_overlap
         );
         $main_chunks = $this->textChunker->chunkText(
           $main_content,
@@ -313,12 +325,12 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
         );
         foreach ($main_chunks as $main_chunk) {
           foreach ($contextual_chunks as $contextual_chunk) {
-            $chunks[] = $this->prepareChunkText($title, $main_chunk, $contextual_chunk, $title_in_contextual, $index);
+            $chunks[] = $this->prepareChunkText($title, $main_chunk, $contextual_chunk, $index);
           }
         }
       }
     }
-    return $chunks;
+    return array_filter($chunks);
   }
 
   /**
@@ -330,27 +342,25 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
    *   The main field content.
    * @param string $contextual_chunk
    *   The contextual content.
-   * @param bool $title_in_contextual
-   *   Whether title is explicitly added as contextual content.
    * @param \Drupal\search_api\IndexInterface|null $index
    *   The Search API index.
    *
    * @return string
    *   The rendered chunk.
    */
-  protected function prepareChunkText(string $title, string $main_chunk, string $contextual_chunk, bool $title_in_contextual = FALSE, ?IndexInterface $index = NULL): string {
+  protected function prepareChunkText(
+    string $title,
+    string $main_chunk,
+    string $contextual_chunk,
+    ?IndexInterface $index = NULL,
+  ): string {
     $parts = [];
-    $exclude_title = FALSE;
-    if ($index !== NULL) {
-      $index_config = $this->configFactory->get('ai_search.index.' . $index->id())->getRawData();
-      $exclude_title = $index_config['exclude_title'] ?? FALSE;
-    }
 
-    // Auto-add title header if:
+    // Automatically prepend the title as contextual content if:
     // 1. Title is not empty
     // 2. Title is NOT explicitly added as contextual content
-    // 3. exclude_title option is NOT enabled.
-    if (!empty($title) && !$title_in_contextual && !$exclude_title) {
+    // 3. The Exclude Title option is NOT enabled.
+    if (!empty($title)) {
       $parts[] = '# ' . strtoupper($title);
     }
     $parts[] = $main_chunk;
