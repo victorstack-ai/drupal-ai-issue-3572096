@@ -162,6 +162,13 @@ class EchoProvider extends AiVdbProviderClientBase implements ContainerFactoryPl
   /**
    * {@inheritdoc}
    */
+  public function deleteItems(array $configuration, array $item_ids): void {
+
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function querySearch(string $collection_name, array $output_fields, mixed $filters = '', int $limit = 10, int $offset = 0, string $database = 'default'): array {
     return [];
   }
@@ -170,13 +177,6 @@ class EchoProvider extends AiVdbProviderClientBase implements ContainerFactoryPl
    * {@inheritdoc}
    */
   public function vectorSearch(string $collection_name, array $vector_input, array $output_fields, QueryInterface $query, mixed $filters = '', int $limit = 10, int $offset = 0, string $database = 'default'): array {
-    return [];
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getVdbIds(string $collection_name, array $drupalIds, string $database = 'default'): array {
     return [];
   }
 

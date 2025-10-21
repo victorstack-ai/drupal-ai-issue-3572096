@@ -306,20 +306,7 @@ abstract class AiVdbProviderClientBase extends PluginBase implements AiVdbProvid
   /**
    * {@inheritdoc}
    */
-  public function deleteItems(array $configuration, array $item_ids): void {
-    $vdbIds = $this->getVdbIds(
-      collection_name: $configuration['database_settings']['collection'],
-      drupalIds: $item_ids,
-      database: $configuration['database_settings']['database_name'],
-    );
-    if ($vdbIds) {
-      $this->getClient()->deleteFromCollection(
-        collection_name: $configuration['database_settings']['collection'],
-        ids: $vdbIds,
-        database_name: $configuration['database_settings']['database_name'],
-      );
-    }
-  }
+  abstract public function deleteItems(array $configuration, array $item_ids): void;
 
   /**
    * {@inheritdoc}

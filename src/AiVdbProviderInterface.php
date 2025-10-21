@@ -203,25 +203,6 @@ interface AiVdbProviderInterface extends PluginInspectionInterface {
   ): array;
 
   /**
-   * Facade method to convert Drupal Entity IDs into Vector DB IDs.
-   *
-   * @param string $collection_name
-   *   The name of the collection.
-   * @param array $drupalIds
-   *   The Drupal IDs.
-   * @param string $database
-   *   The database name.
-   *
-   * @return array
-   *   The VDB IDs.
-   */
-  public function getVdbIds(
-    string $collection_name,
-    array $drupalIds,
-    string $database = 'default',
-  ): array;
-
-  /**
    * Gets the field name used by this provider to store the embedding vector.
    *
    * Implementing this method signals that the provider can return raw
