@@ -145,6 +145,9 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       'tokenizer',
       // Boosting does not apply here.
       'type_boost',
+      // Highlighting is not supported because keywords are vectorized which is
+      // fundamentally different from the way highlighting works.
+      'highlight',
     ];
   }
 
