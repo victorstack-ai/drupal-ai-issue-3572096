@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_search\Plugin\EmbeddingStrategy;
 
+use Drupal\ai\Embedding;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\ai\AiVdbProviderInterface;
@@ -53,11 +54,11 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
         continue;
       }
       $metadata = $this->addContentToMetadata($metadata, $chunk, $index);
-      $embedding = [
-        'id' => $search_api_item->getId() . ':' . $key,
-        'values' => $raw_embeddings[$key],
-        'metadata' => $metadata,
-      ];
+      $embedding = new Embedding(
+        $search_api_item->getId() . ':' . $key,
+        $raw_embeddings[$key],
+        $metadata,
+      );
       $embeddings[] = $embedding;
     }
 

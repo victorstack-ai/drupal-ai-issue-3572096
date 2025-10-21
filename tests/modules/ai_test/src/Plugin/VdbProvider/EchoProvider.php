@@ -12,6 +12,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\Attribute\AiVdbProvider;
 use Drupal\ai\Base\AiVdbProviderClientBase;
 use Drupal\ai\Enum\VdbSimilarityMetrics;
+use Drupal\ai\Validation\EmbeddingValidator;
 use Drupal\search_api\Query\QueryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -42,6 +43,8 @@ class EchoProvider extends AiVdbProviderClientBase implements ContainerFactoryPl
    *   The entity field manager.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger.
+   * @param \Drupal\ai\Validation\EmbeddingValidator $embeddingValidator
+   *   The embedding validator.
    * @param \Symfony\Component\HttpFoundation\Request $request
    *   The current request.
    */
@@ -52,6 +55,7 @@ class EchoProvider extends AiVdbProviderClientBase implements ContainerFactoryPl
     protected ConfigFactoryInterface $configFactory,
     protected EntityFieldManagerInterface $entityFieldManager,
     protected MessengerInterface $messenger,
+    protected EmbeddingValidator $embeddingValidator,
     protected Request $request,
   ) {
     parent::__construct(
@@ -61,6 +65,7 @@ class EchoProvider extends AiVdbProviderClientBase implements ContainerFactoryPl
       $this->configFactory,
       $this->entityFieldManager,
       $this->messenger,
+      $this->embeddingValidator,
     );
   }
 
@@ -75,6 +80,7 @@ class EchoProvider extends AiVdbProviderClientBase implements ContainerFactoryPl
       $container->get('config.factory'),
       $container->get('entity_field.manager'),
       $container->get('messenger'),
+      $container->get('ai.embedding_validator'),
       $container->get('request_stack')->getCurrentRequest(),
     );
   }

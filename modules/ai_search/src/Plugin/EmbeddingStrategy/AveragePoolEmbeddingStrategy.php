@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_search\Plugin\EmbeddingStrategy;
 
+use Drupal\ai\Embedding;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai_search\Attribute\EmbeddingStrategy;
 use Drupal\search_api\IndexInterface;
@@ -34,8 +35,8 @@ class AveragePoolEmbeddingStrategy extends EmbeddingBase {
     IndexInterface $index,
   ): array {
     $this->init($embedding_engine, $chat_model, $configuration);
-    [$title, $contextual_content, $main_content] = $this->groupFieldData($fields, $index);
-    $chunks = $this->getChunks($title, $main_content, $contextual_content);
+    [$title, $contextual_content, $main_content, $title_in_contextual] = $this->groupFieldData($fields, $index, $search_api_item);
+    $chunks = $this->getChunks($title, $main_content, $contextual_content, $title_in_contextual, $index);
 
     // Embed and average.
     if ($raw_embeddings = $this->getRawEmbeddings($chunks)) {
@@ -44,12 +45,12 @@ class AveragePoolEmbeddingStrategy extends EmbeddingBase {
       $metadata = $this->buildBaseMetadata($fields, $index);
       $metadata = $this->addContentToMetadata($metadata, $content, $index);
 
-      // Build the result, optionally adding metadata.
-      $results = [
-        'id' => $search_api_item->getId() . ':0',
-        'values' => $embedding,
-        'metadata' => $metadata,
-      ];
+      // Build the result as Embedding object.
+      $results = new Embedding(
+        id: $search_api_item->getId() . ':0',
+        values: $embedding,
+        metadata: $metadata,
+      );
       return [$results];
     }
     return [];

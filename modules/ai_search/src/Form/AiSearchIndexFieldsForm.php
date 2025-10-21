@@ -5,6 +5,7 @@ namespace Drupal\ai_search\Form;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\TypedData\ComplexDataInterface;
+use Drupal\ai\Embedding;
 use Drupal\ai\Enum\EmbeddingStrategyCapability;
 use Drupal\ai\Enum\EmbeddingStrategyIndexingOptions;
 use Drupal\search_api\Datasource\DatasourceInterface;
@@ -341,13 +342,13 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
    *   The original form.
    * @param int $number
    *   The chunk number.
-   * @param array $embedding
-   *   The embedding chunk.
+   * @param \Drupal\ai\Embedding $embedding
+   *   The embedding object.
    *
    * @return array
    *   The updated form.
    */
-  protected function buildCheckerChunkTable(array $form, int $number, array $embedding): array {
+  protected function buildCheckerChunkTable(array $form, int $number, Embedding $embedding): array {
     $form['checker']['embeddings_' . $number] = [
       '#type' => 'table',
       '#header' => [
@@ -361,11 +362,11 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
       'property' => $this->t('ID for chunk @chunk', [
         '@chunk' => $number,
       ]),
-      'content' => $embedding['id'],
+      'content' => $embedding->id,
     ];
     $form['checker']['embeddings_' . $number]['#rows'][] = [
       'property' => $this->t('Dimensions'),
-      'content' => count($embedding['values']),
+      'content' => count($embedding->values),
     ];
 
     // The conversion from markdown to html is an optional dependency.
@@ -379,7 +380,7 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
         'allow_unsafe_links' => FALSE,
       ]);
     }
-    foreach ($embedding['metadata'] as $key => $item) {
+    foreach ($embedding->getMetadata() as $key => $item) {
       if (is_array($item)) {
         $form['checker']['embeddings_' . $number]['#rows'][] = [
           'property' => $key,

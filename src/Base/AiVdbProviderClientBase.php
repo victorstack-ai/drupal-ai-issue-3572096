@@ -5,6 +5,7 @@ namespace Drupal\ai\Base;
 use Drupal\ai\AiVdbProviderInterface;
 use Drupal\ai\Enum\VdbSimilarityMetrics;
 use Drupal\ai\Exception\AiUnsafePromptException;
+use Drupal\ai\Validation\EmbeddingValidator;
 use Drupal\ai_search\AiVdbProviderSearchApiInterface;
 use Drupal\ai_search\EmbeddingStrategyInterface;
 use Drupal\ai_search\Plugin\Exception\EmbeddingStrategyException;
@@ -45,6 +46,8 @@ abstract class AiVdbProviderClientBase extends PluginBase implements AiVdbProvid
    *   The entity field manager.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger.
+   * @param \Drupal\ai\Validation\EmbeddingValidator $embeddingValidator
+   *   The embedding validator.
    */
   public function __construct(
     array $configuration,
@@ -53,6 +56,7 @@ abstract class AiVdbProviderClientBase extends PluginBase implements AiVdbProvid
     protected ConfigFactoryInterface $configFactory,
     protected EntityFieldManagerInterface $entityFieldManager,
     protected MessengerInterface $messenger,
+    protected EmbeddingValidator $embeddingValidator,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->pluginDefinition = $plugin_definition;
@@ -62,7 +66,7 @@ abstract class AiVdbProviderClientBase extends PluginBase implements AiVdbProvid
   /**
    * Load from dependency injection container.
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): AiVdbProviderClientBase|static {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): AiVdbProviderClientBase | static {
     return new static(
       $configuration,
       $plugin_id,
@@ -70,6 +74,7 @@ abstract class AiVdbProviderClientBase extends PluginBase implements AiVdbProvid
       $container->get('config.factory'),
       $container->get('entity_field.manager'),
       $container->get('messenger'),
+      $container->get('ai.embedding_validator'),
     );
   }
 
@@ -197,12 +202,6 @@ abstract class AiVdbProviderClientBase extends PluginBase implements AiVdbProvid
     EmbeddingStrategyInterface $embedding_strategy,
   ): array {
     $successfulItemIds = [];
-    $itemBase = [
-      'metadata' => [
-        'server_id' => $index->getServerId(),
-        'index_id' => $index->id(),
-      ],
-    ];
 
     // Check if we need to delete some items first.
     $this->deleteIndexItems($configuration, $index, array_values(array_map(function ($item) {
@@ -232,18 +231,23 @@ abstract class AiVdbProviderClientBase extends PluginBase implements AiVdbProvid
         continue;
       }
 
+      /** @var \Drupal\ai\Embedding $embedding */
       foreach ($embeddings as $embedding) {
         // Ensure consistent embedding structure as per
         // EmbeddingStrategyInterface.
-        $this->validateRetrievedEmbedding($embedding);
+        $violations = $this->embeddingValidator->validate($embedding);
+        if (count($violations) > 0) {
+          throw new EmbeddingStrategyException("The embedding object must be valid: \n$violations");
+        }
 
         // Merge the base array structure with the individual chunk array
         // structure and add additional details.
-        $embedding = array_merge_recursive($embedding, $itemBase);
-        $data['drupal_long_id'] = $embedding['id'];
+        $embedding->putMetadata('server_id', $index->getServerId());
+        $embedding->putMetadata('index_id', $index->id());
+        $data['drupal_long_id'] = $embedding->id;
         $data['drupal_entity_id'] = $item_id;
-        $data['vector'] = $embedding['values'];
-        foreach ($embedding['metadata'] as $key => $value) {
+        $data['vector'] = $embedding->values;
+        foreach ($embedding->getMetadata() as $key => $value) {
           $data[$key] = $value;
         }
         $this->insertIntoCollection(
@@ -265,8 +269,15 @@ abstract class AiVdbProviderClientBase extends PluginBase implements AiVdbProvid
    * @param array $embedding
    *   The individual embedding returned in the array of embeddings from the
    *   EmbeddingStrategyInterface::getEmbedding() method.
+   *
+   * @deprecated in ai:1.2.0 and is removed from ai:2.0.0.
+   *   Use \Drupal\ai\Validation\EmbeddingValidator::validate() instead.
+   *
+   * @see https://www.drupal.org/node/3540894
    */
   public function validateRetrievedEmbedding(array $embedding): void {
+    @trigger_error(sprintf('Calling %s() is deprecated in ai:1.2.0 and is removed from ai:2.0.0. Use \Drupal\ai\Validation\EmbeddingValidator::validate() instead. See https://www.drupal.org/node/3540894', __METHOD__), E_USER_DEPRECATED);
+
     if (!isset($embedding['id'])) {
       throw new EmbeddingStrategyException('The individual embedding chunks must have an id.');
     }

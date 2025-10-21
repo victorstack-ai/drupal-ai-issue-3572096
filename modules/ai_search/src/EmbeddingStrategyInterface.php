@@ -31,8 +31,8 @@ interface EmbeddingStrategyInterface extends PluginInspectionInterface {
    * @param \Drupal\search_api\IndexInterface $index
    *   The search API index.
    *
-   * @return array<array{id: string, values: array, metadata: array}>
-   *   The vectors.
+   * @return \Drupal\ai\Embedding[]
+   *   The vectors as Embedding objects.
    */
   public function getEmbedding(
     string $embedding_engine,

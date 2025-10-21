@@ -301,13 +301,22 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
       'checker[entity]' => $this->nodes['chocolate_cake']->label() . ' (' . $this->nodes['chocolate_cake']->id() . ')',
     ], 'Save changes');
 
+    $page_text = $this->getSession()->getPage()->getText();
     if (class_exists('League\CommonMark\CommonMarkConverter')) {
+      // When CommonMark is available, markdown is converted to HTML.
+      // Just check that the title appears somewhere on the page.
       $this->assertSession()->pageTextContains('Chocolate Cake');
     }
     else {
-      $has_markdown_link = $this->getSession()->getPage()->hasContent('[Chocolate Cake](' . $this->nodes['chocolate_cake']->toUrl()->toString() . ')');
-      $has_markdown_title = $this->getSession()->getPage()->hasContent('# CHOCOLATE CAKE');
-      $this->assertTrue($has_markdown_link || $has_markdown_title);
+      // When CommonMark is NOT available, check for raw markdown syntax.
+      $has_markdown_link = str_contains($page_text, '[Chocolate Cake](' . $this->nodes['chocolate_cake']->toUrl()->toString() . ')');
+      $has_markdown_title = str_contains($page_text, '# CHOCOLATE CAKE');
+      $this->assertTrue($has_markdown_link || $has_markdown_title, sprintf(
+        "Expected markdown link '[Chocolate Cake](%s)' OR markdown title '# CHOCOLATE CAKE'. Neither found. CommonMark class exists: %s. Page text preview: %s",
+        $this->nodes['chocolate_cake']->toUrl()->toString(),
+        class_exists('League\CommonMark\CommonMarkConverter') ? 'YES' : 'NO',
+        substr($page_text, 0, 2000)
+      ));
     }
     // Title should NOT appear in contextual content format.
     $this->assertSession()->pageTextNotContains('Title: Chocolate Cake');
@@ -352,10 +361,11 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
       $this->assertSession()->elementNotContains('css', 'h1', 'CHOCOLATE CAKE');
     }
     else {
-      $has_markdown_link = $this->getSession()->getPage()->hasContent('[Chocolate Cake](' . $this->nodes['chocolate_cake']->toUrl()->toString() . ')');
-      $has_markdown_title = $this->getSession()->getPage()->hasContent('# CHOCOLATE CAKE');
-      $this->assertTrue($has_markdown_link);
-      $this->assertFalse($has_markdown_title);
+      $page_text = $this->getSession()->getPage()->getText();
+      $has_markdown_link = str_contains($page_text, '[Chocolate Cake](' . $this->nodes['chocolate_cake']->toUrl()->toString() . ')');
+      $has_markdown_title = str_contains($page_text, '# CHOCOLATE CAKE');
+      $this->assertTrue($has_markdown_link, 'Expected markdown link to be present.');
+      $this->assertFalse($has_markdown_title, 'Expected markdown title NOT to be present.');
     }
     $this->assertSession()->pageTextNotContains('Title: Chocolate Cake');
 

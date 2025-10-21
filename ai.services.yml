@@ -75,4 +75,7 @@ services:
       # Cron will still automatically clear expired entries.
       - { name: cache.backend }
     factory: cache_factory:get
-    arguments: ['ai_embeddings']
+    arguments: [ 'ai_embeddings' ]
+  ai.embedding_validator:
+    class: Drupal\ai\Validation\EmbeddingValidator
+  Drupal\ai\Validation\EmbeddingValidator: '@ai.embedding_validator'
