@@ -12,10 +12,8 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\Attribute\AiVdbProvider;
 use Drupal\ai\Base\AiVdbProviderClientBase;
 use Drupal\ai\Enum\VdbSimilarityMetrics;
-use Drupal\key\KeyRepositoryInterface;
 use Drupal\search_api\Query\QueryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -32,16 +30,14 @@ class EchoProvider extends AiVdbProviderClientBase implements ContainerFactoryPl
   /**
    * Constructs an override for the AiVdbClientBase class to add Milvus V2.
    *
-   * @param string $pluginId
+   * @param array $configuration
+   *   A configuration array containing information about the plugin instance.
+   * @param string $plugin_id
    *   Plugin ID.
-   * @param mixed $pluginDefinition
+   * @param mixed $plugin_definition
    *   Plugin definition.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory.
-   * @param \Drupal\key\KeyRepositoryInterface $keyRepository
-   *   The key repository.
-   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
-   *   The event dispatcher.
    * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entityFieldManager
    *   The entity field manager.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
@@ -50,21 +46,19 @@ class EchoProvider extends AiVdbProviderClientBase implements ContainerFactoryPl
    *   The current request.
    */
   public function __construct(
-    protected string $pluginId,
-    protected mixed $pluginDefinition,
+    array $configuration,
+    string $plugin_id,
+    mixed $plugin_definition,
     protected ConfigFactoryInterface $configFactory,
-    protected KeyRepositoryInterface $keyRepository,
-    protected EventDispatcherInterface $eventDispatcher,
     protected EntityFieldManagerInterface $entityFieldManager,
     protected MessengerInterface $messenger,
     protected Request $request,
   ) {
     parent::__construct(
-      $this->pluginId,
-      $this->pluginDefinition,
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
       $this->configFactory,
-      $this->keyRepository,
-      $this->eventDispatcher,
       $this->entityFieldManager,
       $this->messenger,
     );
@@ -75,11 +69,10 @@ class EchoProvider extends AiVdbProviderClientBase implements ContainerFactoryPl
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): AiVdbProviderClientBase|static {
     return new static(
+      $configuration,
       $plugin_id,
       $plugin_definition,
       $container->get('config.factory'),
-      $container->get('key.repository'),
-      $container->get('event_dispatcher'),
       $container->get('entity_field.manager'),
       $container->get('messenger'),
       $container->get('request_stack')->getCurrentRequest(),

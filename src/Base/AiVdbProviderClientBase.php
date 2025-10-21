@@ -2,100 +2,59 @@
 
 namespace Drupal\ai\Base;
 
+use Drupal\ai\AiVdbProviderInterface;
+use Drupal\ai\Enum\VdbSimilarityMetrics;
 use Drupal\ai\Exception\AiUnsafePromptException;
+use Drupal\ai_search\AiVdbProviderSearchApiInterface;
+use Drupal\ai_search\EmbeddingStrategyInterface;
+use Drupal\ai_search\Plugin\Exception\EmbeddingStrategyException;
+use Drupal\Component\Plugin\PluginBase;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
-use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelTrait;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
-use Drupal\ai\AiVdbProviderInterface;
-use Drupal\ai\Enum\VdbSimilarityMetrics;
-use Drupal\ai_search\AiVdbProviderSearchApiInterface;
-use Drupal\ai_search\EmbeddingStrategyInterface;
-use Drupal\ai_search\Plugin\Exception\EmbeddingStrategyException;
-use Drupal\key\KeyRepositoryInterface;
 use Drupal\search_api\IndexInterface;
 use Drupal\search_api\Item\FieldInterface;
 use Drupal\search_api\Query\QueryInterface;
-use Drupal\search_api\ServerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Service to handle API requests server.
  */
-abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, AiVdbProviderSearchApiInterface, ContainerFactoryPluginInterface {
+abstract class AiVdbProviderClientBase extends PluginBase implements AiVdbProviderInterface, AiVdbProviderSearchApiInterface, ContainerFactoryPluginInterface {
 
   use StringTranslationTrait;
-
   use LoggerChannelTrait;
-
-  /**
-   * Module Handler.
-   *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
-   */
-  protected ModuleHandlerInterface $moduleHandler;
-
-  /**
-   * The plugin definition.
-   *
-   * @var array
-   */
-  protected mixed $pluginDefinition;
-
-  /**
-   * The plugin ID.
-   *
-   * @var string
-   */
-  protected string $pluginId;
-
-  /**
-   * Custom configurations.
-   *
-   * @var array
-   */
-  protected array $configuration = [];
-
-  /**
-   * The server this backend is configured for.
-   *
-   * @var \Drupal\search_api\ServerInterface
-   */
-  protected ServerInterface $server;
 
   /**
    * Constructs a new AiVdbClientBase abstract class.
    *
+   * @param array $configuration
+   *   A configuration array containing information about the plugin instance.
    * @param string $plugin_id
    *   Plugin ID.
    * @param mixed $plugin_definition
    *   Plugin definition.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The config factory.
-   * @param \Drupal\key\KeyRepositoryInterface $keyRepository
-   *   The key repository.
-   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
-   *   The event dispatcher.
    * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entityFieldManager
    *   The entity field manager.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger.
    */
   public function __construct(
+    array $configuration,
     string $plugin_id,
     mixed $plugin_definition,
     protected ConfigFactoryInterface $configFactory,
-    protected KeyRepositoryInterface $keyRepository,
-    protected EventDispatcherInterface $eventDispatcher,
     protected EntityFieldManagerInterface $entityFieldManager,
     protected MessengerInterface $messenger,
   ) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->pluginDefinition = $plugin_definition;
     $this->pluginId = $plugin_id;
   }
@@ -105,48 +64,13 @@ abstract class AiVdbProviderClientBase implements AiVdbProviderInterface, AiVdbP
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): AiVdbProviderClientBase|static {
     return new static(
+      $configuration,
       $plugin_id,
       $plugin_definition,
       $container->get('config.factory'),
-      $container->get('key.repository'),
-      $container->get('event_dispatcher'),
       $container->get('entity_field.manager'),
       $container->get('messenger'),
     );
-  }
-
-  /**
-   * Retrieves the server instance this backend is configured for.
-   *
-   * @return \Drupal\search_api\ServerInterface|null
-   *   The server instance, or NULL if the server is not set yet.
-   */
-  public function getSearchApiServer(): ?ServerInterface {
-    return $this->server;
-  }
-
-  /**
-   * Sets the server the for this backend.
-   *
-   * @param \Drupal\search_api\ServerInterface|null $server
-   *   The server this backend associated with, or NULL.
-   */
-  public function setSearchApiServer(?ServerInterface $server = NULL): void {
-    $this->server = $server;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function getPluginId(): string {
-    return $this->pluginId;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function getPluginDefinition() {
-    return $this->pluginDefinition;
   }
 
   /**
