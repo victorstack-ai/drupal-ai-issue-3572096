@@ -928,7 +928,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    *
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
-  private function getVectorDb(): object {
+  public function getVectorDb(): object {
     if (empty($this->vdbClient)) {
       $this->vdbClient = $this->vdbProviderManager->createInstance($this->configuration['database']);
     }
