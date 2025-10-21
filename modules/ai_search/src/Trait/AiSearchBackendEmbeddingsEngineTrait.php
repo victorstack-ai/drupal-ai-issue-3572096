@@ -51,6 +51,7 @@ trait AiSearchBackendEmbeddingsEngineTrait {
       'embeddings_engine' => NULL,
       'embeddings_engine_configuration' => [
         'dimensions' => 0,
+        'set_dimensions' => FALSE,
       ],
     ];
   }
@@ -66,7 +67,10 @@ trait AiSearchBackendEmbeddingsEngineTrait {
    * @return array
    *   The form array.
    */
-  public function engineConfigurationForm(array $form, FormStateInterface $form_state): array {
+  public function engineConfigurationForm(
+    array $form,
+    FormStateInterface $form_state,
+  ): array {
     // It might be a Sub form state, so we need to get the complete form state.
     if ($form_state instanceof SubformStateInterface) {
       $form_state = $form_state->getCompleteFormState();
@@ -75,7 +79,7 @@ trait AiSearchBackendEmbeddingsEngineTrait {
       $this->engineConfiguration = $this->defaultEngineConfiguration();
     }
 
-    /** @var \Drupal\Core\Entity\Form $form_object */
+    /** @var \Drupal\Core\Form\FormInterface $form_object */
     $form_object = $form_state->getFormObject();
     $entity = $form_object->getEntity();
 

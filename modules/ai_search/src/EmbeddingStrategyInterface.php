@@ -20,8 +20,6 @@ interface EmbeddingStrategyInterface extends PluginInspectionInterface {
    *
    * @param string $embedding_engine
    *   The embedding engine.
-   * @param string $chat_model
-   *   The chat model ID for token calculations.
    * @param array $configuration
    *   The embedding strategy configuration.
    * @param array $fields
@@ -36,7 +34,6 @@ interface EmbeddingStrategyInterface extends PluginInspectionInterface {
    */
   public function getEmbedding(
     string $embedding_engine,
-    string $chat_model,
     array $configuration,
     array $fields,
     ItemInterface $search_api_item,

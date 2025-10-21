@@ -650,4 +650,14 @@ abstract class AiProviderClientBase implements AiProviderInterface, ContainerFac
     return [];
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function getTokenizerForModel(string $model_id): string {
+    // Fallback to the same encoding used by gpt3.5-turbo as a sensible
+    // default when the model is not yet supported by TikToken PHP.
+    // @see https://github.com/yethee/tiktoken-php/blob/master/src/EncoderProvider.php
+    return 'cl100k_base';
+  }
+
 }

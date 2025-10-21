@@ -262,4 +262,15 @@ interface AiVdbProviderInterface extends PluginInspectionInterface {
     array $excluded_entity_ids = [],
   ): array;
 
+  /**
+   * Get the tokenizer type for a specific model.
+   *
+   * @param string $model_id
+   *   The model ID.
+   *
+   * @return string
+   *   The tokenizer type.
+   */
+  public function getTokenizerForModel(string $model_id): string;
+
 }

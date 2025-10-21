@@ -14,7 +14,6 @@ use Drupal\Core\Plugin\PluginFormInterface;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\AiVdbProviderPluginManager;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
-use Drupal\ai\Utility\TokenizerInterface;
 use Drupal\ai_search\Backend\AiSearchBackendPluginBase;
 use Drupal\ai_search\EmbeddingStrategyPluginManager;
 use Drupal\search_api\Backend\BackendSpecificInterface;
@@ -56,13 +55,6 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
    * @var \Drupal\ai_search\EmbeddingStrategyPluginManager
    */
   protected EmbeddingStrategyPluginManager $embeddingStrategyProviderManager;
-
-  /**
-   * The tokenizer interface to get the supported token count models.
-   *
-   * @var \Drupal\ai\Utility\TokenizerInterface
-   */
-  protected TokenizerInterface $tokenizer;
 
   /**
    * Messenger.
@@ -125,7 +117,6 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     $instance->messenger = $container->get('messenger');
     $instance->entityTypeManager = $container->get('entity_type.manager');
     $instance->currentUser = $container->get('current_user');
-    $instance->tokenizer = $container->get('ai.tokenizer');
     $instance->logger = $container->get('logger.factory')->get('ai_search');
     return $instance;
   }
@@ -203,21 +194,6 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       ];
       return $form;
     }
-
-    // Get all supported models, default to gpt-3.5 model.
-    $supported_models = $this->tokenizer->getSupportedModels();
-    $default_model_possibilities = array_keys(array_filter($supported_models, function ($model) {
-      return str_contains($model, 'gpt-3.5');
-    }, ARRAY_FILTER_USE_KEY));
-    $default_model = reset($default_model_possibilities);
-    $form['chat_model'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Tokenizer chat counting model'),
-      '#description' => $this->t('This is recommended to ensure the right number of tokens is calculated for the embeddings. Depending on the vector database and dimensions, the number of Tokens allowed per chunk of content differs. This service is used to count the number of tokens in your content as accurately as possible to better make use of the available space.'),
-      '#default_value' => $this->configuration['chat_model'] ?? $default_model,
-      '#options' => $this->tokenizer->getSupportedModels(),
-      '#weight' => 2,
-    ];
 
     $form['include_raw_embedding_vector'] = [
       '#type' => 'checkbox',
@@ -367,20 +343,6 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       return TRUE;
     }
     return FALSE;
-  }
-
-  /**
-   * Get the chat model options that the tokenizer supports.
-   *
-   * @return array
-   *   The chat model options that Tokenizer supports.
-   */
-  protected function getModelTokenizerOptions(): array {
-    $model_options = $this->aiProviderManager->getSimpleProviderModelOptions('chat');
-    $model_options = array_filter($model_options, function ($option) {
-      return str_contains($option, '__');
-    }, ARRAY_FILTER_USE_KEY);
-    return $model_options;
   }
 
   /**
@@ -1026,14 +988,6 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
       $this->messenger()->addWarning($collection_status['info']);
     }
     $info[] = $collection_status;
-    $supported_models = $this->tokenizer->getSupportedModels();
-    $info[] = [
-      'label' => $this->t('Chat model'),
-      'info' => $supported_models[$this->configuration['chat_model']] ?? $this->t('Could not resolve the %chat_model chat model.', [
-        '%chat_model' => $this->configuration['chat_model'],
-      ]),
-      'status' => !isset($supported_models[$this->configuration['chat_model']]) ? 'error' : NULL,
-    ];
     $embedding_options = $this->getEmbeddingEnginesOptions();
     $info[] = [
       'label' => $this->t('Embeddings engine'),

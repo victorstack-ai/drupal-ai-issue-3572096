@@ -110,18 +110,18 @@ abstract class EmbeddingStrategyPluginBase implements EmbeddingStrategyInterface
    *
    * @param string $embedding_engine
    *   The embedding engine.
-   * @param string $chat_model
-   *   The chat model ID for token calculations.
    * @param array $configuration
    *   The embedding strategy configuration.
    */
-  public function init(string $embedding_engine, string $chat_model, array $configuration): void {
+  public function init(string $embedding_engine, array $configuration): void {
     [$this->providerId, $this->modelId] = explode('__', $embedding_engine);
-    $chat_model_id = $this->aiProviderManager->getModelNameFromSimpleOption($chat_model);
-    $chat_model_id = $chat_model_id ?: 'gpt-3.5';
-    $this->textChunker->setModel($chat_model_id);
     /** @var \Drupal\ai\OperationType\Embeddings\EmbeddingsInterface $embeddingLlm */
     $this->embeddingLlm = $this->aiProviderManager->createInstance($this->providerId);
+
+    // Get the tokenizer for this model from the provider.
+    $tokenizer_type = $this->embeddingLlm->getTokenizerForModel($this->modelId);
+    $this->textChunker->setModel($tokenizer_type);
+
     if (!empty($configuration['chunk_size']) && is_numeric($configuration['chunk_size'])) {
       $this->chunkSize = (int) $configuration['chunk_size'];
     }

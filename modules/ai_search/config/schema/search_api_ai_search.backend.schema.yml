@@ -2,9 +2,6 @@ plugin.plugin_configuration.search_api_backend.search_api_ai_search:
   type: mapping
   label: 'Search API AI Search settings'
   mapping:
-    chat_model:
-      type: string
-      label: 'The chat model'
     database:
       type: string
       label: 'The database type'

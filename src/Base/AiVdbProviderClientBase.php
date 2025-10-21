@@ -214,7 +214,6 @@ abstract class AiVdbProviderClientBase extends PluginBase implements AiVdbProvid
       try {
         $embeddings = $embedding_strategy->getEmbedding(
           $configuration['embeddings_engine'],
-          $configuration['chat_model'],
           $configuration['embedding_strategy_configuration'],
           $item->getFields(),
           $item,
@@ -385,6 +384,16 @@ abstract class AiVdbProviderClientBase extends PluginBase implements AiVdbProvid
    */
   public function getRawEmbeddingFieldName(): ?string {
     return NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getTokenizerForModel(string $model_id): string {
+    // Fallback to the same encoding used by gpt3.5-turbo as a sensible
+    // default when the model is not yet supported by TikToken PHP.
+    // @see https://github.com/yethee/tiktoken-php/blob/master/src/EncoderProvider.php
+    return 'cl100k_base';
   }
 
 }

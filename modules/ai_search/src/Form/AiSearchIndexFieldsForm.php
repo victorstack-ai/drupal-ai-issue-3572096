@@ -323,7 +323,6 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
         if ($search_item instanceof ItemInterface) {
           return $embedding_strategy->getEmbedding(
             $backend_config['embeddings_engine'],
-            $backend_config['chat_model'],
             $backend_config['embedding_strategy_configuration'],
             $search_item->getFields(),
             $search_item,

@@ -59,7 +59,7 @@ class EmbeddingBaseGetChunksTest extends KernelTestBase {
     $this->index->method('id')->willReturn('test_index');
 
     // Initialize the plugin with a default configuration.
-    $this->embeddingStrategy->init('test_mysql_provider__test_model', 'gpt-3.5', [
+    $this->embeddingStrategy->init('test_mysql_provider__test_model', [
       'chunk_size' => 250,
       'chunk_min_overlap' => 25,
       'contextual_content_max_percentage' => 30,

@@ -6,6 +6,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\ai_search\Trait\AiSearchBackendEmbeddingsEngineTrait;
 use Drupal\ai_search\Trait\AiSearchBackendEmbeddingsStrategyTrait;
 use Drupal\search_api\Backend\BackendPluginBase;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Base class for Search API AI backend plugins.
@@ -20,6 +21,20 @@ abstract class AiSearchBackendPluginBase extends BackendPluginBase {
 
   use AiSearchBackendEmbeddingsEngineTrait;
   use AiSearchBackendEmbeddingsStrategyTrait;
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    $plugin = new static($configuration, $plugin_id, $plugin_definition);
+
+    /** @var \Drupal\Core\StringTranslation\TranslationInterface $translation */
+    $translation = $container->get('string_translation');
+    $plugin->setStringTranslation($translation);
+    $plugin->setFieldsHelper($container->get('search_api.fields_helper'));
+    $plugin->setMessenger($container->get('messenger'));
+    return $plugin;
+  }
 
   /**
    * {@inheritdoc}

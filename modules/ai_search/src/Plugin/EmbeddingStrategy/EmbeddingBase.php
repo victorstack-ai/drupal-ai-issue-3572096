@@ -37,13 +37,12 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
    */
   public function getEmbedding(
     string $embedding_engine,
-    string $chat_model,
     array $configuration,
     array $fields,
     ItemInterface $search_api_item,
     IndexInterface $index,
   ): array {
-    $this->init($embedding_engine, $chat_model, $configuration);
+    $this->init($embedding_engine, $configuration);
     [$title, $contextual_content, $main_content, $title_in_contextual] = $this->groupFieldData($fields, $index, $search_api_item);
     $chunks = $this->getChunks($title, $main_content, $contextual_content, $title_in_contextual, $index);
     $metadata = $this->buildBaseMetadata($fields, $index);
@@ -551,8 +550,8 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
   /**
    * {@inheritDoc}
    */
-  public function init(string $embedding_engine, string $chat_model, array $configuration): void {
-    parent::init($embedding_engine, $chat_model, $configuration);
+  public function init(string $embedding_engine, array $configuration): void {
+    parent::init($embedding_engine, $configuration);
     if (!empty($configuration['contextual_content_max_percentage'])) {
       $this->contextualContentMaxPercentage = $configuration['contextual_content_max_percentage'];
     }
