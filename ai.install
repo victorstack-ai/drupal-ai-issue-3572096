@@ -87,3 +87,10 @@ function ai_update_10303() {
     $update_manager->installEntityType($entity_type);
   }
 }
+
+/**
+ * Clear the cache so the new AI Embeddings cache bin becomes available.
+ */
+function ai_update_10304() {
+  // Empty cache clear so new cache bin is recognized.
+}

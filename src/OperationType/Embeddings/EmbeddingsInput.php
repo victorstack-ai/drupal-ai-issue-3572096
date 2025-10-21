@@ -32,8 +32,18 @@ class EmbeddingsInput extends InputBase implements InputInterface {
    *   The prompt to convert to vectors.
    * @param \Drupal\ai\OperationType\GenericType\ImageFile $image
    *   The image to convert to vectors.
+   * @param bool $shouldCache
+   *   If the input conversion to embedding should be cached. During indexing
+   *   it is advised not to cache as the input is unlikely to be repeated.
+   *   However, when the input is from the end-user e.g. doing a search, it is
+   *   likely that identical input is repeated as the user applies filters,
+   *   and therefore it is advised to cache.
    */
-  public function __construct(string $prompt = '', ?ImageFile $image = NULL) {
+  public function __construct(
+    string $prompt = '',
+    ?ImageFile $image = NULL,
+    protected bool $shouldCache = TRUE,
+  ) {
     $this->prompt = $prompt;
     $this->image = $image;
   }
@@ -106,6 +116,16 @@ class EmbeddingsInput extends InputBase implements InputInterface {
       $data['image'] = $this->image->toArray();
     }
     return $data;
+  }
+
+  /**
+   * Determine if the input conversion to embedding should be cached.
+   *
+   * @return bool
+   *   Whether the input conversion to embedding should be cached.
+   */
+  public function shouldCache(): bool {
+    return $this->shouldCache;
   }
 
 }

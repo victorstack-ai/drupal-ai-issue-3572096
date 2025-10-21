@@ -617,7 +617,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
           }
           $search_words = implode(' ', $search_words);
         }
-        $input = new EmbeddingsInput($search_words);
+        $input = new EmbeddingsInput($search_words, NULL, FALSE);
         $params['vector_input'] = $embedding_llm->embeddings($input, $model_id)->getNormalized();
       }
       $params['query'] = $query;
@@ -884,7 +884,7 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
         // Convert the search terms to vector input.
         [$provider_id, $model_id] = explode('__', $this->configuration['embeddings_engine']);
         $embedding_llm = $this->aiProviderManager->createInstance($provider_id);
-        $input = new EmbeddingsInput($search_words);
+        $input = new EmbeddingsInput($search_words, NULL, FALSE);
         return $embedding_llm->embeddings($input, $model_id)->getNormalized();
       }
     }

@@ -68,3 +68,11 @@ services:
   plugin.manager.ai.short_term_memory:
     class: Drupal\ai\PluginManager\AiShortTermMemoryPluginManager
     parent: default_plugin_manager
+  cache.ai_embeddings:
+    class: Drupal\Core\Cache\CacheBackendInterface
+    tags:
+      # By omitting the 'cache.bins' tag, drush cache:rebuild will ignore this bin.
+      # Cron will still automatically clear expired entries.
+      - { name: cache.backend }
+    factory: cache_factory:get
+    arguments: ['ai_embeddings']
