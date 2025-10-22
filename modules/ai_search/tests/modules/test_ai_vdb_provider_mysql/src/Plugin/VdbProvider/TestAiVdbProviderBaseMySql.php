@@ -1,15 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\test_ai_vdb_provider_mysql\Plugin\VdbProvider;
 
+use Drupal\ai\Attribute\AiVdbProvider;
+use Drupal\ai\Enum\VdbSimilarityMetrics;
+use Drupal\ai_search\SearchApiAiVdbProviderBase;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Database\Database;
-use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\ai\Attribute\AiVdbProvider;
-use Drupal\ai\Base\AiVdbProviderClientBase;
-use Drupal\ai\Enum\VdbSimilarityMetrics;
 use Drupal\search_api\Query\QueryInterface;
 use Drupal\test_ai_vdb_provider_mysql\TestVectorTable;
 use MHz\MysqlVector\VectorTable;
@@ -21,7 +22,7 @@ use MHz\MysqlVector\VectorTable;
   id: 'test_mysql',
   label: new TranslatableMarkup('Test MySQL AI VDB provider'),
 )]
-class TestAiVdbProviderMySql extends AiVdbProviderClientBase implements ContainerFactoryPluginInterface {
+class TestAiVdbProviderBaseMySql extends SearchApiAiVdbProviderBase {
 
   use StringTranslationTrait;
 
