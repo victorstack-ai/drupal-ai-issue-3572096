@@ -1,5 +1,13 @@
 # Base definitions for processors
 
+plugin.plugin_configuration.search_api_processor.ai_search_score_threshold:
+  type: search_api.default_processor_configuration
+  label: 'AI Search Score Threshold'
+  mapping:
+    minimum_relevance_score:
+      type: float
+      label: 'Minimum relevance score'
+
 plugin.plugin_configuration.search_api_processor.database_boost_by_ai_search:
   type: search_api.default_processor_configuration
   label: 'Database boost by AI Search processor configuration'
