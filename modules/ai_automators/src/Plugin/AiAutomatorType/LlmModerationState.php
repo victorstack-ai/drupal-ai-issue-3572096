@@ -2,13 +2,11 @@
 
 namespace Drupal\ai_automators\Plugin\AiAutomatorType;
 
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\ai\AiProviderPluginManager;
-use Drupal\ai\Service\AiProviderFormHelper;
-use Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface;
 use Drupal\ai_automators\Attribute\AiAutomatorType;
 use Drupal\ai_automators\PluginBaseClasses\RuleBase;
 use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
@@ -33,32 +31,25 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
    */
   protected ModerationInformation|NULL $moderationInformation;
 
-  public function __construct(
-    AiProviderPluginManager $pluginManager,
-    AiProviderFormHelper $formHelper,
-    PromptJsonDecoderInterface $promptJsonDecoder,
-    ?ModerationInformation $moderationInformation = NULL,
-  ) {
-    $this->aiPluginManager = $pluginManager;
-    $this->formHelper = $formHelper;
-    $this->promptJsonDecoder = $promptJsonDecoder;
-    $this->moderationInformation = $moderationInformation;
-  }
-
   /**
    * Load from dependency injection container.
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    $moderation = NULL;
-    if ($container->has('content_moderation.moderation_information')) {
-      $moderation = $container->get('content_moderation.moderation_information');
-    }
-    return new static(
+    $instance = new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
       $container->get('ai.provider'),
       $container->get('ai.form_helper'),
       $container->get('ai.prompt_json_decode'),
-      $moderation,
     );
+
+    $instance->moderationInformation = NULL;
+    if ($container->has('content_moderation.moderation_information')) {
+      $instance->moderationInformation = $container->get('content_moderation.moderation_information');
+    }
+
+    return $instance;
   }
 
   /**
@@ -120,42 +111,42 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
-    $form = parent::extraAdvancedFormFields($entity, $fieldDefinition, $formState, $defaultValues);
+  public function buildAdvancedConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
     // Get the moderation states.
+    $entity = $automator->getDummyEntity();
     $options = $this->getFlags($entity);
 
-    $form['automator_trigger_states'] = [
+    $form['trigger_states'] = [
       '#type' => 'checkboxes',
       '#title' => $this->t('Trigger on these states'),
       '#description' => $this->t('Select the moderation states that should trigger this automator to run. Do not select all states, only the starting states.'),
       '#options' => $options,
-      '#default_value' => $defaultValues['automator_trigger_states'] ?? [],
+      '#default_value' => $this->configuration['trigger_states'] ?? [],
     ];
 
-    $form['automator_use_simple_model'] = [
+    $form['use_simple_model'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Use small model'),
       '#description' => $this->t('Since smaller models might not be able to produce correct JSON, this will use free text instead and look for the moderation state inside the output prompt.'),
-      '#default_value' => $defaultValues['automator_use_simple_model'] ?? FALSE,
+      '#default_value' => $this->configuration['use_simple_model'] ?? FALSE,
     ];
 
-    $form['automator_trigger_lookup'] = [
+    $form['trigger_lookup'] = [
       '#type' => 'checkboxes',
       '#title' => $this->t('Lookup for these states'),
       '#description' => $this->t('Select the moderation states that you should look for in your lookup. This is required.'),
       '#options' => $options,
-      '#default_value' => $defaultValues['automator_trigger_lookup'] ?? [],
+      '#default_value' => $this->configuration['trigger_lookup'] ?? [],
     ];
 
     $textFields = $this->getGeneralHelper()->getFieldsOfType($entity, 'string_long');
-    $form['automator_store_explanation'] = [
+    $form['store_explanation'] = [
       '#type' => 'select',
       '#options' => $textFields,
       '#empty_option' => $this->t('--Do not store--'),
       '#title' => $this->t('Store explanation'),
       '#description' => $this->t('Store the explanation of the moderation state in any unformatted long text field. For simple models this will be the full output for advanced it will ask specifically for the reason.'),
-      '#default_value' => $defaultValues['automator_store_explanation'] ?? FALSE,
+      '#default_value' => $this->configuration['store_explanation'] ?? FALSE,
     ];
 
     return $form;
@@ -164,28 +155,27 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public function validateConfigValues($form, FormStateInterface $formState) {
+  public function validateAdvancedConfigurationForm(array &$form, FormStateInterface $form_state, AiAutomatorInterface $automator): void {
     // Make sure that if this was enabled that the lookup is set.
     $found = FALSE;
-    foreach ($formState->getValue('automator_trigger_lookup') as $value) {
+    foreach ($form_state->getValue('trigger_lookup') as $value) {
       if ($value) {
         $found = TRUE;
       }
     }
     if (!$found) {
-      $formState->setErrorByName('automator_trigger_lookup', $this->t('You must select at least one lookup state.'));
+      $form_state->setErrorByName('trigger_lookup', $this->t('You must select at least one lookup state.'));
     }
 
     $found = FALSE;
-    foreach ($formState->getValue('automator_trigger_states') as $value) {
+    foreach ($form_state->getValue('trigger_states') as $value) {
       if ($value) {
         $found = TRUE;
       }
     }
     if (!$found) {
-      $formState->setErrorByName('automator_trigger_states', $this->t('You must select at least one trigger state.'));
+      $form_state->setErrorByName('trigger_states', $this->t('You must select at least one trigger state.'));
     }
-
   }
 
   /**

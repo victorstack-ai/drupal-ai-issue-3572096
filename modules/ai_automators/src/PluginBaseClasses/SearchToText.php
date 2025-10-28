@@ -2,9 +2,9 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\ContentEntityInterface;
-use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
 
@@ -18,32 +18,30 @@ abstract class SearchToText extends SearchToReference {
   /**
    * {@inheritdoc}
    */
-  public function extraFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
-    $form = parent::extraFormFields($entity, $fieldDefinition, $formState, $defaultValues);
-
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
     // Add a warning about permissions.
-    $form['automator_permissions_warning'] = [
+    $form['permissions_warning'] = [
       '#type' => 'markup',
       '#markup' => $this->t('⚠️ Note that this will save the data found in this field and that any user that has access to view this field will see the content, independent on content permissions or index permissions.'),
       '#weight' => 10,
     ];
 
     // Add AJAX to the search index field.
-    $form['automator_search_index']['#ajax'] = [
+    $form['search_index']['#ajax'] = [
       'callback' => [$this, 'updateOutputFieldOptions'],
       'wrapper' => 'output-field-wrapper',
       'event' => 'change',
     ];
 
     // Get the selected index to load available fields.
-    $index_id = $formState->getValue('automator_search_index') ?? ($defaultValues['automator_search_index'] ?? NULL);
+    $index_id = $form_state->getValue('search_index') ?? ($this->configuration['search_index'] ?? NULL);
 
-    $form['automator_output_field'] = [
+    $form['output_field'] = [
       '#type' => 'select',
       '#title' => $this->t('Output Field'),
       '#description' => $this->t('Select the field from the search index to use as output.'),
       '#options' => $this->getFieldOptions($index_id),
-      '#default_value' => $defaultValues['automator_output_field'] ?? NULL,
+      '#default_value' => $this->configuration['output_field'] ?? NULL,
       '#required' => TRUE,
       '#weight' => 15,
       '#prefix' => '<div id="output-field-wrapper">',
@@ -101,7 +99,7 @@ abstract class SearchToText extends SearchToReference {
    */
   public function updateOutputFieldOptions(array &$form, FormStateInterface $form_state) {
     // Get the new index and its fields.
-    $index_id = $form_state->getValue('automator_search_index');
+    $index_id = $form_state->getValue('search_index');
     $field_options = $this->getFieldOptions($index_id);
 
     // Rebuild the output field element.
@@ -122,11 +120,9 @@ abstract class SearchToText extends SearchToReference {
   /**
    * {@inheritdoc}
    */
-  public function validateConfigValues($form, FormStateInterface $formState) {
-    parent::validateConfigValues($form, $formState);
-
-    if (empty($formState->getValue('automator_output_field'))) {
-      $formState->setErrorByName('automator_output_field', $this->t('Please select an output field.'));
+  public function validateConfigurationForm(array &$form, FormStateInterface $form_state, AiAutomatorInterface $automator): void {
+    if (empty($form_state->getValue('output_field'))) {
+      $form_state->setErrorByName('output_field', $this->t('Please select an output field.'));
     }
   }
 

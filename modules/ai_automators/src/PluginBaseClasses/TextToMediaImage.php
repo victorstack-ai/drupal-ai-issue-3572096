@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfo;
@@ -59,6 +60,12 @@ class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterfa
   /**
    * Constructs a new AiClientBase abstract class.
    *
+   * @param array $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
    * @param \Drupal\ai\AiProviderPluginManager $pluginManager
    *   The plugin manager.
    * @param \Drupal\ai\Service\AiProviderFormHelper $formHelper
@@ -73,6 +80,9 @@ class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterfa
    *   The field manager.
    */
   final public function __construct(
+    $configuration,
+    $plugin_id,
+    $plugin_definition,
     AiProviderPluginManager $pluginManager,
     AiProviderFormHelper $formHelper,
     PromptJsonDecoderInterface $promptJsonDecoder,
@@ -80,7 +90,7 @@ class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterfa
     EntityTypeManagerInterface $entityTypeManager,
     EntityFieldManagerInterface $fieldManager,
   ) {
-    parent::__construct($pluginManager, $formHelper, $promptJsonDecoder);
+    parent::__construct($configuration, $plugin_id, $plugin_definition, $pluginManager, $formHelper, $promptJsonDecoder);
     $this->entityTypeBundleInfo = $entityTypeBundleInfo;
     $this->entityTypeManager = $entityTypeManager;
     $this->fieldManager = $fieldManager;
@@ -91,6 +101,9 @@ class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterfa
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
       $container->get('ai.provider'),
       $container->get('ai.form_helper'),
       $container->get('ai.prompt_json_decode'),
@@ -117,21 +130,19 @@ class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterfa
   /**
    * {@inheritDoc}
    */
-  public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
-    $form = parent::extraAdvancedFormFields($entity, $fieldDefinition, $formState, $defaultValues);
-
+  public function buildAdvancedConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
     $options = [];
     $types = $this->entityTypeBundleInfo->getBundleInfo('media');
     foreach ($types as $key => $type) {
       $options[$key] = $type['label'];
     }
 
-    $form['automator_llm_media_type'] = [
+    $form['llm_media_type'] = [
       '#type' => 'select',
       '#title' => 'Media Type',
       '#description' => $this->t('Media Type to create'),
       '#options' => $options,
-      '#default_value' => $defaultValues['automator_llm_media_type'] ?? '',
+      '#default_value' => $this->configuration['llm_media_type'] ?? '',
       '#empty_option' => $this->t('- Please select -'),
     ];
 
@@ -141,11 +152,10 @@ class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterfa
   /**
    * {@inheritDoc}
    */
-  public function validateConfigValues($form, FormStateInterface $formState) {
-    parent::validateConfigValues($form, $formState);
-    $values = $formState->getValues();
-    if (empty($values['automator_llm_media_type'])) {
-      $formState->setErrorByName('automator_llm_media_type', 'Media Type is required.');
+  public function validateConfigurationForm(array &$form, FormStateInterface $form_state, AiAutomatorInterface $automator): void {
+    $values = $form_state->getValues();
+    if (empty($values['llm_media_type'])) {
+      $form_state->setErrorByName('llm_media_type', 'Media Type is required.');
     }
   }
 

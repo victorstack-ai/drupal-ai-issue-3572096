@@ -53,7 +53,7 @@ content:
           button_label: 'Create New Tags'
           weight: '0'
           settings:
-            automator_id: node.article.field_tags.default
+            automator_id: tags_default
           plugin_id: automator_autocomplete_tags_on_taxonomy
           remove: 'Remove Action'
   promote:

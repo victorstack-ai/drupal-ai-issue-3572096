@@ -15,3 +15,9 @@ entity.automators_tool.add_form:
   title: 'Add automators tool'
   appears_on:
     - entity.automators_tool.collection
+
+entity.ai_automator.add_form:
+  route_name: 'entity.ai_automator.add_form'
+  title: 'Add Field Automator'
+  appears_on:
+    - entity.ai_automator.collection

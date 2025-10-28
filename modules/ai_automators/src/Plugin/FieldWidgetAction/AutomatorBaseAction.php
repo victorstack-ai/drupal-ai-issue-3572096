@@ -207,14 +207,25 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
     }
     $options = [];
     // Load all automator configurations.
-    /** @var \Drupal\ai_automators\Entity\AiAutomatorInterface[] $automator_configurations */
+    /** @var \Drupal\ai_automators\AiAutomatorInterface[] $automator_configurations */
     $automator_configurations = $this->entityTypeManager->getStorage('ai_automator')->loadMultiple();
     foreach ($automator_configurations as $automator) {
       // Check so the entity type, bundle and rule match.
       $configured_entity_type = $automator->get('entity_type');
       $configured_bundle = $automator->get('bundle');
-      $configured_rule = $automator->get('rule');
       $configured_field_name = $automator->get('field_name');
+      $configured_rule = '';
+
+      // @todo for now we only support automators with one type.
+      $automatorTypes = $automator->getAutomatorTypes();
+      if (count($automatorTypes) !== 1) {
+        continue;
+      }
+      foreach ($automatorTypes as $automatorType) {
+        $configured_rule = $automatorType->getPluginId();
+        break;
+      }
+
       if (
         in_array($configured_rule, $automator_rules) &&
         $configured_entity_type === $entity_type &&

@@ -149,9 +149,10 @@ class AiChainForm extends FormBase {
     });
 
     $header = [
-      'label' => $this->t('Instruction Name'),
-      'field' => $this->t('Manipulated Field'),
-      'automator_type' => $this->t('Automator Type'),
+      'label' => $this->t('Automator'),
+      'field' => $this->t('Field'),
+      'automator_type' => $this->t('Automator Types'),
+      'worker' => $this->t('Worker'),
       'source_type' => $this->t('Source Type'),
       'inputs' => $this->t('Source Field(s)'),
       'weight' => $this->t('Weight'),
@@ -176,69 +177,155 @@ class AiChainForm extends FormBase {
     ];
 
     foreach ($definitions as $definition) {
-      $form['items'][$definition->id()]['#attributes']['class'][] = 'draggable';
-      $form['items'][$definition->id()]['#weight'] = $definition->get('weight');
+      // Get automator types for this definition.
+      $automatorTypes = $definition->getAutomatorTypes();
 
-      $form['items'][$definition->id()]['label'] = [
-        '#plain_text' => $definition->label(),
-      ];
+      // Common worker value.
+      $worker_type_value = $definition->get('worker_type') ?? '-';
+      if ($automatorTypes->count() === 0) {
+        $form['items'][$definition->id()]['#attributes']['class'][] = 'draggable';
+        $form['items'][$definition->id()]['#weight'] = 0;
 
-      $form['items'][$definition->id()]['field'] = [
-        '#plain_text' => $this->fieldNameToLabel($definition->get('field_name')),
-      ];
-
-      $form['items'][$definition->id()]['automator_type'] = [
-        '#plain_text' => $this->automatorTypeManager->getDefinition($definition->get('rule'))['label'],
-      ];
-
-      $form['items'][$definition->id()]['source_type'] = [
-        '#plain_text' => $definition->get('input_mode') == 'base' ? 'Base Field' : 'Token',
-      ];
-
-      $form['items'][$definition->id()]['inputs'] = [
-        '#plain_text' => $this->calculateInput($definition),
-      ];
-
-      $form['items'][$definition->id()]['weight'] = [
-        '#type' => 'weight',
-        '#delta' => 1000,
-        '#default_value' => $definition->get('weight'),
-        '#title' => $this->t('Weight for @label', ['@label' => $definition->label()]),
-        '#title_display' => 'invisible',
-        '#attributes' => ['class' => ['item-order-weight']],
-      ];
-
-      $links = [];
-
-      if ($this->moduleHandler->moduleExists('field_ui')) {
-        $field_config = [
-          'entity_type' => $entity_type,
-          'bundle' => $bundle,
-          'field' => $definition->get('field_name'),
+        $form['items'][$definition->id()]['label'] = [
+          '#plain_text' => $definition->label(),
         ];
 
-        $route_params['field_config'] = implode('.', $field_config);
+        $form['items'][$definition->id()]['field'] = [
+          '#plain_text' => $this->fieldNameToLabel($definition->get('field_name')),
+        ];
 
+        $form['items'][$definition->id()]['automator_type'] = [
+          '#plain_text' => $this->t('No automator types configured'),
+        ];
+
+        $form['items'][$definition->id()]['worker'] = [
+          '#plain_text' => $worker_type_value ?: '-',
+        ];
+
+        $form['items'][$definition->id()]['source_type'] = [
+          '#plain_text' => '-',
+        ];
+
+        $form['items'][$definition->id()]['inputs'] = [
+          '#plain_text' => '-',
+        ];
+
+        $form['items'][$definition->id()]['weight'] = [
+          '#type' => 'weight',
+          '#delta' => 1000,
+          '#default_value' => 0,
+          '#title' => $this->t('Weight for @label', ['@label' => $definition->label()]),
+          '#title_display' => 'invisible',
+          '#attributes' => ['class' => ['item-order-weight']],
+        ];
+
+        // Provide operations even when there are no automator types.
+        $links = [];
         $links['edit'] = [
           'title' => $this->t('Edit'),
-          'url' => Url::fromRoute('entity.field_config.' . $entity_type . '_field_edit_form', $route_params, [
-            'query' => [
-              'destination' => Url::fromRoute('<current>')->toString(),
-            ],
-          ]),
+          'url' => $definition->toUrl('edit-form'),
+          'query' => [
+            'destination' => Url::fromRoute('<current>')->toString(),
+          ],
+        ];
+        $links['delete'] = [
+          'title' => $this->t('Delete'),
+          'url' => $definition->toUrl('delete-form'),
+        ];
+
+        $form['items'][$definition->id()]['operations'] = [
+          '#type' => 'operations',
+          '#links' => $links,
         ];
       }
+      else {
+        // Get the highest weighted automator type for display purposes.
+        $displayAutomatorType = NULL;
+        $highestWeight = -1000;
 
-      $links['delete'] = [
-        'title' => $this->t('Delete'),
-        'url' => $definition->toUrl('delete-form'),
-      ];
+        foreach ($automatorTypes as $automatorType) {
+          if ($automatorType->getWeight() > $highestWeight) {
+            $highestWeight = $automatorType->getWeight();
+            $displayAutomatorType = $automatorType;
+          }
+        }
 
-      $form['items'][$definition->id()]['operations'] = [
-        '#type' => 'operations',
-        '#links' => $links,
-      ];
+        $form['items'][$definition->id()]['#attributes']['class'][] = 'draggable';
+        $form['items'][$definition->id()]['#weight'] = $highestWeight;
+
+        $form['items'][$definition->id()]['label'] = [
+          '#plain_text' => $definition->label() . ($automatorTypes->count() > 1 ? ' (' . $automatorTypes->count() . ' types)' : ''),
+        ];
+
+        $form['items'][$definition->id()]['field'] = [
+          '#plain_text' => $this->fieldNameToLabel($definition->get('field_name')),
+        ];
+
+        $typeLabels = [];
+        foreach ($automatorTypes as $automatorType) {
+          $typeLabels[] = $this->automatorTypeManager->getDefinition($automatorType->getPluginId())['label'];
+        }
+
+        $form['items'][$definition->id()]['automator_type'] = [
+          '#plain_text' => implode(', ', $typeLabels),
+        ];
+
+        $form['items'][$definition->id()]['worker'] = [
+          '#plain_text' => $worker_type_value ?: '-',
+        ];
+
+        $form['items'][$definition->id()]['source_type'] = [
+          '#plain_text' => $this->calculateSourceType($displayAutomatorType),
+        ];
+
+        $form['items'][$definition->id()]['inputs'] = [
+          '#plain_text' => $this->calculateInputFromAutomatorType($displayAutomatorType),
+        ];
+
+        $form['items'][$definition->id()]['weight'] = [
+          '#type' => 'weight',
+          '#delta' => 1000,
+          '#default_value' => $highestWeight,
+          '#title' => $this->t('Weight for @label', ['@label' => $definition->label()]),
+          '#title_display' => 'invisible',
+          '#attributes' => ['class' => ['item-order-weight']],
+        ];
+
+        $links = [];
+        $links['edit'] = [
+          'title' => $this->t('Edit'),
+          'url' => $definition->toUrl('edit-form'),
+          'query' => [
+            'destination' => Url::fromRoute('<current>')->toString(),
+          ],
+        ];
+        $links['delete'] = [
+          'title' => $this->t('Delete'),
+          'url' => $definition->toUrl('delete-form'),
+        ];
+
+        $form['items'][$definition->id()]['operations'] = [
+          '#type' => 'operations',
+          '#links' => $links,
+        ];
+      }
     }
+
+    // Add the "Add new automator" button with query parameters.
+    $form['add_automator'] = [
+      '#type' => 'link',
+      '#title' => $this->t('Add new automator'),
+      '#url' => Url::fromRoute('entity.ai_automator.add_form', [], [
+        'query' => [
+          'entity_type' => $entity_type,
+          'bundle' => $bundle,
+        ],
+      ]),
+      '#attributes' => [
+        'class' => ['button', 'button--primary'],
+      ],
+      '#weight' => -1,
+    ];
 
     $form['submit'] = [
       '#type' => 'submit',
@@ -319,6 +406,66 @@ class AiChainForm extends FormBase {
       return '';
     }
     return '';
+  }
+
+  /**
+   * Calculate the source type from an automator type plugin.
+   *
+   * @param \Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface $automatorType
+   *   The automator type plugin.
+   *
+   * @return string
+   *   The source type.
+   */
+  protected function calculateSourceType($automatorType): string {
+    if (!$automatorType) {
+      return '-';
+    }
+
+    $settings = $automatorType->getConfiguration()['settings'] ?? [];
+    $mode = $settings['mode'] ?? '';
+
+    return $mode === 'base' ? 'Base Field' : ($mode === 'token' ? 'Token' : 'Other');
+  }
+
+  /**
+   * Calculate the input from an automator type plugin.
+   *
+   * @param \Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface $automatorType
+   *   The automator type plugin.
+   *
+   * @return string
+   *   The input description.
+   */
+  protected function calculateInputFromAutomatorType($automatorType): string {
+    if (!$automatorType) {
+      return '-';
+    }
+
+    $settings = $automatorType->getConfiguration()['settings'] ?? [];
+    $mode = $settings['mode'] ?? '';
+
+    if ($mode === 'base') {
+      $baseField = $settings['base_field'] ?? '';
+      return $baseField ? $this->fieldNameToLabel($baseField) : 'Unknown Base Field';
+    }
+    elseif ($mode === 'token') {
+      $token = $settings['token'] ?? '';
+      // Extract all the tokens from the token string.
+      $tokens = [];
+      preg_match_all('/\[(.*?)\]/', $token, $tokens);
+      if (!empty($tokens[1])) {
+        $tokens = $tokens[1];
+        $labels = [];
+        foreach ($tokens as $tokenName) {
+          $labels[] = $this->tokenToLabel($tokenName);
+        }
+        return implode(', ', $labels);
+      }
+      return $token ?: 'No tokens';
+    }
+
+    return 'Other';
   }
 
   /**

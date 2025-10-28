@@ -161,7 +161,7 @@ class AiAutomatorStatusField {
       'bundle' => $bundle,
       'label' => 'AI Automator Status',
       'default_value' => [
-        self::STATUS_PENDING,
+        ['value' => self::STATUS_PENDING],
       ],
       'required' => TRUE,
     ]);

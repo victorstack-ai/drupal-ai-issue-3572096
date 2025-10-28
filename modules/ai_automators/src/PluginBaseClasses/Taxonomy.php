@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
@@ -42,6 +43,12 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
   /**
    * Constructs a new AiClientBase abstract class.
    *
+   * @param array $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
    * @param \Drupal\ai\AiProviderPluginManager $pluginManager
    *   The plugin manager.
    * @param \Drupal\ai\Service\AiProviderFormHelper $formHelper
@@ -54,13 +61,16 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
    *   The current user.
    */
   final public function __construct(
+    $configuration,
+    $plugin_id,
+    $plugin_definition,
     AiProviderPluginManager $pluginManager,
     AiProviderFormHelper $formHelper,
     PromptJsonDecoderInterface $promptJsonDecoder,
     EntityTypeManagerInterface $entityTypeManager,
     AccountProxyInterface $currentUser,
   ) {
-    parent::__construct($pluginManager, $formHelper, $promptJsonDecoder);
+    parent::__construct($configuration, $plugin_id, $plugin_definition, $pluginManager, $formHelper, $promptJsonDecoder);
     $this->entityTypeManager = $entityTypeManager;
     $this->currentUser = $currentUser;
   }
@@ -70,6 +80,9 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
       $container->get('ai.provider'),
       $container->get('ai.form_helper'),
       $container->get('ai.prompt_json_decode'),
@@ -120,11 +133,10 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
   /**
    * {@inheritDoc}
    */
-  public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
-    $form = parent::extraAdvancedFormFields($entity, $fieldDefinition, $formState, $defaultValues);
-    $settings = $fieldDefinition->getConfig($entity->bundle())->getSettings();
+  public function buildAdvancedConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
+    $settings = $automator->getFieldDefinition()?->getSettings();
 
-    $form['automator_clean_up'] = [
+    $form['clean_up'] = [
       '#type' => 'select',
       '#title' => 'Text Manipulation',
       '#description' => $this->t('These are possible text manipulations to run on each created tag.'),
@@ -134,16 +146,16 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
         'uppercase' => $this->t('UPPERCASE'),
         'first_char' => $this->t('First character uppercase'),
       ],
-      '#default_value' => $defaultValues["automator_clean_up"] ?? '',
+      '#default_value' => $this->configuration["clean_up"] ?? '',
       '#weight' => 23,
     ];
 
-    if ($settings['handler_settings']['auto_create']) {
-      $form['automator_search_similar_tags'] = [
+    if (!empty($settings['handler_settings']['auto_create'])) {
+      $form['search_similar_tags'] = [
         '#type' => 'checkbox',
         '#title' => 'Find similar tags',
         '#description' => $this->t('This will use your LLM to find similar tags. Meaning if the tag "Whirlpool" exists and the system wants to store "Whirlpool Bath" it will store it as "Whirlpool". This uses extra calls and is slower and more costly.'),
-        '#default_value' => $defaultValues["automator_search_similar_tags"] ?? FALSE,
+        '#default_value' => $this->configuration["search_similar_tags"] ?? FALSE,
         '#weight' => 23,
       ];
     }

@@ -5,6 +5,7 @@
  * Install, update and uninstall function for AI Automator.
  */
 
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Site\Settings;
 use Drupal\ai_automators\AiAutomatorStatusField;
 
@@ -78,5 +79,192 @@ function ai_automators_update_11000(): void {
   catch (\Exception $e) {
     \Drupal::logger('ai_automators')->error('Failed to install the Automators Tool entity type: @message', ['@message' => $e->getMessage()]);
     \Drupal::messenger()->addError(t('Failed to install the Automators Tool entity type. Please check the logs for more information.'));
+  }
+}
+
+/**
+ * Migrate AI Automator configurations new plugin-based structure.
+ */
+function ai_automators_update_11001(): void {
+  $configFactory = \Drupal::configFactory();
+  $entityTypeManager = \Drupal::entityTypeManager();
+  $aiAutomatorStorage = $entityTypeManager->getStorage('ai_automator');
+  $aiAutomatorTypeManager = \Drupal::service('plugin.manager.ai_automator');
+  $migratedCount = 0;
+  $errorCount = 0;
+  $formDisplayUpdates = [];
+
+  // Get all AI Automator configurations.
+  $automatorConfigs = $configFactory->listAll('ai_automators.ai_automator.');
+
+  foreach ($automatorConfigs as $configName) {
+    try {
+      $config = $configFactory->get($configName);
+      $data = $config->get();
+
+      // Skip if this config has already been migrated (has automator_types).
+      if (isset($data['automator_types']) && is_array($data['automator_types'])) {
+        continue;
+      }
+
+      // Skip if there's no plugin_config to migrate.
+      if (!isset($data['plugin_config']) || !is_array($data['plugin_config'])) {
+        continue;
+      }
+
+      $plugin_config = $data['plugin_config'];
+      $plugin_id = $data['rule'] ?? $plugin_config['automator_rule'] ?? NULL;
+      if (!$plugin_id) {
+        \Drupal::logger('ai_automators')->warning('Skipping migration of @config: no plugin ID found', ['@config' => $configName]);
+        continue;
+      }
+
+      // Build the new settings structure by processing plugin_config values.
+      $settings = [];
+
+      foreach ($plugin_config as $old_key => $value) {
+        // Skip keys that are handled at the top level or are metadata.
+        if (in_array($old_key, [
+          'automator_enabled',
+          'automator_rule',
+          'automator_label',
+          'automator_weight',
+          'automator_worker_type',
+        ])) {
+          continue;
+        }
+
+        // Handle prefix transformations.
+        if (str_starts_with($old_key, 'automator_configuration_')) {
+          // Replace 'automator_configuration_' with 'ai_provider_' prefix.
+          $new_key = substr($old_key, strlen('automator_configuration_'));
+
+          // Special cases that don't get the ai_provider_ prefix.
+          if (in_array($new_key, ['image_field', 'image_style'])) {
+            $settings[$new_key] = $value;
+          }
+          else {
+            $settings['ai_provider_' . $new_key] = $value;
+          }
+        }
+        elseif (str_starts_with($old_key, 'automator_')) {
+          // Remove 'automator_' prefix for direct mappings.
+          $new_key = substr($old_key, strlen('automator_'));
+          $settings[$new_key] = $value;
+        }
+        else {
+          // Keep other keys as-is.
+          $settings[$old_key] = $value;
+        }
+      }
+
+      /** @var \Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface $newAutomatorType */
+      $newAutomatorType = $aiAutomatorTypeManager->createInstance($plugin_id);
+      $newAutomatorType->setConfiguration(['settings' => $settings]);
+      $newAutomatorType->setWeight($plugin_config['automator_weight'] ?? 0);
+
+      // Create a new AI Automator entity using the entity API.
+      $newId = str_replace('-', '_', Html::getId($data['label']));
+      $workerType = $data['worker_type'] ?? $plugin_config['automator_worker_type'] ?? 'direct';
+      $newAutomatorData = [
+        'id' => $newId,
+        'label' => $data['label'],
+        'entity_type' => $data['entity_type'],
+        'bundle' => $data['bundle'],
+        'field_name' => $data['field_name'],
+        'worker_type' => $workerType,
+        'weight' => $data['weight'] ?? 0,
+      ];
+
+      // Check if an entity with this ID already exists and delete it.
+      $existing_entity = $aiAutomatorStorage->load($data['id']);
+      if ($existing_entity) {
+        $existing_entity->delete();
+      }
+
+      // Create and save the new entity.
+      /** @var \Drupal\ai_automators\Entity\AiAutomator $new_automator */
+      $new_automator = $aiAutomatorStorage->create($newAutomatorData);
+      // Assign the new automator type plugin and its configuration.
+      $new_automator->addAutomatorType($newAutomatorType->getConfiguration());
+      $new_automator->save();
+
+      // If field_widget_actions worker type, track form display updates needed.
+      if ($workerType === 'field_widget_actions') {
+        $formDisplayUpdates[] = [
+          'entity_type' => $data['entity_type'],
+          'bundle' => $data['bundle'],
+          'field_name' => $data['field_name'],
+          'old_automator_id' => $data['id'],
+          'new_automator_id' => $newId,
+        ];
+      }
+
+      $migratedCount++;
+    }
+    catch (\Exception $e) {
+      $errorCount++;
+      \Drupal::logger('ai_automators')->error('Failed to migrate AI Automator configuration @config: @message', [
+        '@config' => $configName,
+        '@message' => $e->getMessage(),
+      ]);
+    }
+  }
+
+  // Update form displays for field_widget_actions automators.
+  foreach ($formDisplayUpdates as $updateInfo) {
+    try {
+      $formDisplayConfigName = "core.entity_form_display.{$updateInfo['entity_type']}.{$updateInfo['bundle']}.default";
+      $formDisplayConfig = $configFactory->getEditable($formDisplayConfigName);
+
+      if ($formDisplayConfig->isNew()) {
+        // Skip if form display doesn't exist.
+        continue;
+      }
+
+      $formDisplayData = $formDisplayConfig->get();
+      $fieldName = $updateInfo['field_name'];
+
+      // Check if the field exists in the form display.
+      if (!isset($formDisplayData['content'][$fieldName]['third_party_settings']['field_widget_actions'])) {
+        continue;
+      }
+
+      $fieldWidgetActions = &$formDisplayData['content'][$fieldName]['third_party_settings']['field_widget_actions'];
+      $updated = FALSE;
+
+      // Update automator_id references in field_widget_actions settings.
+      foreach ($fieldWidgetActions as $key => &$actionConfig) {
+        // Skip the 'new' configuration.
+        if ($key === 'new') {
+          continue;
+        }
+
+        if (isset($actionConfig['settings']['automator_id']) &&
+            $actionConfig['settings']['automator_id'] === $updateInfo['old_automator_id']) {
+          $actionConfig['settings']['automator_id'] = $updateInfo['new_automator_id'];
+          $updated = TRUE;
+        }
+      }
+
+      if ($updated) {
+        $formDisplayConfig->setData($formDisplayData)->save();
+      }
+    }
+    catch (\Exception $e) {
+      \Drupal::logger('ai_automators')->error('Failed to update form display for automator @automator_id: @message', [
+        '@automator_id' => $updateInfo['old_automator_id'],
+        '@message' => $e->getMessage(),
+      ]);
+    }
+  }
+
+  // Report results.
+  if ($migratedCount > 0) {
+    \Drupal::messenger()->addStatus(t('Successfully migrated @count AI Automator configurations to the new plugin-based structure.', ['@count' => $migratedCount]));
+  }
+
+  if ($errorCount > 0) {
+    \Drupal::messenger()->addWarning(t('@count AI Automator configurations could not be migrated. Please check the logs for details.', ['@count' => $errorCount]));
   }
 }

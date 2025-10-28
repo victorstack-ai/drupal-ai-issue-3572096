@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
@@ -105,7 +106,7 @@ abstract class SearchToReference extends RuleBase {
   /**
    * {@inheritdoc}
    */
-  public function extraFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
     $form = [];
 
     // Get available search indexes.
@@ -120,54 +121,54 @@ abstract class SearchToReference extends RuleBase {
       $index_options[$index->id()] = $index->label();
     }
 
-    $form['automator_search_index'] = [
+    $form['search_index'] = [
       '#type' => 'select',
       '#title' => $this->t('Vector Search Index'),
       '#description' => $this->t('Select the vector search index to use.'),
       '#options' => $index_options,
-      '#default_value' => $defaultValues['automator_search_index'] ?? NULL,
+      '#default_value' => $this->configuration['search_index'] ?? NULL,
       '#required' => TRUE,
       '#weight' => 12,
     ];
 
-    $form['automator_max_results'] = [
+    $form['max_results'] = [
       '#type' => 'number',
       '#title' => $this->t('Maximum Results'),
       '#description' => $this->t('Maximum number of similar items to return.'),
       '#min' => 1,
       '#max' => 100,
-      '#default_value' => $defaultValues['automator_max_results'] ?? 10,
+      '#default_value' => $this->configuration['max_results'] ?? 10,
       '#required' => TRUE,
       '#weight' => 13,
     ];
 
-    $form['automator_offset'] = [
+    $form['offset'] = [
       '#type' => 'number',
       '#title' => $this->t('Offset'),
       '#description' => $this->t('Number of items to skip before returning results.'),
       '#min' => 0,
-      '#default_value' => $defaultValues['automator_offset'] ?? 0,
+      '#default_value' => $this->configuration['offset'] ?? 0,
       '#required' => TRUE,
       '#weight' => 14,
     ];
 
-    $form['automator_minimum_score'] = [
+    $form['minimum_score'] = [
       '#type' => 'number',
       '#title' => $this->t('Minimum Score'),
       '#description' => $this->t('The minimum score of the returned responses.'),
       '#min' => 0,
       '#max' => 1,
       '#step' => 0.01,
-      '#default_value' => $defaultValues['automator_minimum_score'] ?? 0,
+      '#default_value' => $this->configuration['minimum_score'] ?? 0,
       '#required' => TRUE,
       '#weight' => 14,
     ];
 
-    $form['automator_distinct'] = [
+    $form['distinct'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Distinct entities'),
       '#description' => $this->t('Return only distinct entities.'),
-      '#default_value' => $defaultValues['automator_distinct'] ?? TRUE,
+      '#default_value' => $this->configuration['distinct'] ?? TRUE,
       '#weight' => 15,
     ];
 
@@ -177,9 +178,9 @@ abstract class SearchToReference extends RuleBase {
   /**
    * {@inheritdoc}
    */
-  public function validateConfigValues($form, FormStateInterface $formState) {
-    if (empty($formState->getValue('automator_search_index'))) {
-      $formState->setErrorByName('automator_search_index', $this->t('Please select a vector search index.'));
+  public function validateConfigurationForm(array &$form, FormStateInterface $form_state, AiAutomatorInterface $automator): void {
+    if (empty($form_state->getValue('search_index'))) {
+      $form_state->setErrorByName('search_index', $this->t('Please select a vector search index.'));
     }
   }
 

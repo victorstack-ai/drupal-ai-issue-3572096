@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -21,8 +22,7 @@ class SimpleTextChat extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
-    $form = parent::extraAdvancedFormFields($entity, $fieldDefinition, $formState, $defaultValues);
+  public function buildAdvancedConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
     // Extract the code block types options.
     $codeBlockTypes = $this->getGeneralHelper()->getPromptCodeBlockExtractor()->codeBlockTypes;
     $options = [];
@@ -30,11 +30,11 @@ class SimpleTextChat extends RuleBase {
       $options[$key] = $codeBlockType['label'];
     }
 
-    $form['automator_code_block_type'] = [
+    $form['code_block_type'] = [
       '#type' => 'select',
       '#title' => $this->t('Extract code block type'),
       '#options' => $options,
-      '#default_value' => $defaultValues['automator_code_block_type'] ?? 'html',
+      '#default_value' => $this->configuration['code_block_type'] ?? 'html',
       '#description' => $this->t('The type of code block to extract from the message if needed.'),
       '#empty_option' => $this->t('-- Save all --'),
     ];

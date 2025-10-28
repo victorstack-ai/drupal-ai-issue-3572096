@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_automators;
 
+use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityInterface;
@@ -87,66 +88,55 @@ class AiAutomatorEntityModifier {
       return NULL;
     }
     // Get and check so field configs exists.
-    $configs = $this->entityHasConfig($entity);
-    if (!count($configs)) {
+    $automators = $this->entityHasAutomators($entity, $specificField);
+    if (!count($automators)) {
       return NULL;
     }
 
-    // Resort on weight to create in the right order.
-    usort($configs, function ($a, $b) {
-      if ($a['automatorConfig']['weight'] > $b['automatorConfig']['weight']) {
-        return 1;
-      }
-      elseif ($a['automatorConfig']['weight'] < $b['automatorConfig']['weight']) {
-        return -1;
-      }
-      return 0;
+    // Sort automators by weight to ensure proper execution order.
+    uasort($automators, function ($a, $b) {
+      return $a->get('weight') <=> $b->get('weight');
     });
 
-    // If a specific field is set, only process that one.
-    if ($specificField) {
-      $configs = array_filter($configs, function ($config) use ($specificField) {
-        return $config['fieldDefinition']->getName() === $specificField;
-      });
-      // If no configs are found, return NULL.
-      if (!count($configs)) {
-        return NULL;
-      }
-    }
-
-    // Get possible processes.
-    $workerOptions = [];
-    foreach ($this->processes->getDefinitions() as $definition) {
-      $workerOptions[$definition['id']] = $definition['title'] . ' - ' . $definition['description'];
-    }
-
     // Get process for this entity.
-    $processes = $this->getProcesses($configs);
+    $processes = $this->getProcesses($automators);
 
     // Preprocess.
     foreach ($processes as $process) {
       $process->preProcessing($entity);
     }
 
-    // Walk through the fields and check if we need to save anything.
-    foreach ($configs as $config) {
-      // Event where you can change the field configs when something exists.
-      if (!empty($config['automatorConfig'])) {
-        $event = new AutomatorConfigEvent($entity, $config['automatorConfig']);
-        $this->eventDispatcher->dispatch($event, AutomatorConfigEvent::EVENT_NAME);
-        $config['automatorConfig'] = $event->getAutomatorConfig();
-      }
-      // Load the processor or load direct.
-      $processor = $processes[$config['automatorConfig']['worker_type']] ?? $processes['direct'];
-      // If the processor is a dynamic process and its automatic, we skip it.
-      if ($isAutomated && $processor instanceof AiAutomatorDirectProcessInterface) {
+    // Walk through the automators and mark fields for processing.
+    /** @var \Drupal\ai_automators\AiAutomatorInterface $automator */
+    foreach ($automators as $automator) {
+      $automatorTypes = $automator->getAutomatorTypes();
+      if (!count($automatorTypes)) {
         continue;
       }
-      if (method_exists($processor, 'isImport') && $isInsert) {
-        $this->markFieldForProcessing($entity, $config['fieldDefinition'], $config['automatorConfig'], $processor);
-      }
-      if (!method_exists($processor, 'isImport') && !$isInsert && $config['fieldDefinition']) {
-        $this->markFieldForProcessing($entity, $config['fieldDefinition'], $config['automatorConfig'], $processor);
+      $fieldDefinition = $automator->getFieldDefinition();
+
+      /** @var \Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface $automatorType */
+      foreach ($automatorTypes as $automatorType) {
+        $automatorConfig = $automatorType->getConfiguration();
+        // Event where you can change the field configs when something exists.
+        if (!empty($automatorConfig['settings'])) {
+          $event = new AutomatorConfigEvent($entity, $automatorConfig['settings']);
+          $this->eventDispatcher->dispatch($event, AutomatorConfigEvent::EVENT_NAME);
+          $automatorConfig['settings'] = $event->getAutomatorConfig();
+        }
+        // Load the processor or load direct.
+        $processor = $processes[$automator->get('worker_type')] ?? $processes['direct'];
+        // If the processor is a dynamic process and its automatic, we skip it.
+        if ($isAutomated && $processor instanceof AiAutomatorDirectProcessInterface) {
+          continue;
+        }
+
+        if (method_exists($processor, 'isImport') && $isInsert) {
+          $this->markFieldForProcessing($entity, $fieldDefinition, $automatorType, $processor);
+        }
+        if (!method_exists($processor, 'isImport') && !$isInsert) {
+          $this->markFieldForProcessing($entity, $fieldDefinition, $automatorType, $processor);
+        }
       }
     }
 
@@ -162,50 +152,39 @@ class AiAutomatorEntityModifier {
    *
    * @param \Drupal\Core\Entity\EntityInterface $entity
    *   The entity to check for modifications.
+   * @param string|null $specificField
+   *   If a specific field should be processed, this is the field name.
    *
    * @return array
-   *   An array with the field configs affected.
+   *   An array of Automators for this entity.
    */
-  public function entityHasConfig(EntityInterface $entity) {
+  public function entityHasAutomators(EntityInterface $entity, $specificField = NULL) {
     $storage = $this->entityTypeManager->getStorage('ai_automator');
-    $fields = $storage->loadByProperties([
+    $properties = [
       'entity_type' => $entity->getEntityTypeId(),
       'bundle' => $entity->bundle(),
-    ]);
-    $fieldDefinitions = $this->fieldManager->getFieldDefinitions($entity->getEntityTypeId(), $entity->bundle());
-
-    $fieldConfigs = [];
-    $automatorConfig = [];
-    /** @var \Drupal\ai_automators\Entity\AiAutomator $field */
-    foreach ($fields as $field) {
-      // Check if enabled and return the config.
-      $fieldConfigs[$field->id()]['fieldDefinition'] = $fieldDefinitions[$field->get('field_name')];
-      $automatorConfig = [
-        'field_name' => $field->get('field_name'),
-      ];
-      foreach ($field->get('plugin_config') as $key => $setting) {
-        $automatorConfig[substr($key, 10)] = $setting;
-      }
-      $fieldConfigs[$field->id()]['automatorConfig'] = $automatorConfig;
+    ];
+    if ($specificField) {
+      $properties['field_name'] = $specificField;
     }
-
-    return $fieldConfigs;
+    $automators = $storage->loadByProperties($properties);
+    return $automators;
   }
 
   /**
    * Gets the processes available.
    *
-   * @param array $configs
-   *   The configurations.
+   * @param array $automators
+   *   The enabled automators.
    *
    * @return array
    *   Array of processes keyed by id.
    */
-  public function getProcesses(array $configs) {
+  public function getProcesses(array $automators) {
     // Get possible processes.
     $processes = [];
-    foreach ($configs as $config) {
-      $definition = $this->processes->getDefinition($config['automatorConfig']['worker_type']);
+    foreach ($automators as $automator) {
+      $definition = $this->processes->getDefinition($automator->get('worker_type'));
       $processes[$definition['id']] = $this->processes->createInstance($definition['id']);
     }
     return $processes;
@@ -218,52 +197,55 @@ class AiAutomatorEntityModifier {
    *   The entity to check for modifications.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The field definition interface.
-   * @param array $automatorConfig
-   *   The OpenAI Automator settings for the field.
+   * @param \Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface $automatorType
+   *   The automator type.
    * @param \Drupal\ai_automators\PluginInterfaces\AiAutomatorFieldProcessInterface $processor
    *   The processor.
    *
    * @return bool
    *   If the saving was successful or not.
    */
-  protected function markFieldForProcessing(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig, AiAutomatorFieldProcessInterface $processor) {
+  protected function markFieldForProcessing(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, AiAutomatorTypeInterface $automatorType, AiAutomatorFieldProcessInterface $processor) {
+    $automatorTypeConfig = $automatorType->getConfiguration();
+    $automatorTypeSettings = $automatorTypeConfig['settings'] ?? [];
+
     // Event to modify if the field should be processed.
-    $event = new ProcessFieldEvent($entity, $fieldDefinition, $automatorConfig);
+    $event = new ProcessFieldEvent($entity, $fieldDefinition, $automatorTypeSettings);
     $this->eventDispatcher->dispatch($event, ProcessFieldEvent::EVENT_NAME);
     // If a force reject or force process exists, we do that.
     if (in_array(ProcessFieldEvent::FIELD_FORCE_SKIP, $event->actions)) {
       return FALSE;
     }
     elseif (in_array(ProcessFieldEvent::FIELD_FORCE_PROCESS, $event->actions)) {
-      return $processor->modify($entity, $fieldDefinition, $automatorConfig);
+      return $processor->modify($entity, $fieldDefinition, $automatorType);
     }
 
     // If the type is of AiAutomatorDirectProcessInterface, it checks first.
-    if ($processor instanceof AiAutomatorDirectProcessInterface && $processor->shouldProcessDirectly($entity, $fieldDefinition, $automatorConfig)) {
+    if ($processor instanceof AiAutomatorDirectProcessInterface && $processor->shouldProcessDirectly($entity, $fieldDefinition, $automatorTypeSettings)) {
       // If the processor wants to process directly, we do that.
-      return $processor->modify($entity, $fieldDefinition, $automatorConfig);
+      return $processor->modify($entity, $fieldDefinition, $automatorType);
     }
 
     // Otherwise continue as normal.
-    if ((!isset($automatorConfig['mode']) || $automatorConfig['mode'] == 'base') && !$this->baseShouldSave($entity, $automatorConfig)) {
+    if ((!isset($automatorTypeSettings['mode']) || $automatorTypeSettings['mode'] == 'base') && !$this->baseShouldSave($entity, $fieldDefinition, $automatorType)) {
       return FALSE;
     }
-    elseif (isset($automatorConfig['mode']) && $automatorConfig['mode'] == 'token' && !$this->tokenShouldSave($entity, $automatorConfig)) {
+    elseif (isset($automatorTypeSettings['mode']) && $automatorTypeSettings['mode'] == 'token' && !$this->tokenShouldSave($entity, $fieldDefinition, $automatorType)) {
       return FALSE;
     }
 
-    return $processor->modify($entity, $fieldDefinition, $automatorConfig);
+    return $processor->modify($entity, $fieldDefinition, $automatorType);
   }
 
   /**
    * If token mode, check if it should run.
    */
-  private function tokenShouldSave(ContentEntityInterface $entity, array $automatorConfig) {
-    // Get rule.
-    $rule = $this->fieldRules->findRule($automatorConfig['rule']);
-    // Check if a value exists.
-    $value = $entity->get($automatorConfig['field_name'])->getValue();
-    $value = $rule->checkIfEmpty($value, $automatorConfig);
+  private function tokenShouldSave(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, AiAutomatorTypeInterface $automatorType) {
+    // @todo this could be simplified in automator type.
+    $automatorConfig = $automatorType->getConfiguration();
+    $fieldName = $fieldDefinition->getName();
+    $value = $entity->get($fieldName)->getValue();
+    $value = $automatorType->checkIfEmpty($value, $automatorConfig['settings']);
 
     // Get prompt.
     if (!empty($value) && !empty($value[0])) {
@@ -275,27 +257,31 @@ class AiAutomatorEntityModifier {
   /**
    * If base mode, check if it should run.
    */
-  private function baseShouldSave(ContentEntityInterface $entity, array $automatorConfig) {
+  private function baseShouldSave(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, AiAutomatorTypeInterface $automatorType) {
     // Check if a value exists.
-    $value = $entity->get($automatorConfig['field_name'])->getValue();
+    $fieldName = $fieldDefinition->getName();
+    $value = $entity->get($fieldName)->getValue();
 
-    $original = isset($entity->original) && json_encode($entity->original->get($automatorConfig['base_field'])->getValue()) ?? NULL;
-    $change = json_encode($entity->get($automatorConfig['base_field'])->getValue()) !== $original;
+    // Get automator config.
+    $automatorConfig = $automatorType->getConfiguration();
+    $settings = $automatorConfig['settings'] ?? [];
+
+    $original = isset($entity->original) && json_encode($entity->original->get($settings['base_field'])->getValue()) ?? NULL;
+    $change = json_encode($entity->get($settings['base_field'])->getValue()) !== $original;
 
     // Get the rule to check the value.
-    $rule = $this->fieldRules->findRule($automatorConfig['rule']);
-    $value = $rule->checkIfEmpty($value, $automatorConfig);
+    $value = $automatorType->checkIfEmpty($value, $settings);
 
     // If the base field is not filled out.
     if (!empty($value) && !empty($value[0])) {
       return FALSE;
     }
     // If the value exists and we don't have edit mode, we do nothing.
-    if (!empty($value) && !empty($value[0]) && !$automatorConfig['edit_mode']) {
+    if (!empty($value) && !empty($value[0]) && !$settings['edit_mode']) {
       return FALSE;
     }
     // Otherwise look for a change.
-    if ($automatorConfig['edit_mode'] && !$change && !empty($value) && !empty($value[0])) {
+    if ($settings['edit_mode'] && !$change && !empty($value) && !empty($value[0])) {
       return FALSE;
     }
     return TRUE;

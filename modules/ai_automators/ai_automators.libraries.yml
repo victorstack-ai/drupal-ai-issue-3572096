@@ -6,3 +6,8 @@ field_widget:
   css:
     theme:
       css/field_widget.css: {}
+
+admin:
+  css:
+    theme:
+      css/automators.admin.css: {}

@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_automators\Plugin\AiAutomatorType;
 
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -52,15 +53,15 @@ class LlmVideoToHtml extends VideoToText implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public function extraFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
-    $form['automator_generating_prompt'] = [
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
+    $form['generating_prompt'] = [
       '#type' => 'textarea',
       '#title' => 'Generating Prompt',
       '#description' => $this->t('Any commands that you need in how to generate the HTML. How many images you wantm what kind of language you want, which HTML tags to use and where etc.'),
       '#attributes' => [
         'placeholder' => $this->t('Cut out between 4-6 images. Write 4 sections starting with a h2 header and between 2-4 paragraphs per section. You can use the following other tags: strong, a, quote, pre and em.'),
       ],
-      '#default_value' => $defaultValues['automator_generating_prompt'] ?? '',
+      '#default_value' => $this->configuration['generating_prompt'] ?? '',
       '#weight' => 24,
     ];
 
@@ -68,11 +69,11 @@ class LlmVideoToHtml extends VideoToText implements AiAutomatorTypeInterface {
       // Because we have to invoke this only if the module is installed, no
       // dependency injection.
       // @codingStandardsIgnoreLine @phpstan-ignore-next-line
-      $form['automator_generating_prompt_help'] = \Drupal::service('token.tree_builder')->buildRenderable([
-        $this->getEntityTokenType($entity->getEntityTypeId()),
+      $form['generating_prompt_help'] = \Drupal::service('token.tree_builder')->buildRenderable([
+        $this->getEntityTokenType($automator->get('entity_type')),
         'current-user',
       ]);
-      $form['automator_generating_prompt_help']['#weight'] = 25;
+      $form['generating_prompt_help']['#weight'] = 25;
     }
     return $form;
   }

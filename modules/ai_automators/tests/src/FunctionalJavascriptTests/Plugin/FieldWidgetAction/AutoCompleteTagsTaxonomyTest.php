@@ -30,6 +30,7 @@ class AutoCompleteTagsTaxonomyTest extends BaseClassFunctionalJavascriptTests {
     'field_ui',
     'field_widget_actions',
     'taxonomy',
+    'options',
   ];
 
   /**
@@ -84,7 +85,7 @@ class AutoCompleteTagsTaxonomyTest extends BaseClassFunctionalJavascriptTests {
 
     // Create an automator for the field widget action.
     $config_path = __DIR__ . '/../../../../config/autocomplete_tags_taxonomy_test/';
-    $data = Yaml::parseFile($config_path . 'ai_automators.ai_automator.node.article.field_tags.default.yml');
+    $data = Yaml::parseFile($config_path . 'ai_automators.ai_automator.taxonomy_test.yml');
     \Drupal::entityTypeManager()
       ->getStorage('ai_automator')
       ->create($data)

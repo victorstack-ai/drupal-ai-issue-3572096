@@ -1,0 +1,9 @@
+/* Admin styles for AI Automators tables and form layout. */
+
+/* Keep the select and Add button inline inside the first cell of the new row,
+   mirroring core image style admin behavior. */
+.automator-type-new,
+.automator-type-new div {
+  display: inline;
+}
+

@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfo;
@@ -99,6 +100,12 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
   /**
    * Construct a video to text field.
    *
+   * @param array $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
    * @param \Drupal\ai\AiProviderPluginManager $pluginManager
    *   The AI provider plugin manager.
    * @param \Drupal\ai\Service\AiProviderFormHelper $formHelper
@@ -121,6 +128,9 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
    *   The entity type bundle info.
    */
   public function __construct(
+    $configuration,
+    $plugin_id,
+    $plugin_definition,
     AiProviderPluginManager $pluginManager,
     AiProviderFormHelper $formHelper,
     PromptJsonDecoderInterface $promptJsonDecoder,
@@ -132,7 +142,7 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
     EntityFieldManagerInterface $fieldManager,
     EntityTypeBundleInfo $entityTypeBundleInfo,
   ) {
-    parent::__construct($pluginManager, $formHelper, $promptJsonDecoder);
+    parent::__construct($configuration, $plugin_id, $plugin_definition, $pluginManager, $formHelper, $promptJsonDecoder);
     $this->entityManager = $entityManager;
     $this->fileSystem = $fileSystem;
     $this->token = $token;
@@ -148,6 +158,9 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     // @phpstan-ignore-next-line
     return new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
       $container->get('ai.provider'),
       $container->get('ai.form_helper'),
       $container->get('ai.prompt_json_decode'),
@@ -334,9 +347,8 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
   /**
    * {@inheritDoc}
    */
-  public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
-    $form = parent::extraAdvancedFormFields($entity, $fieldDefinition, $formState, $defaultValues);
-    $this->extraProviderForm($form, $formState, 'speech_to_text', 'audio', $this->t('Speech To Text Provider'), $defaultValues);
+  public function buildAdvancedConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
+    $this->extraProviderForm($form, $form_state, 'speech_to_text', 'audio', $this->t('Speech To Text Provider'), $this->configuration);
     return $form;
   }
 

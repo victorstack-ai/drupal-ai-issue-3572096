@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -14,9 +15,44 @@ class ComplexTextChat extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
-    $form = parent::extraAdvancedFormFields($entity, $fieldDefinition, $formState, $defaultValues);
-    $this->getGeneralHelper()->addJoinerConfigurationFormField('automator', $form, $entity, $fieldDefinition, $defaultValues);
+  public function buildAdvancedConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
+    $joiners = [
+      '' => $this->t("-- Don't join --"),
+      ', ' => $this->t('Comma, with space (, )'),
+      ' ' => $this->t('Space ( )'),
+      '. ' => $this->t('Period, with space (. )'),
+      '\n' => $this->t('New line (\n)'),
+      '\t' => $this->t('Tab (\t)'),
+      '<br />' => $this->t('HTML Break (&#x3c;br />)'),
+      '<br /><br />' => $this->t('HTML Double Break (&#x3c;br />&#x3c;br /&#x3e;)'),
+      '<hr />' => $this->t('HTML Horizontal Rule (&#x3c;hr />)'),
+      ',' => $this->t('Comma (,)'),
+      ';' => $this->t('Semicolon (;)'),
+      '.' => $this->t('Period (.)'),
+      'other' => $this->t('Other'),
+    ];
+
+    $form['joiner'] = [
+      '#type' => 'select',
+      '#options' => $joiners,
+      '#title' => $this->t('Joiner'),
+      '#description' => $this->t('If you do not want multiple values back, this will take all values and join them.'),
+      '#default_value' => $this->configuration['joiner'] ?? "",
+    ];
+
+    $form["joiner_other"] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Other Joiner'),
+      '#description' => $this->t('If you selected other, please specify the joiner.'),
+      '#default_value' => $this->configuration["joiner_other"] ?? "",
+      '#states' => [
+        'visible' => [
+          'select[name="plugin_advanced[joiner]"]' => [
+            'value' => 'other',
+          ],
+        ],
+      ],
+    ];
     return $form;
   }
 

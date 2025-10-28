@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfo;
@@ -22,6 +23,12 @@ abstract class EntityReference extends RuleBase {
   /**
    * Constructs a new AiClientBase abstract class.
    *
+   * @param array $configuration
+   *   A configuration array.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
    * @param \Drupal\ai\AiProviderPluginManager $pluginManager
    *   The plugin manager.
    * @param \Drupal\ai\Service\AiProviderFormHelper $formHelper
@@ -38,6 +45,9 @@ abstract class EntityReference extends RuleBase {
    *   The entity field manager.
    */
   final public function __construct(
+    $configuration,
+    $plugin_id,
+    $plugin_definition,
     AiProviderPluginManager $pluginManager,
     AiProviderFormHelper $formHelper,
     PromptJsonDecoderInterface $promptJsonDecoder,
@@ -46,7 +56,7 @@ abstract class EntityReference extends RuleBase {
     protected EntityTypeBundleInfo $entityTypeBundleInfo,
     protected EntityFieldManagerInterface $entityFieldManager,
   ) {
-    parent::__construct($pluginManager, $formHelper, $promptJsonDecoder);
+    parent::__construct($configuration, $plugin_id, $plugin_definition, $pluginManager, $formHelper, $promptJsonDecoder);
   }
 
   /**
@@ -54,6 +64,9 @@ abstract class EntityReference extends RuleBase {
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
       $container->get('ai.provider'),
       $container->get('ai.form_helper'),
       $container->get('ai.prompt_json_decode'),
@@ -117,11 +130,10 @@ abstract class EntityReference extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function extraFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []): array {
-    // Load the target type.
-    $targetType = $fieldDefinition->getFieldStorageDefinition()->getSettings()['target_type'];
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
+    $entityType = $automator->get('entity_type');
     // Check if the target type has bundles.
-    $bundles = $this->entityTypeBundleInfo->getBundleInfo($targetType);
+    $bundles = $this->entityTypeBundleInfo->getBundleInfo($entityType);
     $chosenBundle = NULL;
     if ($bundles) {
       $options = [
@@ -130,7 +142,7 @@ abstract class EntityReference extends RuleBase {
       foreach ($bundles as $bundle => $info) {
         $options[$bundle] = $info['label'];
       }
-      $chosenBundle = $defaultValues['automator_entity_reference_bundle'] ?? '';
+      $chosenBundle = $this->configuration['automator_entity_reference_bundle'] ?? '';
       $form['automator_entity_reference_bundle'] = [
         '#type' => 'select',
         '#title' => $this->t('Bundle'),
@@ -149,7 +161,7 @@ abstract class EntityReference extends RuleBase {
         '#weight' => 20,
         '#open' => TRUE,
       ];
-      foreach ($this->entityFieldManager->getFieldDefinitions($targetType, $chosenBundle) as $field => $info) {
+      foreach ($this->entityFieldManager->getFieldDefinitions($entityType, $chosenBundle) as $field => $info) {
         // Only string, string_long, text, text_long and text_with_summary.
         if (in_array($info->getType(), $this->allowedTypes)) {
           $form['ai_automator_fields']['automator_entity_field_enable_' . $field] = [
@@ -157,7 +169,7 @@ abstract class EntityReference extends RuleBase {
             '#title' => $info->getLabel(),
             '#description' => $this->t('Check this box to enable this field for the generation.'),
             '#weight' => 20,
-            '#default_value' => $defaultValues['automator_entity_field_enable_' . $field] ?? FALSE,
+            '#default_value' => $this->configuration['automator_entity_field_enable_' . $field] ?? FALSE,
           ];
 
           $form['ai_automator_fields']['automator_entity_field_generate_' . $field] = [
@@ -165,7 +177,7 @@ abstract class EntityReference extends RuleBase {
             '#title' => $info->getLabel(),
             '#description' => $this->t('Describe specifically how this field should be filled out.'),
             '#weight' => 20,
-            '#default_value' => $defaultValues['automator_entity_field_generate_' . $field] ?? '',
+            '#default_value' => $this->configuration['automator_entity_field_generate_' . $field] ?? '',
             '#states' => [
               'visible' => [
                 ':input[name="automator_entity_field_enable_' . $field . '"]' => ['checked' => TRUE],
@@ -181,11 +193,11 @@ abstract class EntityReference extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function validateConfigValues($form, FormStateInterface $formState): void {
+  public function validateConfigurationForm(array &$form, FormStateInterface $form_state, AiAutomatorInterface $automator): void {
     // If the bundle is set, but no fields, please notify the user.
     $foundField = FALSE;
     $isEnabled = FALSE;
-    foreach ($formState->getValues() as $key => $value) {
+    foreach ($form_state->getValues() as $key => $value) {
       if (str_contains($key, 'automator_entity_field_enable_')) {
         $foundField = TRUE;
         if ($value) {
@@ -193,8 +205,8 @@ abstract class EntityReference extends RuleBase {
         }
       }
     }
-    if ($formState->getValue('automator_enabled') && !$isEnabled && $foundField) {
-      $formState->setErrorByName('ai_automator_fields', $this->t('You need to enable at least one field to generate.'));
+    if ($form_state->getValue('automator_enabled') && !$isEnabled && $foundField) {
+      $form_state->setErrorByName('ai_automator_fields', $this->t('You need to enable at least one field to generate.'));
     }
   }
 

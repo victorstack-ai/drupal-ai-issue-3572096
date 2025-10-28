@@ -2,11 +2,12 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\Plugin\PluginBase;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\Enum\AiModelCapability;
 use Drupal\ai\OperationType\Chat\ChatInput;
@@ -23,11 +24,12 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * This is a base class for all LLM rule helpers.
+ *
+ * @todo this should be the AiAutomatorBase class.
  */
-abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPluginInterface {
+abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, ContainerFactoryPluginInterface {
 
   use GeneralHelperTrait;
-  use StringTranslationTrait;
 
   /**
    * The LLM type.
@@ -65,8 +67,35 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
   protected PromptJsonDecoderInterface $promptJsonDecoder;
 
   /**
+   * The automator type ID.
+   *
+   * @var string
+   */
+  protected $uuid;
+
+  /**
+   * The weight of the automator type.
+   *
+   * @var int|string
+   */
+  protected $weight = '';
+
+  /**
+   * The custom label for the automator type.
+   *
+   * @var string|null
+   */
+  protected $label = NULL;
+
+  /**
    * Constructs a new AiClientBase abstract class.
    *
+   * @param array $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
    * @param \Drupal\ai\AiProviderPluginManager $pluginManager
    *   The plugin manager.
    * @param \Drupal\ai\Service\AiProviderFormHelper $formHelper
@@ -75,13 +104,18 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
    *   The prompt JSON decoder.
    */
   public function __construct(
+    array $configuration,
+    $plugin_id,
+    $plugin_definition,
     AiProviderPluginManager $pluginManager,
     AiProviderFormHelper $formHelper,
     PromptJsonDecoderInterface $promptJsonDecoder,
   ) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->aiPluginManager = $pluginManager;
     $this->formHelper = $formHelper;
     $this->promptJsonDecoder = $promptJsonDecoder;
+    $this->setConfiguration($configuration);
   }
 
   /**
@@ -89,10 +123,125 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
       $container->get('ai.provider'),
       $container->get('ai.form_helper'),
       $container->get('ai.prompt_json_decode')
     );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function label(): string {
+    return $this->label ?? $this->pluginDefinition['label'];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function defaultConfiguration() {
+    return [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getUuid() {
+    return $this->uuid;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setWeight($weight) {
+    $this->weight = $weight;
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getWeight() {
+    return $this->weight;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getConfiguration() {
+    return [
+      'uuid' => $this->getUuid(),
+      'id' => $this->getPluginId(),
+      'weight' => $this->getWeight(),
+      'settings' => $this->configuration,
+      'label' => $this->label(),
+    ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setConfiguration(array $configuration) {
+    $configuration += [
+      'settings' => [],
+      'uuid' => '',
+      'weight' => 0,
+      'label' => NULL,
+    ];
+    $this->configuration = $configuration['settings'] + $this->defaultConfiguration();
+    $this->uuid = $configuration['uuid'];
+    $this->weight = $configuration['weight'];
+    $this->label = $configuration['label'];
+    return $this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
+    return $form;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function buildAdvancedConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
+    return $form;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function validateConfigurationForm(array &$form, FormStateInterface $form_state, AiAutomatorInterface $automator): void {
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function validateAdvancedConfigurationForm(array &$form, FormStateInterface $form_state, AiAutomatorInterface $automator): void {
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function submitConfigurationForm(array &$form, FormStateInterface $form_state, AiAutomatorInterface $automator): void {
+    $form_state->cleanValues();
+    foreach ($form_state->getValues() as $key => $value) {
+      $this->configuration[$key] = $value;
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function submitAdvancedConfigurationForm(array &$form, FormStateInterface $form_state, AiAutomatorInterface $automator): void {
+    $form_state->cleanValues();
+    foreach ($form_state->getValues() as $key => $value) {
+      $this->configuration[$key] = $value;
+    }
   }
 
   /**
@@ -162,14 +311,47 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
   }
 
   /**
-   * {@inheritDoc}
+   * Old method to add extra form fields.
+   *
+   * @deprecated in ai:1.2.0 and is removed from ai:2.0.0. Use buildConfigurationForm() instead.
+   * @see https://www.drupal.org/project/ai/issues/3535824
    */
   public function extraFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
+    // Trigger warning only if called from a child class.
+    if (get_class($this) !== __CLASS__) {
+      @trigger_error('extraFormFields() is deprecated in ai:1.2.0 and will be removed in a ai:2.0.0. Use buildConfigurationForm() instead. See https://www.drupal.org/project/ai/issues/3535824', E_USER_DEPRECATED);
+    }
     return [];
   }
 
   /**
-   * {@inheritDoc}
+   * Old method to validate extra form fields.
+   *
+   * @deprecated in ai:1.2.0 and is removed from ai:2.0.0. Use validateConfigurationForm() instead.
+   * @see https://www.drupal.org/project/ai/issues/3535824
+   */
+  public function validateConfigValues($form, FormStateInterface $formState) {
+    if (get_class($this) !== __CLASS__) {
+      @trigger_error('validateConfigValues() is deprecated in ai:1.2.0 and will be removed in a ai:2.0.0. Use validateConfigurationForm() instead. See https://www.drupal.org/project/ai/issues/3535824', E_USER_DEPRECATED);
+    }
+  }
+
+  /**
+   * Adds extra advanced form fields to configuration.
+   *
+   * @todo move this to the automator type form and refactor.
+   *
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   The entity being worked on.
+   * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
+   *   The field definition interface.
+   * @param \Drupal\Core\Form\FormStateInterface $formState
+   *   The form state.
+   * @param array $defaultValues
+   *   The default values.
+   *
+   * @return array
+   *   Form array with key starting with automator_{type}.
    */
   public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
     // Load the AI models.
@@ -193,9 +375,9 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
       }
     }
     $defaults = $this->aiPluginManager->getDefaultProviderForOperationType($this->llmType);
-    $provider = $formState->getValue('automator_ai_provider');
+    $provider = $formState->getValue('ai_provider');
     if (!$provider) {
-      $provider = $defaultValues['automator_ai_provider'] ?? NULL;
+      $provider = $defaultValues['ai_provider'] ?? NULL;
       if (empty($provider)) {
         $provider = key($providers);
       }
@@ -203,7 +385,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
         $provider = $defaults['provider_id'];
       }
     }
-    $form['automator_ai_provider'] = [
+    $form['ai_provider'] = [
       '#type' => 'select',
       '#title' => $this->t('AI Provider'),
       '#options' => $providers,
@@ -222,7 +404,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
       ],
       '#states' => [
         'visible' => [
-          ':input[name="automator_ai_provider"]' => ['!value' => ''],
+          ':input[name="ai_provider"]' => ['!value' => ''],
         ],
       ],
     ];
@@ -236,10 +418,10 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
       'default',
     ])) {
       $llmInstance = $this->aiPluginManager->createInstance($provider);
-      $model = $formState->getValue('automator_ai_model');
+      $model = $formState->getValue('ai_model');
       $models = $llmInstance->getConfiguredModels($this->llmType);
       if (!$model || !in_array($model, array_keys($models))) {
-        $model = $defaultValues['automator_ai_model'] ?? NULL;
+        $model = $defaultValues['ai_model'] ?? NULL;
         if (isset($defaults['model_id']) && !$model) {
           $model = $defaults['model_id'];
         }
@@ -248,7 +430,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
         }
       }
 
-      $form['ajax_prefix']['automator_ai_model'] = [
+      $form['ajax_prefix']['ai_model'] = [
         '#type' => 'select',
         '#title' => $this->t('Model'),
         // Only get chat models.
@@ -269,7 +451,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
             '#title' => $this->t('Settings'),
           ];
           foreach ($configuration as $key => $definition) {
-            $set_key = 'automator_configuration_' . $key;
+            $set_key = 'ai_provider_' . $key;
             $form['ajax_prefix']['ai_settings'][$set_key]['#type'] = $this->formHelper->mapSchemaTypeToFormType($definition);
             $form['ajax_prefix']['ai_settings'][$set_key]['#required'] = $definition['required'] ?? FALSE;
             $form['ajax_prefix']['ai_settings'][$set_key]['#title'] = $definition['label'] ?? $key;
@@ -292,38 +474,31 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     // Add vision if it is available or default vision.
     if (($llmInstance && in_array($model, array_keys($llmInstance->getConfiguredModels('chat', [AiModelCapability::ChatWithImageVision])))) || $provider == 'default_vision') {
       // Add the image field to use.
-      $form['ajax_prefix']['automator_configuration_image_field'] = [
+      $form['ajax_prefix']['image_field'] = [
         '#type' => 'select',
         '#title' => $this->t('Image Field'),
         '#options' => $this->getGeneralHelper()->getImageMediaFields($entity),
         '#description' => $this->t('Since this is a vision model you can choose to add an image field to the prompt.'),
         '#empty_option' => $this->t('No images'),
-        '#default_value' => $defaultValues['automator_configuration_image_field'] ?? NULL,
+        '#default_value' => $defaultValues['image_field'] ?? NULL,
       ];
 
       // Also add the possibility to add an image style.
-      $form['ajax_prefix']['automator_configuration_image_style'] = [
+      $form['ajax_prefix']['image_style'] = [
         '#type' => 'select',
         '#title' => $this->t('Image Style'),
         '#description' => $this->t('Use an optional image style to lower costs and increase speed.'),
         '#empty_option' => $this->t('Use original'),
         '#options' => $this->getGeneralHelper()->getImageStyles(FALSE),
-        '#default_value' => $defaultValues['automator_configuration_image_style'] ?? NULL,
+        '#default_value' => $defaultValues['image_style'] ?? NULL,
         '#states' => [
           'visible' => [
-            ':input[name="automator_configuration_image_field"]' => ['!value' => ''],
+            ':input[name="image_field"]' => ['!value' => ''],
           ],
         ],
       ];
     }
     return $form;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function validateConfigValues($form, FormStateInterface $formState) {
-
   }
 
   /**
@@ -422,12 +597,12 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     // Load the AI models.
     $providers = $this->formHelper->getAiProvidersOptions($type);
     $defaults = $this->aiPluginManager->getDefaultProviderForOperationType($type);
-    $provider = $formState->getValue('automator_ai_provider' . $suffix);
+    $provider = $formState->getValue('ai_provider' . $suffix);
     if (!$provider) {
-      $provider = $defaultValues['automator_ai_provider' . $suffix] ?? $defaults['provider_id'];
+      $provider = $defaultValues['ai_provider' . $suffix] ?? $defaults['provider_id'];
     }
 
-    $form['automator_ai_provider' . $suffix] = [
+    $form['ai_provider' . $suffix] = [
       '#type' => 'select',
       '#title' => $title,
       '#options' => $providers,
@@ -449,22 +624,22 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
       ],
       '#states' => [
         'visible' => [
-          ':input[name="automator_ai_provider' . $suffix . '"]' => ['!value' => ''],
+          ':input[name="ai_provider' . $suffix . '"]' => ['!value' => ''],
         ],
       ],
     ];
 
     if ($provider) {
       $llmInstance = $this->aiPluginManager->createInstance($provider);
-      $model = $formState->getValue('automator_ai_model' . $suffix);
+      $model = $formState->getValue('ai_model' . $suffix);
       if (!$model) {
-        $model = $defaultValues['automator_ai_model' . $suffix] ?? $defaults['model_id'];
+        $model = $defaultValues['ai_model' . $suffix] ?? $defaults['model_id'];
       }
       if (!$model) {
         $model = key($llmInstance->getConfiguredModels($type));
       }
 
-      $form['ajax_prefix' . $suffix]['automator_ai_model' . $suffix] = [
+      $form['ajax_prefix' . $suffix]['ai_model' . $suffix] = [
         '#type' => 'select',
         '#title' => $this->t('Model'),
         // Only get chat models.
@@ -488,7 +663,7 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
             '#title' => $this->t('Settings'),
           ];
           foreach ($configuration as $key => $definition) {
-            $set_key = 'automator_configuration_' . $key . $suffix;
+            $set_key = 'configuration_' . $key . $suffix;
             $form['ajax_prefix' . $suffix]['ai_settings'][$set_key]['#type'] = $this->formHelper->mapSchemaTypeToFormType($definition);
             $form['ajax_prefix' . $suffix]['ai_settings'][$set_key]['#required'] = $definition['required'] ?? FALSE;
             $form['ajax_prefix' . $suffix]['ai_settings'][$set_key]['#title'] = $definition['label'] ?? $key;
@@ -531,8 +706,9 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     $config = [];
     $configCast = $instance->getAvailableConfiguration($operationType, $model);
     foreach ($automatorConfig as $key => $val) {
-      if (strpos($key, 'configuration_') === 0 && $val) {
-        $configKey = str_replace('configuration_', '', $key);
+      // @todo this shouldn't be necessary, but leaving for BC.
+      if (strpos($key, 'ai_provider_') === 0 && $val) {
+        $configKey = str_replace('ai_provider_', '', $key);
         if (isset($configCast[$configKey]['type'])) {
           $config[$configKey] = CastUtility::typeCast($configCast[$configKey]['type'], $val);
         }
@@ -591,10 +767,10 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     $images = [];
     // Check for images or media.
     $possibleImages = [];
-    if (!empty($automatorConfig['configuration_image_field'])) {
-      $parts[0] = $automatorConfig['configuration_image_field'];
-      if (strpos($automatorConfig['configuration_image_field'], '--') !== FALSE) {
-        $parts = explode('--', $automatorConfig['configuration_image_field']);
+    if (!empty($automatorConfig['image_field'])) {
+      $parts[0] = $automatorConfig['image_field'];
+      if (strpos($automatorConfig['image_field'], '--') !== FALSE) {
+        $parts = explode('--', $automatorConfig['image_field']);
       }
       foreach ($entity->get($parts[0]) as $imageEntityWrapper) {
         $imageEntity = $imageEntityWrapper->entity;
@@ -620,8 +796,8 @@ abstract class RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPlu
     }
     foreach ($possibleImages as $possibleImage) {
       // If an image style is set, use it.
-      if (!empty($automatorConfig['configuration_image_style'])) {
-        $possibleImage = $this->getGeneralHelper()->preprocessImageStyle($possibleImage, $automatorConfig['configuration_image_style']);
+      if (!empty($automatorConfig['image_style'])) {
+        $possibleImage = $this->getGeneralHelper()->preprocessImageStyle($possibleImage, $automatorConfig['image_style']);
       }
       $image = new ImageFile();
       $image->setFileFromFile($possibleImage);

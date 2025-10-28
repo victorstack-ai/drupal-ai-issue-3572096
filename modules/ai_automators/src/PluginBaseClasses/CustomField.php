@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -35,13 +36,13 @@ class CustomField extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
-    $config = $fieldDefinition->getConfig($entity->bundle())->getSettings();
+  public function buildAdvancedConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
+    $fieldDefinition = $automator->getFieldDefinition();
+    $config = $fieldDefinition->getConfig($automator->get('entity_type'))->getSettings();
 
-    $form = parent::extraAdvancedFormFields($entity, $fieldDefinition, $formState, $defaultValues);
     if (isset($config['field_settings'])) {
       foreach ($config['field_settings'] as $key => $value) {
-        $form["automator_llm_custom_value_" . $key] = [
+        $form["llm_custom_value_" . $key] = [
           '#type' => 'textarea',
           '#title' => $value['widget_settings']['label'] ?? $key,
           '#description' => $this->t('One sentence how the %label should be filled out. For instance "the original quote".', [
@@ -50,11 +51,11 @@ class CustomField extends RuleBase {
           '#attributes' => [
             'rows' => 2,
           ],
-          '#default_value' => $defaultValues["automator_llm_custom_value_" . $key] ?? '',
+          '#default_value' => $this->configuration["llm_custom_value_" . $key] ?? '',
           '#weight' => 14,
         ];
 
-        $form["automator_llm_custom_oneshot_" . $key] = [
+        $form["llm_custom_oneshot_" . $key] = [
           '#type' => 'textarea',
           '#title' => $this->t('Example %label', [
             '%label' => $value['widget_settings']['label'] ?? $key,
@@ -65,7 +66,7 @@ class CustomField extends RuleBase {
           '#attributes' => [
             'rows' => 2,
           ],
-          '#default_value' => $defaultValues["automator_llm_custom_oneshot_" . $key] ?? '',
+          '#default_value' => $this->configuration["llm_custom_oneshot_" . $key] ?? '',
           '#weight' => 14,
         ];
       }

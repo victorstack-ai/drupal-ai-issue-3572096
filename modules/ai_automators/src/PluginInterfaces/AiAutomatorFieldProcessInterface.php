@@ -17,13 +17,13 @@ interface AiAutomatorFieldProcessInterface {
    *   The entity to check for modifications.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   Field definition interface.
-   * @param array $automatorConfig
-   *   The OpenAI Automator settings for the field.
+   * @param \Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface $automatorType
+   *   The AiAutomatorType plugin instance.
    *
    * @return bool
    *   Success or not.
    */
-  public function modify(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig);
+  public function modify(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition, AiAutomatorTypeInterface $automatorType);
 
   /**
    * Preprocessing to set the batch job before each field is run.

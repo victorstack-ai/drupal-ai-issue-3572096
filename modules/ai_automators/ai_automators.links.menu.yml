@@ -15,3 +15,9 @@ entity.automators_tool.overview:
   parent: ai_automators.list
   description: 'Create a tool from an automators workflow.'
   route_name: entity.automators_tool.collection
+
+entity.ai_automators.overview:
+  title: Field Automators
+  parent: ai_automators.list
+  description: 'Create a new field automator.'
+  route_name: entity.ai_automator.collection

@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_automators\Plugin\AiAutomatorProcess;
 
+use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
@@ -59,11 +60,12 @@ class BatchProcessing implements AiAutomatorFieldProcessInterface, ContainerFact
   /**
    * {@inheritDoc}
    */
-  public function modify(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
+  public function modify(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition, AiAutomatorTypeInterface $automatorType) {
+    $automatorTypeConfig = $automatorType->getConfiguration();
     $entry = [
       'entity' => $entity,
       'fieldDefinition' => $fieldDefinition,
-      'automatorConfig' => $automatorConfig,
+      'automatorConfig' => $automatorTypeConfig,
     ];
 
     $this->batch[] = [

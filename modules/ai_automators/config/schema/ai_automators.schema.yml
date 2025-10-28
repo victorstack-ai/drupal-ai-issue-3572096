@@ -1,4 +1,4 @@
-ai_automators.ai_automator.*.*.*.*:
+ai_automators.ai_automator.*:
   type: config_entity
   label: AI Automator
   mapping:
@@ -8,20 +8,6 @@ ai_automators.ai_automator.*.*.*.*:
     label:
       type: label
       label: Label
-    uuid:
-      type: string
-    rule:
-      type: string
-      label: Rule
-    input_mode:
-      type: string
-      label: Input Mode
-    weight:
-      type: integer
-      label: Weight
-    worker_type:
-      type: string
-      label: Worker Type
     entity_type:
       type: string
       label: Entity Type
@@ -31,23 +17,40 @@ ai_automators.ai_automator.*.*.*.*:
     field_name:
       type: string
       label: Field Name
-    edit_mode:
-      type: boolean
-      label: Edit Mode
-    base_field:
+    worker_type:
       type: string
-      label: Base Field
-    prompt:
-      type: string
-      label: Prompt
-    token:
-      type: string
-      label: Token
-    plugin_config:
+      label: Worker Type
+    weight:
+      type: weight
+      label: Weight
+    automator_types:
       type: sequence
-      label: Plugin Config
       sequence:
-        type: ignore
+        type: mapping
+        mapping:
+          uuid:
+            type: uuid
+          id:
+            type: string
+            constraints:
+              PluginExists:
+                manager: plugin.manager.ai_automator
+                interface: 'Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface'
+          label:
+            type: string
+            label: 'Custom Label'
+          weight:
+            type: weight
+          settings:
+            type: sequence
+            label: Plugin Config
+            sequence:
+              type: ignore
+
+# @todo add schema for types.
+ai_automators.automator_type.*:
+  type: mapping
+  label: 'automator type settings'
 
 ai_automators.automators_tool.*:
   type: config_entity

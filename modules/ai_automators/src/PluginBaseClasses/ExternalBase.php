@@ -2,9 +2,11 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Plugin\PluginBase;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\ai_automators\Traits\FileHelperTrait;
@@ -12,12 +14,36 @@ use Drupal\ai_automators\Traits\GeneralHelperTrait;
 
 /**
  * This is a base class for all rule helpers.
+ *
+ * @todo This likely can be removed in place of RuleBase in 2.x.
  */
-abstract class ExternalBase implements AiAutomatorTypeInterface {
+abstract class ExternalBase extends PluginBase implements AiAutomatorTypeInterface {
 
   use FileHelperTrait;
   use GeneralHelperTrait;
   use StringTranslationTrait;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __construct(array $configuration, $plugin_id, $plugin_definition) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition);
+    $this->setConfiguration($configuration);
+  }
+
+  /**
+   * The automator type ID.
+   *
+   * @var string
+   */
+  protected $uuid;
+
+  /**
+   * The weight of the automator type.
+   *
+   * @var int|string
+   */
+  protected $weight = '';
 
   /**
    * {@inheritDoc}
@@ -86,9 +112,20 @@ abstract class ExternalBase implements AiAutomatorTypeInterface {
   }
 
   /**
-   * {@inheritDoc}
+   * Old method to add extra form fields.
+   *
+   * @deprecated in ai:1.2.0 and is removed from ai:2.0.0. Use buildConfigurationForm() instead.
+   * @see https://www.drupal.org/project/ai/issues/3535824
    */
   public function extraFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
+    // Trigger warning only if called on this class directly.
+    // Child classes calling parent::extraFormFields() will still execute
+    // this, but they inherit it intentionally.
+    if (get_class($this) === __CLASS__) {
+      @trigger_error('extraFormFields() is deprecated in ai:1.2.0 and will be removed in a ai:2.0.0. Use buildConfigurationForm() instead. See https://www.drupal.org/project/ai/issues/3535824', E_USER_DEPRECATED);
+    }
+
+    // Default: return empty array so subclasses can override safely.
     return [];
   }
 
@@ -150,6 +187,115 @@ abstract class ExternalBase implements AiAutomatorTypeInterface {
    */
   public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     $entity->set($fieldDefinition->getName(), $values);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function label(): string {
+    return $this->pluginDefinition['label'];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function defaultConfiguration() {
+    return [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getUuid() {
+    return $this->uuid;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setWeight($weight) {
+    $this->weight = $weight;
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getWeight() {
+    return $this->weight;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getConfiguration() {
+    return [
+      'uuid' => $this->getUuid(),
+      'id' => $this->getPluginId(),
+      'weight' => $this->getWeight(),
+      'settings' => $this->configuration,
+    ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setConfiguration(array $configuration) {
+    $configuration += [
+      'settings' => [],
+      'uuid' => '',
+      'weight' => 0,
+    ];
+    $this->configuration = $configuration['settings'] + $this->defaultConfiguration();
+    $this->uuid = $configuration['uuid'];
+    $this->weight = $configuration['weight'];
+    return $this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
+    return $form;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function buildAdvancedConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
+    return $form;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function validateConfigurationForm(array &$form, FormStateInterface $form_state, AiAutomatorInterface $automator): void {
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function validateAdvancedConfigurationForm(array &$form, FormStateInterface $form_state, AiAutomatorInterface $automator): void {
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function submitConfigurationForm(array &$form, FormStateInterface $form_state, AiAutomatorInterface $automator): void {
+    $form_state->cleanValues();
+    foreach ($form_state->getValues() as $key => $value) {
+      $this->configuration[$key] = $value;
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function submitAdvancedConfigurationForm(array &$form, FormStateInterface $form_state, AiAutomatorInterface $automator): void {
+    $form_state->cleanValues();
+    foreach ($form_state->getValues() as $key => $value) {
+      $this->configuration[$key] = $value;
+    }
   }
 
 }

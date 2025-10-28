@@ -1,0 +1,29 @@
+uuid: f4a812d1-b1d3-420d-9ff1-ed9a793576a0
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.article.field_tags
+id: tags_default
+label: 'Tags Default'
+entity_type: node
+bundle: article
+field_name: field_tags
+worker_type: field_widget_actions
+weight: 100
+automator_types:
+  550e8400-e29b-41d4-a716-446655440000:
+    uuid: 550e8400-e29b-41d4-a716-446655440000
+    id: llm_taxonomy
+    weight: 100
+    settings:
+      mode: base
+      base_field: body
+      prompt: "Based on the context text create between 2 to 5 categories from the category context that fits the text.\r\n\r\nContext:\r\n{{ context }}"
+      token: ''
+      edit_mode: false
+      worker_type: field_widget_actions
+      ai_provider: echoai
+      ai_model: default
+      clean_up: lowercase
+      search_similar_tags: false

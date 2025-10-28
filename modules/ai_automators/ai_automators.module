@@ -5,10 +5,11 @@
  * Hooks for AI Automator.
  */
 
-use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Config\ConfigImporter;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\field\Entity\FieldConfig;
 
 /**
@@ -39,7 +40,7 @@ function ai_automators_entity_presave(EntityInterface $entity) {
  */
 function ai_automators_entity_insert(EntityInterface $entity) {
   // Never generate on import since that will be done via the importer.
-  if ($entity instanceof FieldConfig) {
+  if ($entity instanceof FieldConfig || $entity instanceof AiAutomatorInterface) {
     $importing = \Drupal::state()->get('ai_automators.importing', FALSE);
     $config_installer_syncing = \Drupal::service('config.installer')->isSyncing();
     if (!$importing && !$config_installer_syncing) {
@@ -55,7 +56,7 @@ function ai_automators_entity_insert(EntityInterface $entity) {
  * Implements hook_entity_update().
  */
 function ai_automators_entity_update(EntityInterface $entity) {
-  if ($entity instanceof FieldConfig) {
+  if ($entity instanceof FieldConfig || $entity instanceof AiAutomatorInterface) {
     $importing = \Drupal::state()->get('ai_automators.importing', FALSE);
     $config_installer_syncing = \Drupal::service('config.installer')->isSyncing();
     if (!$importing && !$config_installer_syncing) {
@@ -71,7 +72,7 @@ function ai_automators_entity_update(EntityInterface $entity) {
  * Implements hook_entity_delete().
  */
 function ai_automators_entity_delete(EntityInterface $entity) {
-  if ($entity instanceof FieldConfig && ai_automators_entity_can_save_toggle()) {
+  if (($entity instanceof FieldConfig || $entity instanceof AiAutomatorInterface) && ai_automators_entity_can_save_toggle()) {
     $importing = \Drupal::state()->get('ai_automators.importing', FALSE);
     $config_installer_syncing = \Drupal::service('config.installer')->isSyncing();
     if (!$importing && !$config_installer_syncing) {
@@ -159,4 +160,55 @@ function ai_automators_can_import_toggle($newToggle = NULL) {
     $toggle = $newToggle;
   }
   return $toggle;
+}
+
+/**
+ * Implements hook_entity_operation_alter().
+ */
+function ai_automators_entity_operation_alter(array &$operations, EntityInterface $entity): void {
+  if (!$entity instanceof FieldConfig) {
+    return;
+  }
+  $entityTypeManager = \Drupal::entityTypeManager();
+
+  // Check if can have automator.
+  $entityDefinition = $entityTypeManager->getDefinition($entity->getTargetEntityTypeId());
+  $dummyEntity = $entityTypeManager->getStorage($entity->getTargetEntityTypeId())->create([
+    $entityDefinition->getKey('bundle') => $entity->getTargetBundle(),
+  ]);
+  $rules = \Drupal::service('ai_automator.field_rules')->findRuleCandidates($dummyEntity, $entity);
+  if (empty($rules)) {
+    return;
+  }
+
+  $automator = NULL;
+  $automatorEntities = \Drupal::entityTypeManager()
+    ->getStorage('ai_automator')
+    ->loadByProperties([
+      'entity_type' => $entity->getTargetEntityTypeId(),
+      'bundle' => $entity->getTargetBundle(),
+      'field_name' => $entity->getName(),
+    ]);
+
+  // Build URL and operation label.
+  if (!empty($automatorEntities)) {
+    /** @var \Drupal\ai_automators\Entity\AiAutomator $automator */
+    $automator = reset($automatorEntities);
+    $url = $automator->toUrl('edit-form');
+  }
+  else {
+    $url = Url::fromRoute('entity.ai_automator.add_form', [], [
+      'query' => [
+        'entity_type' => $entity->getTargetEntityTypeId(),
+        'bundle' => $entity->getTargetBundle(),
+        'field_name' => $entity->getName(),
+      ],
+    ]);
+  }
+
+  $operations['automator_operation'] = [
+    'title' => t('@op AI Automator', ['@op' => $automator ? t('Edit') : t('Add')]),
+    'url' => $url,
+    'weight' => 15,
+  ];
 }

@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
@@ -66,10 +67,9 @@ class Metatag extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
+  public function buildAdvancedConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
     $groups = $this->metaTagManager->sortedGroups();
     $tags = $this->metaTagManager->sortedTags();
-    $form = parent::extraAdvancedFormFields($entity, $fieldDefinition, $formState, $defaultValues);
     foreach ($groups as $group_key => $group) {
       $form['group'][$group_key] = [
         '#type' => 'details',
@@ -80,21 +80,21 @@ class Metatag extends RuleBase {
       foreach ($tags as $tag_key => $tag) {
         if ($tag['group'] == $group_key) {
           $description = $tag['description'] ?? '';
-          $form['group'][$group_key]["automator_llm_tag_value_$tag_key"] = [
+          $form['group'][$group_key]["llm_tag_value_$tag_key"] = [
             '#type' => 'textarea',
             '#title' => $this->t('Setup @group', ['@group' => $tag['label']]),
             '#description' => $this->t('Write a subprompt for this field, you may reference the context from the main prompt. Keep empty to not run the automators on this field. The description of the tag is: %description', ['%description' => $description]),
-            '#default_value' => $defaultValues["automator_llm_tag_value_$tag_key"] ?? '',
+            '#default_value' => $this->configuration["llm_tag_value_$tag_key"] ?? '',
             '#attributes' => [
               'rows' => 2,
             ],
           ];
 
-          $form['group'][$group_key]["automator_llm_tag_example_$tag_key"] = [
+          $form['group'][$group_key]["llm_tag_example_$tag_key"] = [
             '#type' => 'textarea',
             '#title' => $this->t('Example of @tag', ['@tag' => $tag['label']]),
             '#description' => $this->t('Write an example of the @tag filled out. This is for the AI to understand better how to produce it.', ['@tag' => $tag['label']]),
-            '#default_value' => $defaultValues["automator_llm_tag_example_$tag_key"] ?? '',
+            '#default_value' => $this->configuration["llm_tag_example_$tag_key"] ?? '',
             '#attributes' => [
               'rows' => 2,
             ],

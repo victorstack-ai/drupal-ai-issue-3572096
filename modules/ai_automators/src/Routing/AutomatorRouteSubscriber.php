@@ -74,7 +74,7 @@ class AutomatorRouteSubscriber implements ContainerInjectionInterface {
         $path,
         [
           '_form' => '\Drupal\ai_automators\Form\AiChainForm',
-          '_title' => 'AI Automator Run Order',
+          '_title' => 'AI Automators',
         ],
         [
           '_permission'  => 'administer ai_automator',

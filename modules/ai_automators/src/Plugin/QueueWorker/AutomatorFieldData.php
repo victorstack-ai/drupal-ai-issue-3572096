@@ -91,7 +91,7 @@ class AutomatorFieldData extends QueueWorkerBase implements ContainerFactoryPlug
    */
   public function processItem($data) {
     $this->loggerFactory->get('ai_automator')->info("Queue worker starting to fill out field %field on entity %entity_type with id %id", [
-      '%field' => $data['automatorConfig']['field_name'],
+      '%field' => $data['fieldDefinition']->getName(),
       '%entity_type' => $data['entity_type'],
       '%id' => $data['entity_id'],
     ]);

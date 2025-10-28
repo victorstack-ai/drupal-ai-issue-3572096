@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_automators\Plugin\AiAutomatorType;
 
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\File\FileExists;
@@ -81,15 +82,15 @@ class LlmVideoToImage extends VideoToText implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public function extraFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
-    $form['automator_cutting_prompt'] = [
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
+    $form['cutting_prompt'] = [
       '#type' => 'textarea',
       '#title' => 'Cutting Prompt',
       '#description' => $this->t('Any commands that you need to give to cut out the image(s).Can use Tokens if Token module is installed.'),
       '#attributes' => [
         'placeholder' => $this->t('Cut out an image where they show two people holding hands.'),
       ],
-      '#default_value' => $defaultValues['automator_cutting_prompt'] ?? '',
+      '#default_value' => $this->configuration['cutting_prompt'] ?? '',
       '#weight' => 24,
     ];
 
@@ -97,11 +98,11 @@ class LlmVideoToImage extends VideoToText implements AiAutomatorTypeInterface {
       // Because we have to invoke this only if the module is installed, no
       // dependency injection.
       // @codingStandardsIgnoreLine @phpstan-ignore-next-line
-      $form['automator_cutting_prompt_token_help'] = \Drupal::service('token.tree_builder')->buildRenderable([
-        $this->getEntityTokenType($entity->getEntityTypeId()),
+      $form['cutting_prompt_token_help'] = \Drupal::service('token.tree_builder')->buildRenderable([
+        $this->getEntityTokenType($automator->get('entity_type')),
         'current-user',
       ]);
-      $form['automator_cutting_prompt_token_help']['#weight'] = 25;
+      $form['cutting_prompt_token_help']['#weight'] = 25;
     }
     return $form;
   }

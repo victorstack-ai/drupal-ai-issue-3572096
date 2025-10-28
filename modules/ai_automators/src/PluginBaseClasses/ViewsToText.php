@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
@@ -83,11 +84,9 @@ abstract class ViewsToText extends RuleBase {
   /**
    * {@inheritdoc}
    */
-  public function extraFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
-    $form = parent::extraFormFields($entity, $fieldDefinition, $formState, $defaultValues);
-
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
     // Add a warning about permissions.
-    $form['automator_permissions_warning'] = [
+    $form['permissions_warning'] = [
       '#type' => 'markup',
       '#markup' => $this->t('⚠️ Note that this will save the data found in this views and that any user that has access to view this field will see the content, independent on views permissions. Only the user that has access to the Views can however trigger it.'),
       '#weight' => 10,
@@ -105,9 +104,9 @@ abstract class ViewsToText extends RuleBase {
       }
     }
 
-    $default_view = $formState->getValue('automator_view') ?? $defaultValues['automator_view'] ?? NULL;
+    $default_view = $form_state->getValue('view') ?? $this->configuration['view'] ?? NULL;
 
-    $form['automator_view'] = [
+    $form['view'] = [
       '#type' => 'select',
       '#title' => $this->t('View'),
       '#description' => $this->t('Select the view to use as input.'),
@@ -120,19 +119,19 @@ abstract class ViewsToText extends RuleBase {
       ],
     ];
 
-    $form['automator_args'] = [
+    $form['args'] = [
       '#type' => 'container',
       '#attributes' => ['id' => 'advanced'],
       '#tree' => TRUE,
     ];
 
-    $form['automator_args']['arguments'] = [
+    $form['args']['arguments'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Arguments'),
       '#description' => $this->t('Add arguments to the view.'),
     ];
 
-    $form['automator_args']['exposed_filters'] = [
+    $form['args']['exposed_filters'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Exposed Filters'),
       '#description' => $this->t('Add exposed filters to the view.'),
@@ -146,11 +145,11 @@ abstract class ViewsToText extends RuleBase {
       $view->setDisplay($displayId);
       // Get the arguments.
       foreach ($view->display_handler->getHandlers('argument') as $argument) {
-        $form['automator_args']['arguments'][$argument->options['id']] = [
+        $form['args']['arguments'][$argument->options['id']] = [
           '#type' => 'textfield',
           '#title' => $this->t('Argument: @name', ['@name' => $argument->options['id']]),
           '#description' => $this->t('The value for the argument. You may use tokens, a hardcoded value or leave it empty.'),
-          '#default_value' => $defaultValues['automator_args']['arguments'][$argument->options['id']] ?? '',
+          '#default_value' => $this->configuration['args']['arguments'][$argument->options['id']] ?? '',
         ];
       }
 
@@ -160,11 +159,11 @@ abstract class ViewsToText extends RuleBase {
         if (empty($filter->options['expose']['identifier'])) {
           continue;
         }
-        $form['automator_args']['exposed_filters'][$filter->options['expose']['identifier']] = [
+        $form['args']['exposed_filters'][$filter->options['expose']['identifier']] = [
           '#type' => 'textfield',
           '#title' => $this->t('Filter: @name', ['@name' => $filter->options['expose']['identifier']]),
           '#description' => $this->t('The value for the filter. You may use tokens, a hardcoded value or leave it empty'),
-          '#default_value' => $defaultValues['automator_args']['exposed_filters'][$filter->options['expose']['identifier']] ?? '',
+          '#default_value' => $this->configuration['args']['exposed_filters'][$filter->options['expose']['identifier']] ?? '',
         ];
       }
 
@@ -176,15 +175,13 @@ abstract class ViewsToText extends RuleBase {
   /**
    * {@inheritDoc}
    */
-  public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
-    $form = parent::extraAdvancedFormFields($entity, $fieldDefinition, $formState, $defaultValues);
-
+  public function buildAdvancedConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
     // Allow html to markdown conversion.
-    $form['automator_html_to_markdown'] = [
+    $form['html_to_markdown'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Convert HTML to Markdown'),
       '#description' => $this->t('Converts HTML to Markdown.'),
-      '#default_value' => $defaultValues['automator_html_to_markdown'] ?? FALSE,
+      '#default_value' => $this->configuration['html_to_markdown'] ?? FALSE,
     ];
 
     return $form;

@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_automators\Plugin\AiAutomatorProcess;
 
+use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
@@ -65,9 +66,11 @@ class DirectSaveProcessing implements AiAutomatorFieldProcessInterface, Containe
   /**
    * {@inheritDoc}
    */
-  public function modify(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
+  public function modify(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition, AiAutomatorTypeInterface $automatorType) {
     try {
-      return $this->aiRunner->generateResponse($entity, $fieldDefinition, $automatorConfig);
+      // @todo shouldn't need to pass around config like this to itself.
+      $automatorTypeConfig = $automatorType->getConfiguration();
+      return $this->aiRunner->generateResponse($entity, $fieldDefinition, $automatorTypeConfig);
     }
     catch (AiAutomatorRuleNotFoundException $e) {
       $this->loggerFactory->get('ai_automator')->warning('A rule was not found, message %message', [

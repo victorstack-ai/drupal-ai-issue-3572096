@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_automators\Plugin\AiAutomatorType;
 
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -79,15 +80,15 @@ class LlmVideoToVideo extends VideoToText implements AiAutomatorTypeInterface {
   /**
    * {@inheritDoc}
    */
-  public function extraFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $form_state, array $defaultValues = []) {
-    $form['automator_cutting_prompt'] = [
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
+    $form['cutting_prompt'] = [
       '#type' => 'textarea',
       '#title' => 'Cutting Prompt',
       '#description' => $this->t('Any commands that you need to give to cut out the video(s). Specify if you want the video(s) to be mixed together in one video if you only want one video out. Can use Tokens if Token module is installed.'),
       '#attributes' => [
         'placeholder' => $this->t('Cut out all the videos where they are saying "Hello". Mix together in one video.'),
       ],
-      '#default_value' => $defaultValues['automator_cutting_prompt'] ?? '',
+      '#default_value' => $this->configuration['cutting_prompt'] ?? '',
       '#weight' => 24,
     ];
 
@@ -95,11 +96,11 @@ class LlmVideoToVideo extends VideoToText implements AiAutomatorTypeInterface {
       // Because we have to invoke this only if the module is installed, no
       // dependency injection.
       // @codingStandardsIgnoreLine @phpstan-ignore-next-line
-      $form['automator_cutting_prompt_token_help'] = \Drupal::service('token.tree_builder')->buildRenderable([
-        $this->getEntityTokenType($entity->getEntityTypeId()),
+      $form['cutting_prompt_token_help'] = \Drupal::service('token.tree_builder')->buildRenderable([
+        $this->getEntityTokenType($automator->get('entity_type')),
         'current-user',
       ]);
-      $form['automator_cutting_prompt_token_help']['#weight'] = 25;
+      $form['cutting_prompt_token_help']['#weight'] = 25;
     }
     return $form;
   }

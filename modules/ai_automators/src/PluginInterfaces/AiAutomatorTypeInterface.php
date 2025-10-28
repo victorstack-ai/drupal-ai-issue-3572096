@@ -2,6 +2,9 @@
 
 namespace Drupal\ai_automators\PluginInterfaces;
 
+use Drupal\ai_automators\AiAutomatorInterface;
+use Drupal\Component\Plugin\ConfigurableInterface;
+use Drupal\Component\Plugin\PluginInspectionInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -9,7 +12,7 @@ use Drupal\Core\Form\FormStateInterface;
 /**
  * Interface for automator type modifiers.
  */
-interface AiAutomatorTypeInterface {
+interface AiAutomatorTypeInterface extends PluginInspectionInterface, ConfigurableInterface {
 
   /**
    * Does it need a prompt.
@@ -63,50 +66,6 @@ interface AiAutomatorTypeInterface {
   public function tokens(ContentEntityInterface $entity);
 
   /**
-   * Adds extra form fields to configuration.
-   *
-   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
-   *   The entity being worked on.
-   * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
-   *   The field definition interface.
-   * @param \Drupal\Core\Form\FormStateInterface $formState
-   *   The form state.
-   * @param array $defaultValues
-   *   The default values.
-   *
-   * @return array
-   *   Form array with key starting with automator_{type}.
-   */
-  public function extraFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []);
-
-  /**
-   * Adds extra advanced form fields to configuration.
-   *
-   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
-   *   The entity being worked on.
-   * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
-   *   The field definition interface.
-   * @param \Drupal\Core\Form\FormStateInterface $formState
-   *   The form state.
-   * @param array $defaultValues
-   *   The default values.
-   *
-   * @return array
-   *   Form array with key starting with automator_{type}.
-   */
-  public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []);
-
-  /**
-   * Valiudate the config values.
-   *
-   * @param array $form
-   *   The form array.
-   * @param \Drupal\Core\Form\FormStateInterface $formState
-   *   The form state.
-   */
-  public function validateConfigValues($form, FormStateInterface $formState);
-
-  /**
    * Checks if the value is empty on complex field types.
    *
    * @param array $value
@@ -147,7 +106,12 @@ interface AiAutomatorTypeInterface {
    * @return array
    *   Token key and token value.
    */
-  public function generateTokens(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig, $delta);
+  public function generateTokens(
+    ContentEntityInterface $entity,
+    FieldDefinitionInterface $fieldDefinition,
+    array $automatorConfig,
+    $delta,
+  );
 
   /**
    * Generates a response.
@@ -162,7 +126,11 @@ interface AiAutomatorTypeInterface {
    * @return array
    *   An array of values.
    */
-  public function generate(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig);
+  public function generate(
+    ContentEntityInterface $entity,
+    FieldDefinitionInterface $fieldDefinition,
+    array $automatorConfig,
+  );
 
   /**
    * Verifies a value.
@@ -179,7 +147,12 @@ interface AiAutomatorTypeInterface {
    * @return bool
    *   True if verified, otherwise false.
    */
-  public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition, array $automatorConfig);
+  public function verifyValue(
+    ContentEntityInterface $entity,
+    $value,
+    FieldDefinitionInterface $fieldDefinition,
+    array $automatorConfig,
+  );
 
   /**
    * Stores one or many values.
@@ -196,6 +169,123 @@ interface AiAutomatorTypeInterface {
    * @return bool|void
    *   True if verified, otherwise false.
    */
-  public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, array $automatorConfig);
+  public function storeValues(
+    ContentEntityInterface $entity,
+    array $values,
+    FieldDefinitionInterface $fieldDefinition,
+    array $automatorConfig,
+  );
+
+  /**
+   * Returns the label of the automator type.
+   *
+   * @return string
+   *   The label of the automator type.
+   */
+  public function label(): string;
+
+  /**
+   * Returns the unique ID representing the automator type.
+   *
+   * @return string
+   *   The automator type ID.
+   */
+  public function getUuid();
+
+  /**
+   * Returns the weight of the automator type.
+   *
+   * @return int|string
+   *   Either the integer weight of the automator type, or an empty string.
+   */
+  public function getWeight();
+
+  /**
+   * Sets the weight for this automator type.
+   *
+   * @param int $weight
+   *   The weight for this automator type.
+   *
+   * @return $this
+   */
+  public function setWeight($weight);
+
+  /**
+   * Build the base settings section.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param \Drupal\ai_automators\AiAutomatorInterface $automator
+   *   The automator instance.
+   *
+   * @return array
+   *   The base configuration form array.
+   */
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array;
+
+  /**
+   * Validate the base settings section.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param \Drupal\ai_automators\AiAutomatorInterface $automator
+   *   The automator instance.
+   */
+  public function validateConfigurationForm(array &$form, FormStateInterface $form_state, AiAutomatorInterface $automator): void;
+
+  /**
+   * Submit the base settings section.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param \Drupal\ai_automators\AiAutomatorInterface $automator
+   *   The automator instance.
+   */
+  public function submitConfigurationForm(array &$form, FormStateInterface $form_state, AiAutomatorInterface $automator): void;
+
+  /**
+   * Build the advanced settings section.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param \Drupal\ai_automators\AiAutomatorInterface $automator
+   *   The automator instance.
+   *
+   * @return array
+   *   The advanced configuration form array.
+   */
+  public function buildAdvancedConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array;
+
+  /**
+   * Validate the advanced settings section.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param \Drupal\ai_automators\AiAutomatorInterface $automator
+   *   The automator instance.
+   */
+  public function validateAdvancedConfigurationForm(array &$form, FormStateInterface $form_state, AiAutomatorInterface $automator): void;
+
+  /**
+   * Submit the advanced settings section.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param \Drupal\ai_automators\AiAutomatorInterface $automator
+   *   The automator instance.
+   */
+  public function submitAdvancedConfigurationForm(array &$form, FormStateInterface $form_state, AiAutomatorInterface $automator): void;
 
 }

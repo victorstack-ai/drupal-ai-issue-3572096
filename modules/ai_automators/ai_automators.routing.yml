@@ -7,7 +7,7 @@ ai_automators.list:
     _permission: 'administer ai_automator'
 
 entity.ai_automator.collection:
-  path: '/admin/config/ai/ai-automators/ai-automator'
+  path: '/admin/config/ai/ai-automators/fields'
   defaults:
     _entity_list: 'ai_automator'
     _title: 'AI Automator configuration'
@@ -15,7 +15,7 @@ entity.ai_automator.collection:
     _permission: 'administer ai_automator'
 
 entity.ai_automator.add_form:
-  path: '/admin/config/ai/ai-automators/ai-automator/add'
+  path: '/admin/config/ai/ai-automators/fields/add'
   defaults:
     _entity_form: 'ai_automator.add'
     _title: 'Add an ai automator'
@@ -23,7 +23,7 @@ entity.ai_automator.add_form:
     _permission: 'administer ai_automator'
 
 entity.ai_automator.edit_form:
-  path: '/admin/config/ai/ai-automators/ai-automator/{ai_automator}'
+  path: '/admin/config/ai/ai-automators/fields/{ai_automator}'
   defaults:
     _entity_form: 'ai_automator.edit'
     _title: 'Edit an ai automator'
@@ -31,7 +31,7 @@ entity.ai_automator.edit_form:
     _permission: 'administer ai_automator'
 
 entity.ai_automator.delete_form:
-  path: '/admin/config/ai/ai-automators/ai-automator/{ai_automator}/delete'
+  path: '/admin/config/ai/ai-automators/fields/{ai_automator}/delete'
   defaults:
     _entity_form: 'ai_automator.delete'
     _title: 'Delete an ai automator'
@@ -80,3 +80,19 @@ ai_automators.autocomplete.workflows:
     _format: json
   requirements:
     _permission: 'administer automators_tool'
+
+ai_automators.ai_automator_type_form:
+  path: '/admin/config/ai/ai-automators/fields/{ai_automator}/manage/{ai_automator_type}'
+  defaults:
+    _form: '\Drupal\ai_automators\Form\AiAutomatorTypeForm'
+    _title: 'Add Ai Automator Type'
+  requirements:
+    _permission: 'administer ai_automator'
+
+ai_automators.ai_automator_type_delete:
+  path: '/admin/config/ai/ai-automators/fields/{ai_automator}/manage/{ai_automator_type}/delete'
+  defaults:
+    _form: '\Drupal\ai_automators\Form\AiAutomatorDeleteForm'
+    _title: 'Delete Ai Automator Type'
+  requirements:
+    _permission: 'administer ai_automator'

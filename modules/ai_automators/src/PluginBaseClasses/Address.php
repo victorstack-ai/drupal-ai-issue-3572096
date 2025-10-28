@@ -27,6 +27,12 @@ class Address extends RuleBase {
   /**
    * The constructor.
    *
+   * @param array $configuration
+   *   A configuration array for the plugin instance.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
    * @param \Drupal\ai\AiProviderPluginManager $provider
    *   The AI provider plugin manager.
    * @param \Drupal\ai\Service\AiProviderFormHelper $formHelper
@@ -37,12 +43,15 @@ class Address extends RuleBase {
    *   The module handler.
    */
   public function __construct(
+    $configuration,
+    $plugin_id,
+    $plugin_definition,
     AiProviderPluginManager $provider,
     AiProviderFormHelper $formHelper,
     PromptJsonDecoderInterface $promptJsonDecoder,
     ModuleHandlerInterface $moduleHandler,
   ) {
-    parent::__construct($provider, $formHelper, $promptJsonDecoder);
+    parent::__construct($configuration, $plugin_id, $plugin_definition, $provider, $formHelper, $promptJsonDecoder);
     $this->moduleHandler = $moduleHandler;
   }
 
@@ -51,6 +60,9 @@ class Address extends RuleBase {
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
       $container->get('ai.provider'),
       $container->get('ai.form_helper'),
       $container->get('ai.prompt_json_decode'),

@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_automators\Plugin\AiAutomatorProcess;
 
+use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
@@ -45,13 +46,14 @@ class QueueWorkerProcessor implements AiAutomatorFieldProcessInterface, Containe
   /**
    * {@inheritDoc}
    */
-  public function modify(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
+  public function modify(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition, AiAutomatorTypeInterface $automatorType) {
     $queue = $this->queueFactory->get('ai_automator_field_modifier');
+    $automatorTypeConfig = $automatorType->getConfiguration();
     $queue->createItem([
       'entity_id' => $entity->id(),
       'entity_type' => $entity->getEntityTypeId(),
       'fieldDefinition' => $fieldDefinition,
-      'automatorConfig' => $automatorConfig,
+      'automatorConfig' => $automatorTypeConfig,
     ]);
     return TRUE;
   }

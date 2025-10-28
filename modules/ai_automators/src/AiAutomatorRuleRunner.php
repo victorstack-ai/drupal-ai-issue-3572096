@@ -52,38 +52,39 @@ class AiAutomatorRuleRunner {
    *   The entity being worked on.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The field definition interface.
-   * @param array $automatorConfig
+   * @param array $automatorTypeConfig
    *   The automator config.
    *
    * @return \Drupal\Core\Entity\EntityInterface
    *   Throws error or returns entity.
    */
-  public function generateResponse(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
+  public function generateResponse(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorTypeConfig) {
     // Get rule.
-    $rule = $this->fieldRules->findRule($automatorConfig['rule']);
+    // @todo refactor to not need to pass around config to itself.
+    $rule = $this->fieldRules->findRule($automatorTypeConfig['id']);
 
     if (!$rule) {
       throw new AiAutomatorRuleNotFoundException('The rule could not be found: ' . $fieldDefinition->getType());
     }
 
     // Generate values.
-    $values = $rule->generate($entity, $fieldDefinition, $automatorConfig);
+    $values = $rule->generate($entity, $fieldDefinition, $automatorTypeConfig['settings']);
 
     // Run event to change the values if needed.
-    $event = new ValuesChangeEvent($values, $entity, $fieldDefinition, $automatorConfig);
+    $event = new ValuesChangeEvent($values, $entity, $fieldDefinition, $automatorTypeConfig['settings']);
     $this->eventDispatcher->dispatch($event, ValuesChangeEvent::EVENT_NAME);
     $values = $event->getValues();
 
     foreach ($values as $key => $value) {
       // Remove values that does not fit.
-      if (!$rule->verifyValue($entity, $value, $fieldDefinition, $automatorConfig)) {
+      if (!$rule->verifyValue($entity, $value, $fieldDefinition, $automatorTypeConfig['settings'])) {
         unset($values[$key]);
       }
     }
 
     // Save values.
     if ($values && is_array($values)) {
-      $rule->storeValues($entity, $values, $fieldDefinition, $automatorConfig);
+      $rule->storeValues($entity, $values, $fieldDefinition, $automatorTypeConfig['settings']);
     }
     return $entity;
   }
