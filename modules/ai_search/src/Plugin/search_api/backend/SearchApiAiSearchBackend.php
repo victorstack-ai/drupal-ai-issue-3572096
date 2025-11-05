@@ -569,28 +569,15 @@ class SearchApiAiSearchBackend extends AiSearchBackendPluginBase implements Plug
     $get_chunked = $query->getOption('search_api_ai_get_chunks_result', FALSE);
     $use_grouping = !$bypass_access && !$get_chunked && method_exists($vdb_client, 'supportsGrouping') && $vdb_client->supportsGrouping();
 
-    // Prepare search parameters.
-    $search_words = $query->getKeys();
-    if (!empty($search_words)) {
-      [$provider_id, $model_id] = explode('__', $this->configuration['embeddings_engine']);
-      $embedding_llm = $this->aiProviderManager->createInstance($provider_id);
-
-      if (!isset($params['vector_input'])) {
-        if (is_array($search_words)) {
-          if (isset($search_words['#conjunction'])) {
-            unset($search_words['#conjunction']);
-          }
-          $search_words = implode(' ', $search_words);
-        }
-        $input = new EmbeddingsInput($search_words, NULL, FALSE);
-        $params['vector_input'] = $embedding_llm->embeddings($input, $model_id)->getNormalized();
-      }
-      $params['query'] = $query;
-    }
+    // Get the vectorized input which might come from the search terms, or might
+    // be provided in the query options already.
+    $vector_input = $this->getSearchVectorInput($query, $params);
 
     // Use grouping if supported and entity-level results wanted.
     if ($use_grouping) {
-      if (!empty($params['vector_input'])) {
+      if (!empty($vector_input)) {
+        $params['vector_input'] = $vector_input;
+        $params['query'] = $query;
         $response = $vdb_client->vectorSearchWithGrouping(...$params);
       }
       else {
