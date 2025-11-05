@@ -3,6 +3,7 @@
 namespace Drupal\ai_search\Plugin\search_api\processor;
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Plugin\PluginDependencyTrait;
 use Drupal\Core\Plugin\PluginFormInterface;
 use Drupal\search_api\Entity\Index;
 use Drupal\search_api\Entity\Server;
@@ -18,6 +19,7 @@ use Drupal\search_api\ServerInterface;
  */
 abstract class BoostByAiSearchBase extends ProcessorPluginBase implements PluginFormInterface {
   use PluginFormTrait;
+  use PluginDependencyTrait;
 
   /**
    * Whether exact phrase search is supported by the index backend.
@@ -232,6 +234,17 @@ abstract class BoostByAiSearchBase extends ProcessorPluginBase implements Plugin
         }
         $ai_entity_ids[$result_item->getId()] = $result_item->getScore();
       }
+
+      // Give other modules a chance to modify or re-rank the AI search results.
+      // @todo This ignore next line can be removed after Search API 2.0.x is
+      // released.
+      // @phpstan-ignore-next-line
+      $this->moduleHandler()->invokeAll('ai_search_boost_results_alter', [
+        &$ai_entity_ids,
+        $keywords,
+        $ai_index,
+        $this->getIndex(),
+      ]);
 
       return $ai_entity_ids;
     }
