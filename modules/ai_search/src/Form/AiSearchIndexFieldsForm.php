@@ -321,9 +321,15 @@ class AiSearchIndexFieldsForm extends IndexFieldsForm {
           ->get('search_api.fields_helper')
           ->createItemFromObject($this->entity, $item, $item_id, $current_data_source);
         if ($search_item instanceof ItemInterface) {
-          return $embedding_strategy->getEmbedding(
+          $allChunks = $embedding_strategy->getChunks(
             $backend_config['embeddings_engine'],
             $backend_config['embedding_strategy_configuration'],
+            $search_item->getFields(),
+            $search_item,
+            $this->entity,
+          );
+          return $embedding_strategy->getEmbedding(
+            $allChunks,
             $search_item->getFields(),
             $search_item,
             $this->entity,

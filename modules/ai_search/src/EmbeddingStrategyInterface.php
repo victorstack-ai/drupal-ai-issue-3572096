@@ -14,9 +14,11 @@ use Drupal\search_api\Item\ItemInterface;
 interface EmbeddingStrategyInterface extends PluginInspectionInterface {
 
   /**
-   * Returns array of vectors for given main content and contextual content.
+   * Returns array of chunks.
    *
-   * Depending on the strategy, one or more vectors are returned in an array.
+   * This is typically used to ultimately get the embedding; however, it is
+   * also used by the AI Search Tracker to determine the number of chunks to
+   * index.
    *
    * @param string $embedding_engine
    *   The embedding engine.
@@ -32,9 +34,33 @@ interface EmbeddingStrategyInterface extends PluginInspectionInterface {
    * @return \Drupal\ai\Embedding[]
    *   The vectors as Embedding objects.
    */
-  public function getEmbedding(
+  public function getChunks(
     string $embedding_engine,
     array $configuration,
+    array $fields,
+    ItemInterface $search_api_item,
+    IndexInterface $index,
+  ): array;
+
+  /**
+   * Returns an array of vectors for given main content and contextual content.
+   *
+   * Depending on the strategy, one or more vectors are returned in an array.
+   *
+   * @param array $chunks
+   *   The chunks that are ready for embedding.
+   * @param array $fields
+   *   The fields.
+   * @param \Drupal\search_api\Item\ItemInterface $search_api_item
+   *   The search API item.
+   * @param \Drupal\search_api\IndexInterface $index
+   *   The search API index.
+   *
+   * @return array<array{id: string, values: array, metadata: array}>
+   *   The vectors.
+   */
+  public function getEmbedding(
+    array $chunks,
     array $fields,
     ItemInterface $search_api_item,
     IndexInterface $index,

@@ -167,6 +167,7 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
       'datasources[entity:node]' => TRUE,
       'server' => 'test_mysql_vdb',
       'options[cron_limit]' => 5,
+      'tracker' => 'ai_search_tracker',
     ], 'Save and add fields');
     $this->submitForm([], 'Save and add fields');
 
@@ -579,6 +580,118 @@ class AiSearchSetupMySqlTest extends BrowserTestBase {
       $second_result = array_shift($result_items);
       $this->assertNotSame('entity:node/' . $this->nodes['chocolate_cake']->id() . ':en', $second_result->getExtraData('drupal_entity_id'), 'Item found is not sample item 1 "Chocolate Cake".');
     }
+  }
+
+  /**
+   * Tests the chunked indexing mechanism for a single, very large item.
+   *
+   * @see \Drupal\ai_search\SearchApiAiVdbProviderBase::indexItems()
+   * @see \Drupal\ai_search\Utility\AiSearchIndexingBatchHelper::process()
+   */
+  public function testChunkedIndexing() {
+    $this->drupalLogin($this->adminUser);
+
+    // 1. First, ensure the index is 100% complete from the setUp() method.
+    $this->drupalGet('admin/config/search/search-api/index/test_mysql_vdb_index');
+    $this->assertSession()->elementTextContains('css', '.progress__percentage', '100%');
+
+    // 2. Create a very long node that will be the *only* item in the queue.
+    // This text is repeated 500 times to ensure it exceeds the chunk limit
+    // of the default chunking strategy.
+    $long_text = str_repeat("This is a very long piece of text designed to test the chunking mechanism. Each sentence adds more content to be processed. ", 500);
+    $long_node = $this->drupalCreateNode([
+      'type' => 'article',
+      'title' => 'Very Long Article for Chunking Test',
+      'body' => ['value' => $long_text, 'format' => 'plain_text'],
+      'status' => NodeInterface::NOT_PUBLISHED,
+    ]);
+    $long_node_item_id = 'entity:node/' . $long_node->id() . ':en';
+
+    // 3. Get the cron and database services.
+    $cron_service = \Drupal::service('cron');
+    $db = \Drupal::database();
+    $search_api_item_table = 'search_api_item';
+
+    // 4. Run cron *once*. This will trigger one indexing batch.
+    $cron_service->run();
+
+    // 5. Check the database for the item's status.
+    $status_run_1 = $db->select($search_api_item_table, 'sai')
+      ->fields('sai', ['processed_chunks', 'total_chunks'])
+      ->condition('index_id', 'test_mysql_vdb_index')
+      ->condition('item_id', $long_node_item_id)
+      ->execute()
+      ->fetchAssoc();
+
+    $this->assertNotNull($status_run_1, 'Long node has an entry in the search_api_item table after the first cron run.');
+
+    $total_chunks = (int) $status_run_1['total_chunks'];
+    $processed_run_1 = (int) $status_run_1['processed_chunks'];
+
+    // Assert that the item was split into more than 10 chunks.
+    $this->assertGreaterThan(
+      10,
+      $total_chunks,
+      sprintf('Long node was split into %d chunks (expected > 10).', $total_chunks)
+    );
+
+    // Assert that the first batch processed exactly 10 chunks, as per
+    // getMaximumChunksPerIndexItems().
+    $this->assertEquals(
+      10,
+      $processed_run_1,
+      sprintf('First cron run processed %d chunks (expected 10).', $processed_run_1)
+    );
+
+    // 6. Run cron a *second time*.
+    $cron_service->run();
+
+    $status_run_2 = $db->select($search_api_item_table, 'sai')
+      ->fields('sai', ['processed_chunks'])
+      ->condition('index_id', 'test_mysql_vdb_index')
+      ->condition('item_id', $long_node_item_id)
+      ->execute()
+      ->fetchField();
+
+    $processed_run_2 = (int) $status_run_2;
+    $expected_chunks_run_2 = min($total_chunks, 20);
+
+    // Assert that the second batch processed 10 *more* chunks (or was
+    // completed).
+    $this->assertEquals(
+      $expected_chunks_run_2,
+      $processed_run_2,
+      sprintf('Second cron run processed %d chunks (expected %d).', $processed_run_2, $expected_chunks_run_2)
+    );
+
+    // 7. Loop cron runs until the item is fully indexed.
+    // Calculate max runs + buffer
+    $max_runs = (int) ceil($total_chunks / 10) + 2;
+    $processed_chunks = $processed_run_2;
+    $run_count = 2;
+
+    while ($processed_chunks < $total_chunks && $run_count < $max_runs) {
+      $cron_service->run();
+      $run_count++;
+      $processed_chunks = (int) $db->select($search_api_item_table, 'sai')
+        ->fields('sai', ['processed_chunks'])
+        ->condition('index_id', 'test_mysql_vdb_index')
+        ->condition('item_id', $long_node_item_id)
+        ->execute()
+        ->fetchField();
+    }
+
+    // 8. Final assertion that the indexing has finished.
+    $this->assertLessThan($max_runs, $run_count, 'Indexing finished within the expected number of cron runs.');
+    $this->assertEquals(
+      $total_chunks,
+      $processed_chunks,
+      sprintf('Item is fully processed after %d cron runs (processed %d of %d chunks).', $run_count, $processed_chunks, $total_chunks)
+    );
+
+    // Check that the Search API UI now reflects 100% completion for all items.
+    $this->drupalGet('admin/config/search/search-api/index/test_mysql_vdb_index');
+    $this->assertSession()->elementTextContains('css', '.progress__percentage', '100%');
   }
 
 }

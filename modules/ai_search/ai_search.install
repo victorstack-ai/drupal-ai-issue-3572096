@@ -6,6 +6,33 @@
  */
 
 use Drupal\ai\Enum\EmbeddingStrategyIndexingOptions;
+use Drupal\Core\Database\Database;
+
+/**
+ * Implements hook_install().
+ */
+function ai_search_install(): void {
+  $schema = Database::getConnection()->schema();
+  $schema_parts = _ai_search_search_api_item_schema();
+  foreach ($schema_parts as $key => $schema_part) {
+    if (!$schema->fieldExists('search_api_item', $key)) {
+      $schema->addField('search_api_item', $key, $schema_part);
+    }
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function ai_search_uninstall(): void {
+  $schema = Database::getConnection()->schema();
+  $schema_parts = _ai_search_search_api_item_schema();
+  foreach (array_keys($schema_parts) as $key) {
+    if ($schema->fieldExists('search_api_item', $key)) {
+      $schema->dropField('search_api_item', $key);
+    }
+  }
+}
 
 /**
  * Update the servers that use AI Search with nested database settings.
@@ -308,4 +335,17 @@ function ai_search_update_10007() {
   return t('Search API Servers using the AI Search module updated: @number.', [
     '@number' => $updated_servers,
   ]);
+}
+
+/**
+ * Adds chunking fields to the search_api_item table for existing sites.
+ */
+function ai_search_update_10008(): void {
+  $schema = Database::getConnection()->schema();
+  $schema_parts = _ai_search_search_api_item_schema();
+  foreach ($schema_parts as $key => $schema_part) {
+    if (!$schema->fieldExists('search_api_item', $key)) {
+      $schema->addField('search_api_item', $key, $schema_part);
+    }
+  }
 }

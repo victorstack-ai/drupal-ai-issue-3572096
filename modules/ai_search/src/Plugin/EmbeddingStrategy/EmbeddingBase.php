@@ -35,7 +35,7 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
   /**
    * {@inheritDoc}
    */
-  public function getEmbedding(
+  public function getChunks(
     string $embedding_engine,
     array $configuration,
     array $fields,
@@ -44,7 +44,18 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
   ): array {
     $this->init($embedding_engine, $configuration);
     [$title, $contextual_content, $main_content, $title_in_contextual] = $this->groupFieldData($fields, $index, $search_api_item);
-    $chunks = $this->getChunks($title, $main_content, $contextual_content, $title_in_contextual, $index);
+    return $this->prepareChunks($title, $main_content, $contextual_content, $title_in_contextual, $index);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getEmbedding(
+    array $chunks,
+    array $fields,
+    ItemInterface $search_api_item,
+    IndexInterface $index,
+  ): array {
     $metadata = $this->buildBaseMetadata($fields, $index);
     $raw_embeddings = $this->getRawEmbeddings($chunks);
     $embeddings = [];
@@ -155,7 +166,6 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
 
     // Get the label key for this entity type and extract title from entity.
     $label_key = '';
-    $entity_type_id = '';
     foreach ($fields as $field) {
       if ($field instanceof FieldInterface) {
         $datasource = $field->getDatasource();
@@ -264,7 +274,7 @@ class EmbeddingBase extends EmbeddingStrategyPluginBase implements EmbeddingStra
    * @return string[]
    *   The array of chunks from the text chunker.
    */
-  protected function getChunks(string $title, string $main_content, string $contextual_content, bool $title_in_contextual = FALSE, ?IndexInterface $index = NULL): array {
+  protected function prepareChunks(string $title, string $main_content, string $contextual_content, bool $title_in_contextual = FALSE, ?IndexInterface $index = NULL): array {
     // This determines the available space in each chunk used by contextual
     // content vs the main fields. See the description for
     // contextual content max percentage for more details.

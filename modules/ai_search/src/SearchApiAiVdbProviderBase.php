@@ -5,10 +5,16 @@ namespace Drupal\ai_search;
 use Drupal\ai\Base\AiVdbProviderClientBase;
 use Drupal\ai\Enum\VdbSimilarityMetrics;
 use Drupal\ai\Exception\AiUnsafePromptException;
+use Drupal\ai\Validation\EmbeddingValidator;
 use Drupal\ai_search\Plugin\Exception\EmbeddingStrategyException;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Database\Connection;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Url;
 use Drupal\search_api\IndexInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Base class for Search API VDB (Vector Database) provider plugins.
@@ -17,6 +23,63 @@ use Drupal\search_api\IndexInterface;
  * including the settings form and search methods.
  */
 abstract class SearchApiAiVdbProviderBase extends AiVdbProviderClientBase implements AiVdbProviderSearchApiInterface {
+
+  /**
+   * Constructs a new SearchApiAiVdbProviderBase abstract class.
+   *
+   * @param array $configuration
+   *   A configuration array containing information about the plugin instance.
+   * @param string $plugin_id
+   *   Plugin ID.
+   * @param mixed $plugin_definition
+   *   Plugin definition.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The config factory.
+   * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entityFieldManager
+   *   The entity field manager.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger.
+   * @param \Drupal\ai\Validation\EmbeddingValidator $embeddingValidator
+   *   The embedding validator.
+   * @param \Drupal\Core\Database\Connection $database
+   *   The database connection.
+   */
+  public function __construct(
+    array $configuration,
+    string $plugin_id,
+    mixed $plugin_definition,
+    protected ConfigFactoryInterface $configFactory,
+    protected EntityFieldManagerInterface $entityFieldManager,
+    protected MessengerInterface $messenger,
+    protected EmbeddingValidator $embeddingValidator,
+    protected Connection $database,
+  ) {
+    parent::__construct(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
+      $this->configFactory,
+      $this->entityFieldManager,
+      $this->messenger,
+      $this->embeddingValidator,
+    );
+  }
+
+  /**
+   * Load from dependency injection container.
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): AiVdbProviderClientBase | static {
+    return new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
+      $container->get('config.factory'),
+      $container->get('entity_field.manager'),
+      $container->get('messenger'),
+      $container->get('ai.embedding_validator'),
+      $container->get('database'),
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -114,38 +177,127 @@ abstract class SearchApiAiVdbProviderBase extends AiVdbProviderClientBase implem
   }
 
   /**
+   * In long running chunking, PHP Maximum Execution Time can otherwise be hit.
+   *
+   * @return int
+   *   The number of chunks to index in a batch.
+   */
+  protected function getMaximumChunksPerIndexItems(): int {
+    return 10;
+  }
+
+  /**
    * {@inheritdoc}
    */
-  public function indexItems(array $configuration, IndexInterface $index, array $items, EmbeddingStrategyInterface $embedding_strategy): array {
+  public function indexItems(
+    array $configuration,
+    IndexInterface $index,
+    array $items,
+    EmbeddingStrategyInterface $embedding_strategy,
+  ): array {
     $successfulItemIds = [];
 
-    // Check if we need to delete some items first.
-    $this->deleteIndexItems($configuration, $index, array_values(array_map(function ($item) {
+    $itemIds = array_values(array_map(function ($item) {
       return $item->getId();
-    }, $items)));
+    }, $items));
+
+    // Get the items that are currently being processed, where there was not
+    // enough processing budget to handle all chunks.
+    $processedStatus = $this->database->select('search_api_item', 'sai')
+      ->fields('sai', ['item_id', 'processed_chunks'])
+      ->condition('index_id', $index->id())
+      ->condition('item_id', $itemIds, 'IN')
+      ->execute()
+      ->fetchAllKeyed();
+
+    // Delete items that have not yet had processing started. This is needed
+    // because the chunk count for the entity can change, so we need to start
+    // fresh each reindexing.
+    $deleteItemIds = array_diff($itemIds, array_keys(array_filter($processedStatus)));
+    if (!empty($deleteItemIds)) {
+      $this->deleteIndexItems($configuration, $index, $deleteItemIds);
+    }
+
+    $remainingMaximumChunksToProcess = $this->getMaximumChunksPerIndexItems();
 
     /** @var \Drupal\search_api\Item\ItemInterface $item */
     foreach ($items as $item) {
-      $item_id = $item->getId();
+      if ($remainingMaximumChunksToProcess <= 0) {
+        break;
+      }
+
+      $itemId = $item->getId();
+      $allChunks = $embedding_strategy->getChunks(
+        $configuration['embeddings_engine'],
+        $configuration['embedding_strategy_configuration'],
+        $item->getFields(),
+        $item,
+        $index,
+      );
+      $totalChunks = count($allChunks);
+      $offset = $processedStatus[$itemId] ?? 0;
+
+      // Calculate how many chunks are left to process for this specific item.
+      $chunksLeftForItem = $totalChunks - $offset;
+
+      // Determine how many chunks to take in this run: either all remaining
+      // chunks for the item, or the rest of our batch budget, whichever is
+      // smaller.
+      $chunksToTake = min($chunksLeftForItem, $remainingMaximumChunksToProcess);
+
+      if ($chunksToTake <= 0) {
+        // This item may be fully processed already, or there's no budget left.
+        if ($offset >= $totalChunks) {
+          $successfulItemIds[] = $itemId;
+        }
+        continue;
+      }
+
+      $chunks = array_slice($allChunks, $offset, $chunksToTake);
+
+      // If the item is not fully processed, update the processed chunks.
+      if (($offset + count($chunks)) < $totalChunks) {
+        $this->database->update('search_api_item')
+          ->fields([
+            'processed_chunks' => $offset + count($chunks),
+            'total_chunks' => $totalChunks,
+          ])
+          ->condition('index_id', $index->id())
+          ->condition('item_id', $itemId)
+          ->execute();
+      }
+      else {
+
+        // Store the totals. It is not strictly necessary to track progress on
+        // anything other than entities that have not indexed in one go, but it
+        // makes it easier to debug.
+        $this->database->update('search_api_item')
+          ->fields([
+            'processed_chunks' => $totalChunks,
+            'total_chunks' => $totalChunks,
+          ])
+          ->condition('index_id', $index->id())
+          ->condition('item_id', $itemId)
+          ->execute();
+      }
+
       try {
         $embeddings = $embedding_strategy->getEmbedding(
-          $configuration['embeddings_engine'],
-          $configuration['embedding_strategy_configuration'],
+          $chunks,
           $item->getFields(),
           $item,
           $index,
         );
       }
       catch (AiUnsafePromptException $e) {
-        // Log the exception and skip this item.
-        $logger = $this->getLogger('ai_search');
-        $logger->warning('Skipping item @id due to unsafe prompt: @message', [
-          '@id' => $item_id,
+        $this->getLogger('ai_search')->warning('Skipping item @id due to unsafe prompt: @message', [
+          '@id' => $itemId,
           '@message' => $e->getMessage(),
         ]);
         continue;
       }
 
+      /** @var \Drupal\ai\Embedding $embedding */
       foreach ($embeddings as $embedding) {
         // Ensure consistent embedding structure as per
         // EmbeddingStrategyInterface.
@@ -159,7 +311,7 @@ abstract class SearchApiAiVdbProviderBase extends AiVdbProviderClientBase implem
         $embedding->putMetadata('server_id', $index->getServerId());
         $embedding->putMetadata('index_id', $index->id());
         $data['drupal_long_id'] = $embedding->id;
-        $data['drupal_entity_id'] = $item_id;
+        $data['drupal_entity_id'] = $itemId;
         $data['vector'] = $embedding->values;
         foreach ($embedding->getMetadata() as $key => $value) {
           $data[$key] = $value;
@@ -171,7 +323,13 @@ abstract class SearchApiAiVdbProviderBase extends AiVdbProviderClientBase implem
         );
       }
 
-      $successfulItemIds[] = $item_id;
+      // Mark an item as successful only if all chunks have been processed.
+      // We otherwise need the batch processing to pick this item up again
+      // next batch run and continue where it left off.
+      $remainingMaximumChunksToProcess -= count($chunks);
+      if (($offset + count($chunks)) >= $totalChunks) {
+        $successfulItemIds[] = $itemId;
+      }
     }
 
     return $successfulItemIds;

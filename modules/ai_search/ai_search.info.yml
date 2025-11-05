@@ -7,4 +7,4 @@ lifecycle: experimental
 
 dependencies:
   - ai:ai
-  - search_api:search_api
+  - search_api:search_api (>=8.x-1.40)

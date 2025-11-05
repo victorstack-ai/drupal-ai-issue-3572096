@@ -27,15 +27,12 @@ class AveragePoolEmbeddingStrategy extends EmbeddingBase {
    * {@inheritDoc}
    */
   public function getEmbedding(
-    string $embedding_engine,
-    array $configuration,
+    array $chunks,
     array $fields,
     ItemInterface $search_api_item,
     IndexInterface $index,
   ): array {
-    $this->init($embedding_engine, $configuration);
-    [$title, $contextual_content, $main_content, $title_in_contextual] = $this->groupFieldData($fields, $index, $search_api_item);
-    $chunks = $this->getChunks($title, $main_content, $contextual_content, $title_in_contextual, $index);
+    [$title, $contextual_content, $main_content] = $this->groupFieldData($fields, $index, $search_api_item);
 
     // Embed and average.
     if ($raw_embeddings = $this->getRawEmbeddings($chunks)) {

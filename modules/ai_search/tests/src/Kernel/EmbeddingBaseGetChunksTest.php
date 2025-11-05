@@ -139,8 +139,8 @@ class EmbeddingBaseGetChunksTest extends KernelTestBase {
     $property->setValue($this->embeddingStrategy, $configFactory);
 
     // Get the protected getChunks method and invoke it with test data.
-    $getChunksMethod = $this->getProtectedMethod('getChunks');
-    $chunks = $getChunksMethod->invoke(
+    $prepareChunksMethod = $this->getProtectedMethod('prepareChunks');
+    $chunks = $prepareChunksMethod->invoke(
       $this->embeddingStrategy,
       $title,
       $main_content,
