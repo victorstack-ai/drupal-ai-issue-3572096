@@ -1,9 +1,0 @@
-name: Test AI Provider MySQL
-package: Testing
-description: 'Test AI Provider for MySQL.'
-type: module
-core_version_requirement: ^10.4 || ^11
-
-dependencies:
-  - ai:ai
-  - ai:ai_search

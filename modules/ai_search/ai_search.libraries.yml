@@ -1,6 +1,0 @@
-conditional_tracker:
-  js:
-    assets/js/conditional-tracker.js: {}
-  dependencies:
-    - core/jquery
-    - core/drupal

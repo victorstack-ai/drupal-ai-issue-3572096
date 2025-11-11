@@ -1,3 +1,0 @@
-plugin.plugin_configuration.search_api_tracker.ai_search_tracker:
-  type: plugin.plugin_configuration.search_api_tracker.default
-  label: 'AI Search Tracker configuration'

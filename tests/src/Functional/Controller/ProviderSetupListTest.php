@@ -140,28 +140,4 @@ class ProviderSetupListTest extends BrowserTestBase {
     $this->assertSession()->pageTextContains('No vector database provider is configured.');
   }
 
-  /**
-   * Tests that the vdb page show a message when allowed with provider.
-   */
-  public function testProviderVdbListingPageProviderAccess() {
-    // Install AI Test module.
-    $this->container->get('module_installer')->install(['ai_search', 'search_api', 'test_ai_vdb_provider_mysql']);
-    $account = $this->drupalCreateUser([
-      'administer ai providers',
-      'administer ai',
-      'administer site configuration',
-      'access content',
-      'view the administration theme',
-      'access administration pages',
-    ]);
-    $this->drupalLogin($account);
-
-    $this->drupalGet('admin/config/ai/vdb_providers');
-    $this->assertSession()->statusCodeEquals(200);
-
-    // Test that there is not an empty reaction rule listing.
-    $this->assertSession()->pageTextNotContains('No vector database provider is configured.');
-    $this->assertSession()->pageTextContains('Test MySQL VDB Provider');
-  }
-
 }

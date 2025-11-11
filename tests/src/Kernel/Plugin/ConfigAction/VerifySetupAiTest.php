@@ -24,8 +24,6 @@ class VerifySetupAiTest extends KernelTestBase {
     'ai',
     'not_setup_provider',
     'ai_test',
-    'ai_search',
-    'search_api',
     'key',
     'system',
   ];
