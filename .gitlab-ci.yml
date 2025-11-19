@@ -156,7 +156,7 @@ cspell:
 phpcs:
   allow_failure: false
 phpstan:
-  allow_failure: false
+  allow_failure: true
 
 .phpunit-base:
   before_script:

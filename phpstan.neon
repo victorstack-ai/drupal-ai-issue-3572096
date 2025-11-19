@@ -8,7 +8,7 @@ includes:
   - phar://phpstan.phar/conf/bleedingEdge.neon
 
 parameters:
-  level: 1
+  level: 7
 
   paths:
     - .
