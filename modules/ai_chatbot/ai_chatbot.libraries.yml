@@ -2,20 +2,6 @@ chat-print:
   css:
     base:
       css/chat-print.css: { media: print }
-chat:
-  css:
-    theme:
-      css/chat.css: {}
-  dependencies:
-    - ai_chatbot/chat-print
-form-stream:
-  js:
-    js/showdown.min.js: {}
-    js/form-stream.js: {}
-  dependencies:
-    - core/jquery
-    - core/drupal
-    - core/once
 deepchat:
   js:
     deepchat/deepchat.bundle.js: {  attributes: { type: module } }

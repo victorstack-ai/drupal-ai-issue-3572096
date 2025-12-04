@@ -1,10 +1,3 @@
-ai_chatbot.message_skeleton:
-  path: '/ajax/chatbot/message-skeleton/{assistant_id}/{thread_id}/{user}'
-  defaults:
-    _controller: '\Drupal\ai_chatbot\Controller\GetSkeleton::messageSkeleton'
-    _format: json
-  requirements:
-    _permission: 'access content'
 ai_chatbot.reset_conversation:
   path: '/ajax/chatbot/reset-session/{assistant_id}/{thread_id}'
   defaults:
