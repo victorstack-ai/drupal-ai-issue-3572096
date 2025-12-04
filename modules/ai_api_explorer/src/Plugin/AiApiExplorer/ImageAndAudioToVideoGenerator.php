@@ -117,7 +117,7 @@ final class ImageAndAudioToVideoGenerator extends AiApiExplorerPluginBase {
 
     $form['left']['submit'] = [
       '#type' => 'submit',
-      '#value' => $this->t('Generate an Video File'),
+      '#value' => $this->t('Generate a Video File'),
       '#ajax' => [
         'callback' => $this->getAjaxResponseId(),
         'wrapper' => 'ai-video-response',

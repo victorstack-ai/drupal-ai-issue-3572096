@@ -127,7 +127,7 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
       '#type' => 'textarea',
       '#title' => $this->t('System Message'),
       '#attributes' => [
-        'placeholder' => $this->t('You are an helpful assistant.'),
+        'placeholder' => $this->t('You are a helpful assistant.'),
       ],
       '#required' => FALSE,
     ];
@@ -145,7 +145,7 @@ final class ChatGenerator extends AiApiExplorerPluginBase {
       '#type' => 'textarea',
       '#title' => $this->t('Message'),
       '#attributes' => [
-        'placeholder' => $this->t('Write you message here.'),
+        'placeholder' => $this->t('Write your message here.'),
       ],
       '#required' => TRUE,
       '#default_value' => '',
