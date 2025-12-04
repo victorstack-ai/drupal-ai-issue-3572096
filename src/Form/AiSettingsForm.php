@@ -43,26 +43,30 @@ class AiSettingsForm extends ConfigFormBase {
     [
       'id' => 'chat_with_image_vision',
       'actual_type' => 'chat',
-      'label' => 'Chat with Image Vision',
+      'label' => NULL,
       'filter' => [AiModelCapability::ChatWithImageVision],
+      'description' => NULL,
     ],
     [
       'id' => 'chat_with_complex_json',
       'actual_type' => 'chat',
-      'label' => 'Chat with Complex JSON',
+      'label' => NULL,
       'filter' => [AiModelCapability::ChatJsonOutput],
+      'description' => NULL,
     ],
     [
       'id' => 'chat_with_structured_response',
       'actual_type' => 'chat',
-      'label' => 'Chat with Structured Response',
+      'label' => NULL,
       'filter' => [AiModelCapability::ChatStructuredResponse],
+      'description' => NULL,
     ],
     [
       'id' => 'chat_with_tools',
       'actual_type' => 'chat',
-      'label' => 'Chat with Tools/Function Calling',
+      'label' => NULL,
       'filter' => [AiModelCapability::ChatTools],
+      'description' => NULL,
     ],
   ];
 
@@ -101,6 +105,42 @@ class AiSettingsForm extends ConfigFormBase {
   }
 
   /**
+   * Returns hardcoded operation types with translated labels and descriptions.
+   */
+  protected function getHardcodedSelections(): array {
+    return [
+      [
+        'id' => 'chat_with_image_vision',
+        'actual_type' => 'chat',
+        'label' => $this->t('Chat with Image Vision'),
+        'filter' => [AiModelCapability::ChatWithImageVision],
+        'description' => $this->t('Analyze and interpret images provided within a conversation to enrich responses.'),
+      ],
+      [
+        'id' => 'chat_with_complex_json',
+        'actual_type' => 'chat',
+        'label' => $this->t('Chat with Complex JSON'),
+        'filter' => [AiModelCapability::ChatJsonOutput],
+        'description' => $this->t('Produce structured and valid JSON outputs suitable for programmatic use.'),
+      ],
+      [
+        'id' => 'chat_with_structured_response',
+        'actual_type' => 'chat',
+        'label' => $this->t('Chat with Structured Response'),
+        'filter' => [AiModelCapability::ChatStructuredResponse],
+        'description' => $this->t('Format responses into predictable structures such as lists or tables to facilitate readability and integration.'),
+      ],
+      [
+        'id' => 'chat_with_tools',
+        'actual_type' => 'chat',
+        'label' => $this->t('Chat with Tools/Function Calling'),
+        'filter' => [AiModelCapability::ChatTools],
+        'description' => $this->t('Dynamically execute external functions or API calls during the conversation.'),
+      ],
+    ];
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $nojs = NULL) {
@@ -132,8 +172,8 @@ class AiSettingsForm extends ConfigFormBase {
       $this->messenger()->addWarning($this->t('Choose at least one AI provider module from those listed on the AI module homepage, add to your project, install and configure it. Then update the AI Settings on this page.'));
     }
 
-    // Add the hardcoded selections of filtered types.
-    $operation_types = array_merge($operation_types, $this->hardcodedSelections);
+    // Add hardcoded operation types.
+    $operation_types = array_merge($operation_types, $this->getHardcodedSelections());
 
     // Check if we're simulating no JavaScript or if a non-JS button
     // was clicked.
@@ -176,8 +216,10 @@ class AiSettingsForm extends ConfigFormBase {
         '#type' => 'fieldset',
         '#title' => $operation_type['label'],
       ];
-
-      $form['default_providers'][$operation_type['id']][$operation_key] = [
+      if (!empty($operation_type['description'])) {
+        $form['default_providers'][$operation_type['id']]['#description'] = $operation_type['description'];
+      }
+      $form['default_providers'][$operation_type['id']]['operation__' . $operation_type['id']] = [
         '#type' => 'select',
         '#title' => $this->t('Default Provider'),
         '#options' => $options,

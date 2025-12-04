@@ -12,6 +12,7 @@ use Drupal\ai\OperationType\OperationTypeInterface;
 #[OperationType(
   id: 'translate_text',
   label: new TranslatableMarkup('Translate Text'),
+  description: new TranslatableMarkup('Translate text from one language to another.')
 )]
 interface TranslateTextInterface extends OperationTypeInterface {
 

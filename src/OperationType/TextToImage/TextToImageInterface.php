@@ -12,6 +12,7 @@ use Drupal\ai\OperationType\OperationTypeInterface;
 #[OperationType(
   id: 'text_to_image',
   label: new TranslatableMarkup('Text To Image'),
+  description: new TranslatableMarkup('Create an image from a text description using generative AI.')
 )]
 interface TextToImageInterface extends OperationTypeInterface {
 

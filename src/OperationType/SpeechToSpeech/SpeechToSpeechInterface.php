@@ -12,6 +12,7 @@ use Drupal\ai\OperationType\OperationTypeInterface;
 #[OperationType(
   id: 'speech_to_speech',
   label: new TranslatableMarkup('Speech to Speech'),
+  description: new TranslatableMarkup('Convert spoken input into modified speech, including translation, voice conversion, or tone modification.')
 )]
 interface SpeechToSpeechInterface extends OperationTypeInterface {
 

@@ -12,6 +12,7 @@ use Drupal\ai\OperationType\OperationTypeInterface;
 #[OperationType(
   id: 'embeddings',
   label: new TranslatableMarkup('Embeddings'),
+  description: new TranslatableMarkup('Represent text or images as numerical vectors capturing semantic meaning for search or comparison.')
 )]
 interface EmbeddingsInterface extends OperationTypeInterface {
 

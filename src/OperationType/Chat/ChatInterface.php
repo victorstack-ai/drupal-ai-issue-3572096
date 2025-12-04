@@ -12,6 +12,7 @@ use Drupal\ai\OperationType\OperationTypeInterface;
 #[OperationType(
   id: 'chat',
   label: new TranslatableMarkup('Chat'),
+  description: new TranslatableMarkup('Enable free-form conversational interaction in natural language.')
 )]
 interface ChatInterface extends OperationTypeInterface {
 

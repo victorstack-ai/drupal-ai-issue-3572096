@@ -12,6 +12,7 @@ use Drupal\ai\OperationType\OperationTypeInterface;
 #[OperationType(
   id: 'text_to_speech',
   label: new TranslatableMarkup('Text To Speech'),
+  description: new TranslatableMarkup('Generate spoken audio from written text using AI-generated synthetic voices.')
 )]
 interface TextToSpeechInterface extends OperationTypeInterface {
 
