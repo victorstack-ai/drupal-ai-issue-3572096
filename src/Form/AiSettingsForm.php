@@ -35,42 +35,6 @@ class AiSettingsForm extends ConfigFormBase {
   protected $vdbProviderManager;
 
   /**
-   * The hard coded selections to add for filtering purposes.
-   *
-   * @var array
-   */
-  protected $hardcodedSelections = [
-    [
-      'id' => 'chat_with_image_vision',
-      'actual_type' => 'chat',
-      'label' => NULL,
-      'filter' => [AiModelCapability::ChatWithImageVision],
-      'description' => NULL,
-    ],
-    [
-      'id' => 'chat_with_complex_json',
-      'actual_type' => 'chat',
-      'label' => NULL,
-      'filter' => [AiModelCapability::ChatJsonOutput],
-      'description' => NULL,
-    ],
-    [
-      'id' => 'chat_with_structured_response',
-      'actual_type' => 'chat',
-      'label' => NULL,
-      'filter' => [AiModelCapability::ChatStructuredResponse],
-      'description' => NULL,
-    ],
-    [
-      'id' => 'chat_with_tools',
-      'actual_type' => 'chat',
-      'label' => NULL,
-      'filter' => [AiModelCapability::ChatTools],
-      'description' => NULL,
-    ],
-  ];
-
-  /**
    * Constructor.
    */
   final public function __construct(AiProviderPluginManager $provider_manager, AiVdbProviderPluginManager $vdb_provider_manager) {
@@ -346,7 +310,7 @@ class AiSettingsForm extends ConfigFormBase {
     }
 
     $values = $form_state->getValues();
-    $operation_types = array_merge($this->providerManager->getOperationTypes(), $this->hardcodedSelections);
+    $operation_types = array_merge($this->providerManager->getOperationTypes(), $this->getHardcodedSelections());
     foreach ($operation_types as $operation_type) {
       // We only want to ensure a model is selected for each operation that
       // has a default.
@@ -428,7 +392,7 @@ class AiSettingsForm extends ConfigFormBase {
     $provider = $this->providerManager->createInstance($provider_id);
 
     // Get the operation type definition and filters.
-    $operation_types = array_merge($this->providerManager->getOperationTypes(), $this->hardcodedSelections);
+    $operation_types = array_merge($this->providerManager->getOperationTypes(), $this->getHardcodedSelections());
     $operation_type_definition = NULL;
     $filters = [];
     foreach ($operation_types as $type) {
