@@ -309,6 +309,7 @@ johansson
 RTBC
 cpath
 csvg
+lussoluca
 groq
 huggingface
 lmstudio
