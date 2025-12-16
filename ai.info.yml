@@ -7,3 +7,4 @@ configure: ai.settings_form
 
 dependencies:
   - key:key
+  - token:token

@@ -4,6 +4,7 @@
     "type": "drupal-module",
     "require": {
         "drupal/key": "^1.18",
+        "drupal/token": "^1.16",
         "league/html-to-markdown": "^5.1",
         "yethee/tiktoken": "^0.5.1",
         "openai-php/client": ">=v0.10.1"
