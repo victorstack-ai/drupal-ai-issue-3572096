@@ -23,6 +23,12 @@ case is.
    [Advanced section](#advanced-usage) for more details.
 2. The AI ECA module integrates AI Core with the [ECA](https://www.drupal.org/project/eca) module
    and can be used to trigger AI Automators within ECA workflows.
+3. The [Field Widget Actions](https://www.drupal.org/project/field_widget_actions)
+   provides an easy way to attach automator-based action
+   buttons to form elements (widgets). For example, it is possible to add button
+   labelled "Generate tags" to the "Tags" field form element on content add/edit
+   form. Clicking this button will trigger the automator associated with this field
+   (the automator must exist on the field before field widget action is added).
 
 ## How to use the AI Automators module
 The AI Automators module is extremely flexible, and will interact with the

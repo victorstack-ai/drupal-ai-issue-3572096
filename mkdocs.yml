@@ -43,9 +43,6 @@ nav:
     - AI Search: modules/ai_search/index.md
     - AI Translate: modules/ai_translate/index.md
     - AI Validations: modules/ai_validations/index.md
-    - Field Widget Actions:
-      - Overview: modules/field_widget_actions/index.md
-      - With AI Automators: modules/field_widget_actions/automators.md
   - Develop:
     - Getting Started: developers/developer_information.md
     - Why base on the AI module?: developers/why_ai.md

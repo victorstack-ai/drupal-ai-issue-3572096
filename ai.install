@@ -94,3 +94,10 @@ function ai_update_10303() {
 function ai_update_10304() {
   // Empty cache clear so new cache bin is recognized.
 }
+
+/**
+ * Clear modules list to discover new locations of submodules.
+ */
+function ai_update_10305() {
+  \Drupal::service('extension.list.module')->reset();
+}
