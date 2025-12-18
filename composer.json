@@ -20,6 +20,7 @@
         "allanpichardo/mysql-vector": "^2.0"
     },
     "suggest": {
+        "drupal/ai_validations": "Provides AI support for the Field Validation module.",
         "drupal/field_widget_actions": "Provides easy way to attach actions to field widgets, for example for content suggestions.",
         "league/commonmark": "Allows previewing of chunked content when configuring the fields to be indexed in AI Search, and formats messages in the AI Chatbot module."
     }

@@ -41,7 +41,6 @@ nav:
     - AI ECA: modules/ai_eca/index.md
     - AI Search: modules/ai_search/index.md
     - AI Translate: modules/ai_translate/index.md
-    - AI Validations: modules/ai_validations/index.md
   - Develop:
     - Getting Started: developers/developer_information.md
     - Why base on the AI module?: developers/why_ai.md

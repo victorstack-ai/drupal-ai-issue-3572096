@@ -44,7 +44,7 @@ When creating issues, use `Normal` or `Minor` for priority, and the AI team can 
 
 - **Critical**: Typically reserved for fatal bugs that need immediate attention.
 
-- **Major**: Work that is prioritized on the roadmap or an important bug that isn't fatal. Major feature requests are the primary focus of the AI Initiative. 
+- **Major**: Work that is prioritized on the roadmap or an important bug that isn't fatal. Major feature requests are the primary focus of the AI Initiative.
 These are typically worked on by dedicated contributors from Drupal AI sponsors, and are actively managed and supported by the AI team.
 
 - **Normal**: This priority is used for most issues. For feature requests, these might be beneficial features, but aren't currently a focus for the AI team.
@@ -94,7 +94,6 @@ When creating issues, select the most relevant component. If unsure, leave as â€
 - AI Search
 - AI Test
 - AI Translate
-- AI Validations
 - Field Widget Actions
 - Documentation
 - Project Management
