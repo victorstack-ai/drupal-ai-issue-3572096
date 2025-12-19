@@ -88,7 +88,6 @@ When creating issues, select the most relevant component. If unsure, leave as â€
 - AI CKEditor
 - AI Content Suggestions
 - AI Core module
-- AI ECA
 - AI External Moderation
 - AI Logging
 - AI Search
