@@ -47,13 +47,14 @@ The people currently responsible for each part of the release process, in the or
 
 | Name | Drupal.org Profile |
 |------|--------------------|
-| Will Huggins | [zoocha will](https://www.drupal.org/u/zoocha-will) |
+| Will Huggins | [https://www.drupal.org/u/zoocha-will](https://www.drupal.org/u/zoocha-will) |
 
 ### Publishing
 
 | Name | Drupal.org Profile |
 |------|--------------------|
 | Artem Dmitriiev | [https://www.drupal.org/u/admitriiev](https://www.drupal.org/u/admitriiev) |
+| Rob Loach | [https://www.drupal.org/u/robloach](https://www.drupal.org/u/robloach) |
 
 ### Backup
 
