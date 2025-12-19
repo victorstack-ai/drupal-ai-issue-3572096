@@ -2,8 +2,7 @@
 
 namespace Drupal\ai_automators\Plugin\AiAutomatorProcess;
 
-use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
-use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
@@ -15,6 +14,7 @@ use Drupal\ai_automators\Attribute\AiAutomatorProcessRule;
 use Drupal\ai_automators\Exceptions\AiAutomatorRequestErrorException;
 use Drupal\ai_automators\Exceptions\AiAutomatorResponseErrorException;
 use Drupal\ai_automators\Exceptions\AiAutomatorRuleNotFoundException;
+use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\ai_automators\PluginInterfaces\AiAutomatorDirectProcessInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -41,7 +41,16 @@ class FieldWidgetProcessing implements AiAutomatorDirectProcessInterface, Contai
   }
 
   /**
-   * {@inheritDoc}
+   * The create method.
+   *
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The service container.
+   * @param array<mixed> $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin ID.
+   * @param mixed $plugin_definition
+   *   The plugin definition.
    */
   final public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
@@ -55,11 +64,12 @@ class FieldWidgetProcessing implements AiAutomatorDirectProcessInterface, Contai
   /**
    * {@inheritDoc}
    */
-  public function modify(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition, AiAutomatorTypeInterface $automatorType) {
+  public function modify(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, AiAutomatorTypeInterface $automatorType) {
     try {
       // @todo shouldn't need to pass around config like this to itself.
       $automatorTypeConfig = $automatorType->getConfiguration();
-      return $this->aiRunner->generateResponse($entity, $fieldDefinition, $automatorTypeConfig);
+      $this->aiRunner->generateResponse($entity, $fieldDefinition, $automatorTypeConfig);
+      return TRUE;
     }
     catch (AiAutomatorRuleNotFoundException $e) {
       $this->loggerFactory->get('ai_automator')->warning('A rule was not found, message %message', [
@@ -88,21 +98,21 @@ class FieldWidgetProcessing implements AiAutomatorDirectProcessInterface, Contai
   /**
    * {@inheritDoc}
    */
-  public function preProcessing(EntityInterface $entity) {
+  public function preProcessing(ContentEntityInterface $entity) {
     // We do not need to do anything since we are not saving the entity.
   }
 
   /**
    * {@inheritDoc}
    */
-  public function postProcessing(EntityInterface $entity) {
+  public function postProcessing(ContentEntityInterface $entity) {
     // We do not need to do anything since we are not saving the entity.
   }
 
   /**
    * {@inheritDoc}
    */
-  public function processorIsAllowed(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition) {
+  public function processorIsAllowed(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition) {
     // Only is available if the Form Widget Actions module is enabled.
     return $this->moduleHandler->moduleExists('field_widget_actions');
   }
@@ -110,7 +120,7 @@ class FieldWidgetProcessing implements AiAutomatorDirectProcessInterface, Contai
   /**
    * {@inheritDoc}
    */
-  public function shouldProcessDirectly(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig): bool {
+  public function shouldProcessDirectly(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig): bool {
     // This processor always processes directly.
     return TRUE;
   }

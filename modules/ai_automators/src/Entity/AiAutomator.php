@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Drupal\ai_automators\Entity;
 
-use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\ai_automators\AutomatorTypePluginCollection;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\ai_automators\AiAutomatorInterface;
+use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\Core\Entity\EntityWithPluginCollectionInterface;
 
 /**
@@ -105,7 +105,7 @@ final class AiAutomator extends ConfigEntityBase implements AiAutomatorInterface
    *
    * This must match the key used in getPluginCollections() and config_export.
    *
-   * @var array
+   * @var array<string,mixed>
    */
   protected $automator_types = [];
 
@@ -136,12 +136,7 @@ final class AiAutomator extends ConfigEntityBase implements AiAutomatorInterface
   }
 
   /**
-   * Get a dummy entity of the type and bundle this automator is for.
-   *
-   * @todo we shouldn't need this.
-   *
-   * @return \Drupal\Core\Entity\EntityInterface
-   *   A dummy entity of the type and bundle this automator is for.
+   * {@inheritdoc}
    */
   public function getDummyEntity() {
     $entityDefinition = $this->entityTypeManager()->getDefinition($this->entity_type);
@@ -161,7 +156,7 @@ final class AiAutomator extends ConfigEntityBase implements AiAutomatorInterface
    * {@inheritdoc}
    */
   public function getAutomatorTypes(): AutomatorTypePluginCollection {
-    if (!$this->automatorTypesCollection) {
+    if ($this->automatorTypesCollection === NULL) {
       $this->automatorTypesCollection = new AutomatorTypePluginCollection($this->getAutomatorTypePluginManager(), $this->automator_types);
       $this->automatorTypesCollection->sort();
     }
@@ -190,7 +185,7 @@ final class AiAutomator extends ConfigEntityBase implements AiAutomatorInterface
    */
   public function deleteAutomatorType(string $uuid): void {
     // Remove from the plugin collection if supported.
-    if ($this->automatorTypesCollection) {
+    if ($this->automatorTypesCollection !== NULL) {
       if ($this->automatorTypesCollection->has($uuid)) {
         $this->automatorTypesCollection->removeInstanceId($uuid);
       }
@@ -200,7 +195,7 @@ final class AiAutomator extends ConfigEntityBase implements AiAutomatorInterface
       unset($this->automator_types[$uuid]);
     }
     // Rebuild the collection to reflect the updated configuration.
-    if ($this->automatorTypesCollection) {
+    if ($this->automatorTypesCollection !== NULL) {
       $this->automatorTypesCollection = new AutomatorTypePluginCollection($this->getAutomatorTypePluginManager(), $this->automator_types);
       $this->automatorTypesCollection->sort();
     }

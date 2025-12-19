@@ -398,7 +398,7 @@ class AiProviderFormHelper {
   /**
    * Maps schema data types to form element types.
    *
-   * @param array $definition
+   * @param array<mixed> $definition
    *   Data type of a configuration value.
    *
    * @return string

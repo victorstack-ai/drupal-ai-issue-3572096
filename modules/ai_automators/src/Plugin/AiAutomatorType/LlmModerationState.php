@@ -2,11 +2,11 @@
 
 namespace Drupal\ai_automators\Plugin\AiAutomatorType;
 
-use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\ai_automators\Attribute\AiAutomatorType;
 use Drupal\ai_automators\PluginBaseClasses\RuleBase;
 use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
@@ -33,6 +33,15 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
 
   /**
    * Load from dependency injection container.
+   *
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The container.
+   * @param array<string,mixed> $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = new static(
@@ -53,7 +62,9 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
   }
 
   /**
-   * {@inheritDoc}
+   * The title of the automator.
+   *
+   * @var string
    */
   public $title = 'LLM: Moderation State';
 
@@ -95,6 +106,7 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
    * {@inheritDoc}
    */
   public function generateTokens(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig, $delta = 0) {
+    /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
     $values = $entity->get($automatorConfig['base_field'])->getValue();
     $flags = $this->getFlags($entity);
     $tokens = [
@@ -113,6 +125,7 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
    */
   public function buildAdvancedConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
     // Get the moderation states.
+    /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
     $entity = $automator->getDummyEntity();
     $options = $this->getFlags($entity);
 
@@ -280,7 +293,7 @@ class LlmModerationState extends RuleBase implements AiAutomatorTypeInterface {
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity.
    *
-   * @return array
+   * @return array<string, string>
    *   The flags.
    */
   protected function getFlags(ContentEntityInterface $entity) {

@@ -2,9 +2,9 @@
 
 namespace Drupal\ai_automators\Form;
 
-use Drupal\ai_automators\PluginManager\AiAutomatorFieldProcessManager;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
+use Drupal\ai_automators\PluginManager\AiAutomatorFieldProcessManager;
 use Drupal\ai_automators\PluginManager\AiAutomatorTypeManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -43,7 +43,19 @@ class AiAutomatorEditForm extends AiAutomatorFormBase {
   }
 
   /**
-   * {@inheritdoc}
+   * The form builder.
+   *
+   * @param array<string,mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param mixed $entity
+   *   The entity being edited.
+   * @param mixed $fieldInfo
+   *   Additional field info.
+   *
+   * @return array<string,mixed>
+   *   The form array.
    */
   public function buildForm(array $form, FormStateInterface $form_state, $entity = NULL, $fieldInfo = NULL): array {
     $user_input = $form_state->getUserInput();
@@ -57,8 +69,9 @@ class AiAutomatorEditForm extends AiAutomatorFormBase {
     $workerOptions = [];
     foreach ($this->processManager->getDefinitions() as $definition) {
       // Check so the processor is allowed.
+      /** @var \Drupal\ai_automators\PluginInterfaces\AiAutomatorFieldProcessInterface $instance */
       $instance = $this->processManager->createInstance($definition['id']);
-      // @todo refactor to not need entity.
+      /** @var \Drupal\Core\Entity\ContentEntityInterface $dummyEntity */
       $dummyEntity = $this->entity->getDummyEntity();
       $fieldDefinition = $this->entity->getFieldDefinition();
       if ($instance->processorIsAllowed($dummyEntity, $fieldDefinition)) {
@@ -89,6 +102,16 @@ class AiAutomatorEditForm extends AiAutomatorFormBase {
 
   /**
    * Build the automator types table.
+   *
+   * @param array<mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param array<mixed> $user_input
+   *   The user input.
+   *
+   * @return void
+   *   No return value.
    */
   protected function buildAutomatorTypesTable(array &$form, FormStateInterface $form_state, array $user_input): void {
     // Build the list of existing automator types for this automator.
@@ -115,15 +138,11 @@ class AiAutomatorEditForm extends AiAutomatorFormBase {
 
     // Iterate plugin instances like core image style form does.
     foreach ($this->entity->getAutomatorTypes() as $automator_type) {
-      // Plugins must provide these methods (see AiAutomatorTypeInterface).
-      $uuid = method_exists($automator_type, 'getUuid') ? $automator_type->getUuid() : NULL;
-      if (!$uuid) {
-        // Skip invalid plugin entries.
-        continue;
-      }
+      $uuid = $automator_type->getUuid();
       $label = $automator_type->label();
-      $current_weight = method_exists($automator_type, 'getWeight') ? $automator_type->getWeight() : 0;
+      $current_weight = $automator_type->getWeight();
 
+      // @phpstan-ignore-next-line
       $form['automator_types'][$uuid]['#attributes']['class'][] = 'draggable';
       $form['automator_types'][$uuid]['#weight'] = isset($user_input['automator_types']) ? ($user_input['automator_types'][$uuid]['weight'] ?? NULL) : NULL;
 
@@ -182,6 +201,14 @@ class AiAutomatorEditForm extends AiAutomatorFormBase {
 
   /**
    * Build the form for adding new automator types.
+   *
+   * @param array<mixed> $form
+   *   The form array.
+   * @param array<mixed> $user_input
+   *   The user input.
+   *
+   * @return void
+   *   No return value.
    */
   protected function buildNewAutomatorTypeForm(array &$form, array $user_input): void {
     // Get available automator types for the current field.
@@ -230,6 +257,9 @@ class AiAutomatorEditForm extends AiAutomatorFormBase {
 
   /**
    * Get available automator types for the current field.
+   *
+   * @return array<string, string>
+   *   The available automator types as options.
    */
   protected function getAvailableAutomatorTypes(): array {
     $options = [];
@@ -264,10 +294,11 @@ class AiAutomatorEditForm extends AiAutomatorFormBase {
       $field_definition = $field_definitions[$field_name] ?? NULL;
 
       if ($field_definition) {
+        /** @var \Drupal\Core\Entity\ContentEntityInterface $dummyEntity */
         $dummyEntity = $this->entity->getDummyEntity();
         $rules = $this->fieldRules->findRuleCandidates($dummyEntity, $field_definition);
         foreach ($rules as $rule_id => $rule) {
-          $options[$rule_id] = $rule->title;
+          $options[$rule_id] = $rule->label();
         }
 
         // Sort options alphabetically by title.
@@ -285,6 +316,14 @@ class AiAutomatorEditForm extends AiAutomatorFormBase {
 
   /**
    * Validate handler for automator type.
+   *
+   * @param array<mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return void
+   *   No return value.
    */
   public function automatorTypeValidate(array $form, FormStateInterface $form_state): void {
     if (!$form_state->getValue('new')) {
@@ -294,6 +333,14 @@ class AiAutomatorEditForm extends AiAutomatorFormBase {
 
   /**
    * Submit handler for automator type.
+   *
+   * @param array<mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return void
+   *   No return value.
    */
   public function automatorTypeSave(array $form, FormStateInterface $form_state): void {
     $this->save($form, $form_state);
@@ -327,6 +374,12 @@ class AiAutomatorEditForm extends AiAutomatorFormBase {
 
   /**
    * Updates automator type weights.
+   *
+   * @param array<string, mixed> $automator_types
+   *   The automator types values from the form.
+   *
+   * @return void
+   *   No return value.
    */
   protected function updateAutomatorTypeWeights(array $automator_types): void {
     // Mirror core ImageStyle behavior: update weights via plugin instances.

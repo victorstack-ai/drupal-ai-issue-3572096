@@ -3,7 +3,7 @@
 namespace Drupal\ai\OperationType\GenericType;
 
 use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
-use Drupal\file\Entity\File;
+use Drupal\file\FileInterface;
 
 /**
  * The file base interface.
@@ -97,10 +97,10 @@ interface FileBaseInterface {
   /**
    * Sets the file from a Drupal file.
    *
-   * @param \Drupal\file\Entity\File $file
+   * @param \Drupal\file\FileInterface $file
    *   The file.
    */
-  public function setFileFromFile(File $file): void;
+  public function setFileFromFile(FileInterface $file): void;
 
   /**
    * Get the file mime type guesser.

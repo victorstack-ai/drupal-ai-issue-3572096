@@ -2,12 +2,12 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
-use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
+use Drupal\ai_automators\AiAutomatorInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -20,14 +20,14 @@ abstract class SearchToReference extends RuleBase {
   /**
    * The VDB provider manager.
    *
-   * @var \Drupal\ai\AiVdbProviderManagerInterface
+   * @var \Drupal\ai\AiVdbProviderPluginManager
    */
   protected $vdbProviderManager;
 
   /**
    * The AI provider manager.
    *
-   * @var \Drupal\ai\AiProviderManagerInterface
+   * @var \Drupal\ai\AiProviderPluginManager
    */
   protected $aiProviderManager;
 
@@ -202,10 +202,10 @@ abstract class SearchToReference extends RuleBase {
    *   The entity being processed.
    * @param string $field_name
    *   The name of the field being processed.
-   * @param array $automatorConfig
+   * @param array<string,mixed> $automatorConfig
    *   The automator configuration.
    *
-   * @return array
+   * @return array<int,mixed>
    *   An array of target entity IDs.
    */
   protected function process($value, ContentEntityInterface $entity, $field_name, array $automatorConfig) {
@@ -245,12 +245,15 @@ abstract class SearchToReference extends RuleBase {
 
       // Get embeddings.
       [$provider_id, $model_id] = explode('__', $backend_config['embeddings_engine']);
+      /** @var \Drupal\ai\OperationType\Embeddings\EmbeddingsInterface $embedding_llm */
       $embedding_llm = $this->aiProviderManager->createInstance($provider_id);
       $input = new EmbeddingsInput($value);
       $params['vector_input'] = $embedding_llm->embeddings($input, $model_id)->getNormalized();
 
       // Get VDB client and perform search.
       $vdb_client = $this->vdbProviderManager->createInstance($backend_config['database']);
+      // PHPStan false positive: Variadic parameters are supported.
+      // @phpstan-ignore-next-line
       $response = $vdb_client->vectorSearch(...$params);
 
       // Extract entity IDs from results.

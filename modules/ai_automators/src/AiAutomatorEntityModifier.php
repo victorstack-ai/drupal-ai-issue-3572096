@@ -99,6 +99,7 @@ class AiAutomatorEntityModifier {
     });
 
     // Get process for this entity.
+    /** @var array<string, \Drupal\ai_automators\PluginInterfaces\AiAutomatorFieldProcessInterface> $processes */
     $processes = $this->getProcesses($automators);
 
     // Preprocess.
@@ -155,10 +156,10 @@ class AiAutomatorEntityModifier {
    * @param string|null $specificField
    *   If a specific field should be processed, this is the field name.
    *
-   * @return array
+   * @return array<\Drupal\ai_automators\AiAutomatorInterface>
    *   An array of Automators for this entity.
    */
-  public function entityHasAutomators(EntityInterface $entity, $specificField = NULL) {
+  public function entityHasAutomators(EntityInterface $entity, $specificField = NULL): array {
     $storage = $this->entityTypeManager->getStorage('ai_automator');
     $properties = [
       'entity_type' => $entity->getEntityTypeId(),
@@ -167,6 +168,7 @@ class AiAutomatorEntityModifier {
     if ($specificField) {
       $properties['field_name'] = $specificField;
     }
+    /** @var \Drupal\ai_automators\AiAutomatorInterface[] $automators */
     $automators = $storage->loadByProperties($properties);
     return $automators;
   }
@@ -174,18 +176,20 @@ class AiAutomatorEntityModifier {
   /**
    * Gets the processes available.
    *
-   * @param array $automators
+   * @param array<\Drupal\ai_automators\AiAutomatorInterface> $automators
    *   The enabled automators.
    *
-   * @return array
+   * @return array<string,\Drupal\ai_automators\PluginInterfaces\AiAutomatorFieldProcessInterface>
    *   Array of processes keyed by id.
    */
-  public function getProcesses(array $automators) {
+  public function getProcesses(array $automators): array {
     // Get possible processes.
     $processes = [];
     foreach ($automators as $automator) {
       $definition = $this->processes->getDefinition($automator->get('worker_type'));
-      $processes[$definition['id']] = $this->processes->createInstance($definition['id']);
+      /** @var \Drupal\ai_automators\PluginInterfaces\AiAutomatorFieldProcessInterface $process */
+      $process = $this->processes->createInstance($definition['id']);
+      $processes[$definition['id']] = $process;
     }
     return $processes;
   }
@@ -239,8 +243,18 @@ class AiAutomatorEntityModifier {
 
   /**
    * If token mode, check if it should run.
+   *
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   The entity to check for modifications.
+   * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
+   *   The field definition interface.
+   * @param \Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface $automatorType
+   *   The automator type.
+   *
+   * @return bool
+   *   If it should save or not.
    */
-  private function tokenShouldSave(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, AiAutomatorTypeInterface $automatorType) {
+  private function tokenShouldSave(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, AiAutomatorTypeInterface $automatorType): bool {
     // @todo this could be simplified in automator type.
     $automatorConfig = $automatorType->getConfiguration();
     $fieldName = $fieldDefinition->getName();
@@ -256,8 +270,18 @@ class AiAutomatorEntityModifier {
 
   /**
    * If base mode, check if it should run.
+   *
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   The entity to check for modifications.
+   * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
+   *   The field definition interface.
+   * @param \Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface $automatorType
+   *   The automator type.
+   *
+   * @return bool
+   *   If it should save or not.
    */
-  private function baseShouldSave(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, AiAutomatorTypeInterface $automatorType) {
+  private function baseShouldSave(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, AiAutomatorTypeInterface $automatorType): bool {
     // Check if a value exists.
     $fieldName = $fieldDefinition->getName();
     $value = $entity->get($fieldName)->getValue();
@@ -266,7 +290,7 @@ class AiAutomatorEntityModifier {
     $automatorConfig = $automatorType->getConfiguration();
     $settings = $automatorConfig['settings'] ?? [];
 
-    $original = isset($entity->original) && json_encode($entity->original->get($settings['base_field'])->getValue()) ?? NULL;
+    $original = isset($entity->original) && json_encode($entity->original->get($settings['base_field'])->getValue());
     $change = json_encode($entity->get($settings['base_field'])->getValue()) !== $original;
 
     // Get the rule to check the value.

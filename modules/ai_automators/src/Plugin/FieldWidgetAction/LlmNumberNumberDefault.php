@@ -25,6 +25,14 @@ class LlmNumberNumberDefault extends AutomatorBaseAction {
 
   /**
    * Ajax handler for AI Automator.
+   *
+   * @param array<mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array<mixed>
+   *   The updated form element.
    */
   public function aiAutomatorsAjax(array &$form, FormStateInterface $form_state) {
     $triggering_element = $form_state->getTriggeringElement();

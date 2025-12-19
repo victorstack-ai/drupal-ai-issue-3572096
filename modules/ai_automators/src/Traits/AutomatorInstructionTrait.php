@@ -17,13 +17,13 @@ trait AutomatorInstructionTrait {
    * @param string|null $bundle
    *   The bundle.
    *
-   * @return array
+   * @return array<int|string, \Drupal\ai_automators\AiAutomatorInterface>
    *   The available automator instructions.
    */
   protected function getAutomatorInstructions($entity_type = NULL, $bundle = NULL) {
     $definitions = \Drupal::entityTypeManager()->getStorage('ai_automator')->loadMultiple();
     $options = [];
-    /** @var \Drupal\ai_automators\Entity\AiAutomator $definition */
+    /** @var \Drupal\ai_automators\AiAutomatorInterface $definition */
     foreach ($definitions as $definition) {
       if ((empty($entity_type) || $definition->get('entity_type') == $entity_type) && (empty($bundle) || $definition->get('bundle') == $bundle)) {
         $options[$definition->id()] = $definition;

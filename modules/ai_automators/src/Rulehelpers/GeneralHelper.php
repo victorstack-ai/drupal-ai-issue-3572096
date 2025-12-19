@@ -23,62 +23,6 @@ class GeneralHelper {
   use StringTranslationTrait;
 
   /**
-   * The entity field manager.
-   *
-   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
-   */
-  protected $entityFieldManager;
-
-  /**
-   * The module handler.
-   *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
-   */
-  protected $moduleHandler;
-
-  /**
-   * The AI Automator field config.
-   *
-   * @var \Drupal\ai_automators\FormAlter\AiAutomatorFieldConfig
-   */
-  protected $aiAutomatorFieldConfig;
-
-  /**
-   * The token system.
-   *
-   * @var \Drupal\Core\Utility\Token
-   */
-  protected $token;
-
-  /**
-   * The current user.
-   *
-   * @var \Drupal\Core\Session\AccountProxyInterface
-   */
-  protected $currentUser;
-
-  /**
-   * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
-   * The token tree builder.
-   *
-   * @var Drupal\token\TreeBuilder
-   */
-  protected $tokenTreeBuilder;
-
-  /**
-   * Prompt code block extractor.
-   *
-   * @var \Drupal\ai\PromptCodeBlockExtractor\PromptCodeBlockExtractor
-   */
-  protected $promptCodeBlockExtractor;
-
-  /**
    * Constructor for the class.
    *
    * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entityFieldManager
@@ -95,27 +39,19 @@ class GeneralHelper {
    *   The entity type manager.
    * @param \Drupal\token\TreeBuilder $tokenTreeBuilder
    *   The token tree builder.
-   * @param \Drupal\ai\PromptCodeBlockExtractor\PromptCodeBlockExtractor $promptCodeBlockExtractor
+   * @param \Drupal\ai\Service\PromptCodeBlockExtractor\PromptCodeBlockExtractor $promptCodeBlockExtractor
    *   The prompt code block extractor.
    */
   public function __construct(
-    EntityFieldManagerInterface $entityFieldManager,
-    ModuleHandlerInterface $moduleHandler,
-    AiAutomatorFieldConfig $aiAutomatorFieldConfig,
-    Token $token,
-    AccountProxyInterface $currentUser,
-    EntityTypeManagerInterface $entityTypeManager,
-    TreeBuilder $tokenTreeBuilder,
-    PromptCodeBlockExtractorInterface $promptCodeBlockExtractor,
+    protected EntityFieldManagerInterface $entityFieldManager,
+    protected ModuleHandlerInterface $moduleHandler,
+    protected AiAutomatorFieldConfig $aiAutomatorFieldConfig,
+    protected Token $token,
+    protected AccountProxyInterface $currentUser,
+    protected EntityTypeManagerInterface $entityTypeManager,
+    protected TreeBuilder $tokenTreeBuilder,
+    protected PromptCodeBlockExtractorInterface $promptCodeBlockExtractor,
   ) {
-    $this->entityFieldManager = $entityFieldManager;
-    $this->moduleHandler = $moduleHandler;
-    $this->aiAutomatorFieldConfig = $aiAutomatorFieldConfig;
-    $this->token = $token;
-    $this->currentUser = $currentUser;
-    $this->entityTypeManager = $entityTypeManager;
-    $this->tokenTreeBuilder = $tokenTreeBuilder;
-    $this->promptCodeBlockExtractor = $promptCodeBlockExtractor;
   }
 
   /**
@@ -124,7 +60,7 @@ class GeneralHelper {
    * @param string $response
    *   The response from the LLM.
    *
-   * @return array
+   * @return array<mixed>
    *   The cleaned up JSON response.
    */
   public function parseJson($response) {
@@ -183,9 +119,6 @@ class GeneralHelper {
     elseif (isset($json['value'])) {
       return [$json['value']];
     }
-    else {
-      return [$response['choices'][0]['message']['content']];
-    }
     return [];
   }
 
@@ -194,12 +127,15 @@ class GeneralHelper {
    *
    * @param string $prefix
    *   The prefix for the form.
-   * @param array $form
+   * @param array<mixed> $form
    *   The form passed by reference.
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The field definition.
+   *
+   * @return void
+   *   No return.
    */
   public function addCommonLlmParametersFormFields($prefix, array &$form, ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition) {
     $form["automator_{$prefix}_temperature"] = [
@@ -260,14 +196,14 @@ class GeneralHelper {
   /**
    * Helper function if the automator needs to load another set of fields.
    *
-   * @param Drupal\Core\Entity\ContentEntityInterface $entity
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity type to list on.
    * @param string $type
    *   The field type to get.
    * @param string $target
    *   The target type to get.
    *
-   * @return array
+   * @return array<string,string>
    *   The fields found.
    */
   public function getFieldsOfType(ContentEntityInterface $entity, $type, $target = NULL) {
@@ -289,7 +225,7 @@ class GeneralHelper {
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity to look at.
    *
-   * @return array
+   * @return array<string,string>
    *   The image fields.
    */
   public function getImageMediaFields(ContentEntityInterface $entity) {
@@ -301,7 +237,7 @@ class GeneralHelper {
         $names[$fieldDefinition->getName()] = $fieldDefinition->getLabel();
       }
       if ('entity_reference' == $fieldDefinition->getType() && $fieldTarget == 'media') {
-        $bundles = array_keys($fieldDefinition->getSettings()['handler_settings']['target_bundles']) ?? [];
+        $bundles = array_keys($fieldDefinition->getSettings()['handler_settings']['target_bundles']);
         foreach ($bundles as $bundle) {
           $mediaStorage = $this->entityTypeManager->getStorage('media');
           $mediaTypeInterface = $this->entityTypeManager->getStorage('media_type')->load($bundle);
@@ -329,13 +265,17 @@ class GeneralHelper {
    *   The base64 encoded image.
    */
   public function base64EncodeFileEntity(FileInterface $imageEntity) {
-    return 'data:' . $imageEntity->getMimeType() . ';base64,' . base64_encode(file_get_contents($imageEntity->getFileUri()));
+    $contents = file_get_contents($imageEntity->getFileUri());
+    if ($contents === FALSE) {
+      return '';
+    }
+    return 'data:' . $imageEntity->getMimeType() . ';base64,' . base64_encode($contents);
   }
 
   /**
    * Helper function to join if wanted.
    *
-   * @param array $values
+   * @param array<mixed> $values
    *   The values to join.
    * @param string $joiner
    *   The joiner.
@@ -352,14 +292,17 @@ class GeneralHelper {
   /**
    * Helper function to enable/disable form field tokens from the entity.
    *
-   * @param array $form
+   * @param array<mixed> $form
    *   The form element, passed by reference.
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The field definition.
-   * @param array $defaultValues
+   * @param array<mixed> $defaultValues
    *   The default values.
+   *
+   * @return void
+   *   No return.
    */
   public function addTokenConfigurationToggle(array &$form, $entity, $fieldDefinition, $defaultValues) {
     $form['automator_token_configuration_toggle'] = [
@@ -375,7 +318,7 @@ class GeneralHelper {
    *
    * @param string $id
    *   The id.
-   * @param array $form
+   * @param array<mixed> $form
    *   The form element, passed by reference.
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity.
@@ -385,6 +328,9 @@ class GeneralHelper {
    *   If its under a wrapper.
    * @param int $weight
    *   Any added weight.
+   *
+   * @return void
+   *   No return.
    */
   public function addTokenConfigurationFormField($id, array &$form, ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, $wrapper = "", $weight = 0) {
     $title = $form[$id]['#title'] ?? $id;
@@ -439,7 +385,7 @@ class GeneralHelper {
    *
    * @param string $id
    *   Key to get value from.
-   * @param array $automatorConfig
+   * @param array<string,mixed> $automatorConfig
    *   The config.
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity.
@@ -465,7 +411,7 @@ class GeneralHelper {
   /**
    * Get possible text formats for a drop down.
    *
-   * @return array
+   * @return array<mixed>
    *   The text formats.
    */
   public function getTextFormatsOptions() {
@@ -520,7 +466,7 @@ class GeneralHelper {
    * @param bool $none
    *   If we want to add a none option.
    *
-   * @return array
+   * @return array<mixed>
    *   An array of all image styles.
    */
   public function getImageStyles($none = TRUE) {
@@ -613,7 +559,7 @@ class GeneralHelper {
    * @param string $fieldName
    *   The field name.
    *
-   * @return array
+   * @return array<string>
    *   The vocabularies.
    */
   public function getVocabulariesFromField($entityType, $bundle, $fieldName) {

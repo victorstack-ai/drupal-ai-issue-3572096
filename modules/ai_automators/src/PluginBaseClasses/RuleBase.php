@@ -2,7 +2,6 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
-use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -16,6 +15,7 @@ use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface;
 use Drupal\ai\Utility\CastUtility;
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\ai_automators\Exceptions\AiAutomatorResponseErrorException;
 use Drupal\ai_automators\Exceptions\AiAutomatorTypeNotRunnable;
 use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
@@ -41,7 +41,7 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
   /**
    * The json schema.
    *
-   * @var array
+   * @var array<mixed>
    */
   public array $jsonSchema = [];
 
@@ -90,7 +90,7 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
   /**
    * Constructs a new AiClientBase abstract class.
    *
-   * @param array $configuration
+   * @param array<string,mixed> $configuration
    *   The plugin configuration.
    * @param string $plugin_id
    *   The plugin_id for the plugin instance.
@@ -120,6 +120,15 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
 
   /**
    * Load from dependency injection container.
+   *
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The container.
+   * @param array<string,mixed> $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
@@ -136,6 +145,8 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
    * {@inheritdoc}
    */
   public function label(): string {
+    // The plugin definition is not typed as a string array.
+    // @phpstan-ignore-next-line
     return $this->label ?? $this->pluginDefinition['label'];
   }
 
@@ -311,49 +322,11 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
   }
 
   /**
-   * Old method to add extra form fields.
-   *
-   * @deprecated in ai:1.2.0 and is removed from ai:2.0.0. Use buildConfigurationForm() instead.
-   * @see https://www.drupal.org/project/ai/issues/3535824
+   * {@inheritDoc}
    */
-  public function extraFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
-    // Trigger warning only if called from a child class.
-    if (get_class($this) !== __CLASS__) {
-      @trigger_error('extraFormFields() is deprecated in ai:1.2.0 and will be removed in a ai:2.0.0. Use buildConfigurationForm() instead. See https://www.drupal.org/project/ai/issues/3535824', E_USER_DEPRECATED);
-    }
-    return [];
-  }
-
-  /**
-   * Old method to validate extra form fields.
-   *
-   * @deprecated in ai:1.2.0 and is removed from ai:2.0.0. Use validateConfigurationForm() instead.
-   * @see https://www.drupal.org/project/ai/issues/3535824
-   */
-  public function validateConfigValues($form, FormStateInterface $formState) {
-    if (get_class($this) !== __CLASS__) {
-      @trigger_error('validateConfigValues() is deprecated in ai:1.2.0 and will be removed in a ai:2.0.0. Use validateConfigurationForm() instead. See https://www.drupal.org/project/ai/issues/3535824', E_USER_DEPRECATED);
-    }
-  }
-
-  /**
-   * Adds extra advanced form fields to configuration.
-   *
-   * @todo move this to the automator type form and refactor.
-   *
-   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
-   *   The entity being worked on.
-   * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
-   *   The field definition interface.
-   * @param \Drupal\Core\Form\FormStateInterface $formState
-   *   The form state.
-   * @param array $defaultValues
-   *   The default values.
-   *
-   * @return array
-   *   Form array with key starting with automator_{type}.
-   */
-  public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
+  public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []): array {
+    /** @var array<mixed> $form */
+    $form = [];
     // Load the AI models.
     $providers = $this->formHelper->getAiProvidersOptions($this->llmType);
     // Add to the start of the array.
@@ -377,7 +350,7 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
     $defaults = $this->aiPluginManager->getDefaultProviderForOperationType($this->llmType);
     $provider = $formState->getValue('ai_provider');
     if (!$provider) {
-      $provider = $defaultValues['ai_provider'] ?? NULL;
+      $provider = !empty($defaultValues['ai_provider']) ? $defaultValues['ai_provider'] : NULL;
       if (empty($provider)) {
         $provider = key($providers);
       }
@@ -417,6 +390,7 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
       'default_vision',
       'default',
     ])) {
+      /** @var \Drupal\ai\AiProviderInterface&\Drupal\ai\Plugin\ProviderProxy $llmInstance */
       $llmInstance = $this->aiPluginManager->createInstance($provider);
       $model = $formState->getValue('ai_model');
       $models = $llmInstance->getConfiguredModels($this->llmType);
@@ -452,6 +426,7 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
           ];
           foreach ($configuration as $key => $definition) {
             $set_key = 'ai_provider_' . $key;
+            $form['ajax_prefix']['ai_settings'][$set_key] = [];
             $form['ajax_prefix']['ai_settings'][$set_key]['#type'] = $this->formHelper->mapSchemaTypeToFormType($definition);
             $form['ajax_prefix']['ai_settings'][$set_key]['#required'] = $definition['required'] ?? FALSE;
             $form['ajax_prefix']['ai_settings'][$set_key]['#title'] = $definition['label'] ?? $key;
@@ -550,7 +525,7 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
   /**
    * If a json schema is set, it returns it.
    *
-   * @return array|null
+   * @return array<mixed>|null
    *   The json schema.
    */
   public function getJsonSchema() {
@@ -560,12 +535,12 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
   /**
    * Ajax callback to load the models for the selected provider.
    *
-   * @param array $form
+   * @param array<mixed> $form
    *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
    *
-   * @return array
+   * @return array<string,mixed>
    *   The form array.
    */
   public static function loadModelsAjaxCallback(array &$form, FormStateInterface $form_state) {
@@ -579,7 +554,7 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
   /**
    * Load one extra provider form.
    *
-   * @param array $form
+   * @param array<mixed> $form
    *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $formState
    *   The form state.
@@ -589,8 +564,11 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
    *   The suffix.
    * @param string $title
    *   The title.
-   * @param array $defaultValues
+   * @param array<mixed> $defaultValues
    *   The default values.
+   *
+   * @return array<mixed>
+   *   The form array.
    */
   public function extraProviderForm(&$form, FormStateInterface $formState, $type, $suffix, $title, $defaultValues = []) {
     $suffix = '_' . ltrim($suffix, '_');
@@ -630,6 +608,9 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
     ];
 
     if ($provider) {
+      // @todo fix when the proxy is gone.
+      /** @var \Drupal\ai\AiProviderInterface $llmInstance */
+      // @phpstan-ignore varTag.nativeType
       $llmInstance = $this->aiPluginManager->createInstance($provider);
       $model = $formState->getValue('ai_model' . $suffix);
       if (!$model) {
@@ -691,15 +672,18 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
    *
    * @param string $operationType
    *   The operation type.
-   * @param array $automatorConfig
+   * @param array<string,mixed> $automatorConfig
    *   The automator configuration.
    *
-   * @return \Drupal\ai\Plugin\ProviderProxy
+   * @return \Drupal\ai\OperationType\Chat\ChatInterface
    *   The LLM instance.
    */
   public function prepareLlmInstance($operationType, array &$automatorConfig) {
     $provider = $this->getProvider($automatorConfig);
     $model = $this->getModel($automatorConfig);
+    // @todo fix when the proxy is gone.
+    /** @var \Drupal\ai\AiProviderInterface&\Drupal\ai\OperationType\Chat\ChatInterface $instance */
+    // @phpstan-ignore varTag.nativeType
     $instance = $this->aiPluginManager->createInstance($provider);
 
     // Get configuration.
@@ -723,17 +707,18 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
    *
    * @param string $prompt
    *   The prompt.
-   * @param array $automatorConfig
+   * @param array<string,mixed> $automatorConfig
    *   The automator configuration.
-   * @param \Drupal\ai\Plugin\ProviderProxy $instance
+   * @param \Drupal\ai\OperationType\Chat\ChatInterface $instance
    *   The LLM instance.
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity.
    *
-   * @return array
+   * @return array<string,mixed>
    *   The response.
    */
   public function runChatMessage(string $prompt, array $automatorConfig, $instance, ?ContentEntityInterface $entity = NULL) {
+    /** @var \Drupal\ai\OperationType\Chat\ChatMessage $text */
     $text = $this->runRawChatMessage($prompt, $automatorConfig, $instance, $entity);
 
     // Normalize the response.
@@ -743,7 +728,9 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
     }
     if ($this->getJsonSchema()) {
       // Return as it is.
-      return $this->promptJsonDecoder->decode($text)['values'] ?? [];
+      /** @var array<mixed> $json */
+      $json = $this->promptJsonDecoder->decode($text);
+      return $json['values'] ?? [];
     }
     return $this->decodeValueArray($this->promptJsonDecoder->decode($text));
   }
@@ -753,9 +740,9 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
    *
    * @param string $prompt
    *   The prompt.
-   * @param array $automatorConfig
+   * @param array<string,mixed> $automatorConfig
    *   The automator configuration.
-   * @param \Drupal\ai\Plugin\ProviderProxy $instance
+   * @param \Drupal\ai\OperationType\Chat\ChatInterface $instance
    *   The LLM instance.
    * @param \Drupal\Core\Entity\ContentEntityInterface|null $entity
    *   The entity.
@@ -772,7 +759,10 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
       if (strpos($automatorConfig['image_field'], '--') !== FALSE) {
         $parts = explode('--', $automatorConfig['image_field']);
       }
+
+      /** @var \Drupal\file\Plugin\Field\FieldType\FileItem $imageEntityWrapper */
       foreach ($entity->get($parts[0]) as $imageEntityWrapper) {
+        /** @var \Drupal\file\FileInterface|null $imageEntity */
         $imageEntity = $imageEntityWrapper->entity;
         // If the image entity is not available, it might be partially formed.
         if (!$imageEntity) {
@@ -785,6 +775,7 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
         }
 
         if (isset($parts[1])) {
+          /** @var \Drupal\file\Plugin\Field\FieldType\FileItem $image */
           foreach ($imageEntity->get($parts[1]) as $image) {
             $possibleImages[] = $image->entity;
           }
@@ -810,10 +801,11 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
     ]);
 
     if ($this->getJsonSchema()) {
-      $instance->setChatStructuredJsonSchema($this->getJsonSchema());
+      $input->setChatStructuredJsonSchema($this->getJsonSchema());
     }
 
     $model = $this->getModel($automatorConfig);
+    /** @var \Drupal\ai\OperationType\Chat\ChatMessage $response */
     $response = $instance->chat($input, $model, $this->getTags($prompt, $automatorConfig, $instance, $entity))->getNormalized();
 
     return $response;
@@ -822,7 +814,7 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
   /**
    * Get the provider.
    *
-   * @param array $automatorConfig
+   * @param array<string,mixed> $automatorConfig
    *   The automator configuration.
    *
    * @return string
@@ -857,7 +849,7 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
   /**
    * Get the model.
    *
-   * @param array $automatorConfig
+   * @param array<string,mixed> $automatorConfig
    *   The automator configuration.
    *
    * @return string
@@ -885,7 +877,7 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
    * @param mixed $json
    *   The input.
    *
-   * @return array
+   * @return array<mixed>
    *   The decoded array.
    */
   public function decodeValueArray($json) {
@@ -936,9 +928,9 @@ abstract class RuleBase extends PluginBase implements AiAutomatorTypeInterface, 
    *
    * @param string $prompt
    *   The prompt.
-   * @param array $automatorConfig
+   * @param array<string,mixed> $automatorConfig
    *   The automator configuration.
-   * @param \Drupal\ai\Plugin\ProviderProxy $instance
+   * @param \Drupal\ai\OperationType\Chat\ChatInterface $instance
    *   The LLM instance.
    * @param \Drupal\Core\Entity\ContentEntityInterface|null $entity
    *   The entity if available.

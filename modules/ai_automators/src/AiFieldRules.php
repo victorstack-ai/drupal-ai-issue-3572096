@@ -5,6 +5,7 @@ namespace Drupal\ai_automators;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\ai_automators\Event\RuleIsAllowedEvent;
+use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\ai_automators\PluginManager\AiAutomatorTypeManager;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -44,16 +45,17 @@ class AiFieldRules {
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The field definition interface.
    *
-   * @return array[Drupal\ai_automators\Attribute\AiAutomatorType]
+   * @return array<string,\Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface>
    *   The field rules to possibly use.
    */
-  public function findRuleCandidates(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition) {
+  public function findRuleCandidates(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition): array {
     $target = $fieldDefinition->getFieldStorageDefinition()->getSettings()['target_type'] ?? NULL;
     $candidates = [];
 
     foreach ($this->fieldRuleManager->getDefinitions() as $definition) {
       if ($definition['field_rule'] == $fieldDefinition->getType() && (
         !$target || $definition['target'] == $target || $definition['target'] == 'any')) {
+        /** @var \Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface $rule */
         $rule = $this->fieldRuleManager->createInstance($definition['id']);
         // Event that can be used to override the rule.
         $event = new RuleIsAllowedEvent($entity, $fieldDefinition);
@@ -77,13 +79,15 @@ class AiFieldRules {
    * @param string $id
    *   The id of the rule.
    *
-   * @return Drupal\ai_automators\Attribute\AiAutomatorType
+   * @return \Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface|null
    *   The field rule to use.
    */
-  public function findRule($id) {
+  public function findRule($id): AiAutomatorTypeInterface|NULL {
     foreach ($this->fieldRuleManager->getDefinitions() as $definition) {
       if ($id == $definition['id']) {
-        return $this->fieldRuleManager->createInstance($definition['id']);
+        /** @var \Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface $rule */
+        $rule = $this->fieldRuleManager->createInstance($definition['id']);
+        return $rule;
       }
     }
     return NULL;

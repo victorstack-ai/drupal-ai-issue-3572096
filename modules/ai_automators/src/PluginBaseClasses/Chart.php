@@ -15,6 +15,8 @@ class Chart extends RuleBase implements AiAutomatorTypeInterface {
 
   /**
    * Colors to set.
+   *
+   * @var array<string>
    */
   public array $colors = [
     '#006fb0',
@@ -70,6 +72,7 @@ class Chart extends RuleBase implements AiAutomatorTypeInterface {
         new ChatMessage("user", $prompt),
       ]);
 
+      /** @var \Drupal\ai\OperationType\Chat\ChatMessage $response */
       $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
       // Normalize the response.
       $values = [str_replace(['```csv', '```'], '', $response->getText())];
@@ -83,9 +86,6 @@ class Chart extends RuleBase implements AiAutomatorTypeInterface {
    * {@inheritDoc}
    */
   public function verifyValue(ContentEntityInterface $entity, $value, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
-    if (empty(str_getcsv($value))) {
-      return FALSE;
-    }
     return TRUE;
   }
 

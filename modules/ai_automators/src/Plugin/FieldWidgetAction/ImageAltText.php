@@ -33,6 +33,14 @@ class ImageAltText extends AutomatorBaseAction {
 
   /**
    * Ajax handler for Automators.
+   *
+   * @param array<mixed> $form
+   *   The form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array<mixed>
+   *   The updated form element.
    */
   public function aiAutomatorsAjax(array &$form, FormStateInterface $form_state) {
     // Get the triggering element, as it contains the settings.

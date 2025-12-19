@@ -40,14 +40,14 @@ class ProcessFieldEvent extends Event {
   /**
    * The configuration for the automator.
    *
-   * @var array
+   * @var array<string,mixed>
    */
   public $automatorConfig;
 
   /**
    * The changes made.
    *
-   * @var array
+   * @var array<int,mixed>
    */
   public $actions = [];
 
@@ -58,7 +58,7 @@ class ProcessFieldEvent extends Event {
    *   The entity to process.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The field definition.
-   * @param array $automatorConfig
+   * @param array<string,mixed> $automatorConfig
    *   The configuration for the automator.
    */
   public function __construct(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
@@ -69,6 +69,9 @@ class ProcessFieldEvent extends Event {
 
   /**
    * Force the field to be processed.
+   *
+   * @return void
+   *   No return.
    */
   public function setForceProcess() {
     $this->actions[] = self::FIELD_FORCE_PROCESS;
@@ -76,6 +79,9 @@ class ProcessFieldEvent extends Event {
 
   /**
    * Force the field to be skipped.
+   *
+   * @return void
+   *   No return.
    */
   public function setForceSkip() {
     $this->actions[] = self::FIELD_FORCE_SKIP;
@@ -83,6 +89,9 @@ class ProcessFieldEvent extends Event {
 
   /**
    * Neutral, let the system decide.
+   *
+   * @return void
+   *   No return.
    */
   public function setNeutral() {
     $this->actions[] = self::FIELD_NEUTRAL;

@@ -19,7 +19,9 @@ use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 class LlmMediaImageGeneration extends TextToMediaImage implements AiAutomatorTypeInterface {
 
   /**
-   * {@inheritDoc}
+   * The title of the automator.
+   *
+   * @var string
    */
   public $title = 'LLM: Media Image Generation';
 

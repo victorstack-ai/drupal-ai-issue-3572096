@@ -55,7 +55,7 @@ class TextToMediaSpeech extends RuleBase implements ContainerFactoryPluginInterf
   /**
    * The prompt json decoder.
    *
-   * @var \Drupal\ai\service\PromptJsonDecoder\PromptJsonDecoderInterface
+   * @var \Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface
    */
   protected PromptJsonDecoderInterface $promptJsonDecoder;
 
@@ -76,7 +76,7 @@ class TextToMediaSpeech extends RuleBase implements ContainerFactoryPluginInterf
   /**
    * Constructs a new AiClientBase abstract class.
    *
-   * @param array $configuration
+   * @param array<string,mixed> $configuration
    *   The plugin configuration.
    * @param string $plugin_id
    *   The plugin_id for the plugin instance.
@@ -100,8 +100,8 @@ class TextToMediaSpeech extends RuleBase implements ContainerFactoryPluginInterf
    *   The module handler.
    */
   final public function __construct(
-    $configuration,
-    $plugin_id,
+    array $configuration,
+    string $plugin_id,
     $plugin_definition,
     AiProviderPluginManager $pluginManager,
     AiProviderFormHelper $formHelper,
@@ -122,6 +122,15 @@ class TextToMediaSpeech extends RuleBase implements ContainerFactoryPluginInterf
 
   /**
    * Load from dependency injection container.
+   *
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The container.
+   * @param array<string,mixed> $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
@@ -206,12 +215,13 @@ class TextToMediaSpeech extends RuleBase implements ContainerFactoryPluginInterf
       foreach ($entity->get($automatorConfig['base_field'])->getValue() as $i => $item) {
         // Get tokens.
         $tokens = $this->generateTokens($entity, $fieldDefinition, $automatorConfig, $i);
-        $prompts[] = $this->aiPromptHelper->renderPrompt($automatorConfig['prompt'], $tokens, $i);
+        $prompts[] = $this->aiPromptHelper->renderPrompt($automatorConfig['prompt'], $tokens);
       }
     }
 
     // Generate the audio files.
     $audios = [];
+    /** @var \Drupal\ai\OperationType\TextToSpeech\TextToSpeechInterface $instance */
     $instance = $this->prepareLlmInstance('text_to_speech', $automatorConfig);
 
     foreach ($prompts as $prompt) {
@@ -308,7 +318,7 @@ class TextToMediaSpeech extends RuleBase implements ContainerFactoryPluginInterf
   /**
    * Gets the filename. Override this.
    *
-   * @param array $args
+   * @param array<string> $args
    *   If arguments are needed to create the filename.
    *
    * @return string

@@ -29,11 +29,11 @@ abstract class AiAutomatorFormBase extends EntityForm {
   /**
    * Constructs a new AiAutomatorForm object.
    *
-   * @param mixed $entityTypeManager
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity type manager.
-   * @param mixed $entityFieldManager
+   * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entityFieldManager
    *   The entity field manager.
-   * @param mixed $loggerFactory
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerFactory
    *   The logger factory.
    * @param \Drupal\ai_automators\AiFieldRules $fieldRules
    *   The field rules service.
@@ -58,7 +58,19 @@ abstract class AiAutomatorFormBase extends EntityForm {
   }
 
   /**
-   * {@inheritdoc}
+   * The form builder.
+   *
+   * @param array<string,mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param mixed $entity
+   *   The entity being edited.
+   * @param mixed $fieldInfo
+   *   Additional field info.
+   *
+   * @return array<string,mixed>
+   *   The form array.
    */
   public function buildForm(array $form, FormStateInterface $form_state, $entity = NULL, $fieldInfo = NULL): array {
     $form = parent::buildForm($form, $form_state);
@@ -161,6 +173,14 @@ abstract class AiAutomatorFormBase extends EntityForm {
 
   /**
    * AJAX callback to update bundle options based on selected entity type.
+   *
+   * @param array<string,mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return \Drupal\Core\Ajax\AjaxResponse
+   *   The AJAX response.
    */
   public function updateBundleOptions(array &$form, FormStateInterface $form_state): AjaxResponse {
     $selected_entity_type = $form_state->getValue('selected_type');
@@ -190,6 +210,14 @@ abstract class AiAutomatorFormBase extends EntityForm {
 
   /**
    * AJAX callback to update field options based on selected bundle.
+   *
+   * @param array<string,mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return \Drupal\Core\Ajax\AjaxResponse
+   *   The AJAX response.
    */
   public function updateFieldOptions(array &$form, FormStateInterface $form_state): AjaxResponse {
     $selected_entity_type = $form_state->getValue('selected_type');
@@ -212,6 +240,9 @@ abstract class AiAutomatorFormBase extends EntityForm {
 
   /**
    * Get all fieldable entity types.
+   *
+   * @return array<string, mixed>
+   *   The fieldable entity types as options.
    */
   protected function getFieldableEntityTypes(): array {
     $entity_types = $this->entityTypeManager->getDefinitions();
@@ -234,6 +265,12 @@ abstract class AiAutomatorFormBase extends EntityForm {
 
   /**
    * Get all bundles for a given entity type.
+   *
+   * @param string $entity_type_id
+   *   The entity type ID.
+   *
+   * @return array<mixed>
+   *   The bundles as options.
    */
   protected function getEntityBundles(string $entity_type_id): array {
     $bundles = [];
@@ -272,17 +309,20 @@ abstract class AiAutomatorFormBase extends EntityForm {
 
   /**
    * Get all fields for a given entity type and bundle.
+   *
+   * @param string $entity_type_id
+   *   The entity type ID.
+   * @param string $bundle_id
+   *   The bundle ID.
+   *
+   * @return array<string, string>
+   *   The fields as options.
    */
   protected function getEntityFields(string $entity_type_id, string $bundle_id): array {
     $fields = [];
 
     try {
       $entity_type = $this->entityTypeManager->getDefinition($entity_type_id);
-
-      // Skip if we can't find the definition.
-      if (!$entity_type) {
-        return $fields;
-      }
 
       // Get field definitions for the specific bundle.
       $field_definitions = $this->entityFieldManager->getFieldDefinitions($entity_type_id, $bundle_id);
@@ -310,6 +350,7 @@ abstract class AiAutomatorFormBase extends EntityForm {
         }
 
         // Build a dummy entity for rule checks.
+        /** @var \Drupal\Core\Entity\ContentEntityInterface $dummyEntity */
         $dummyEntity = $this->entityTypeManager->getStorage($entity_type_id)->create([
           $entity_type->getKey('bundle') => $bundle_id,
         ]);
@@ -337,7 +378,15 @@ abstract class AiAutomatorFormBase extends EntityForm {
   }
 
   /**
-   * {@inheritdoc}
+   * Submit handler for the AI Automator form.
+   *
+   * @param array<mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return void
+   *   No return value.
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     // @todo entity_type and bundle are reserved and should be changed.
@@ -354,7 +403,15 @@ abstract class AiAutomatorFormBase extends EntityForm {
   }
 
   /**
-   * {@inheritdoc}
+   * Save handler for the AI Automator form.
+   *
+   * @param array<mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return int
+   *   The save result.
    */
   public function save(array $form, FormStateInterface $form_state): int {
     $result = parent::save($form, $form_state);

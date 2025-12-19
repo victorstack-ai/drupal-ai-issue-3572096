@@ -29,7 +29,7 @@ class Automate {
   /**
    * Excluded known fields.
    *
-   * @var array
+   * @var array<string>
    */
   protected $excludedRequiresFields = [
     'bundle',
@@ -52,7 +52,7 @@ class Automate {
   /**
    * Get all automator types.
    *
-   * @return array
+   * @return array<mixed>
    *   The automator types with key/label.
    */
   public function getWorkflows() {
@@ -70,7 +70,7 @@ class Automate {
    * @param string $type
    *   The type of the automator chain.
    *
-   * @return array
+   * @return array<string, string>
    *   The fields that are required for input.
    */
   public function getRequiredFields(string $type) {
@@ -90,10 +90,10 @@ class Automate {
    *
    * @param string $type
    *   The type of the automator chain.
-   * @param array $field_types
+   * @param array<mixed> $field_types
    *   The types of the field to filter on (optional).
    *
-   * @return array
+   * @return array<string, string>
    *   The fields that has automators on them.
    */
   public function getAutomatedFields(string $type, ?array $field_types = []) {
@@ -103,7 +103,7 @@ class Automate {
       'bundle' => $type,
     ]);
     $output_fields = [];
-    /** @var \Drupal\field\Entity\FieldConfig */
+    /** @var \Drupal\field\Entity\FieldConfig $field */
     foreach ($fields as $field) {
       if (empty($field_types) || in_array($field_names[$field->get('field_name')]->getType(), $field_types)) {
         $output_fields[$field->get('field_name')] = $field_names[$field->get('field_name')]->getLabel();
@@ -117,16 +117,15 @@ class Automate {
    *
    * @param string $type
    *   The type of the automator chain.
-   * @param mixed $inputs
+   * @param array<mixed> $inputs
    *   The inputs to the automator chain.
    *
-   * @return array
+   * @return array<string, mixed>
    *   The output of the automator chain.
    */
   public function run(string $type, $inputs = []) {
     // Check so the type exists.
     try {
-      /** @var \Drupal\ai_automators\Entity\AiAutomatorChainType */
       $this->entityTypeManager->getStorage('automator_chain_type')->load($type);
     }
     catch (\Exception $e) {
@@ -138,7 +137,7 @@ class Automate {
     // Load field types.
     $this->fieldManager->getFieldDefinitions('automator_chain', $type);
 
-    /** @var \Drupal\ai_automators\Entity\AutomatorChain */
+    /** @var \Drupal\ai_automators\Entity\AutomatorChain $automator */
     $automator = $this->entityTypeManager->getStorage('automator_chain')->create([
       'bundle' => $type,
     ]);

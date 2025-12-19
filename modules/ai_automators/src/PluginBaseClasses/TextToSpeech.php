@@ -54,6 +54,7 @@ class TextToSpeech extends RuleBase {
 
     // Generate the audio.
     $audios = [];
+    /** @var \Drupal\ai\OperationType\TextToSpeech\TextToSpeechInterface $instance */
     $instance = $this->prepareLlmInstance('text_to_audio', $automatorConfig);
     foreach ($prompts as $prompt) {
       // The audio binary.
@@ -100,7 +101,7 @@ class TextToSpeech extends RuleBase {
   /**
    * Gets the filename. Override this.
    *
-   * @param array $args
+   * @param array<mixed> $args
    *   If arguments are needed to create the filename.
    *
    * @return string

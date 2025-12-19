@@ -19,7 +19,9 @@ use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 class VectorSearchText extends SearchToText implements AiAutomatorTypeInterface {
 
   /**
-   * {@inheritDoc}
+   * The title of the automator.
+   *
+   * @var string
    */
   public $title = 'Vector Search: Text';
 

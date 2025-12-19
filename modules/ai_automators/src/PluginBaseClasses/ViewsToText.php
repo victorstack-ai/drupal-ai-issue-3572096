@@ -145,6 +145,7 @@ abstract class ViewsToText extends RuleBase {
       $view->setDisplay($displayId);
       // Get the arguments.
       foreach ($view->display_handler->getHandlers('argument') as $argument) {
+        /** @var \Drupal\views\Plugin\views\argument\ArgumentPluginBase $argument */
         $form['args']['arguments'][$argument->options['id']] = [
           '#type' => 'textfield',
           '#title' => $this->t('Argument: @name', ['@name' => $argument->options['id']]),
@@ -190,10 +191,13 @@ abstract class ViewsToText extends RuleBase {
   /**
    * Ajax method to get all the arguments and filters for a view.
    *
-   * @param array $form
+   * @param array<mixed> $form
    *   The form.
    * @param \Drupal\Core\Form\FormStateInterface $formState
    *   The form state.
+   *
+   * @return array<mixed>
+   *   The advanced form part.
    */
   public function ajaxGetViewArgumentsFilters(array $form, FormStateInterface $formState) {
     $formState->setRebuild(TRUE);

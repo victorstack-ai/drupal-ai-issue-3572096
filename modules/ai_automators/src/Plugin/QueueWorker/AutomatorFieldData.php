@@ -48,7 +48,7 @@ class AutomatorFieldData extends QueueWorkerBase implements ContainerFactoryPlug
   /**
    * Constructor.
    *
-   * @param array $configuration
+   * @param array<mixed> $configuration
    *   A configuration array containing information about the plugin instance.
    * @param string $plugin_id
    *   The plugin_id for the plugin instance.
@@ -62,6 +62,9 @@ class AutomatorFieldData extends QueueWorkerBase implements ContainerFactoryPlug
    *   The logger factory.
    * @param \Drupal\Core\Database\Connection $db
    *   The database connection.
+   *
+   * @return void
+   *   No return.
    */
   final public function __construct(array $configuration, $plugin_id, $plugin_definition, AiAutomatorRuleRunner $aiRunner, EntityTypeManagerInterface $entityTypeManager, LoggerChannelFactoryInterface $loggerFactory, Connection $db) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
@@ -87,7 +90,13 @@ class AutomatorFieldData extends QueueWorkerBase implements ContainerFactoryPlug
   }
 
   /**
-   * {@inheritDoc}
+   * Process a single item from the queue.
+   *
+   * @param array<mixed> $data
+   *   The data passed to the queue.
+   *
+   * @return void|int
+   *   Success indicator or nothing.
    */
   public function processItem($data) {
     $this->loggerFactory->get('ai_automator')->info("Queue worker starting to fill out field %field on entity %entity_type with id %id", [
@@ -98,6 +107,7 @@ class AutomatorFieldData extends QueueWorkerBase implements ContainerFactoryPlug
 
     try {
       // Get new entity, to not overwrite.
+      /** @var \Drupal\Core\Entity\ContentEntityInterface $newEntity */
       $newEntity = $this->entityTypeManager->getStorage($data['entity_type'])->load($data['entity_id']);
       // Maybe it was removed.
       if ($newEntity == NULL) {
@@ -107,6 +117,7 @@ class AutomatorFieldData extends QueueWorkerBase implements ContainerFactoryPlug
         ]);
         return;
       }
+      /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
       $entity = $this->aiRunner->generateResponse($newEntity, $data['fieldDefinition'], $data['automatorConfig']);
       // Turn off the hook.
       ai_automators_entity_can_save_toggle(FALSE);
@@ -147,6 +158,7 @@ class AutomatorFieldData extends QueueWorkerBase implements ContainerFactoryPlug
     }
     // Since it failed.
     ai_automators_entity_can_save_toggle(FALSE);
+    /** @var \Drupal\Core\Entity\ContentEntityInterface  $entity */
     $entity = $this->entityTypeManager->getStorage($data['entity_type'])->load($data['entity_id']);
     $entity->set('ai_automator_status', AiAutomatorStatusField::STATUS_FAILED);
     $entity->save();
@@ -158,7 +170,7 @@ class AutomatorFieldData extends QueueWorkerBase implements ContainerFactoryPlug
    *
    * @param string $entityType
    *   The entity type.
-   * @param int $entityId
+   * @param int|string|null $entityId
    *   The entity id.
    *
    * @return bool

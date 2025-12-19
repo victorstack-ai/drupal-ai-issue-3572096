@@ -23,7 +23,7 @@ abstract class EntityReference extends RuleBase {
   /**
    * Constructs a new AiClientBase abstract class.
    *
-   * @param array $configuration
+   * @param array<mixed> $configuration
    *   A configuration array.
    * @param string $plugin_id
    *   The plugin_id for the plugin instance.
@@ -45,8 +45,8 @@ abstract class EntityReference extends RuleBase {
    *   The entity field manager.
    */
   final public function __construct(
-    $configuration,
-    $plugin_id,
+    array $configuration,
+    string $plugin_id,
     $plugin_definition,
     AiProviderPluginManager $pluginManager,
     AiProviderFormHelper $formHelper,
@@ -61,6 +61,15 @@ abstract class EntityReference extends RuleBase {
 
   /**
    * Load from dependency injection container.
+   *
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The container.
+   * @param array<string,mixed> $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
@@ -80,7 +89,7 @@ abstract class EntityReference extends RuleBase {
   /**
    * Allowed field types initially.
    *
-   * @var array
+   * @var array<string>
    */
   public array $allowedTypes = [
     'string',
@@ -116,11 +125,10 @@ abstract class EntityReference extends RuleBase {
    * {@inheritDoc}
    */
   public function ruleIsAllowed(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition): bool {
-    if ($storage = $fieldDefinition->getFieldStorageDefinition()) {
-      if (isset($storage->getSettings()['target_type'])) {
-        if ($storage->getSettings()['target_type'] !== 'media') {
-          return TRUE;
-        }
+    $storage = $fieldDefinition->getFieldStorageDefinition();
+    if (isset($storage->getSettings()['target_type'])) {
+      if ($storage->getSettings()['target_type'] !== 'media') {
+        return TRUE;
       }
     }
 
@@ -318,7 +326,10 @@ abstract class EntityReference extends RuleBase {
   /**
    * Get the base fields for the entity, like label, owner, status etc.
    *
-   * @return array
+   * @param string $entityType
+   *   The entity type.
+   *
+   * @return array<string, mixed>
    *   The base fields.
    *
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException

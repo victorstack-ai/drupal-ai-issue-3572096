@@ -15,7 +15,15 @@ use Drupal\ai_automators\Entity\AutomatorChainType;
 final class AutomatorChainTypeForm extends BundleEntityFormBase {
 
   /**
-   * {@inheritdoc}
+   * The form.
+   *
+   * @param array<mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array<mixed>
+   *   The modified form array.
    */
   public function form(array $form, FormStateInterface $form_state): array {
     $form = parent::form($form, $form_state);
@@ -47,7 +55,15 @@ final class AutomatorChainTypeForm extends BundleEntityFormBase {
   }
 
   /**
-   * {@inheritdoc}
+   * Add custom actions.
+   *
+   * @param array<mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array<mixed>
+   *   The modified actions array.
    */
   protected function actions(array $form, FormStateInterface $form_state): array {
     $actions = parent::actions($form, $form_state);
@@ -57,9 +73,18 @@ final class AutomatorChainTypeForm extends BundleEntityFormBase {
   }
 
   /**
-   * {@inheritdoc}
+   * Save the automator chain type entity.
+   *
+   * @param array<mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return int
+   *   The save result.
    */
   public function save(array $form, FormStateInterface $form_state): int {
+    /** @var int<1,2> $result */
     $result = parent::save($form, $form_state);
 
     $message_args = ['%label' => $this->entity->label()];

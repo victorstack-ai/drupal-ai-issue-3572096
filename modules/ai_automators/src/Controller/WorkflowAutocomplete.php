@@ -23,7 +23,13 @@ class WorkflowAutocomplete extends ControllerBase {
   }
 
   /**
-   * {@inheritdoc}
+   * Creates an instance of the form.
+   *
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The service container.
+   *
+   * @return static
+   *   The form instance.
    */
   public static function create(ContainerInterface $container) {
     // Instantiates this form class.
@@ -34,9 +40,16 @@ class WorkflowAutocomplete extends ControllerBase {
 
   /**
    * Handler for autocomplete workflows.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The request object.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   The JSON response.
    */
-  public function workflows(Request $request) {
+  public function workflows(Request $request): JsonResponse {
     $results = [];
+    /** @var string|null */
     $input = $request->query->get('q');
 
     // Get the typed string from the URL, if it exists and longer than 3 chars.

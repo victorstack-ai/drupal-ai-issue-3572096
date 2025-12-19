@@ -19,7 +19,9 @@ use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 class LlmOfficeHours extends OfficeHours implements AiAutomatorTypeInterface {
 
   /**
-   * {@inheritDoc}
+   * The title of the automator.
+   *
+   * @var string
    */
   public $title = 'LLM: Office Hours';
 

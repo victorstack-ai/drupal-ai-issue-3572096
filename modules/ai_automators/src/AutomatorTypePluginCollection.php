@@ -21,7 +21,15 @@ class AutomatorTypePluginCollection extends DefaultLazyPluginCollection {
   }
 
   /**
-   * {@inheritdoc}
+   * Provides a sort helper for automator types.
+   *
+   * @param string $aID
+   *   The first automator type ID.
+   * @param string $bID
+   *   The second automator type ID.
+   *
+   * @return int
+   *   The comparison result.
    */
   public function sortHelper($aID, $bID) {
     return $this->get($aID)->getWeight() <=> $this->get($bID)->getWeight();

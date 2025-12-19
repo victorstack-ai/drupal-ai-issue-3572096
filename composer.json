@@ -13,9 +13,9 @@
         "drupal/eca": "^2.0",
         "drupal/field_validation": "^3.0@beta",
         "drupal/field_widget_actions": "^1.0.x-dev",
+        "drupal/metatag": "^2.2",
         "drupal/search_api": "^1.x-dev",
         "drupal/search_api_solr": "^4.0",
-        "drupal/token": "^1.14",
         "drush/drush": "^12|^13",
         "allanpichardo/mysql-vector": "^2.0"
     },

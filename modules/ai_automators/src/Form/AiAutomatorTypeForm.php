@@ -2,15 +2,14 @@
 
 namespace Drupal\ai_automators\Form;
 
-use Drupal\ai_automators\AiAutomatorInterface;
-use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
-use Drupal\ai_automators\PluginManager\AiAutomatorTypeManager;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformState;
+use Drupal\ai_automators\AiAutomatorInterface;
+use Drupal\ai_automators\PluginManager\AiAutomatorTypeManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -44,7 +43,13 @@ class AiAutomatorTypeForm extends FormBase {
   }
 
   /**
-   * {@inheritdoc}
+   * The create method.
+   *
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The service container.
+   *
+   * @return static
+   *   The created instance.
    */
   public static function create(ContainerInterface $container) {
     return new static(
@@ -62,7 +67,19 @@ class AiAutomatorTypeForm extends FormBase {
   }
 
   /**
-   * Builds the form for the AI automator type.
+   * The form builder.
+   *
+   * @param array<string,mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param \Drupal\ai_automators\AiAutomatorInterface|null $ai_automator
+   *   The AI Automator entity.
+   * @param string|null $ai_automator_type
+   *   The automator type plugin ID.
+   *
+   * @return array<string,mixed>
+   *   The form array.
    */
   public function buildForm(array $form, FormStateInterface $form_state, ?AiAutomatorInterface $ai_automator = NULL, $ai_automator_type = NULL) {
     $this->aiAutomator = $ai_automator;
@@ -73,10 +90,6 @@ class AiAutomatorTypeForm extends FormBase {
       throw new NotFoundHttpException("Invalid effect id: '$ai_automator_type'.");
     }
     $request = $this->getRequest();
-
-    if (!$this->aiAutomatorType instanceof AiAutomatorTypeInterface) {
-      throw new NotFoundHttpException();
-    }
 
     // Load up the config.
     $configuration = $this->aiAutomatorType->getConfiguration();
@@ -126,12 +139,6 @@ class AiAutomatorTypeForm extends FormBase {
       '#weight' => 18,
       '#open' => TRUE,
     ];
-
-    // @todo remove this in ai:2.0.0.
-    if (method_exists($this->aiAutomatorType, 'extraFormFields')) {
-      $extraFields = $this->aiAutomatorType->extraFormFields($dummyEntity, $fieldDefinition, $form_state, $settings);
-      $form['automator_container'] = array_merge($form['automator_container'], $extraFields);
-    }
 
     // Plugin base config form.
     $form['automator_container']['plugin_base'] = [];
@@ -301,10 +308,13 @@ class AiAutomatorTypeForm extends FormBase {
   /**
    * Validates the form for the AI automator type.
    *
-   * @param array $form
+   * @param array<mixed> $form
    *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
+   *
+   * @return void
+   *   No return value.
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     // Validate the configuration.
@@ -313,11 +323,6 @@ class AiAutomatorTypeForm extends FormBase {
     }
     if ($form_state->getValue('mode') == 'base' && !$form_state->getValue('base_field')) {
       $form_state->setErrorByName('base_field', $this->t('If you enable AI Automator, you have to give a base field.'));
-    }
-
-    // @todo remove in ai:2.0.0.
-    if (method_exists($this->aiAutomatorType, 'validateConfigValues')) {
-      $this->aiAutomatorType->validateConfigValues($form, $form_state);
     }
 
     // Pass validation to each plugin.
@@ -332,10 +337,13 @@ class AiAutomatorTypeForm extends FormBase {
   /**
    * Submits the form for the AI automator type.
    *
-   * @param array $form
+   * @param array<mixed> $form
    *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
+   *
+   * @return void
+   *   No return value.
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     // Let plugin process subforms first.
@@ -376,13 +384,17 @@ class AiAutomatorTypeForm extends FormBase {
    *
    * @param string $automator_type
    *   The automator type ID.
+   *
+   * @return \Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface
+   *   The automator type plugin instance.
    */
-  protected function prepareAutomatorType($automator_type) {
+  protected function prepareAutomatorType(string $automator_type) {
     $automatorTypes = $this->aiAutomator->getAutomatorTypes();
     if ($automatorTypes->has($automator_type)) {
       return $automatorTypes->get($automator_type);
     }
     else {
+      /** @var \Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface  $newAutomatorType */
       $newAutomatorType = $this->automatorTypeManager->createInstance($automator_type);
       // Set the initial weight so this effect comes last.
       $newAutomatorType->setWeight(count($automatorTypes));

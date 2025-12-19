@@ -46,15 +46,15 @@ class AiPromptHelper {
   /**
    * Render a prompt.
    *
-   * @var string $prompt
+   * @param string $prompt
    *   The prompt.
-   * @var array $tokens
+   * @param array<string,mixed> $tokens
    *   The placeholders.
    *
    * @return string
    *   The rendered twig.
    */
-  public function renderPrompt($prompt, array $tokens) {
+  public function renderPrompt(string $prompt, array $tokens) {
     // Get variables.
     $template = $this->twig->createTemplate(htmlspecialchars_decode($prompt));
     return $template->render($tokens);
@@ -63,15 +63,15 @@ class AiPromptHelper {
   /**
    * Render a tokenized prompt.
    *
-   * @var string $prompt
+   * @param string $prompt
    *   The prompt.
-   * @var \Drupal\Core\Entity\ContentEntityInterface $entity
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity.
    *
    * @return string
    *   The rendered prompt.
    */
-  public function renderTokenPrompt($prompt, ContentEntityInterface $entity) {
+  public function renderTokenPrompt(string $prompt, ContentEntityInterface $entity) {
     // Get variables.
     return $this->token->replace($prompt, [
       $this->getEntityTokenType($entity->getEntityTypeId()) => $entity,

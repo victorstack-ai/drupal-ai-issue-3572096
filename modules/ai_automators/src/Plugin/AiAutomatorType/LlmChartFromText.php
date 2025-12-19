@@ -19,7 +19,9 @@ class LlmChartFromText extends Chart {
 
 
   /**
-   * {@inheritDoc}
+   * The title of the automator.
+   *
+   * @var string
    */
   public $title = 'LLM: Chart From Text';
 

@@ -19,7 +19,9 @@ use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 class LlmFaqField extends FaqField implements AiAutomatorTypeInterface {
 
   /**
-   * {@inheritDoc}
+   * The title of the automator.
+   *
+   * @var string
    */
   public $title = 'LLM: FAQ Field';
 

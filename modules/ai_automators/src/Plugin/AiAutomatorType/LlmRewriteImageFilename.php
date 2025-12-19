@@ -26,7 +26,9 @@ class LlmRewriteImageFilename extends RuleBase implements AiAutomatorTypeInterfa
   use FileHelperTrait;
 
   /**
-   * {@inheritDoc}
+   * The title of the automator.
+   *
+   * @var string
    */
   public $title = 'LLM: Rewrite Image Filename';
 
@@ -90,9 +92,10 @@ class LlmRewriteImageFilename extends RuleBase implements AiAutomatorTypeInterfa
    * {@inheritDoc}
    */
   public function storeValues(ContentEntityInterface $entity, array $values, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
+    /** @var \Drupal\file\Plugin\Field\FieldType\FileItem $item */
     foreach ($entity->get($fieldDefinition->getName()) as $delta => $item) {
       // Check the original value to get the extension.
-      /** @var \Drupal\file\FileInterface $file */
+      /** @var \Drupal\file\FileInterface $image */
       $image = $item->entity;
       // Get the original filepath and replace the filename with the new one.
       $original_filepath = $image->getFileUri();

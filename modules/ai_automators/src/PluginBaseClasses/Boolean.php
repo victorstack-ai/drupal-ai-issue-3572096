@@ -74,6 +74,7 @@ class Boolean extends RuleBase {
         new ChatMessage("user", $prompt),
       ]);
 
+      /** @var \Drupal\ai\OperationType\Chat\ChatMessage $response */
       $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
 
       // Normalize the response.

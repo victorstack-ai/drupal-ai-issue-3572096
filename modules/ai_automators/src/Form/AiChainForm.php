@@ -8,10 +8,10 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Url;
 use Drupal\ai_automators\Entity\AiAutomator;
 use Drupal\ai_automators\PluginManager\AiAutomatorTypeManager;
 use Drupal\ai_automators\Traits\AutomatorInstructionTrait;
-use Drupal\Core\Url;
 use Drupal\token\TokenEntityMapperInterface;
 use Drupal\token\TreeBuilder;
 use Http\Discovery\Exception\NotFoundException;
@@ -69,7 +69,13 @@ class AiChainForm extends FormBase {
   }
 
   /**
-   * {@inheritdoc}
+   * The create method.
+   *
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The container.
+   *
+   * @return static
+   *   The class instance.
    */
   public static function create(ContainerInterface $container) {
     return new static(
@@ -91,7 +97,15 @@ class AiChainForm extends FormBase {
   }
 
   /**
-   * {@inheritdoc}
+   * Build the form.
+   *
+   * @param array<string,mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array<string,mixed>
+   *   The form array.
    */
   public function buildForm(array $form, FormStateInterface $form_state): array {
     $entity = NULL;
@@ -183,6 +197,7 @@ class AiChainForm extends FormBase {
       // Common worker value.
       $worker_type_value = $definition->get('worker_type') ?? '-';
       if ($automatorTypes->count() === 0) {
+        // @phpstan-ignore-next-line
         $form['items'][$definition->id()]['#attributes']['class'][] = 'draggable';
         $form['items'][$definition->id()]['#weight'] = 0;
 
@@ -249,7 +264,7 @@ class AiChainForm extends FormBase {
             $displayAutomatorType = $automatorType;
           }
         }
-
+        // @phpstan-ignore-next-line
         $form['items'][$definition->id()]['#attributes']['class'][] = 'draggable';
         $form['items'][$definition->id()]['#weight'] = $highestWeight;
 
@@ -336,7 +351,15 @@ class AiChainForm extends FormBase {
   }
 
   /**
-   * {@inheritdoc}
+   * Submit handler for the form.
+   *
+   * @param array<string,mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return void
+   *   No return value.
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     // Get items safely.
@@ -362,7 +385,7 @@ class AiChainForm extends FormBase {
 
     // Now loop through the instructions and update the weight.
     foreach ($items as $instruction => $new_weight) {
-      /** @var \Drupal\ai_automators\Entity\AiAutomator $definition */
+      /** @var \Drupal\ai_automators\Entity\AiAutomator|null $definition */
       $definition = $this->entityTypeManager->getStorage('ai_automator')->load($instruction);
 
       if ($definition) {
@@ -411,7 +434,7 @@ class AiChainForm extends FormBase {
   /**
    * Calculate the source type from an automator type plugin.
    *
-   * @param \Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface $automatorType
+   * @param \Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface|null $automatorType
    *   The automator type plugin.
    *
    * @return string
@@ -431,7 +454,7 @@ class AiChainForm extends FormBase {
   /**
    * Calculate the input from an automator type plugin.
    *
-   * @param \Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface $automatorType
+   * @param \Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface|null $automatorType
    *   The automator type plugin.
    *
    * @return string

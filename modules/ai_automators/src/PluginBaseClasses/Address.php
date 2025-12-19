@@ -27,7 +27,7 @@ class Address extends RuleBase {
   /**
    * The constructor.
    *
-   * @param array $configuration
+   * @param array<mixed> $configuration
    *   A configuration array for the plugin instance.
    * @param string $plugin_id
    *   The plugin_id for the plugin instance.
@@ -57,6 +57,15 @@ class Address extends RuleBase {
 
   /**
    * Load from dependency injection container.
+   *
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The container.
+   * @param array<string,mixed> $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
@@ -213,7 +222,7 @@ class Address extends RuleBase {
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The target field definition.
    *
-   * @return array|false
+   * @return array<mixed>|false
    *   Array of field overrides or FALSE if there are missing classes
    */
   protected function getFieldOverrides(FieldDefinitionInterface $fieldDefinition): array|FALSE {
@@ -245,7 +254,7 @@ class Address extends RuleBase {
   /**
    * Get all possible address fields.
    *
-   * @return array
+   * @return array<string>
    *   Array of all possible address fields
    *
    * @throws \ReflectionException
@@ -261,7 +270,7 @@ class Address extends RuleBase {
   /**
    * Get generic field labels from address module.
    *
-   * @return array
+   * @return array<string, string>
    *   Array of generic field labels keyed by field name.
    */
   protected function getGenericFieldLabels(): array {

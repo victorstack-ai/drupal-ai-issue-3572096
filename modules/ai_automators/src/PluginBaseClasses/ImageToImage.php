@@ -5,7 +5,7 @@ namespace Drupal\ai_automators\PluginBaseClasses;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\ai_automators\Traits\FileHelperTrait;
-use Drupal\file\Entity\File;
+use Drupal\file\FileInterface;
 
 /**
  * This is a base class that can be used for image generators from images.
@@ -61,6 +61,7 @@ class ImageToImage extends RuleBase {
     foreach ($entity->get($automatorConfig['base_field']) as $target) {
       // The image binary.
       for ($i = 0; $i < $amount; $i++) {
+        /** @var \Drupal\file\Plugin\Field\FieldType\FileItem $target */
         $image = $this->generateFileResponse($target->entity, $automatorConfig, $entity, $fieldDefinition);
         if ($image) {
           $images[] = [
@@ -102,7 +103,7 @@ class ImageToImage extends RuleBase {
   /**
    * Gets the filename. Override this.
    *
-   * @param array $args
+   * @param array<mixed> $args
    *   If arguments are needed to create the filename.
    *
    * @return string
@@ -115,9 +116,9 @@ class ImageToImage extends RuleBase {
   /**
    * Mockup for generating response, have to be filled in by the rule.
    *
-   * @param \Drupal\file\Entity\File $file
+   * @param \Drupal\file\FileInterface $file
    *   The file.
-   * @param array $automatorConfig
+   * @param array<string,mixed> $automatorConfig
    *   The configuration.
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity.
@@ -127,7 +128,7 @@ class ImageToImage extends RuleBase {
    * @return mixed
    *   The response.
    */
-  public function generateFileResponse(File $file, $automatorConfig, ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition) {
+  public function generateFileResponse(FileInterface $file, $automatorConfig, ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition) {
     return NULL;
   }
 

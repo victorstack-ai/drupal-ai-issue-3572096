@@ -40,7 +40,7 @@ class RuleIsAllowedEvent extends Event {
   /**
    * The actions to take.
    *
-   * @var array
+   * @var array<mixed>
    */
   public $actions = [];
 
@@ -59,6 +59,9 @@ class RuleIsAllowedEvent extends Event {
 
   /**
    * Force the field to be processed.
+   *
+   * @return void
+   *   No return.
    */
   public function setRuleVisible() {
     $this->actions[] = self::RULE_FORCE_VISIBLE;
@@ -66,6 +69,9 @@ class RuleIsAllowedEvent extends Event {
 
   /**
    * Force the field to be hidden.
+   *
+   * @return void
+   *   No return.
    */
   public function setRuleHidden() {
     $this->actions[] = self::RULE_FORCE_HIDDEN;
@@ -73,6 +79,9 @@ class RuleIsAllowedEvent extends Event {
 
   /**
    * Neutral, let the system decide.
+   *
+   * @return void
+   *   No return.
    */
   public function setRuleNeutral() {
     $this->actions[] = self::RULE_NEUTRAL;

@@ -25,6 +25,14 @@ class AutoCompleteTagsTaxonomy extends AutomatorBaseAction {
 
   /**
    * Ajax handler for Automators.
+   *
+   * @param array<mixed> $form
+   *   The form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array<mixed>
+   *   The updated form element.
    */
   public function aiAutomatorsAjax(array &$form, FormStateInterface $form_state) {
     // Get the triggering element, as it contains the settings.
@@ -37,14 +45,29 @@ class AutoCompleteTagsTaxonomy extends AutomatorBaseAction {
   }
 
   /**
-   * {@inheritdoc}
+   * Save form values.
+   *
+   * @param array<mixed> $form
+   *   The form.
+   * @param string $form_key
+   *   The form key.
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   The entity.
+   * @param int|null $key
+   *   The key.
+   *
+   * @return array<mixed>
+   *   The form values.
    */
   protected function saveFormValues(array &$form, string $form_key, $entity, ?int $key = NULL): array {
     // Specific saving for autocomplete tags on taxonomy.
     if (is_null($key)) {
       // If not key is provided, we should iterate through all items.
       $text_items = [];
+
       foreach ($entity->get($form_key) as $index => $item) {
+        /** @var \Drupal\Core\Field\EntityReferenceFieldItemList $item */
+        // @phpstan-ignore missingType.generics
         if ($item->get($this->formElementProperty)) {
           $form[$form_key]['widget']['target_id']['#default_value'][$index] = $item->entity;
           $text_items[] = $item->entity->label() . ' (' . $item->entity->id() . ')';
@@ -54,6 +77,8 @@ class AutoCompleteTagsTaxonomy extends AutomatorBaseAction {
     }
     else {
       if (isset($entity->get($form_key)[0])) {
+        /** @var \Drupal\Core\Field\EntityReferenceFieldItemList $item */
+        // @phpstan-ignore missingType.generics
         $item = $entity->get($form_key)[0];
         $text_items = [];
         if ($item->get($this->formElementProperty)) {

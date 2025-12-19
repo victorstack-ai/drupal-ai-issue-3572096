@@ -2,7 +2,6 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
-use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfo;
@@ -14,6 +13,7 @@ use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\OperationType\TextToImage\TextToImageInput;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface;
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\ai_automators\Traits\FileHelperTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -53,14 +53,14 @@ class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterfa
   /**
    * The prompt json decoder.
    *
-   * @var \Drupal\ai\service\PromptJsonDecoder\PromptJsonDecoderInterface
+   * @var \Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface
    */
   protected PromptJsonDecoderInterface $promptJsonDecoder;
 
   /**
    * Constructs a new AiClientBase abstract class.
    *
-   * @param array $configuration
+   * @param array<string,mixed> $configuration
    *   The plugin configuration.
    * @param string $plugin_id
    *   The plugin_id for the plugin instance.
@@ -80,8 +80,8 @@ class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterfa
    *   The field manager.
    */
   final public function __construct(
-    $configuration,
-    $plugin_id,
+    array $configuration,
+    string $plugin_id,
     $plugin_definition,
     AiProviderPluginManager $pluginManager,
     AiProviderFormHelper $formHelper,
@@ -98,6 +98,15 @@ class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterfa
 
   /**
    * Load from dependency injection container.
+   *
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The container.
+   * @param array<string,mixed> $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
@@ -168,6 +177,7 @@ class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterfa
 
     // Generate the images.
     $images = [];
+    /** @var \Drupal\ai\OperationType\TextToImage\TextToImageInterface $instance */
     $instance = $this->prepareLlmInstance('text_to_image', $automatorConfig);
 
     foreach ($prompts as $prompt) {
@@ -238,7 +248,7 @@ class TextToMediaImage extends RuleBase implements ContainerFactoryPluginInterfa
   /**
    * Gets the filename. Override this.
    *
-   * @param array $args
+   * @param array<mixed> $args
    *   If arguments are needed to create the filename.
    *
    * @return string

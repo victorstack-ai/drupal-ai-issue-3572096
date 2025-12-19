@@ -105,14 +105,18 @@ class FileHelper {
    * @param string $title
    *   The title.
    *
-   * @return array
+   * @return array<string,mixed>|null
    *   The image entity with meta data.
    */
   public function generateImageMetaDataFromBinary(string $binary, string $dest, string $alt_text = '', string $title = '') {
     $file = $this->generateFileFromBinary($binary, $dest);
     if ($file instanceof FileInterface) {
-      // Get resolution.
+      // Get resolution. We do have access here, phpstan just can't infer it.
+      // @phpstan-ignore-next-line
       $resolution = getimagesize($file->uri->value);
+      if (!$resolution) {
+        $resolution = [0, 0];
+      }
       // Add to the entities saved.
       return [
         'target_id' => $file->id(),
@@ -160,6 +164,9 @@ class FileHelper {
    */
   public function generateFileFromUrl(string $url, string $dest) {
     $binary = file_get_contents($url);
+    if ($binary === FALSE) {
+      return FALSE;
+    }
     return $this->generateFileFromBinary($binary, $dest);
   }
 
@@ -176,6 +183,10 @@ class FileHelper {
    */
   public function generateTemporaryFileFromBinary(string $binary, $fileType = '') {
     $tmpName = $this->fileSystem->tempnam('temporary://', 'ai_automator_');
+    // Bool meaning failure.
+    if (is_bool($tmpName)) {
+      return FALSE;
+    }
     if ($fileType) {
       // Delete and generate with a extension.
       unlink($tmpName);
@@ -191,7 +202,7 @@ class FileHelper {
   /**
    * Get all media bundles as options.
    *
-   * @return array
+   * @return array<mixed>
    *   The media bundles.
    */
   public function getMediaBundles() {
@@ -232,7 +243,7 @@ class FileHelper {
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity.
    *
-   * @return array
+   * @return array<string,mixed>
    *   The media settings.
    */
   public function getMediaSettings($mediaType, ContentEntityInterface $entity) {
@@ -272,7 +283,7 @@ class FileHelper {
    *   The media type.
    * @param string $mediaName
    *   The media name.
-   * @param array $params
+   * @param array<mixed> $params
    *   The media params.
    *
    * @return \Drupal\media\Entity\Media|false
@@ -286,11 +297,18 @@ class FileHelper {
 
     $imageConfig = $sourceField->getConfig($mediaType)->getSettings();
     if (!$imageConfig) {
-      return [];
+      return FALSE;
     }
     $file = $this->generateFileFromBinary($binary, $path);
+    if (!($file instanceof FileInterface)) {
+      return FALSE;
+    }
     // Get resolution.
+    // @phpstan-ignore-next-line
     $resolution = getimagesize($file->uri->value);
+    if (!$resolution) {
+      $resolution = [0, 0];
+    }
 
     // Prepare for Media.
     $fileForMedia = [

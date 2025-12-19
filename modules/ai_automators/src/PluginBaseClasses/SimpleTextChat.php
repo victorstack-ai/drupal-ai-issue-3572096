@@ -2,10 +2,10 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
-use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\ai_automators\AiAutomatorInterface;
 
 /**
  * This is a base class that can be used for LLMs simple text chat/instructions.
@@ -23,7 +23,9 @@ class SimpleTextChat extends RuleBase {
    * {@inheritDoc}
    */
   public function buildAdvancedConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
-    // Extract the code block types options.
+    // Extract the code block types options. Should work in phpstan, don't know
+    // why it fails here.
+    // @phpstan-ignore-next-line
     $codeBlockTypes = $this->getGeneralHelper()->getPromptCodeBlockExtractor()->codeBlockTypes;
     $options = [];
     foreach ($codeBlockTypes as $key => $codeBlockType) {

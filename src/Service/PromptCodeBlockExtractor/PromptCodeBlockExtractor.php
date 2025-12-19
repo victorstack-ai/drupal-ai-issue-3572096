@@ -17,7 +17,7 @@ class PromptCodeBlockExtractor implements PromptCodeBlockExtractorInterface {
    * The two different types, between and regex exists. Between is used when
    * parsing line by line and regex is used when parsing the whole message.
    *
-   * @var array
+   * @var array<mixed>
    */
   public $codeBlockTypes = [
     'html' => [

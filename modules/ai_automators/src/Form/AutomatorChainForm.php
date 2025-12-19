@@ -13,7 +13,15 @@ use Drupal\Core\Form\FormStateInterface;
 final class AutomatorChainForm extends ContentEntityForm {
 
   /**
-   * {@inheritdoc}
+   * Saves the automator chain entity.
+   *
+   * @param array<mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return int
+   *   The save result constant.
    */
   public function save(array $form, FormStateInterface $form_state): int {
     $result = parent::save($form, $form_state);

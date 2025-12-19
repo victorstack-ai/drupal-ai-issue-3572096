@@ -2,11 +2,11 @@
 
 namespace Drupal\ai_automators\Plugin\AiAutomatorType;
 
-use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\ai_automators\Attribute\AiAutomatorType;
 use Drupal\ai_automators\PluginBaseClasses\SimpleTextChat;
 use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
@@ -23,7 +23,9 @@ use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 class LlmSimpleTextWithSummary extends SimpleTextChat implements AiAutomatorTypeInterface {
 
   /**
-   * {@inheritDoc}
+   * The title of the automator.
+   *
+   * @var string
    */
   public $title = 'LLM: Text (simple)';
 

@@ -2,12 +2,12 @@
 
 namespace Drupal\ai_automators\PluginInterfaces;
 
-use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Component\Plugin\ConfigurableInterface;
 use Drupal\Component\Plugin\PluginInspectionInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\ai_automators\AiAutomatorInterface;
 
 /**
  * Interface for automator type modifiers.
@@ -41,7 +41,7 @@ interface AiAutomatorTypeInterface extends PluginInspectionInterface, Configurab
   /**
    * Allowed inputs.
    *
-   * @return array
+   * @return array<mixed>
    *   The array of field inputs to allow.
    */
   public function allowedInputs();
@@ -60,7 +60,7 @@ interface AiAutomatorTypeInterface extends PluginInspectionInterface, Configurab
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity being worked on.
    *
-   * @return array
+   * @return array<string,mixed>
    *   Token with replacement as key and description as value.
    */
   public function tokens(ContentEntityInterface $entity);
@@ -68,9 +68,9 @@ interface AiAutomatorTypeInterface extends PluginInspectionInterface, Configurab
   /**
    * Checks if the value is empty on complex field types.
    *
-   * @param array $value
+   * @param array<mixed> $value
    *   The value response.
-   * @param array $automatorConfig
+   * @param array<string,mixed> $automatorConfig
    *   The automator config.
    *
    * @return mixed
@@ -98,12 +98,12 @@ interface AiAutomatorTypeInterface extends PluginInspectionInterface, Configurab
    *   The entity being worked on.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The field definition interface.
-   * @param array $automatorConfig
+   * @param array<mixed> $automatorConfig
    *   The automator config.
    * @param int $delta
    *   The delta in the values.
    *
-   * @return array
+   * @return array<mixed>
    *   Token key and token value.
    */
   public function generateTokens(
@@ -120,10 +120,10 @@ interface AiAutomatorTypeInterface extends PluginInspectionInterface, Configurab
    *   The entity being worked on.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The field definition interface.
-   * @param array $automatorConfig
+   * @param array<string,mixed> $automatorConfig
    *   The automator config.
    *
-   * @return array
+   * @return array<mixed>
    *   An array of values.
    */
   public function generate(
@@ -141,7 +141,7 @@ interface AiAutomatorTypeInterface extends PluginInspectionInterface, Configurab
    *   The value returned.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The field definition interface.
-   * @param array $automatorConfig
+   * @param array<string,mixed> $automatorConfig
    *   The automator config.
    *
    * @return bool
@@ -159,11 +159,11 @@ interface AiAutomatorTypeInterface extends PluginInspectionInterface, Configurab
    *
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity being worked on.
-   * @param array $values
+   * @param array<mixed> $values
    *   The array of mixed value(s) returned.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The field definition interface.
-   * @param array $automatorConfig
+   * @param array<string,mixed> $automatorConfig
    *   The automator config.
    *
    * @return bool|void
@@ -213,14 +213,14 @@ interface AiAutomatorTypeInterface extends PluginInspectionInterface, Configurab
   /**
    * Build the base settings section.
    *
-   * @param array $form
+   * @param array<string,mixed> $form
    *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
    * @param \Drupal\ai_automators\AiAutomatorInterface $automator
    *   The automator instance.
    *
-   * @return array
+   * @return array<string,mixed>
    *   The base configuration form array.
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array;
@@ -228,7 +228,7 @@ interface AiAutomatorTypeInterface extends PluginInspectionInterface, Configurab
   /**
    * Validate the base settings section.
    *
-   * @param array $form
+   * @param array<string,mixed> $form
    *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
@@ -240,7 +240,7 @@ interface AiAutomatorTypeInterface extends PluginInspectionInterface, Configurab
   /**
    * Submit the base settings section.
    *
-   * @param array $form
+   * @param array<string,mixed> $form
    *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
@@ -252,14 +252,14 @@ interface AiAutomatorTypeInterface extends PluginInspectionInterface, Configurab
   /**
    * Build the advanced settings section.
    *
-   * @param array $form
+   * @param array<string,mixed> $form
    *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
    * @param \Drupal\ai_automators\AiAutomatorInterface $automator
    *   The automator instance.
    *
-   * @return array
+   * @return array<string,mixed>
    *   The advanced configuration form array.
    */
   public function buildAdvancedConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array;
@@ -267,7 +267,7 @@ interface AiAutomatorTypeInterface extends PluginInspectionInterface, Configurab
   /**
    * Validate the advanced settings section.
    *
-   * @param array $form
+   * @param array<string,mixed> $form
    *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
@@ -279,7 +279,7 @@ interface AiAutomatorTypeInterface extends PluginInspectionInterface, Configurab
   /**
    * Submit the advanced settings section.
    *
-   * @param array $form
+   * @param array<string,mixed> $form
    *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
@@ -287,5 +287,24 @@ interface AiAutomatorTypeInterface extends PluginInspectionInterface, Configurab
    *   The automator instance.
    */
   public function submitAdvancedConfigurationForm(array &$form, FormStateInterface $form_state, AiAutomatorInterface $automator): void;
+
+  /**
+   * Legacy extra advanced form fields.
+   *
+   * @todo move this to the automator type form and refactor.
+   *
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   The entity being worked on.
+   * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
+   *   The field definition interface.
+   * @param \Drupal\Core\Form\FormStateInterface $formState
+   *   The form state.
+   * @param array<mixed> $defaultValues
+   *   The default values.
+   *
+   * @return array<mixed>
+   *   Form array with key starting with automator_{type}.
+   */
+  public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []): array;
 
 }

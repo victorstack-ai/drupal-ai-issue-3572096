@@ -25,7 +25,7 @@ final class AutomatorsToolForm extends EntityForm {
   /**
    * Known outliers.
    *
-   * @var array
+   * @var array<string>
    */
   protected array $knownOutliers = [
     'id',
@@ -42,7 +42,7 @@ final class AutomatorsToolForm extends EntityForm {
   /**
    * Allowed field input fields for now.
    *
-   * @var array
+   * @var array<string, string>
    */
   protected array $inputFieldsType = [
     'string_long' => 'string',
@@ -62,7 +62,7 @@ final class AutomatorsToolForm extends EntityForm {
   /**
    * Allowed field output fields for now.
    *
-   * @var array
+   * @var array<string, string>
    */
   protected array $outputFieldTypes = [
     'string_long' => 'text',
@@ -84,7 +84,13 @@ final class AutomatorsToolForm extends EntityForm {
   }
 
   /**
-   * {@inheritdoc}
+   * Creates an instance of the form.
+   *
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The service container.
+   *
+   * @return static
+   *   The form instance.
    */
   public static function create(ContainerInterface $container) {
     return new static(
@@ -93,7 +99,15 @@ final class AutomatorsToolForm extends EntityForm {
   }
 
   /**
-   * {@inheritdoc}
+   * Form definition.
+   *
+   * @param array<mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array<mixed>
+   *   The form array.
    */
   public function form(array $form, FormStateInterface $form_state): array {
 
@@ -294,7 +308,15 @@ final class AutomatorsToolForm extends EntityForm {
   }
 
   /**
-   * {@inheritdoc}
+   * Validation handler.
+   *
+   * @param array<mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $formState
+   *   The form state.
+   *
+   * @return void
+   *   The return value is void.
    */
   public function validateForm(array &$form, FormStateInterface $formState) {
     // Validation is optional.
@@ -313,13 +335,22 @@ final class AutomatorsToolForm extends EntityForm {
   }
 
   /**
-   * {@inheritdoc}
+   * Save handler.
+   *
+   * @param array<mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return int
+   *   The save result.
    */
   public function save(array $form, FormStateInterface $form_state): int {
     $fields = $form_state->getValue('field_connections');
     if (empty($fields)) {
       $this->entity->set('field_connections', []);
     }
+    /** @var int<1,2> $result */
     $result = parent::save($form, $form_state);
     $message_args = ['%label' => $this->entity->label()];
     $this->messenger()->addStatus(
@@ -334,8 +365,14 @@ final class AutomatorsToolForm extends EntityForm {
 
   /**
    * Get the default values if nothing is set.
+   *
+   * @param array<mixed> $fields
+   *   The fields.
+   *
+   * @return array<string, string>
+   *   The initial values.
    */
-  private function getInitialValues(array $fields) {
+  private function getInitialValues(array $fields): array {
     $defaults = [];
     foreach ($fields as $fieldName => $field) {
       if (!empty($field['config'])) {
@@ -356,6 +393,9 @@ final class AutomatorsToolForm extends EntityForm {
 
   /**
    * Get the actual default values.
+   *
+   * @return array<string, mixed>
+   *   The default values.
    */
   private function getDefaultValues() {
     $connections = $this->entity->get('field_connections');
@@ -371,10 +411,13 @@ final class AutomatorsToolForm extends EntityForm {
   /**
    * Ajax callback for the workflow field.
    *
-   * @param array $form
+   * @param array<mixed> $form
    *   The form.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
+   *
+   * @return array<mixed>
+   *   The field connections part of the form.
    */
   public function getWorkflow(array $form, FormStateInterface $form_state): array {
     return $form['field_connections'];
@@ -388,10 +431,10 @@ final class AutomatorsToolForm extends EntityForm {
    * @param string $bundle
    *   The bundle.
    *
-   * @return array
+   * @return array<mixed>
    *   An array of fields for the bundle.
    */
-  public function getFieldsForBundle($entityType, $bundle) {
+  public function getFieldsForBundle(string $entityType, string $bundle): array {
     $fields = [];
     $fieldDefinitions = $this->entityFieldManager->getFieldDefinitions($entityType, $bundle);
     $keys = array_flip($this->entityTypeManager->getDefinition($entityType)->getKeys());

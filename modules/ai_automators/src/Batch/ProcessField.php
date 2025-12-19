@@ -14,13 +14,17 @@ class ProcessField {
   /**
    * Save the field.
    *
-   * @param array $data
+   * @param array<string,mixed> $data
    *   The data needed.
+   *
+   * @return void
+   *   No return.
    */
-  public static function saveField(array $data) {
+  public static function saveField(array $data): void {
     $logger = \Drupal::logger('ai_automator');
     try {
       // Get new entity, to not overwrite.
+      /** @var \Drupal\Core\Entity\ContentEntityInterface $newEntity */
       $newEntity = \Drupal::entityTypeManager()->getStorage($data['entity']->getEntityTypeId())->load($data['entity']->id());
       $entity = \Drupal::service('ai_automator.rule_runner')->generateResponse($newEntity, $data['fieldDefinition'], $data['automatorConfig']);
       // Turn off the hook.

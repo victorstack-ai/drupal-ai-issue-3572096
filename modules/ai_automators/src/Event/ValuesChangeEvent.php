@@ -17,7 +17,7 @@ class ValuesChangeEvent extends Event {
   /**
    * The values to process.
    *
-   * @var array
+   * @var array<string,mixed>
    */
   protected $values;
 
@@ -38,20 +38,20 @@ class ValuesChangeEvent extends Event {
   /**
    * The automator config.
    *
-   * @var array
+   * @var array<string,mixed>
    */
   protected $automatorConfig;
 
   /**
    * Constructs the object.
    *
-   * @param array $values
+   * @param array<mixed> $values
    *   The values to process.
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity to process.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The field definition.
-   * @param array $automatorConfig
+   * @param array<string,mixed> $automatorConfig
    *   The automator config.
    */
   public function __construct(array $values, ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
@@ -64,7 +64,7 @@ class ValuesChangeEvent extends Event {
   /**
    * Get the values.
    *
-   * @return array
+   * @return array<mixed>
    *   The values.
    */
   public function getValues() {
@@ -94,7 +94,7 @@ class ValuesChangeEvent extends Event {
   /**
    * Get the automator config.
    *
-   * @return array
+   * @return array<string,mixed>
    *   The automator config.
    */
   public function getAutomatorConfig() {
@@ -104,8 +104,11 @@ class ValuesChangeEvent extends Event {
   /**
    * Set the new values.
    *
-   * @param array $values
+   * @param array<mixed> $values
    *   The new values.
+   *
+   * @return void
+   *   No return.
    */
   public function setValues(array $values) {
     $this->values = $values;

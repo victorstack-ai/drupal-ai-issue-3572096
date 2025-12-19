@@ -22,7 +22,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class StripTags extends AiAutomatorType implements AiAutomatorTypeInterface, ContainerFactoryPluginInterface {
 
   /**
-   * {@inheritDoc}
+   * The title of the automator.
+   *
+   * @var string
    */
   public $title = 'Strip Tags';
 

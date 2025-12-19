@@ -49,12 +49,21 @@ class AutomatorPluginBase extends FunctionCallBase implements StructuredExecutab
   /**
    * The output.
    *
-   * @var array
+   * @var array<mixed>
    */
   protected array $output = [];
 
   /**
    * Load from dependency injection container.
+   *
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The container.
+   * @param array<string,mixed> $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): FunctionCallInterface|static {
     $instance = new static(
@@ -69,7 +78,10 @@ class AutomatorPluginBase extends FunctionCallBase implements StructuredExecutab
   }
 
   /**
-   * {@inheritdoc}
+   * Execute the function call.
+   *
+   * @return void
+   *   No return value.
    */
   public function execute() {
     // Load the automator tool.
@@ -109,14 +121,23 @@ class AutomatorPluginBase extends FunctionCallBase implements StructuredExecutab
   }
 
   /**
-   * {@inheritdoc}
+   * Getter for structured output.
+   *
+   * @return array<mixed>
+   *   The structured output.
    */
   public function getStructuredOutput(): array {
     return $this->output;
   }
 
   /**
-   * {@inheritdoc}
+   * Setter for structured output.
+   *
+   * @param array<mixed> $output
+   *   The structured output.
+   *
+   * @return void
+   *   No return value.
    */
   public function setStructuredOutput(array $output): void {
     $this->output = $output;

@@ -42,7 +42,13 @@ class ChainLocalTasks extends DeriverBase implements ContainerDeriverInterface {
   }
 
   /**
-   * {@inheritdoc}
+   * Generates the derivative definitions.
+   *
+   * @param array<mixed> $base_plugin_definition
+   *   The base plugin definition.
+   *
+   * @return array<mixed>
+   *   The derivative definitions.
    */
   public function getDerivativeDefinitions($base_plugin_definition): array {
 

@@ -2,8 +2,7 @@
 
 namespace Drupal\ai_automators\Plugin\AiAutomatorProcess;
 
-use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
-use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
@@ -12,6 +11,7 @@ use Drupal\ai_automators\AiAutomatorRuleRunner;
 use Drupal\ai_automators\AiAutomatorStatusField;
 use Drupal\ai_automators\Attribute\AiAutomatorProcessRule;
 use Drupal\ai_automators\PluginInterfaces\AiAutomatorFieldProcessInterface;
+use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -26,6 +26,8 @@ class BatchProcessing implements AiAutomatorFieldProcessInterface, ContainerFact
 
   /**
    * The batch.
+   *
+   * @var array<mixed>
    */
   protected array $batch;
 
@@ -48,7 +50,16 @@ class BatchProcessing implements AiAutomatorFieldProcessInterface, ContainerFact
   }
 
   /**
-   * {@inheritDoc}
+   * The create method.
+   *
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The service container.
+   * @param array<mixed> $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin ID.
+   * @param mixed $plugin_definition
+   *   The plugin definition.
    */
   final public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
@@ -60,7 +71,7 @@ class BatchProcessing implements AiAutomatorFieldProcessInterface, ContainerFact
   /**
    * {@inheritDoc}
    */
-  public function modify(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition, AiAutomatorTypeInterface $automatorType) {
+  public function modify(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, AiAutomatorTypeInterface $automatorType) {
     $automatorTypeConfig = $automatorType->getConfiguration();
     $entry = [
       'entity' => $entity,
@@ -78,14 +89,15 @@ class BatchProcessing implements AiAutomatorFieldProcessInterface, ContainerFact
   /**
    * {@inheritDoc}
    */
-  public function preProcessing(EntityInterface $entity) {
+  public function preProcessing(ContentEntityInterface $entity) {
+    // @phpstan-ignore-next-line
     $entity->ai_automator_status = AiAutomatorStatusField::STATUS_PROCESSING;
   }
 
   /**
    * {@inheritDoc}
    */
-  public function postProcessing(EntityInterface $entity) {
+  public function postProcessing(ContentEntityInterface $entity) {
     if (!empty($this->batch)) {
       $batch = [
         'operations' => $this->batch,
@@ -101,7 +113,7 @@ class BatchProcessing implements AiAutomatorFieldProcessInterface, ContainerFact
   /**
    * {@inheritDoc}
    */
-  public function processorIsAllowed(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition) {
+  public function processorIsAllowed(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition) {
     return TRUE;
   }
 

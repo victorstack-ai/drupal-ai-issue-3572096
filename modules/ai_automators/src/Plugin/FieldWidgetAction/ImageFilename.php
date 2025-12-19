@@ -33,6 +33,14 @@ class ImageFilename extends AutomatorBaseAction {
 
   /**
    * Ajax handler for Automators.
+   *
+   * @param array<mixed> $form
+   *   The form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array<mixed>
+   *   The updated form element.
    */
   public function aiAutomatorsAjax(array &$form, FormStateInterface $form_state) {
     // Get the triggering element, as it contains the settings.
@@ -50,7 +58,7 @@ class ImageFilename extends AutomatorBaseAction {
    */
   public function populateAutomatorValues(array &$form, FormStateInterface $form_state, string $form_key, ?int $key = NULL): array {
     $form = parent::populateAutomatorValues($form, $form_state, $form_key, $key);
-    $preview = !empty($form['widget'][$key]['preview']['#uri']) && !empty($form['widget'][$key]['preview']) ?? '';
+    $preview = !empty($form['widget'][$key]['preview']['#uri']) && !empty($form['widget'][$key]['preview']);
     // If a preview exists, we have to rerender it.
     if ($preview) {
       // Reset the #uri with the latest file url.

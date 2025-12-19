@@ -119,8 +119,11 @@ class AiAutomatorStatusField {
    *   The entity type name.
    * @param string $bundle
    *   The bundle.
+   *
+   * @return void
+   *   Nothing.
    */
-  protected function addStatusField($entityType, $bundle) {
+  protected function addStatusField($entityType, $bundle): void {
     // Create the storage only if needed.
     $fieldStorageLoader = $this->entityType->getStorage('field_storage_config');
     $query = $fieldStorageLoader->getQuery();
@@ -175,8 +178,11 @@ class AiAutomatorStatusField {
    *   The entity type name.
    * @param string $bundle
    *   The bundle.
+   *
+   * @return void
+   *   Nothing.
    */
-  protected function removeStatusField($entityType, $bundle) {
+  protected function removeStatusField($entityType, $bundle): void {
     // Load the config to remove.
     $config = FieldConfig::loadByName($entityType, $bundle, self::FIELD_NAME);
     if (empty($config)) {

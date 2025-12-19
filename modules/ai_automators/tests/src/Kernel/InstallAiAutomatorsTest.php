@@ -14,7 +14,7 @@ class InstallAiAutomatorsTest extends KernelTestBase {
   /**
    * Modules to enable before running the tests.
    *
-   * @var array
+   * @var array<string>
    */
   protected static $modules = ['system', 'file', 'user', 'ai', 'token'];
 

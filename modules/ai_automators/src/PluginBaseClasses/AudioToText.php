@@ -15,7 +15,9 @@ use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 class AudioToText extends RuleBase implements AiAutomatorTypeInterface, ContainerFactoryPluginInterface {
 
   /**
-   * {@inheritDoc}
+   * The title of the automator.
+   *
+   * @var string
    */
   public $title = 'LLM: Audio To Text';
 
@@ -59,9 +61,11 @@ class AudioToText extends RuleBase implements AiAutomatorTypeInterface, Containe
    */
   public function generate(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
     $values = [];
+    /** @var \Drupal\ai\OperationType\SpeechToText\SpeechToTextInterface $instance */
     $instance = $this->prepareLlmInstance('speech_to_text', $automatorConfig);
 
     foreach ($entity->get($automatorConfig['base_field']) as $entityWrapper) {
+      /** @var \Drupal\file\Plugin\Field\FieldType\FileItem $entityWrapper */
       if ($entityWrapper->entity) {
         $fileEntity = $entityWrapper->entity;
         if (in_array($fileEntity->getMimeType(), [
@@ -69,7 +73,11 @@ class AudioToText extends RuleBase implements AiAutomatorTypeInterface, Containe
           'audio/aac',
           'audio/wav',
         ])) {
-          $input = new SpeechToTextInput(new AudioFile(file_get_contents($fileEntity->getFileUri()), $fileEntity->getMimeType(), $fileEntity->getFilename()));
+          $binary = file_get_contents($fileEntity->getFileUri());
+          if ($binary === FALSE) {
+            continue;
+          }
+          $input = new SpeechToTextInput(new AudioFile($binary, $fileEntity->getMimeType(), $fileEntity->getFilename()));
           $response = $instance->speechToText($input, $automatorConfig['ai_model'], ['ai_automator_speech_to_text']);
           $values[] = $response->getNormalized();
         }

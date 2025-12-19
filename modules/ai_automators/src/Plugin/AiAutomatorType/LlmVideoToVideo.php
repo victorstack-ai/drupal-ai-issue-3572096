@@ -2,13 +2,13 @@
 
 namespace Drupal\ai_automators\Plugin\AiAutomatorType;
 
-use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\ai_automators\Attribute\AiAutomatorType;
 use Drupal\ai_automators\PluginBaseClasses\VideoToText;
 use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
@@ -26,7 +26,9 @@ use Drupal\file\Entity\File;
 class LlmVideoToVideo extends VideoToText implements AiAutomatorTypeInterface {
 
   /**
-   * {@inheritDoc}
+   * The title of the automator.
+   *
+   * @var string
    */
   public $title = 'LLM: Video To Video (Experimental)';
 
@@ -114,6 +116,7 @@ class LlmVideoToVideo extends VideoToText implements AiAutomatorTypeInterface {
 
     $total = [];
     foreach ($entity->get($automatorConfig['base_field']) as $entityWrapper) {
+      /** @var \Drupal\file\Plugin\Field\FieldType\FileItem $entityWrapper */
       if ($entityWrapper->entity) {
         $fileEntity = $entityWrapper->entity;
         if (in_array($fileEntity->getMimeType(), [
@@ -128,6 +131,7 @@ class LlmVideoToVideo extends VideoToText implements AiAutomatorTypeInterface {
           $input = new ChatInput([
             new ChatMessage('user', $prompt, $this->images),
           ]);
+          /** @var \Drupal\ai\OperationType\Chat\ChatMessage $response */
           $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
           $json = json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE);
           $values = $this->decodeValueArray($json);
@@ -160,11 +164,15 @@ class LlmVideoToVideo extends VideoToText implements AiAutomatorTypeInterface {
 
     // First cut out the videos.
     $baseField = $automatorConfig['base_field'];
-    $realPath = $this->fileSystem->realpath($entity->get($baseField)->entity->getFileUri());
+    /** @var \Drupal\file\FileInterface $file */
+    $file = $entity->get($baseField)->entity;
+    $realPath = $this->fileSystem->realpath($file->getFileUri());
+    if ($realPath === FALSE) {
+      throw new \Exception('Could not get the real path of the video file.');
+    }
     // Get the actual file name and replace it with _cut.
     $fileName = pathinfo($realPath, PATHINFO_FILENAME);
-    $newFile = str_replace($fileName, $fileName . '_cut', $entity
-      ->get($baseField)->entity->getFileUri());
+    $newFile = str_replace($fileName, $fileName . '_cut', $file->getFileUri());
 
     foreach ($values as $keys) {
       $tmpNames = [];

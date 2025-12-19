@@ -2,7 +2,6 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
-use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfo;
@@ -22,9 +21,11 @@ use Drupal\ai\OperationType\GenericType\ImageFile;
 use Drupal\ai\OperationType\SpeechToText\SpeechToTextInput;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface;
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\ai_automators\Exceptions\AiAutomatorRequestErrorException;
 use Drupal\ai_automators\Exceptions\AiAutomatorResponseErrorException;
 use Drupal\file\Entity\File;
+use Drupal\file\FileInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -59,6 +60,8 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
 
   /**
    * The images.
+   *
+   * @var array<mixed>
    */
   public array $images;
 
@@ -100,7 +103,7 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
   /**
    * Construct a video to text field.
    *
-   * @param array $configuration
+   * @param array<string,mixed> $configuration
    *   The plugin configuration.
    * @param string $plugin_id
    *   The plugin_id for the plugin instance.
@@ -217,6 +220,7 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
     }
 
     $total = [];
+    /** @var \Drupal\file\Plugin\Field\FieldType\FileItem $entityWrapper */
     foreach ($entity->get($automatorConfig['base_field']) as $entityWrapper) {
       if ($entityWrapper->entity) {
         $fileEntity = $entityWrapper->entity;
@@ -232,6 +236,7 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
           $input = new ChatInput([
             new ChatMessage('user', $prompt, $this->images),
           ]);
+          /** @var \Drupal\ai\OperationType\Chat\ChatMessage $response */
           $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
           $json = json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE);
           $values = $this->decodeValueArray($json);
@@ -266,17 +271,17 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
   /**
    * Generate a video from screenshots.
    *
-   * @param \Drupal\file\Entity\File $video
+   * @param \Drupal\file\FileInterface $video
    *   The video.
    * @param string $timeStamp
    *   The timestamp.
-   * @param array $cropData
+   * @param array<mixed> $cropData
    *   The crop data in x, y, width, height format.
    *
-   * @return \Drupal\file\Entity\File
+   * @return \Drupal\file\FileInterface
    *   The screenshot image.
    */
-  public function screenshotFromTimestamp(File $video, $timeStamp, array $cropData = []) {
+  public function screenshotFromTimestamp(FileInterface $video, $timeStamp, array $cropData = []) {
     $path = $video->getFileUri();
     // Clean values before using them.
     $command = "-y -nostdin -ss {timeStamp} -i {realPath} -vframes 1 {screenshotFile}";
@@ -307,21 +312,26 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
   /**
    * Get the correct crop data with the base being 640.
    *
-   * @param \Drupal\file\Entity\File $video
+   * @param \Drupal\file\FileInterface $video
    *   The video.
-   * @param array $cropData
+   * @param array<mixed> $cropData
    *   The crop data.
    *
-   * @return array
+   * @return array<mixed>
    *   The corrected crop data.
    */
-  public function normalizeCropData(File $video, $cropData) {
+  public function normalizeCropData(FileInterface $video, $cropData) {
     $originalWidth = 640;
     // Get the width and height of the video with FFmpeg.
-    $realPathEscaped = escapeshellarg($this->fileSystem->realpath($video->getFileUri()));
+    /** @var string $uri */
+    $uri = $this->fileSystem->realpath($video->getFileUri());
+    $realPathEscaped = escapeshellarg($uri);
     $command = "ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 $realPathEscaped";
     $result = shell_exec($command);
+    assert(is_string($result));
     [$width] = explode('x', $result);
+    // Cast width to int.
+    $width = (int) trim($width);
     $ratio = $width / $originalWidth;
     $newCropData = [];
     foreach ($cropData as $key => $value) {
@@ -354,8 +364,20 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
 
   /**
    * Generate the images and audio for OpenAI.
+   *
+   * @param array<mixed> $automatorConfig
+   *   The automator configuration.
+   * @param \Drupal\file\FileInterface $file
+   *   The file.
+   * @param bool $video
+   *   Whether to generate video rasters.
+   * @param bool $audio
+   *   Whether to generate audio and transcription.
+   *
+   * @return void
+   *   Nothing.
    */
-  protected function prepareToExplain(array $automatorConfig, File $file, $video = TRUE, $audio = TRUE) {
+  protected function prepareToExplain(array $automatorConfig, FileInterface $file, $video = TRUE, $audio = TRUE) {
     $this->createTempDirectory();
     if ($video) {
       $this->createVideoRasterImages($automatorConfig, $file);
@@ -368,8 +390,16 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
 
   /**
    * Helper function to get the image raster from the video.
+   *
+   * @param array<mixed> $automatorConfig
+   *   The automator configuration.
+   * @param \Drupal\file\FileInterface $file
+   *   The file.
+   *
+   * @return string
+   *   The audio file path.
    */
-  protected function createAudioFile(array $automatorConfig, File $file) {
+  protected function createAudioFile(array $automatorConfig, FileInterface $file) {
     // Get the video file.
     $video = $file->getFileUri();
     // Get the actual file path on the server.
@@ -386,6 +416,12 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
 
   /**
    * Transcribe the audio.
+   *
+   * @param array<mixed> $automatorConfig
+   *   The automator configuration.
+   *
+   * @return void
+   *   Nothing.
    */
   protected function transcribeAudio(array $automatorConfig) {
     // Use Whisper to transcribe and then get the segments.
@@ -394,16 +430,30 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
       'file' => fopen($this->tmpDir . 'audio.mp3', 'r'),
       'response_format' => 'json',
     ];
+    /** @var \Drupal\ai\OperationType\SpeechToText\SpeechToTextInterface&\Drupal\ai\Plugin\ProviderProxy $instance */
     $instance = $this->aiPluginManager->createInstance($automatorConfig['ai_provider_audio']);
 
-    $input = new SpeechToTextInput(new AudioFile(file_get_contents($this->tmpDir . 'audio.mp3'), 'audio/mpeg', 'audio.mp3'));
+    /** @var string $binary */
+    $binary = file_get_contents($this->tmpDir . 'audio.mp3');
+    $file = new AudioFile($binary, 'audio/mpeg', 'audio.mp3');
+    $input = new SpeechToTextInput($file);
     $this->transcription = $instance->speechToText($input, $automatorConfig['ai_model_audio'])->getNormalized();
   }
 
   /**
    * Helper function to get the image raster images from the video.
+   *
+   * @param array<mixed> $automatorConfig
+   *   The automator configuration.
+   * @param \Drupal\file\FileInterface $file
+   *   The file.
+   * @param string|null $timeStamp
+   *   The timestamp.
+   *
+   * @return void
+   *   No return.
    */
-  protected function createVideoRasterImages($automatorConfig, File $file, $timeStamp = NULL) {
+  protected function createVideoRasterImages($automatorConfig, FileInterface $file, $timeStamp = NULL) {
     $this->images = [];
     // Remove all the images.
     $this->deleteFilesFromTmpDir('jpeg');
@@ -428,6 +478,9 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
     $rasterCommand = "-i {thumbFile} -filter_complex \"scale=640:-1,tile=3x3:margin=10:padding=4:color=white\" {rasterFile}";
     $this->runFfmpegCommand($rasterCommand, $tokens, 'Could not create video raster.');
     $images = glob($this->tmpDir . 'raster-*.jpeg');
+    if (!$images) {
+      throw new AiAutomatorResponseErrorException('Could not find generated video raster images.');
+    }
     foreach ($images as $uri) {
       $image = new ImageFile();
       $image->setFileFromUri($uri);
@@ -443,6 +496,9 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
 
   /**
    * Helper function to generate a temp directory.
+   *
+   * @return void
+   *   Nothing.
    */
   protected function createTempDirectory() {
     $this->tmpDir = $this->fileSystem->getTempDirectory() . '/ai_automator/' . mt_rand(10000, 99999) . '/';
@@ -471,9 +527,9 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
   /**
    * Render a tokenized prompt.
    *
-   * @var string $prompt
+   * @param string $prompt
    *   The prompt.
-   * @var \Drupal\Core\Entity\ContentEntityInterface $entity
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity.
    *
    * @return string
@@ -489,9 +545,20 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
 
   /**
    * Calculate with ffmpeg data.
+   *
+   * @param string $timestamp
+   *   The timestamp.
+   * @param float $calculation
+   *   The calculation.
+   *
+   * @return string
+   *   The calculated timestamp.
    */
   public function calculateFfmpegTimestamp($timestamp, $calculation) {
     $date = \DateTime::createFromFormat('H:i:s.u', $timestamp);
+    if (!$date) {
+      throw new AiAutomatorRequestErrorException('The timestamp is not in the correct format.');
+    }
 
     $interval = new \DateInterval('PT0S');
     $interval->f = $calculation;
@@ -506,7 +573,7 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
    * @param string|null $timeStamp
    *   The timestamp.
    *
-   * @return string
+   * @return string|null
    *   The cleaned up timestamp.
    */
   public function cleanTimestamp(?string $timeStamp = NULL) {
@@ -526,10 +593,13 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
    *
    * @param string $command
    *   The command to run.
-   * @param array $tokens
+   * @param array<mixed> $tokens
    *   The tokens to replace.
    * @param string $error_message
    *   Error message to throw if it fails.
+   *
+   * @return void
+   *   Nothing.
    */
   public function runFfmpegCommand($command, array $tokens, $error_message) {
     $command = $this->prepareFfmpegCommand($command, $tokens);
@@ -544,7 +614,7 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
    *
    * @param string $command
    *   The command to run.
-   * @param array $tokens
+   * @param array<mixed> $tokens
    *   The tokens to replace.
    *
    * @return string
@@ -570,6 +640,9 @@ class VideoToText extends RuleBase implements ContainerFactoryPluginInterface {
    *   The extension to delete.
    * @param bool $remove_directory
    *   If the directory should be removed.
+   *
+   * @return void
+   *   Nothing.
    */
   public function deleteFilesFromTmpDir($ext = '', $remove_directory = FALSE) {
     // Get the actual tmp directory, to make sure nothing was injected.

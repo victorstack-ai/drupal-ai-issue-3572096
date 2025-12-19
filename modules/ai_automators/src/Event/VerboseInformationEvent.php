@@ -17,7 +17,7 @@ class VerboseInformationEvent extends Event {
   /**
    * An array of verbose information.
    *
-   * @var array
+   * @var array<mixed>
    */
   protected $values = [];
 
@@ -38,7 +38,7 @@ class VerboseInformationEvent extends Event {
   /**
    * The automator config.
    *
-   * @var array
+   * @var array<string,mixed>
    */
   protected $automatorConfig;
 
@@ -49,7 +49,7 @@ class VerboseInformationEvent extends Event {
    *   The entity to process.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The field definition.
-   * @param array $automatorConfig
+   * @param array<string,mixed> $automatorConfig
    *   The automator config.
    */
   public function __construct(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig) {
@@ -61,7 +61,7 @@ class VerboseInformationEvent extends Event {
   /**
    * Get the verbose info.
    *
-   * @return array
+   * @return array<mixed>
    *   The verbose info.
    */
   public function getVerboseInfo() {
@@ -91,7 +91,7 @@ class VerboseInformationEvent extends Event {
   /**
    * Get the automator config.
    *
-   * @return array
+   * @return array<string,mixed>
    *   The automator config.
    */
   public function getAutomatorConfig() {
@@ -101,8 +101,11 @@ class VerboseInformationEvent extends Event {
   /**
    * Set the new verbose info.
    *
-   * @param array $values
+   * @param array<mixed> $values
    *   The new verbose info.
+   *
+   * @return void
+   *   No return.
    */
   public function setVerboseInfo(array $values) {
     $this->values = $values;

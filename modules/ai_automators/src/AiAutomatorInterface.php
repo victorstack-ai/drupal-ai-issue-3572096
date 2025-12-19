@@ -27,15 +27,15 @@ interface AiAutomatorInterface extends ConfigEntityInterface {
    * @param string $automator_type
    *   The automator type ID.
    *
-   * @return \Drupal\ai_automators\PluginInterfaces\aiAutomatorTypeInterface
+   * @return \Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface
    *   The automator type object.
    */
-  public function getAutomatorType(string $automator_type): aiAutomatorTypeInterface;
+  public function getAutomatorType(string $automator_type): AiAutomatorTypeInterface;
 
   /**
    * Returns the automator types for this style.
    *
-   * @return \Drupal\ai_automators\AutomatorTypePluginCollection|\Drupal\ai_automators\PluginInterfaces\aiAutomatorTypeInterface[]
+   * @return \Drupal\ai_automators\AutomatorTypePluginCollection|\Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface[]
    *   The automator type plugin collection.
    */
   public function getAutomatorTypes(): AutomatorTypePluginCollection;
@@ -43,7 +43,10 @@ interface AiAutomatorInterface extends ConfigEntityInterface {
   /**
    * Adds an automator type to this automator.
    *
-   * @return string[]
+   * @param array<string,mixed> $configuration
+   *   The automator type configuration.
+   *
+   * @return string
    *   The added automator type UUID.
    */
   public function addAutomatorType(array $configuration): string;
@@ -55,5 +58,15 @@ interface AiAutomatorInterface extends ConfigEntityInterface {
    *   The automator type instance UUID.
    */
   public function deleteAutomatorType(string $uuid): void;
+
+  /**
+   * Get a dummy entity of the type and bundle this automator is for.
+   *
+   * @todo we shouldn't need this.
+   *
+   * @return \Drupal\Core\Entity\EntityInterface
+   *   A dummy entity of the type and bundle this automator is for.
+   */
+  public function getDummyEntity();
 
 }

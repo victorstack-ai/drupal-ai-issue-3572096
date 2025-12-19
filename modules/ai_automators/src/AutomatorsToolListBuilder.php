@@ -13,7 +13,10 @@ use Drupal\Core\Entity\EntityInterface;
 final class AutomatorsToolListBuilder extends ConfigEntityListBuilder {
 
   /**
-   * {@inheritdoc}
+   * Returns the header row for the automator chain list.
+   *
+   * @return array<string, string>
+   *   The header row.
    */
   public function buildHeader(): array {
     $header['label'] = $this->t('Label');
@@ -23,7 +26,13 @@ final class AutomatorsToolListBuilder extends ConfigEntityListBuilder {
   }
 
   /**
-   * {@inheritdoc}
+   * Returns a single row in the automator chain list.
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   *   The entity.
+   *
+   * @return array<string, mixed>
+   *   The row data.
    */
   public function buildRow(EntityInterface $entity): array {
     /** @var \Drupal\ai_automators\AutomatorsToolInterface $entity */

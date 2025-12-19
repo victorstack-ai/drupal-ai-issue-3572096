@@ -42,8 +42,12 @@ class AiAutomatorCleanupService {
    *
    * @param \Drupal\ai_automators\AiAutomatorInterface $automator
    *   The automator entity being deleted.
+   *
+   * @return void
+   *   No return value.
    */
-  public function cleanupActionsForAutomator(AiAutomatorInterface $automator) {
+  public function cleanupActionsForAutomator(AiAutomatorInterface $automator): void {
+    /** @var string */
     $automator_id = $automator->id();
 
     // Find all entity form displays that might contain field widget actions
@@ -93,7 +97,7 @@ class AiAutomatorCleanupService {
   /**
    * Check if an action configuration references a specific automator.
    *
-   * @param array $action_config
+   * @param array<string|array<string>> $action_config
    *   The action configuration array.
    * @param string $automator_id
    *   The automator ID to check for.

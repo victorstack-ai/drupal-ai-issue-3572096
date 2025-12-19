@@ -23,7 +23,7 @@ class AutomatorConfigEvent extends Event {
   /**
    * The configuration for the automator.
    *
-   * @var array
+   * @var array<string,mixed>
    */
   protected $automatorConfig;
 
@@ -32,7 +32,7 @@ class AutomatorConfigEvent extends Event {
    *
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity to process.
-   * @param array $automatorConfig
+   * @param array<string,mixed> $automatorConfig
    *   The configuration for the automator.
    */
   public function __construct(ContentEntityInterface $entity, array $automatorConfig) {
@@ -53,7 +53,7 @@ class AutomatorConfigEvent extends Event {
   /**
    * Get the automator config.
    *
-   * @return array
+   * @return array<string,mixed>
    *   The automator config.
    */
   public function getAutomatorConfig() {
@@ -63,10 +63,13 @@ class AutomatorConfigEvent extends Event {
   /**
    * Set the automator config.
    *
-   * @param array $automatorConfig
+   * @param array<string,mixed> $automatorConfig
+   *   The automator config.
+   *
+   * @return void
    *   The automator config.
    */
-  public function setAutomatorConfig(array $automatorConfig) {
+  public function setAutomatorConfig(array $automatorConfig): void {
     $this->automatorConfig = $automatorConfig;
   }
 

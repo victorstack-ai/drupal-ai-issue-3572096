@@ -2,7 +2,6 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
-use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
@@ -12,6 +11,7 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai\Service\AiProviderFormHelper;
 use Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface;
+use Drupal\ai_automators\AiAutomatorInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -36,14 +36,14 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
   /**
    * The prompt json decoder.
    *
-   * @var \Drupal\ai\service\PromptJsonDecoder\PromptJsonDecoderInterface
+   * @var \Drupal\ai\Service\PromptJsonDecoder\PromptJsonDecoderInterface
    */
   protected PromptJsonDecoderInterface $promptJsonDecoder;
 
   /**
    * Constructs a new AiClientBase abstract class.
    *
-   * @param array $configuration
+   * @param array<string,mixed> $configuration
    *   The plugin configuration.
    * @param string $plugin_id
    *   The plugin_id for the plugin instance.
@@ -61,8 +61,8 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
    *   The current user.
    */
   final public function __construct(
-    $configuration,
-    $plugin_id,
+    array $configuration,
+    string $plugin_id,
     $plugin_definition,
     AiProviderPluginManager $pluginManager,
     AiProviderFormHelper $formHelper,
@@ -77,6 +77,15 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
 
   /**
    * Load from dependency injection container.
+   *
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The container.
+   * @param array<string,mixed> $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
@@ -250,14 +259,17 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
   /**
    * Looks for similar tags using any model.
    *
-   * @param array $values
+   * @param array<mixed> $values
    *   The values to search for.
    * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity being worked on.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The field definition interface.
-   * @param array $automatorConfig
+   * @param array<string,mixed> $automatorConfig
    *   The configuration.
+   *
+   * @return array<mixed>
+   *   The updated values.
    */
   public function searchSimilarTags(array $values, ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, $automatorConfig) {
     $list = $this->getTaxonomyList($entity, $fieldDefinition);
@@ -291,12 +303,12 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
   /**
    * Helper function to clean up values.
    *
-   * @param array $values
+   * @param array<mixed> $values
    *   The values to clean up.
    * @param string $cleanUp
    *   The clean up type.
    *
-   * @return array
+   * @return array<string,mixed>
    *   The cleaned up values.
    */
   public function cleanUpValues(array $values, $cleanUp) {
@@ -325,7 +337,7 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
    * @param bool $withDescriptions
    *   If we should include descriptions.
    *
-   * @return array
+   * @return array<int|string,string>
    *   Array of tid as key and name as value.
    */
   protected function getTaxonomyList(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, $withDescriptions = FALSE) {
@@ -336,8 +348,9 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
     // Get vocabularies and get taxonomies from that.
     foreach ($config['handler_settings']['target_bundles'] as $vid) {
       $terms = $storage->loadTree($vid);
+      /** @var \Drupal\taxonomy\TermInterface $term */
       foreach ($terms as $term) {
-        $returnTerms[$term->tid] = $withDescriptions ? $term->name . ' - ' . $term->description__value : $term->name;
+        $returnTerms[$term->id()] = $withDescriptions ? $term->getName() . ' - ' . $term->getDescription() : $term->getName();
       }
     }
     return $returnTerms;
@@ -348,7 +361,7 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
    *
    * @param string $name
    *   The name of the taxonomy.
-   * @param array $settings
+   * @param array<mixed> $settings
    *   The field config settings.
    *
    * @return \Drupal\taxonomy\Entity\Term|null

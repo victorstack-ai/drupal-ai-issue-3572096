@@ -2,7 +2,6 @@
 
 namespace Drupal\ai_automators\Plugin\AiAutomatorType;
 
-use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\File\FileExists;
@@ -10,6 +9,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\ai_automators\Attribute\AiAutomatorType;
 use Drupal\ai_automators\Exceptions\AiAutomatorResponseErrorException;
 use Drupal\ai_automators\PluginBaseClasses\VideoToText;
@@ -28,7 +28,9 @@ use Drupal\file\Entity\File;
 class LlmVideoToImage extends VideoToText implements AiAutomatorTypeInterface {
 
   /**
-   * {@inheritDoc}
+   * The title of the automator.
+   *
+   * @var string
    */
   public $title = 'LLM: Video To Image (Experimental)';
 
@@ -116,6 +118,7 @@ class LlmVideoToImage extends VideoToText implements AiAutomatorTypeInterface {
 
     $total = [];
     foreach ($entity->get($automatorConfig['base_field']) as $entityWrapper) {
+      /** @var \Drupal\file\Plugin\Field\FieldType\FileItem $entityWrapper */
       if ($entityWrapper->entity) {
         $fileEntity = $entityWrapper->entity;
         if (in_array($fileEntity->getMimeType(), [
@@ -130,6 +133,7 @@ class LlmVideoToImage extends VideoToText implements AiAutomatorTypeInterface {
           $input = new ChatInput([
             new ChatMessage('user', $prompt, $this->images),
           ]);
+          /** @var \Drupal\ai\OperationType\Chat\ChatMessage $response */
           $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
           $json = json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE);
           $values = $this->decodeValueArray($json);
@@ -141,6 +145,7 @@ class LlmVideoToImage extends VideoToText implements AiAutomatorTypeInterface {
           $input = new ChatInput([
             new ChatMessage('user', $prompt, $this->images),
           ]);
+          /** @var \Drupal\ai\OperationType\Chat\ChatMessage $response */
           $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
           $json = json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE);
           $values = $this->decodeValueArray($json);
@@ -173,13 +178,17 @@ class LlmVideoToImage extends VideoToText implements AiAutomatorTypeInterface {
 
     // First cut out the videos.
     $baseField = $automatorConfig['base_field'] ?? '';
-    $realPath = $this->fileSystem->realpath($entity->get($baseField)->entity
-      ->getFileUri());
+    /** @var \Drupal\file\FileInterface $file */
+    $file = $entity->get($baseField)->entity;
+    $realPath = $this->fileSystem->realpath($file->getFileUri());
+
+    if ($realPath === FALSE) {
+      throw new \RuntimeException('Could not get real path for file: ' . $file->getFileUri());
+    }
 
     // Get the actual file name and replace it with _cut.
     $fileName = pathinfo($realPath, PATHINFO_FILENAME);
-    $newFile = str_replace($fileName, $fileName . '_cut', $entity
-      ->get($baseField)->entity->getFileUri()) . '.jpg';
+    $newFile = str_replace($fileName, $fileName . '_cut', $file->getFileUri()) . '.jpg';
 
     $tmpName = "";
     foreach ($values as $keys) {

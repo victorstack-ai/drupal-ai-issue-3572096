@@ -2,7 +2,7 @@
 
 namespace Drupal\ai_automators\PluginInterfaces;
 
-use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 
 /**
@@ -13,7 +13,7 @@ interface AiAutomatorFieldProcessInterface {
   /**
    * Loads a Archive entity by its uuid.
    *
-   * @param \Drupal\Core\Entity\EntityInterface $entity
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity to check for modifications.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   Field definition interface.
@@ -23,28 +23,34 @@ interface AiAutomatorFieldProcessInterface {
    * @return bool
    *   Success or not.
    */
-  public function modify(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition, AiAutomatorTypeInterface $automatorType);
+  public function modify(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, AiAutomatorTypeInterface $automatorType);
 
   /**
    * Preprocessing to set the batch job before each field is run.
    *
-   * @param \Drupal\Core\Entity\EntityInterface $entity
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity to check for modifications.
+   *
+   * @return void
+   *   Nothing returned.
    */
-  public function preProcessing(EntityInterface $entity);
+  public function preProcessing(ContentEntityInterface $entity);
 
   /**
    * Postprocessing to set the batch job before each field is run.
    *
-   * @param \Drupal\Core\Entity\EntityInterface $entity
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity to check for modifications.
+   *
+   * @return void
+   *   Nothing returned.
    */
-  public function postProcessing(EntityInterface $entity);
+  public function postProcessing(ContentEntityInterface $entity);
 
   /**
    * Check if the processor is allowed.
    *
-   * @param \Drupal\Core\Entity\EntityInterface $entity
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity to check for modifications.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   Field definition interface.
@@ -52,6 +58,6 @@ interface AiAutomatorFieldProcessInterface {
    * @return bool
    *   If the processor is allowed.
    */
-  public function processorIsAllowed(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition);
+  public function processorIsAllowed(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition);
 
 }

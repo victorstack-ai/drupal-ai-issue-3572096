@@ -24,7 +24,13 @@ class AutomatorRouteSubscriber implements ContainerInjectionInterface {
   }
 
   /**
-   * {@inheritdoc}
+   * Creates an instance of the form.
+   *
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The service container.
+   *
+   * @return static
+   *   The form instance.
    */
   public static function create(ContainerInterface $container) {
     return new static(
@@ -34,6 +40,9 @@ class AutomatorRouteSubscriber implements ContainerInjectionInterface {
 
   /**
    * Provides dynamic routes.
+   *
+   * @return array<mixed>
+   *   An array of routes.
    */
   public function routes(): array {
     $routes = [];
@@ -53,6 +62,10 @@ class AutomatorRouteSubscriber implements ContainerInjectionInterface {
       }
 
       $path = $entity_type->hasLinkTemplate('canonical') ? $entity_type->getLinkTemplate('canonical') : $entity_type->getLinkTemplate('edit-form');
+
+      if (!$path) {
+        continue;
+      }
 
       // But sometimes the edit-form link is itself a sub-path, usually ending
       // with "/edit" so we will accommodate for that.

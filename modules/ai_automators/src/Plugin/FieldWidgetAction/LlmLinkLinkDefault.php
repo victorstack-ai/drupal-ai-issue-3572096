@@ -25,6 +25,14 @@ class LlmLinkLinkDefault extends AutomatorBaseAction {
 
   /**
    * Ajax handler for Automators.
+   *
+   * @param array<mixed> $form
+   *   The form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array<mixed>
+   *   The updated form element.
    */
   public function aiAutomatorsAjax(array &$form, FormStateInterface $form_state) {
     $triggering_element = $form_state->getTriggeringElement();
@@ -38,14 +46,26 @@ class LlmLinkLinkDefault extends AutomatorBaseAction {
   }
 
   /**
-   * {@inheritdoc}
+   * Save form values.
+   *
+   * @param array<mixed> $form
+   *   The form.
+   * @param string $form_key
+   *   The form key.
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   The entity.
+   * @param int|null $key
+   *   The key.
+   *
+   * @return array<mixed>
+   *   The form values.
    */
   protected function saveFormValues(array &$form, string $form_key, $entity, ?int $key = NULL): array {
     if (is_null($key)) {
       // If not key is provided, we should iterate through all items.
       foreach ($entity->get($form_key) as $index => $item) {
         if ($item->get($this->formElementProperty)) {
-          if ($item && $item->get($this->formElementProperty)) {
+          if ($item) {
             $form[$form_key]['widget'][$index][$this->formElementProperty]['#value'] = $item->get($this->formElementProperty)->getValue();
             $form[$form_key]['widget'][$index]['title']['#value'] = $item->title ?? '';
           }

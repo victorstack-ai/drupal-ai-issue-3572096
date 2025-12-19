@@ -60,13 +60,16 @@ class AutoCompleteTaxonomy extends AutomatorBaseAction {
    *
    * @todo fix to refactor to base class.
    *
-   * @param array $form
+   * @param array<mixed> $form
    *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state object.
    *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   *
+   * @return void
+   *   No return value.
    */
   public function runAutomatorSubmit(array &$form, FormStateInterface $form_state): void {
     $triggering_element = $form_state->getTriggeringElement();
@@ -119,6 +122,8 @@ class AutoCompleteTaxonomy extends AutomatorBaseAction {
     // Store values in form state for the AJAX callback to use.
     $automator_values = [];
     foreach ($items as $index => $item) {
+      /** @var \Drupal\Core\Field\EntityReferenceFieldItemList $item */
+      // @phpstan-ignore missingType.generics
       $target_entity = $item->entity;
       if ($target_entity) {
         $automator_values[$index] = [
@@ -145,7 +150,15 @@ class AutoCompleteTaxonomy extends AutomatorBaseAction {
   }
 
   /**
-   * {@inheritdoc}
+   * Ajax handler for Automators.
+   *
+   * @param array<mixed> $form
+   *   The form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array<mixed>
+   *   The updated form element.
    */
   public function aiAutomatorsAjax(array &$form, FormStateInterface $form_state) {
     $triggering_element = $form_state->getTriggeringElement();
@@ -166,11 +179,24 @@ class AutoCompleteTaxonomy extends AutomatorBaseAction {
   }
 
   /**
-   * {@inheritdoc}
+   * Save form values.
+   *
+   * @param array<mixed> $form
+   *   The form.
+   * @param string $form_key
+   *   The form key.
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   The entity.
+   * @param int|null $key
+   *   The key.
+   *
+   * @return array<mixed>
+   *   The form values.
    */
   protected function saveFormValues(array &$form, string $form_key, $entity, ?int $key = NULL): array {
     // Populate the form with the stored values.
     $automator_values = $entity;
+    /** @var array<mixed> $value */
     foreach ($automator_values as $index => $value) {
       if (isset($form[$form_key]['widget'][$index][$this->formElementProperty])) {
         $form[$form_key]['widget'][$index][$this->formElementProperty]['#value'] = $value['label'];

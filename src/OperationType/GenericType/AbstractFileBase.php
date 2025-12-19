@@ -7,7 +7,7 @@ use Drupal\ai\Traits\File\GenerateBase64Trait;
 use Drupal\ai\Traits\File\GenerateBinaryTrait;
 use Drupal\ai\Traits\File\GenerateFileEntityTrait;
 use Drupal\ai\Traits\File\GenerateMediaEntityTrait;
-use Drupal\file\Entity\File;
+use Drupal\file\FileInterface;
 
 /**
  * The file base.
@@ -132,7 +132,7 @@ abstract class AbstractFileBase implements FileBaseInterface {
   /**
    * {@inheritdoc}
    */
-  public function setFileFromFile(File $file): void {
+  public function setFileFromFile(FileInterface $file): void {
     $this->mimeType = $file->getMimeType();
     $this->binary = file_get_contents($file->getFileUri());
     $this->filename = $file->getFilename();

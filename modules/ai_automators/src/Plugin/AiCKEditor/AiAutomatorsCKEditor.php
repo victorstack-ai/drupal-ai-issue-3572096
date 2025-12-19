@@ -15,12 +15,12 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\file\Element\ManagedFile;
-use Drupal\file\Entity\File;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai_automators\Service\Automate;
 use Drupal\ai_ckeditor\AiCKEditorPluginBase;
 use Drupal\ai_ckeditor\Attribute\AiCKEditor;
+use Drupal\file\Element\ManagedFile;
+use Drupal\file\Entity\File;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -80,7 +80,36 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
   protected LanguageManagerInterface $languageManager;
 
   /**
-   * {@inheritdoc}
+   * Constructs a AiAutomatorsCKEditor object.
+   *
+   * @param array<mixed> $configuration
+   *   A configuration array containing information about the plugin instance.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
+   * @param \Drupal\ai\AiProviderPluginManager $ai_provider_manager
+   *   The AI provider plugin manager.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
+   * @param \Drupal\Core\Session\AccountProxyInterface $account
+   *   The current user account.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $requestStack
+   *   The request stack.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
+   *   The logger factory.
+   * @param \Drupal\ai_automators\Service\Automate $automate
+   *   The automate service.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory.
+   * @param \Drupal\Core\Entity\EntityFieldManagerInterface $field_manager
+   *   The field manager.
+   * @param \Drupal\Core\File\FileUrlGeneratorInterface $file_url_generator
+   *   The file url generator.
+   * @param \Drupal\Core\Entity\EntityFormBuilderInterface $entity_form_builder
+   *   The entity form builder.
+   * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
+   *   The language manager.
    */
   public function __construct(
     array $configuration,
@@ -108,7 +137,19 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
   }
 
   /**
-   * {@inheritdoc}
+   * Creates an instance of the plugin.
+   *
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The service container.
+   * @param array<mixed> $configuration
+   *   A configuration array containing information about the plugin instance.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
+   *
+   * @return static
+   *   The plugin instance.
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
@@ -130,7 +171,10 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
   }
 
   /**
-   * {@inheritdoc}
+   * Default configuration.
+   *
+   * @return array<string, mixed>
+   *   The default configuration.
    */
   public function defaultConfiguration() {
     return [
@@ -139,7 +183,15 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
   }
 
   /**
-   * {@inheritdoc}
+   * Build the configuration form.
+   *
+   * @param array<mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array<mixed>
+   *   The form array.
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     // Create checkboxes.
@@ -216,21 +268,40 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
   }
 
   /**
-   * {@inheritdoc}
+   * Need selected text.
+   *
+   * @return bool
+   *   TRUE if selected text is needed.
    */
   protected function needsSelectedText() {
     return FALSE;
   }
 
   /**
-   * {@inheritdoc}
+   * Validate the configuration form.
+   *
+   * @param array<mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return void
+   *   No return value.
    */
   public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
 
   }
 
   /**
-   * {@inheritdoc}
+   * Submit the configuration form.
+   *
+   * @param array<mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return void
+   *   No return value.
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     foreach ($this->automate->getWorkflows() as $workflow_id => $workflow_label) {
@@ -381,6 +452,16 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
 
   /**
    * Static value callback for managed_file.
+   *
+   * @param array<mixed> $element
+   *   The form element.
+   * @param mixed $input
+   *   The input value.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return mixed
+   *   The processed value.
    */
   public static function fileValueCallback(&$element, $input, FormStateInterface $form_state) {
     // Use default managed_file value callback to handle initial processing.
@@ -396,6 +477,14 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
 
   /**
    * Static submit handler to save uploaded files and store only file IDs.
+   *
+   * @param array<mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return void
+   *   No return value.
    */
   public static function saveUploadedFile(array &$form, FormStateInterface $form_state) {
     $values = $form_state->getValue('plugin_config');
@@ -414,7 +503,15 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
   }
 
   /**
-   * {@inheritdoc}
+   * Ajax Generate callback.
+   *
+   * @param array<mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return \Drupal\Core\Ajax\AjaxResponse
+   *   The ajax response.
    */
   public function ajaxGenerate(array $form, FormStateInterface $form_state) {
     $response = new AjaxResponse();
@@ -505,7 +602,7 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
   /**
    * If the field is an image, render an image.
    *
-   * @param array $data
+   * @param array<mixed> $data
    *   The image data id.
    *
    * @return string

@@ -30,8 +30,8 @@ final class AiAutomatorProcessRule extends AttributeBase {
    */
   public function __construct(
     public readonly string $id,
-    public readonly TranslatableMarkup $title,
-    public readonly TranslatableMarkup $description,
+    public readonly TranslatableMarkup|NULL $title,
+    public readonly TranslatableMarkup|NULL $description,
     public readonly ?string $deriver = NULL,
   ) {
   }

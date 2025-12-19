@@ -2,12 +2,12 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
-use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\PluginBase;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 use Drupal\ai_automators\Traits\FileHelperTrait;
 use Drupal\ai_automators\Traits\GeneralHelperTrait;
@@ -24,7 +24,17 @@ abstract class ExternalBase extends PluginBase implements AiAutomatorTypeInterfa
   use StringTranslationTrait;
 
   /**
-   * {@inheritdoc}
+   * Construct the ExternalBase object.
+   *
+   * @param array<mixed> $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin ID.
+   * @param mixed $plugin_definition
+   *   The plugin definition.
+   *
+   * @return void
+   *   No return value.
    */
   public function __construct(array $configuration, $plugin_id, $plugin_definition) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
@@ -112,34 +122,10 @@ abstract class ExternalBase extends PluginBase implements AiAutomatorTypeInterfa
   }
 
   /**
-   * Old method to add extra form fields.
-   *
-   * @deprecated in ai:1.2.0 and is removed from ai:2.0.0. Use buildConfigurationForm() instead.
-   * @see https://www.drupal.org/project/ai/issues/3535824
-   */
-  public function extraFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
-    // Trigger warning only if called on this class directly.
-    // Child classes calling parent::extraFormFields() will still execute
-    // this, but they inherit it intentionally.
-    if (get_class($this) === __CLASS__) {
-      @trigger_error('extraFormFields() is deprecated in ai:1.2.0 and will be removed in a ai:2.0.0. Use buildConfigurationForm() instead. See https://www.drupal.org/project/ai/issues/3535824', E_USER_DEPRECATED);
-    }
-
-    // Default: return empty array so subclasses can override safely.
-    return [];
-  }
-
-  /**
    * {@inheritDoc}
    */
-  public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []) {
+  public function extraAdvancedFormFields(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, FormStateInterface $formState, array $defaultValues = []): array {
     return [];
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function validateConfigValues($form, FormStateInterface $formState) {
   }
 
   /**
@@ -193,11 +179,15 @@ abstract class ExternalBase extends PluginBase implements AiAutomatorTypeInterfa
    * {@inheritdoc}
    */
   public function label(): string {
+    // @phpstan-ignore-next-line
     return $this->pluginDefinition['label'];
   }
 
   /**
-   * {@inheritDoc}
+   * The default configuration for the automator type.
+   *
+   * @return array<mixed>
+   *   The default configuration.
    */
   public function defaultConfiguration() {
     return [];
@@ -226,7 +216,10 @@ abstract class ExternalBase extends PluginBase implements AiAutomatorTypeInterfa
   }
 
   /**
-   * {@inheritdoc}
+   * Get the configuration.
+   *
+   * @return array<mixed>
+   *   The configuration array.
    */
   public function getConfiguration() {
     return [
@@ -238,7 +231,13 @@ abstract class ExternalBase extends PluginBase implements AiAutomatorTypeInterfa
   }
 
   /**
-   * {@inheritdoc}
+   * Sets the configuration.
+   *
+   * @param array<mixed> $configuration
+   *   The configuration array.
+   *
+   * @return $this
+   *   The current instance.
    */
   public function setConfiguration(array $configuration) {
     $configuration += [

@@ -13,7 +13,10 @@ use Drupal\Core\Entity\EntityListBuilder;
 final class AutomatorChainListBuilder extends EntityListBuilder {
 
   /**
-   * {@inheritdoc}
+   * Returns the header row for the automator chain list.
+   *
+   * @return array<string, string>
+   *   The header row.
    */
   public function buildHeader(): array {
     $header['id'] = $this->t('ID');
@@ -21,7 +24,13 @@ final class AutomatorChainListBuilder extends EntityListBuilder {
   }
 
   /**
-   * {@inheritdoc}
+   * Returns a single row in the automator chain list.
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   *   The entity.
+   *
+   * @return array<string, mixed>
+   *   The row data.
    */
   public function buildRow(EntityInterface $entity): array {
     /** @var \Drupal\ai_automators\AutomatorChainInterface $entity */
@@ -30,7 +39,10 @@ final class AutomatorChainListBuilder extends EntityListBuilder {
   }
 
   /**
-   * {@inheritdoc}
+   * A renderable array for this list builder.
+   *
+   * @return array<string,mixed>
+   *   A renderable array.
    */
   public function render(): array {
     $build = parent::render();

@@ -32,7 +32,7 @@ final class AiAutomatorType extends AttributeBase {
    */
   public function __construct(
     public readonly string $id,
-    public readonly TranslatableMarkup $label,
+    public readonly TranslatableMarkup|NULL $label,
     public readonly string $field_rule,
     public readonly ?string $target,
     public readonly ?string $deriver = NULL,

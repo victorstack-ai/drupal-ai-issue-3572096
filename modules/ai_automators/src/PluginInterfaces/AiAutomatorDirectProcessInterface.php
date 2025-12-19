@@ -2,7 +2,7 @@
 
 namespace Drupal\ai_automators\PluginInterfaces;
 
-use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 
 /**
@@ -13,16 +13,16 @@ interface AiAutomatorDirectProcessInterface extends AiAutomatorFieldProcessInter
   /**
    * If the automator should process the field directly.
    *
-   * @param \Drupal\Core\Entity\EntityInterface $entity
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity to process.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The field definition.
-   * @param array $automatorConfig
+   * @param array<string,mixed> $automatorConfig
    *   The configuration for the automator.
    *
    * @return bool
    *   TRUE if the automator should process the field directly, FALSE otherwise.
    */
-  public function shouldProcessDirectly(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig): bool;
+  public function shouldProcessDirectly(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorConfig): bool;
 
 }

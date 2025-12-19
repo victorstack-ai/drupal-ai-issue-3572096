@@ -28,7 +28,9 @@ class LlmTextCreateSummary extends ComplexTextChat implements AiAutomatorTypeInt
   }
 
   /**
-   * {@inheritDoc}
+   * The title of the automator.
+   *
+   * @var string
    */
   public $title = 'LLM: Text Summary';
 

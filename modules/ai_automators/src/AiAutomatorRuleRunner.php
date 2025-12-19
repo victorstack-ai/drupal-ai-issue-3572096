@@ -2,7 +2,7 @@
 
 namespace Drupal\ai_automators;
 
-use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManager;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\ai_automators\Event\ValuesChangeEvent;
@@ -48,22 +48,22 @@ class AiAutomatorRuleRunner {
   /**
    * Generate response.
    *
-   * @param \Drupal\Core\Entity\EntityInterface $entity
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
    *   The entity being worked on.
    * @param \Drupal\Core\Field\FieldDefinitionInterface $fieldDefinition
    *   The field definition interface.
-   * @param array $automatorTypeConfig
+   * @param array<string,mixed> $automatorTypeConfig
    *   The automator config.
    *
-   * @return \Drupal\Core\Entity\EntityInterface
+   * @return \Drupal\Core\Entity\ContentEntityInterface
    *   Throws error or returns entity.
    */
-  public function generateResponse(EntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorTypeConfig) {
+  public function generateResponse(ContentEntityInterface $entity, FieldDefinitionInterface $fieldDefinition, array $automatorTypeConfig): ContentEntityInterface {
     // Get rule.
     // @todo refactor to not need to pass around config to itself.
     $rule = $this->fieldRules->findRule($automatorTypeConfig['id']);
 
-    if (!$rule) {
+    if (empty($rule)) {
       throw new AiAutomatorRuleNotFoundException('The rule could not be found: ' . $fieldDefinition->getType());
     }
 
@@ -83,7 +83,7 @@ class AiAutomatorRuleRunner {
     }
 
     // Save values.
-    if ($values && is_array($values)) {
+    if (!empty($values)) {
       $rule->storeValues($entity, $values, $fieldDefinition, $automatorTypeConfig['settings']);
     }
     return $entity;

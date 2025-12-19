@@ -23,7 +23,9 @@ use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 class LlmSimpleTextLong extends SimpleTextChat implements AiAutomatorTypeInterface {
 
   /**
-   * {@inheritDoc}
+   * The title of the automator.
+   *
+   * @var string
    */
   public $title = 'LLM: Text (simple)';
 
@@ -31,6 +33,7 @@ class LlmSimpleTextLong extends SimpleTextChat implements AiAutomatorTypeInterfa
    * {@inheritDoc}
    */
   public function buildAdvancedConfigurationForm(array $form, FormStateInterface $form_state, AiAutomatorInterface $automator): array {
+    parent::buildAdvancedConfigurationForm($form, $form_state, $automator);
     $form['use_text_format'] = [
       '#type' => 'select',
       '#title' => $this->t('Use text format'),

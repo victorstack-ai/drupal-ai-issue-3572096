@@ -13,7 +13,10 @@ use Drupal\Core\Entity\EntityInterface;
 final class AiAutomatorListBuilder extends ConfigEntityListBuilder {
 
   /**
-   * {@inheritdoc}
+   * Builds the header row for the entity listing.
+   *
+   * @return array<string, string>
+   *   A render array structure of header strings.
    */
   public function buildHeader(): array {
     $header['label'] = $this->t('Label');
@@ -27,7 +30,10 @@ final class AiAutomatorListBuilder extends ConfigEntityListBuilder {
   }
 
   /**
-   * {@inheritdoc}
+   * Builds a row for the entity listing.
+   *
+   * @return array<string, string>
+   *   A render array structure of row strings.
    */
   public function buildRow(EntityInterface $entity): array {
     /** @var \Drupal\ai_automators\AiAutomatorInterface $entity */

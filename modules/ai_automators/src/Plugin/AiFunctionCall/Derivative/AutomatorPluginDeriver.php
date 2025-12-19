@@ -43,7 +43,13 @@ class AutomatorPluginDeriver extends DeriverBase implements ContainerDeriverInte
   }
 
   /**
-   * {@inheritdoc}
+   * Get the derivative definitions.
+   *
+   * @param array<mixed> $base_plugin_definition
+   *   The base plugin definition.
+   *
+   * @return array<string, array<mixed>>
+   *   The derivative definitions.
    */
   public function getDerivativeDefinitions($base_plugin_definition) {
     if (empty($this->derivatives)) {
@@ -73,7 +79,7 @@ class AutomatorPluginDeriver extends DeriverBase implements ContainerDeriverInte
    * @param \Drupal\ai_automators\Entity\AutomatorsTool $tool
    *   The automator tool.
    *
-   * @return array
+   * @return array<string, \Drupal\Core\Plugin\Context\ContextDefinition>
    *   An array of context definitions.
    */
   protected function getContextDefinitions(AutomatorsTool $tool) {

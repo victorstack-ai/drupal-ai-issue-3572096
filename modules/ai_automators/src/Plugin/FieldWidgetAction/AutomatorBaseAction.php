@@ -4,12 +4,12 @@ namespace Drupal\ai_automators\Plugin\FieldWidgetAction;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai_automators\AiAutomatorEntityModifier;
 use Drupal\ai_automators\PluginManager\AiAutomatorTypeManager;
 use Drupal\field_widget_actions\FieldWidgetActionBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 
 /**
  * This is an abstract base class for automator actions.
@@ -70,7 +70,19 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
   protected LoggerChannelFactoryInterface $loggerFactory;
 
   /**
-   * {@inheritdoc}
+   * Creates an instance of the AutomatorBaseAction.
+   *
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The service container.
+   * @param array<mixed> $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin ID.
+   * @param mixed $plugin_definition
+   *   The plugin definition.
+   *
+   * @return static
+   *   The created instance.
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
@@ -83,7 +95,10 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
   }
 
   /**
-   * {@inheritdoc}
+   * The default configuration for the automator action.
+   *
+   * @return array<string, mixed>
+   *   The default configuration.
    */
   public function defaultConfiguration() {
     return [
@@ -94,7 +109,17 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
   }
 
   /**
-   * {@inheritdoc}
+   * Build the configuration form for the automator action.
+   *
+   * @param array<mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param string|null $action_id
+   *   The action ID.
+   *
+   * @return array<mixed>
+   *   The form array.
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state, $action_id = NULL) {
     $settings = $this->getConfiguration();
@@ -135,14 +160,20 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
   }
 
   /**
-   * {@inheritdoc}
+   * Get the AJAX callback function name.
+   *
+   * @return string|null
+   *   The AJAX callback function name.
    */
   public function getAjaxCallback(): ?string {
     return 'aiAutomatorsAjax';
   }
 
   /**
-   * {@inheritdoc}
+   * Get the libraries to be attached.
+   *
+   * @return array<int, string>
+   *   The libraries to be attached.
    */
   public function getLibraries(): array {
     return [
@@ -151,7 +182,17 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
   }
 
   /**
-   * {@inheritdoc}
+   * The action button styling.
+   *
+   * @param array<mixed> $form
+   *   The form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param array<string, mixed> $context
+   *   The context.
+   *
+   * @return void
+   *   No return value.
    */
   protected function actionButton(array &$form, FormStateInterface $form_state, array $context = []) {
     parent::actionButton($form, $form_state, $context);
@@ -195,7 +236,7 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
    * @param string $field_name
    *   The field name.
    *
-   * @return array
+   * @return array<mixed>
    *   An array of automators that are enabled for the field widget.
    */
   public function getAutomatorsOptions(string $entity_type, string $bundle, string $field_name): array {
@@ -241,7 +282,7 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
   /**
    * Function to populate values.
    *
-   * @param array $form
+   * @param array<mixed> $form
    *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
@@ -249,6 +290,9 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
    *   The form key for the field.
    * @param int|null $key
    *   The key for the field item, used for multi-value fields.
+   *
+   * @return array<string, mixed>
+   *   The updated form array with values populated.
    */
   public function populateAutomatorValues(array &$form, FormStateInterface $form_state, string $form_key, ?int $key = NULL): array {
     // Get the content entity from form object.
@@ -284,7 +328,7 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
   /**
    * Function to save the form values.
    *
-   * @param array $form
+   * @param array<mixed> $form
    *   The form array.
    * @param string $form_key
    *   The form key for the field.
@@ -293,7 +337,7 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
    * @param int|null $key
    *   The key for the field item, used for multi-value fields.
    *
-   * @return array
+   * @return array<string, mixed>
    *   The updated form array with values populated.
    */
   protected function saveFormValues(array &$form, string $form_key, $entity, ?int $key = NULL): array {
@@ -302,7 +346,7 @@ abstract class AutomatorBaseAction extends FieldWidgetActionBase {
       // If not key is provided, we should iterate through all items.
       foreach ($entity->get($form_key) as $index => $item) {
         if ($item->get($this->formElementProperty)) {
-          if ($item && $item->get($this->formElementProperty)) {
+          if ($item) {
             $form[$form_key]['widget'][$index][$this->formElementProperty]['#value'] = $item->get($this->formElementProperty)->getValue();
           }
         }

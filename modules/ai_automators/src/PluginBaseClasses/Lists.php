@@ -40,8 +40,8 @@ class Lists extends RuleBase {
     $keys = array_keys($config['allowed_values']);
     $values = array_values($config['allowed_values']);
 
-    $tokens['min'] = min($keys) ?? NULL;
-    $tokens['max'] = max($keys) ?? NULL;
+    $tokens['min'] = empty($keys) ? 0 : min($keys);
+    $tokens['max'] = empty($keys) ? 0 : max($keys);
     $tokens['options_comma'] = implode(', ', $keys);
     $tokens['options_nl'] = implode("\n", $keys);
     $tokens['value_options_comma'] = implode(', ', $values);

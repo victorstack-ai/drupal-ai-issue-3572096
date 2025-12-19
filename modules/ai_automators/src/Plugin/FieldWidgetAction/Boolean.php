@@ -24,6 +24,14 @@ class Boolean extends AutomatorBaseAction {
 
   /**
    * Ajax handler for Automators.
+   *
+   * @param array<mixed> $form
+   *   The form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array<mixed>
+   *   The updated form element.
    */
   public function aiAutomatorsAjax(array &$form, FormStateInterface $form_state) {
     // Get the triggering element, as it contains the settings.
@@ -42,7 +50,19 @@ class Boolean extends AutomatorBaseAction {
   }
 
   /**
-   * {@inheritdoc}
+   * Save form values.
+   *
+   * @param array<mixed> $form
+   *   The form.
+   * @param string $form_key
+   *   The form key.
+   * @param \Drupal\Core\Entity\ContentEntityInterface $entity
+   *   The entity.
+   * @param int|null $key
+   *   The key.
+   *
+   * @return array<mixed>
+   *   The form values.
    */
   protected function saveFormValues(array &$form, string $form_key, $entity, ?int $key = NULL): array {
     // Get the first (and only) item from the boolean field.

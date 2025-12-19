@@ -30,14 +30,14 @@ interface AiCKEditorPluginInterface extends PluginFormInterface, ConfigurableInt
   /**
    * Returns the built form for CKEditor.
    *
-   * @param array $form
+   * @param array<mixed> $form
    *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
-   * @param array $settings
+   * @param array<mixed> $settings
    *   The settings array.
    *
-   * @return array
+   * @return array<mixed>
    *   The form array.
    */
   public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []);
@@ -45,14 +45,14 @@ interface AiCKEditorPluginInterface extends PluginFormInterface, ConfigurableInt
   /**
    * Validates the form for CKEditor.
    *
-   * @param array $form
+   * @param array<mixed> $form
    *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
-   * @param array $settings
+   * @param array<mixed> $settings
    *   The settings array.
    *
-   * @return array
+   * @return array<mixed>
    *   The form array.
    */
   public function validateCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []);
@@ -60,12 +60,12 @@ interface AiCKEditorPluginInterface extends PluginFormInterface, ConfigurableInt
   /**
    * Submits the form for CKEditor.
    *
-   * @param array $form
+   * @param array<mixed> $form
    *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
    *
-   * @return array
+   * @return array<mixed>
    *   The form array.
    */
   public function submitCkEditorModalForm(array $form, FormStateInterface $form_state);
@@ -73,7 +73,7 @@ interface AiCKEditorPluginInterface extends PluginFormInterface, ConfigurableInt
   /**
    * Returns available editors if the plugin provides many.
    *
-   * @return array
+   * @return array<string,string>
    *   The array of editors with id and label.
    */
   public function availableEditors();

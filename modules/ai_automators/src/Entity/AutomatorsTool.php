@@ -74,6 +74,8 @@ final class AutomatorsTool extends ConfigEntityBase implements AutomatorsToolInt
 
   /**
    * The field connections.
+   *
+   * @var array<string,mixed>
    */
   protected array $field_connections;
 

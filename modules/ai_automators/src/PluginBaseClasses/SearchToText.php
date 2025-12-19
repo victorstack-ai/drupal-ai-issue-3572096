@@ -2,11 +2,11 @@
 
 namespace Drupal\ai_automators\PluginBaseClasses;
 
-use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\ai\OperationType\Embeddings\EmbeddingsInput;
+use Drupal\ai_automators\AiAutomatorInterface;
 
 /**
  * Base class for Search to Text automator type plugins.
@@ -57,7 +57,7 @@ abstract class SearchToText extends SearchToReference {
    * @param string|null $index_id
    *   The search index ID.
    *
-   * @return array
+   * @return array<string,mixed>
    *   Array of field options.
    */
   protected function getFieldOptions(?string $index_id): array {
@@ -92,10 +92,13 @@ abstract class SearchToText extends SearchToReference {
   /**
    * Ajax callback to update output field options.
    *
-   * @param array $form
+   * @param array<mixed> $form
    *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
+   *
+   * @return array<mixed>
+   *   The updated output field element.
    */
   public function updateOutputFieldOptions(array &$form, FormStateInterface $form_state) {
     // Get the new index and its fields.
@@ -161,12 +164,15 @@ abstract class SearchToText extends SearchToReference {
 
       // Get embeddings.
       [$provider_id, $model_id] = explode('__', $backend_config['embeddings_engine']);
+      /** @var \Drupal\ai\OperationType\Embeddings\EmbeddingsInterface $embedding_llm */
       $embedding_llm = $this->aiProviderManager->createInstance($provider_id);
       $input = new EmbeddingsInput($value);
       $params['vector_input'] = $embedding_llm->embeddings($input, $model_id)->getNormalized();
 
       // Get VDB client and perform search.
       $vdb_client = $this->vdbProviderManager->createInstance($backend_config['database']);
+      // PHPStan false positive: Variadic parameters are supported.
+      // @phpstan-ignore-next-line
       $response = $vdb_client->vectorSearch(...$params);
 
       // Extract field values from results.

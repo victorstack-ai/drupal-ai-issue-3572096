@@ -2,13 +2,13 @@
 
 namespace Drupal\ai_automators\Plugin\AiAutomatorType;
 
-use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ai\OperationType\Chat\ChatInput;
 use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai_automators\AiAutomatorInterface;
 use Drupal\ai_automators\Attribute\AiAutomatorType;
 use Drupal\ai_automators\PluginBaseClasses\VideoToText;
 use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
@@ -25,7 +25,9 @@ use Drupal\ai_automators\PluginInterfaces\AiAutomatorTypeInterface;
 class LlmVideoToHtml extends VideoToText implements AiAutomatorTypeInterface {
 
   /**
-   * {@inheritDoc}
+   * The title of the automator.
+   *
+   * @var string
    */
   public $title = 'LLM: Video To HTML (Experimental)';
 
@@ -87,6 +89,7 @@ class LlmVideoToHtml extends VideoToText implements AiAutomatorTypeInterface {
 
     $total = [];
     foreach ($entity->get($automatorConfig['base_field']) as $entityWrapper) {
+      /** @var \Drupal\file\Plugin\Field\FieldType\FileItem $entityWrapper */
       if ($entityWrapper->entity) {
         $fileEntity = $entityWrapper->entity;
         if (in_array($fileEntity->getMimeType(), [
@@ -111,6 +114,7 @@ class LlmVideoToHtml extends VideoToText implements AiAutomatorTypeInterface {
           $input = new ChatInput([
             new ChatMessage('user', $prompt, $this->images),
           ]);
+          /** @var \Drupal\ai\OperationType\Chat\ChatMessage $response */
           $response = $instance->chat($input, $automatorConfig['ai_model'])->getNormalized();
           $json = json_decode(str_replace("\n", "", trim(str_replace(['```json', '```'], '', $response->getText()))), TRUE);
           $values = $this->decodeValueArray($json);
@@ -157,7 +161,9 @@ class LlmVideoToHtml extends VideoToText implements AiAutomatorTypeInterface {
             $cropData = $parts;
           }
         }
-        $screenShot = $this->screenshotFromTimestamp($entity->get($baseField)->entity, $match, $cropData);
+        /** @var \Drupal\file\FileInterface $fileInterface */
+        $fileInterface = $entity->get($baseField)->entity;
+        $screenShot = $this->screenshotFromTimestamp($fileInterface, $match, $cropData);
         $value = str_replace($match, $screenShot->createFileUrl(TRUE), $value);
         $value = preg_replace('/data-crop="(.*)"/', '', $value);
       }

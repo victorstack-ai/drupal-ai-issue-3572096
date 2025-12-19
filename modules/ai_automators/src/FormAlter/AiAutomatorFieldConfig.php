@@ -8,9 +8,9 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\Url;
 use Drupal\ai_automators\AiFieldRules;
 use Drupal\ai_automators\PluginManager\AiAutomatorFieldProcessManager;
-use Drupal\Core\Url;
 
 /**
  * A helper to store configs for fields.
@@ -46,7 +46,7 @@ class AiAutomatorFieldConfig {
   /**
    * Alter the form with field config if applicable.
    *
-   * @param array $form
+   * @param array<mixed> $form
    *   The form passed by reference.
    * @param \Drupal\Core\Form\FormStateInterface $formState
    *   The form state interface.
@@ -54,6 +54,9 @@ class AiAutomatorFieldConfig {
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   *
+   * @return void
+   *   No return value.
    */
   public function alterForm(array &$form, FormStateInterface $formState): void {
     // Get the entity and the field name.
@@ -80,11 +83,11 @@ class AiAutomatorFieldConfig {
     // Get the field config.
     $fields = $this->fieldManager->getFieldDefinitions($entity->getEntityTypeId(), $entity->bundle());
 
-    /** @var \Drupal\field\Entity\FieldConfig $fieldInfo */
+    /** @var \Drupal\field\Entity\FieldConfig|null $fieldInfo */
     $fieldInfo = $fields[$fieldName] ?? NULL;
 
     // The info might not have been saved yet.
-    if (!$fieldInfo) {
+    if ($fieldInfo === NULL) {
       return;
     }
 

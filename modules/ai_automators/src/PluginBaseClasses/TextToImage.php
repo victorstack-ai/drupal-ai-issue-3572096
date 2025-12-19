@@ -54,6 +54,7 @@ class TextToImage extends RuleBase {
 
     // Generate the images.
     $images = [];
+    /** @var \Drupal\ai\OperationType\TextToImage\TextToImageInterface $instance */
     $instance = $this->prepareLlmInstance('text_to_image', $automatorConfig);
     foreach ($prompts as $prompt) {
       // The image binary.
@@ -100,7 +101,7 @@ class TextToImage extends RuleBase {
   /**
    * Gets the filename. Override this.
    *
-   * @param array $args
+   * @param array<mixed> $args
    *   If arguments are needed to create the filename.
    *
    * @return string
