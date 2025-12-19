@@ -127,7 +127,7 @@ pages:
         exit 1
       fi
     - cd $CI_PROJECT_DIR && pwd
-    - pip install mkdocs-material mike mkdocs-glightbox
+    - pip install mkdocs-material mike mkdocs-glightbox mkdocs-include-markdown-plugin
     - echo "Pulling latest changes from origin to get mike versions"
     - git fetch origin gh-pages --depth=1
     - pwd && ls -l logo* && ls -l docs/logo* || true
