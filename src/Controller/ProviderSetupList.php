@@ -53,6 +53,7 @@ class ProviderSetupList extends ControllerBase {
    *   A render array suitable for rendering the admin interface.
    */
   public function list() {
+    $blockContents = $this->systemManager->getBlockContents();
     // Check special cases based on the current path.
     switch ($this->currentPath->getPath()) {
       case '/admin/config/ai/vdb_providers':
@@ -67,7 +68,7 @@ class ProviderSetupList extends ControllerBase {
         break;
 
       case '/admin/config/ai/providers':
-        if (empty($this->aiProviderManager->getDefinitions())) {
+        if (empty($blockContents['#content'])) {
           return [
             '#markup' => $this->t('No AI provider is configured. Please <a href=":link" target="_blank">configure a provider</a> to use this feature.', [
               ':link' => 'https://project.pages.drupalcode.org/ai/latest/providers/matris/',
@@ -77,7 +78,7 @@ class ProviderSetupList extends ControllerBase {
         }
         break;
     }
-    return $this->systemManager->getBlockContents();
+    return $blockContents;
   }
 
 }

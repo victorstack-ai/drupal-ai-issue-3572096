@@ -40,7 +40,6 @@ nav:
     - AI Content Suggestions: modules/ai_content_suggestions/index.md
     - AI Logging: modules/ai_logging/index.md
     - AI Search: modules/ai_search/index.md
-    - AI Translate: modules/ai_translate/index.md
   - Develop:
     - Getting Started: developers/developer_information.md
     - Why base on the AI module?: developers/why_ai.md

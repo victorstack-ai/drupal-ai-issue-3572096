@@ -1,9 +1,5 @@
 langcode: en
 status: true
-dependencies:
-  enforced:
-    module:
-      - ai_translate
 id: ai_translate
 label: 'AI Translation prompt'
 variables:

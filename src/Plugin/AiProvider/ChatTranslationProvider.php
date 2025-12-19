@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\ai_translate\Plugin\AiProvider;
+namespace Drupal\ai\Plugin\AiProvider;
 
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Messenger\MessengerTrait;
@@ -37,6 +37,11 @@ class ChatTranslationProvider extends AiProviderClientBase implements
 
   use MessengerTrait;
   use StringTranslationTrait;
+
+  /**
+   * Hard coded prompt ID to use for translation.
+   */
+  const PROMPT_ID = 'ai_translate__ai_translate_default';
 
   /**
    * AI provider plugin manager.
@@ -80,7 +85,6 @@ class ChatTranslationProvider extends AiProviderClientBase implements
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->manager = $container->get('ai.provider');
     $instance->twig = $container->get('twig');
-    $instance->configFactory = $container->get('config.factory');
     $instance->entityTypeManager = $container->get('entity_type.manager');
     return $instance;
   }
@@ -89,15 +93,11 @@ class ChatTranslationProvider extends AiProviderClientBase implements
    * {@inheritdoc}
    */
   public function isUsable(?string $operation_type = NULL, array $capabilities = []): bool {
-    if (empty($this->configFactory->get('ai_translate.settings')->get('prompt'))) {
+    if (!$this->configFactory->get('ai.ai_prompt.' . self::PROMPT_ID)) {
       return FALSE;
     }
     if (!isset($this->chatConfiguration)) {
-      $defaultProviders = $this->config->get('default_providers');
-      if (empty($defaultProviders)) {
-        $this->chatConfiguration = [];
-      }
-      $this->chatConfiguration = $defaultProviders['chat'] ?? [];
+      $this->chatConfiguration = $this->config->get('default_providers')['chat'] ?? [];
     }
     return !empty($this->chatConfiguration)
       && in_array($operation_type, $this->getSupportedOperationTypes());
@@ -168,6 +168,7 @@ class ChatTranslationProvider extends AiProviderClientBase implements
    */
   public function translateText(TranslateTextInput $input, string $model_id, array $options = []): TranslateTextOutput {
     $text = $input->getText();
+    $prompt = $this->configFactory->get('ai.ai_prompt.' . self::PROMPT_ID)->get('prompt');
 
     // We can guess source, but not target language.
     /** @var \Drupal\language\Entity\ConfigurableLanguage $targetLanguage */
@@ -175,26 +176,10 @@ class ChatTranslationProvider extends AiProviderClientBase implements
     if (!$targetLanguage) {
       // @todo TranslateText-specific exception, documented in
       // TranslateTextInterface::translateText() docblock.
-      $this->loggerFactory->get('ai_translate')->warning(
+      $this->loggerFactory->get('ai')->warning(
         $this->t('Unable to guess target language, code @langcode',
           ['@langcode' => $input->getTargetLanguage()]));
       return new TranslateTextOutput('', '', '');
-    }
-
-    $aiConfig = $this->configFactory->get('ai_translate.settings')->get('language_settings') ?? [];
-    $prompt = NULL;
-    // Get target language-specific prompt, if it exists.
-    if ($aiConfig[$targetLanguage->getId()]['prompt']) {
-      $promptId = $aiConfig[$targetLanguage->getId()]['prompt'];
-      if ($languageSpecificPrompt = $this->configFactory->get('ai.ai_prompt.' . $promptId)->get('prompt')) {
-        $prompt = $languageSpecificPrompt;
-      }
-    }
-
-    // If no language-specific prompt config exists, fall back to the default.
-    if (!$prompt) {
-      $promptId = $this->configFactory->get('ai_translate.settings')->get('prompt');
-      $prompt = $this->configFactory->get('ai.ai_prompt.' . $promptId)->get('prompt');
     }
 
     // Define replacement variables.
