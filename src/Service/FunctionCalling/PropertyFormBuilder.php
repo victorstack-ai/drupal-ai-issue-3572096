@@ -127,7 +127,7 @@ class PropertyFormBuilder {
           $form_element['#type'] = 'textarea';
           $form_element['#rows'] = 5;
           $form_element['#value_callback'] = [self::class, 'splitContextList'];
-          $form_element['#description'] .= new FormattableMarkup(
+          $form_element['#description'] = new FormattableMarkup(
             '@description @list',
             [
               '@description' => $form_element['#description'],
