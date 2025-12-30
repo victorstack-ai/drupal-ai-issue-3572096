@@ -10,8 +10,11 @@ use Drupal\editor\EditorInterface;
 
 /**
  * Enable modify_prompt plugin for all editors that use AI CKEditor button.
+ *
+ * @param array<mixed> &$sandbox
+ *   Stores information for batch updates.
  */
-function ai_ckeditor_post_update_10001(&$sandbox) {
+function ai_ckeditor_post_update_10001(array &$sandbox): void {
   $config_entity_updater = \Drupal::classResolver(ConfigEntityUpdater::class);
   $callback = function (EditorInterface $editor) {
     $needs_save = FALSE;

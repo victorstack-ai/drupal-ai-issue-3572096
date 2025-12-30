@@ -348,9 +348,8 @@ class Taxonomy extends RuleBase implements ContainerFactoryPluginInterface {
     // Get vocabularies and get taxonomies from that.
     foreach ($config['handler_settings']['target_bundles'] as $vid) {
       $terms = $storage->loadTree($vid);
-      /** @var \Drupal\taxonomy\TermInterface $term */
       foreach ($terms as $term) {
-        $returnTerms[$term->id()] = $withDescriptions ? $term->getName() . ' - ' . $term->getDescription() : $term->getName();
+        $returnTerms[$term->tid] = $withDescriptions && isset($term->description) ? $term->name . ' - ' . $term->description : $term->name;
       }
     }
     return $returnTerms;

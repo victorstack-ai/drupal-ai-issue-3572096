@@ -25,8 +25,11 @@ class AiRequestCommand implements CommandInterface {
 
   /**
    * Implements Drupal\Core\Ajax\CommandInterface:render().
+   *
+   * @return array<string>
+   *   The rendered AJAX command.
    */
-  public function render() {
+  public function render(): array {
     return [
       'command' => 'aiRequest',
       'prompt' => $this->prompt,

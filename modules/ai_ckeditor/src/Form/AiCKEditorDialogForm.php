@@ -40,7 +40,7 @@ class AiCKEditorDialogForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container): static {
     return new static(
       $container->get('plugin.manager.ai_ckeditor'),
     );
@@ -49,14 +49,22 @@ class AiCKEditorDialogForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function getFormId() {
+  public function getFormId(): string {
     return 'ckeditor5_ai_ckeditor_dialog_form';
   }
 
   /**
-   * {@inheritdoc}
+   * Form constructor.
+   *
+   * @param array<string, mixed> $form
+   *   An associative array containing the structure of the form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The current state of the form.
+   *
+   * @return array<string, mixed>
+   *   The form structure.
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
+  public function buildForm(array $form, FormStateInterface $form_state): array {
     $request = $this->getRequest();
     $payload = $request->getPayload();
 
@@ -99,73 +107,76 @@ class AiCKEditorDialogForm extends FormBase {
       return $form;
     }
 
-    if ($plugin_id) {
-      try {
-        // Check for multi-instance plugin format (e.g., "plugin__config").
-        $config_id = $plugin_id;
+    try {
+      // Check for multi-instance plugin format (e.g., "plugin__config").
+      $config_id = $plugin_id;
 
-        if (strpos($plugin_id, '__') !== FALSE) {
-          [$plugin_id, $config_id] = explode('__', $plugin_id);
-        }
-        // The config id can also be in the payload of the plugin config.
-        elseif (!empty($full_payload['plugin_config']['config_id'])) {
-          $config_id = $full_payload['plugin_config']['config_id'];
-        }
-
-        // Instantiate the plugin using the manager.
-        /** @var \Drupal\ai_ckeditor\PluginInterfaces\AiCKEditorPluginInterface $instance */
-        $instance = $this->aiCKEditorPluginManager->createInstance(
-          $plugin_id,
-          $instance_config['plugins'][$config_id] ?? []
-        );
-
-        // Initialize subform and SubformState.
-        $subform = $form['plugin_config'] ?? [];
-        $subform_state = SubformState::createForSubform($subform, $form, $form_state);
-
-        // Set selected text in storage if provided in the payload.
-        $selected_text = $payload->get('selected_text');
-
-        if ($selected_text) {
-          $subform_state->setStorage(['selected_text' => $selected_text]);
-        }
-
-        // Build and render the plugin configuration form.
-        $form['plugin_config'] = $instance->buildCkEditorModalForm([], $subform_state, [
-          'config_id' => $config_id,
-          'editor_id' => $editor_id,
-          'plugin_id' => $plugin_id,
-          'selected_text' => $selected_text,
-        ]);
-        $form['plugin_config']['#tree'] = TRUE;
-
-        // Hidden fields for editor ID, plugin ID, and selected text.
-        $form['editor_id'] = [
-          '#type' => 'hidden',
-          '#value' => $editor_id,
-        ];
-        $form['plugin_id'] = [
-          '#type' => 'hidden',
-          '#value' => $plugin_id,
-        ];
-        $form['selected_text'] = [
-          '#type' => 'hidden',
-          '#value' => $selected_text,
-        ];
+      if (strpos($plugin_id, '__') !== FALSE) {
+        [$plugin_id, $config_id] = explode('__', $plugin_id);
       }
-      catch (\Exception $exception) {
-        $form['message'] = [
-          '#type' => 'status_messages',
-        ];
+      // The config id can also be in the payload of the plugin config.
+      elseif (!empty($full_payload['plugin_config']['config_id'])) {
+        $config_id = $full_payload['plugin_config']['config_id'];
       }
+
+      // Instantiate the plugin using the manager.
+      /** @var \Drupal\ai_ckeditor\PluginInterfaces\AiCKEditorPluginInterface $instance */
+      $instance = $this->aiCKEditorPluginManager->createInstance(
+        $plugin_id,
+        $instance_config['plugins'][$config_id] ?? []
+      );
+
+      // Initialize subform and SubformState.
+      $subform = $form['plugin_config'] ?? [];
+      $subform_state = SubformState::createForSubform($subform, $form, $form_state);
+
+      // Set selected text in storage if provided in the payload.
+      $selected_text = $payload->get('selected_text');
+
+      if ($selected_text) {
+        $subform_state->setStorage(['selected_text' => $selected_text]);
+      }
+
+      // Build and render the plugin configuration form.
+      $form['plugin_config'] = $instance->buildCkEditorModalForm([], $subform_state, [
+        'config_id' => $config_id,
+        'editor_id' => $editor_id,
+        'plugin_id' => $plugin_id,
+        'selected_text' => $selected_text,
+      ]);
+      $form['plugin_config']['#tree'] = TRUE;
+
+      // Hidden fields for editor ID, plugin ID, and selected text.
+      $form['editor_id'] = [
+        '#type' => 'hidden',
+        '#value' => $editor_id,
+      ];
+      $form['plugin_id'] = [
+        '#type' => 'hidden',
+        '#value' => $plugin_id,
+      ];
+      $form['selected_text'] = [
+        '#type' => 'hidden',
+        '#value' => $selected_text,
+      ];
+    }
+    catch (\Exception $exception) {
+      $form['message'] = [
+        '#type' => 'status_messages',
+      ];
     }
 
     return $form;
   }
 
   /**
-   * {@inheritdoc}
+   * The form submission handler.
+   *
+   * @param array<string, mixed> $form
+   *   An associative array containing the structure of the form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The current state of the form.
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {}
+  public function submitForm(array &$form, FormStateInterface $form_state): void {}
 
 }

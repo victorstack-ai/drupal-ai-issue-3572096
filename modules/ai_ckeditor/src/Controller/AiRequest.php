@@ -66,7 +66,7 @@ class AiRequest implements ContainerInjectionInterface {
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container): static {
     return new static(
       $container->get('plugin.manager.ai_ckeditor'),
       $container->get('ai.provider'),
@@ -145,9 +145,8 @@ class AiRequest implements ContainerInjectionInterface {
       $messages->setStreamedOutput(TRUE);
       $messages->setSystemPrompt('You are helpful website assistant for content writing and editing. Do not give responses in the first, second or third person form. Do not add any commentary to the answer.');
 
-      /** @var \Drupal\ai\OperationType\Chat\StreamedChatMessageIteratorInterface $response */
+      // @phpstan-ignore method.notFound
       $response = $ai_provider->chat($messages, $ai_model, ['ai_ckeditor'])->getNormalized();
-
       if ($response instanceof StreamedChatMessageIteratorInterface) {
         return new StreamedResponse(function () use ($response) {
           foreach ($response as $message) {

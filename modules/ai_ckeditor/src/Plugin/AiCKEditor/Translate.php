@@ -24,7 +24,7 @@ final class Translate extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function defaultConfiguration() {
+  public function defaultConfiguration(): array {
     return [
       'autocreate' => FALSE,
       'provider' => NULL,
@@ -37,7 +37,7 @@ final class Translate extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state): array {
     $vocabularies = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->loadMultiple();
 
     if (empty($vocabularies)) {
@@ -130,7 +130,7 @@ final class Translate extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
+  public function submitConfigurationForm(array &$form, FormStateInterface $form_state): void {
     $this->configuration['provider'] = $form_state->getValue('provider');
     $this->configuration['language_source'] = $form_state->getValue('language_source');
     $this->configuration['autocreate'] = (bool) $form_state->getValue('autocreate');
@@ -144,28 +144,28 @@ final class Translate extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  protected function getGenerateButtonLabel() {
+  protected function getGenerateButtonLabel(): TranslatableMarkup {
     return $this->t('Translate');
   }
 
   /**
    * {@inheritdoc}
    */
-  protected function getSelectedTextLabel() {
+  protected function getSelectedTextLabel(): TranslatableMarkup {
     return $this->t('Selected text to translate');
   }
 
   /**
    * {@inheritdoc}
    */
-  protected function getAiResponseLabel() {
+  protected function getAiResponseLabel(): TranslatableMarkup {
     return $this->t('Suggested translation');
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []) {
+  public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []): array {
     $form = parent::buildCkEditorModalForm($form, $form_state);
 
     $autocreate = $this->configuration['autocreate'] && $this->configuration['language_source'] == 'tax';
@@ -212,24 +212,16 @@ final class Translate extends AiCKEditorPluginBase {
   }
 
   /**
-   * Generate text callback.
-   *
-   * @param array $form
-   *   The form.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The form state.
-   *
-   * @return mixed
-   *   The result of the AJAX operation.
+   * {@inheritdoc}
    */
-  public function ajaxGenerate(array &$form, FormStateInterface $form_state) {
+  public function ajaxGenerate(array &$form, FormStateInterface $form_state): ?AjaxResponse {
     $values = $form_state->getValues();
 
     try {
       $prompts_config = $this->getConfigFactory()->get('ai_ckeditor.settings');
       $prompt = $prompts_config->get('prompts.translate');
 
-      if ($this->configuration['language_source'] == 'lang') {
+      if ($this->configuration['language_source'] === 'lang') {
         $site_languages = $this->languageManager->getLanguages();
         $langName = $site_languages[$values['plugin_config']['language']]->getName();
         $prompt = str_replace('{{ lang }}', $langName . ' (' . $values['plugin_config']['language'] . ')', $prompt);
@@ -259,6 +251,7 @@ final class Translate extends AiCKEditorPluginBase {
       }
 
       $prompt .= "\n\nThe text that we want to translate is the following:\n" . $values['plugin_config']['selected_text'];
+      assert(is_array($this->pluginDefinition));
       $response = new AjaxResponse();
       $response->addCommand(new AiRequestCommand($prompt, $values["editor_id"], $this->pluginDefinition['id'], 'ai-ckeditor-response'));
       return $response;
@@ -268,30 +261,9 @@ final class Translate extends AiCKEditorPluginBase {
         '@message' => $e->getMessage(),
       ]);
 
-      return $form['plugin_config']['response_wrapper']['response_text']['#value'] = 'There was an error in the Translate AI plugin for CKEditor.';
+      $form['plugin_config']['response_wrapper']['response_text']['#value'] = 'There was an error in the Translate AI plugin for CKEditor.';
     }
-  }
-
-  /**
-   * Helper function to get all terms as an options array.
-   *
-   * @param string $vid
-   *   The vocabulary ID.
-   *
-   * @return array
-   *   The options array.
-   */
-  protected function getTermOptions(string $vid): array {
-    /** @var \Drupal\taxonomy\TermStorageInterface $voc */
-    $voc = $this->entityTypeManager->getStorage('taxonomy_term');
-    $terms = $voc->loadTree($vid);
-    $options = [];
-
-    foreach ($terms as $term) {
-      $options[$term->tid] = $term->name;
-    }
-
-    return $options;
+    return NULL;
   }
 
 }

@@ -24,14 +24,26 @@ class PluginIdParamConverter implements ParamConverterInterface {
   /**
    * {@inheritdoc}
    */
-  public function applies($definition, $name, Route $route) {
-    return isset($definition['type']) && $definition['type'] == 'ai_ckeditor_plugin';
+  public function applies($definition, $name, Route $route): bool {
+    return isset($definition['type']) && $definition['type'] === 'ai_ckeditor_plugin';
   }
 
   /**
-   * {@inheritdoc}
+   * Converts path variables to their corresponding objects.
+   *
+   * @param mixed $value
+   *   The raw value.
+   * @param mixed $definition
+   *   The parameter definition provided in the route options.
+   * @param string $name
+   *   The name of the parameter.
+   * @param array<mixed> $defaults
+   *   The route defaults array.
+   *
+   * @return \Drupal\ai_ckeditor\PluginInterfaces\AiCKEditorPluginInterface|null
+   *   The converted parameter value.
    */
-  public function convert($value, $definition, $name, array $defaults) {
+  public function convert($value, $definition, $name, array $defaults): ?AiCKEditorPluginInterface {
     try {
       $plugin = $this->pluginManager->createInstance($value);
       return ($plugin instanceof AiCKEditorPluginInterface) ? $plugin : NULL;

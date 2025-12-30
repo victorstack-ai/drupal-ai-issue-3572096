@@ -9,6 +9,8 @@ use Drupal\ai_ckeditor\PreRender\PreRender;
 
 /**
  * Implements hook_element_info_alter().
+ *
+ * @phpstan-ignore missingType.iterableValue
  */
 function ai_ckeditor_element_info_alter(array &$info): void {
   if (isset($info['text_format']['#pre_render'])) {
@@ -21,8 +23,10 @@ function ai_ckeditor_element_info_alter(array &$info): void {
 
 /**
  * Implements hook_module_implements_alter().
+ *
+ * @phpstan-ignore missingType.iterableValue
  */
-function ai_ckeditor_module_implements_alter(&$implementations, $hook): void {
+function ai_ckeditor_module_implements_alter(array &$implementations, string $hook): void {
   if (isset($implementations['ai_ckeditor'])) {
     $implementation = $implementations['ai_ckeditor'];
     unset($implementations['ai_ckeditor']);

@@ -16,7 +16,9 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\ai\AiProviderPluginManager;
 use Drupal\ai_ckeditor\PluginInterfaces\AiCKEditorPluginInterface;
 use Drupal\ai_ckeditor\Traits\AiCKEditorConfigTrait;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\editor\Ajax\EditorDialogSave;
+use Drupal\taxonomy\TermInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -71,7 +73,26 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
   protected LanguageManagerInterface $languageManager;
 
   /**
-   * {@inheritdoc}
+   * Constructs a AiCKEditorPluginBase instance.
+   *
+   * @param array<mixed> $configuration
+   *   A configuration array containing information about the plugin instance.
+   * @param string $plugin_id
+   *   The plugin ID for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
+   * @param \Drupal\ai\AiProviderPluginManager $ai_provider_manager
+   *   The AI provider manager service.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager service.
+   * @param \Drupal\Core\Session\AccountProxyInterface $account
+   *   The current user account.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $requestStack
+   *   The request stack.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
+   *   The logger factory service.
+   * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
+   *   The language manager service.
    */
   public function __construct(array $configuration, $plugin_id, $plugin_definition, AiProviderPluginManager $ai_provider_manager, EntityTypeManagerInterface $entity_type_manager, AccountProxyInterface $account, RequestStack $requestStack, LoggerChannelFactoryInterface $logger_factory, LanguageManagerInterface $language_manager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
@@ -87,7 +108,7 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): static {
     return new static(
       $configuration,
       $plugin_id,
@@ -105,6 +126,7 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
    * {@inheritdoc}
    */
   public function label(): string {
+    assert(is_array($this->pluginDefinition));
     return (string) $this->pluginDefinition['label'];
   }
 
@@ -112,47 +134,65 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
    * {@inheritdoc}
    */
   public function description(): string {
+    assert(is_array($this->pluginDefinition));
     return (string) $this->pluginDefinition['description'];
   }
 
   /**
-   * {@inheritdoc}
+   * Form constructor.
+   *
+   * @param array<string, mixed> $form
+   *   An associative array containing the initial structure of the plugin form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The current state of the form. Calling code should pass on a subform
+   *   state created through
+   *   \Drupal\Core\Form\SubformState::createForSubform().
+   *
+   * @return array<string, mixed>
+   *   The form structure.
    */
-  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state): array {
     return [];
   }
 
   /**
-   * {@inheritdoc}
+   * Form validation handler.
+   *
+   * @param array<string, mixed> $form
+   *   An associative array containing the structure of the plugin form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The current state of the form.
    */
-  public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
+  public function validateConfigurationForm(array &$form, FormStateInterface $form_state): void {}
 
-  }
+  /**
+   * Form submission handler.
+   *
+   * @param array<string, mixed> $form
+   *   An associative array containing the structure of the plugin form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The current state of the form.
+   */
+  public function submitConfigurationForm(array &$form, FormStateInterface $form_state): void {}
 
   /**
    * {@inheritdoc}
    */
-  public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getConfiguration() {
+  public function getConfiguration(): array {
     return $this->configuration;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function setConfiguration(array $configuration) {
+  public function setConfiguration(array $configuration): void {
     $this->configuration = NestedArray::mergeDeep($this->defaultConfiguration(), $configuration);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function defaultConfiguration() {
+  public function defaultConfiguration(): array {
     return [];
   }
 
@@ -162,7 +202,7 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
    * @return \Drupal\Core\StringTranslation\TranslatableMarkup
    *   The button label.
    */
-  protected function getGenerateButtonLabel() {
+  protected function getGenerateButtonLabel(): TranslatableMarkup {
     return $this->t('Generate');
   }
 
@@ -172,7 +212,7 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
    * @return \Drupal\Core\StringTranslation\TranslatableMarkup
    *   The form element label.
    */
-  protected function getSelectedTextLabel() {
+  protected function getSelectedTextLabel(): TranslatableMarkup {
     return $this->t('Selected text to process');
   }
 
@@ -182,7 +222,7 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
    * @return \Drupal\Core\StringTranslation\TranslatableMarkup
    *   The form element label.
    */
-  protected function getAiResponseLabel() {
+  protected function getAiResponseLabel(): TranslatableMarkup {
     return $this->t('Response from AI');
   }
 
@@ -192,7 +232,7 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
    * @return \Drupal\Core\StringTranslation\TranslatableMarkup
    *   The form element description.
    */
-  protected function getAiResponseDescription() {
+  protected function getAiResponseDescription(): TranslatableMarkup {
     return $this->t('The response from AI will appear here. You can edit and tweak the response before saving it back to the main editor.');
   }
 
@@ -202,14 +242,14 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
    * @return bool
    *   The boolean flag.
    */
-  protected function needsSelectedText() {
+  protected function needsSelectedText(): bool {
     return TRUE;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []) {
+  public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []): array {
     $editor_id = $this->requestStack->getParentRequest()->get('editor_id');
     $storage = $form_state->getStorage();
     if ($this->needsSelectedText()) {
@@ -221,7 +261,7 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
     }
 
     $form['description'] = [
-      '#markup' => '<p>' . $this->pluginDefinition['description'] . '</p>',
+      '#markup' => '<p>' . $this->description() . '</p>',
       '#weight' => -9999,
     ];
     if ($this->needsSelectedText()) {
@@ -303,7 +343,7 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
   /**
    * {@inheritdoc}
    */
-  public function submitCkEditorModalForm(array $form, FormStateInterface $form_state) {
+  public function submitCkEditorModalForm(array $form, FormStateInterface $form_state): array|AjaxResponse {
     $response = new AjaxResponse();
     $values = $form_state->getValues();
 
@@ -322,10 +362,39 @@ abstract class AiCKEditorPluginBase extends PluginBase implements AiCKEditorPlug
   /**
    * {@inheritdoc}
    */
-  public function availableEditors() {
+  public function availableEditors(): array {
     return [
       $this->pluginId  => $this->label(),
     ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function ajaxGenerate(array &$form, FormStateInterface $form_state): ?AjaxResponse {
+    return NULL;
+  }
+
+  /**
+   * Helper function to get all terms as an options array.
+   *
+   * @param string $vid
+   *   The vocabulary ID.
+   *
+   * @return array<string>
+   *   The options array.
+   */
+  protected function getTermOptions(string $vid): array {
+    $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadTree($vid);
+    $options = [];
+
+    foreach ($terms as $term) {
+      if ($term instanceof TermInterface) {
+        $options[$term->id()] = $term->label();
+      }
+    }
+
+    return $options;
   }
 
 }

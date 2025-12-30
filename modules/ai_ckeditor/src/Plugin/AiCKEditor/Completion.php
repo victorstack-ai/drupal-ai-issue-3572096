@@ -23,7 +23,7 @@ final class Completion extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function defaultConfiguration() {
+  public function defaultConfiguration(): array {
     return [
       'provider' => NULL,
     ];
@@ -70,7 +70,7 @@ final class Completion extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  protected function needsSelectedText() {
+  protected function needsSelectedText(): bool {
     return FALSE;
   }
 
@@ -95,7 +95,7 @@ final class Completion extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function ajaxGenerate(array $form, FormStateInterface $form_state) {
+  public function ajaxGenerate(array &$form, FormStateInterface $form_state): AjaxResponse {
     $response = new AjaxResponse();
     $values = $form_state->getValues();
     $prompts_config = $this->getConfigFactory()->get('ai_ckeditor.settings');
@@ -106,6 +106,7 @@ final class Completion extends AiCKEditorPluginBase {
     else {
       $prompt = $values['plugin_config']['text_to_submit'];
     }
+    assert(is_array($this->pluginDefinition));
     $response->addCommand(new AiRequestCommand($prompt, $values["editor_id"], $this->pluginDefinition['id'], 'ai-ckeditor-response'));
 
     return $response;

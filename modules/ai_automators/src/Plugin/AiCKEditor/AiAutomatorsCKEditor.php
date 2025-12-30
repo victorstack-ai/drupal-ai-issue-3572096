@@ -137,21 +137,9 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
   }
 
   /**
-   * Creates an instance of the plugin.
-   *
-   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
-   *   The service container.
-   * @param array<mixed> $configuration
-   *   A configuration array containing information about the plugin instance.
-   * @param string $plugin_id
-   *   The plugin_id for the plugin instance.
-   * @param mixed $plugin_definition
-   *   The plugin implementation definition.
-   *
-   * @return static
-   *   The plugin instance.
+   * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): static {
     return new static(
       $configuration,
       $plugin_id,
@@ -171,29 +159,18 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
   }
 
   /**
-   * Default configuration.
-   *
-   * @return array<string, mixed>
-   *   The default configuration.
+   * {@inheritdoc}
    */
-  public function defaultConfiguration() {
+  public function defaultConfiguration(): array {
     return [
       'workflows' => [],
     ];
   }
 
   /**
-   * Build the configuration form.
-   *
-   * @param array<mixed> $form
-   *   The form array.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The form state.
-   *
-   * @return array<mixed>
-   *   The form array.
+   * {@inheritdoc}
    */
-  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state): array {
     // Create checkboxes.
     foreach ($this->automate->getWorkflows() as $workflow_id => $workflow_label) {
       $form[$workflow_id . '_advanced'] = [
@@ -268,42 +245,23 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
   }
 
   /**
-   * Need selected text.
-   *
-   * @return bool
-   *   TRUE if selected text is needed.
+   * {@inheritdoc}
    */
-  protected function needsSelectedText() {
+  protected function needsSelectedText(): bool {
     return FALSE;
   }
 
   /**
-   * Validate the configuration form.
-   *
-   * @param array<mixed> $form
-   *   The form array.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The form state.
-   *
-   * @return void
-   *   No return value.
+   * {@inheritdoc}
    */
-  public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
+  public function validateConfigurationForm(array &$form, FormStateInterface $form_state): void {
 
   }
 
   /**
-   * Submit the configuration form.
-   *
-   * @param array<mixed> $form
-   *   The form array.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The form state.
-   *
-   * @return void
-   *   No return value.
+   * {@inheritdoc}
    */
-  public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
+  public function submitConfigurationForm(array &$form, FormStateInterface $form_state): void {
     foreach ($this->automate->getWorkflows() as $workflow_id => $workflow_label) {
       $this->configuration['workflows'][$workflow_id]['enabled'] = $form_state->getValue($workflow_id . '_advanced')[$workflow_id];
       $this->configuration['workflows'][$workflow_id]['inputs'] = $form_state->getValue($workflow_id . '_advanced')['inputs'];
@@ -317,7 +275,7 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []) {
+  public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []): array {
     $form_state->disableCache();
     $storage = $form_state->getStorage();
     $form = parent::buildCkEditorModalForm($form, $form_state);
@@ -513,7 +471,7 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
    * @return \Drupal\Core\Ajax\AjaxResponse
    *   The ajax response.
    */
-  public function ajaxGenerate(array $form, FormStateInterface $form_state) {
+  public function ajaxGenerate(array &$form, FormStateInterface $form_state): ?AjaxResponse {
     $response = new AjaxResponse();
     // Generate the response.
     $values = $form_state->getValue('plugin_config');
@@ -587,7 +545,7 @@ final class AiAutomatorsCKEditor extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function availableEditors() {
+  public function availableEditors(): array {
     $available_workflows = $this->automate->getWorkflows();
     $editors = [];
     foreach ($this->configuration['workflows'] as $workflow => $data) {

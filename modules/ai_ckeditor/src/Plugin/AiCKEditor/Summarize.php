@@ -23,7 +23,7 @@ final class Summarize extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function defaultConfiguration() {
+  public function defaultConfiguration(): array {
     return [
       'provider' => NULL,
     ];
@@ -32,7 +32,7 @@ final class Summarize extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state): array {
     $options = $this->aiProviderManager->getSimpleProviderModelOptions('chat');
     array_shift($options);
     array_splice($options, 0, 1);
@@ -63,14 +63,12 @@ final class Summarize extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
-
-  }
+  public function validateConfigurationForm(array &$form, FormStateInterface $form_state): void {}
 
   /**
    * {@inheritdoc}
    */
-  public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
+  public function submitConfigurationForm(array &$form, FormStateInterface $form_state): void {
     $this->configuration['provider'] = $form_state->getValue('provider');
     $newPrompt = $form_state->getValue('prompt');
     $prompts_config = $this->getConfigFactory()->getEditable('ai_ckeditor.settings');
@@ -80,36 +78,28 @@ final class Summarize extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  protected function getGenerateButtonLabel() {
+  protected function getGenerateButtonLabel(): TranslatableMarkup {
     return $this->t('Summarize');
   }
 
   /**
    * {@inheritdoc}
    */
-  protected function getSelectedTextLabel() {
+  protected function getSelectedTextLabel(): TranslatableMarkup {
     return $this->t('Selected text to summarize');
   }
 
   /**
    * {@inheritdoc}
    */
-  protected function getAiResponseLabel() {
+  protected function getAiResponseLabel(): TranslatableMarkup {
     return $this->t('Suggested summary');
   }
 
   /**
-   * Generate text callback.
-   *
-   * @param array $form
-   *   The form.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The form state.
-   *
-   * @return mixed
-   *   The result of the AJAX operation.
+   * {@inheritdoc}
    */
-  public function ajaxGenerate(array &$form, FormStateInterface $form_state) {
+  public function ajaxGenerate(array &$form, FormStateInterface $form_state): ?AjaxResponse {
     $values = $form_state->getValues();
     $prompts_config = $this->getConfigFactory()->get('ai_ckeditor.settings');
     $prompt = $prompts_config->get('prompts.summarise');
@@ -117,13 +107,15 @@ final class Summarize extends AiCKEditorPluginBase {
       $prompt .= '"' . $values['plugin_config']['selected_text'] . '"';
       $response = new AjaxResponse();
       $values = $form_state->getValues();
+      assert(is_array($this->pluginDefinition));
       $response->addCommand(new AiRequestCommand($prompt, $values['editor_id'], $this->pluginDefinition['id'], 'ai-ckeditor-response'));
       return $response;
     }
     catch (\Exception $e) {
       $this->loggerFactory->get('ai_ckeditor')->error("There was an error in the Summarize AI plugin for CKEditor.");
-      return $form['plugin_config']['response_wrapper']['response_text']['#value'] = 'There was an error in the Summarize AI plugin for CKEditor.';
+      $form['plugin_config']['response_wrapper']['response_text']['#value'] = 'There was an error in the Summarize AI plugin for CKEditor.';
     }
+    return NULL;
   }
 
 }

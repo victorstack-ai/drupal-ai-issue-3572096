@@ -18,7 +18,7 @@ class AiCKEditorPluginManager extends DefaultPluginManager {
   /**
    * Constructs a AiCKEditor plugin object.
    *
-   * @param \Traversable $namespaces
+   * @param \Traversable<mixed> $namespaces
    *   An object that implements \Traversable which contains the root paths
    *   keyed by the corresponding namespace to look for plugin implementations.
    * @param \Drupal\Core\Cache\CacheBackendInterface $cache_backend
@@ -41,7 +41,7 @@ class AiCKEditorPluginManager extends DefaultPluginManager {
   /**
    * Finds plugin definitions.
    *
-   * @return array
+   * @return array<mixed>
    *   List of definitions to store in cache.
    */
   protected function findDefinitions():array {

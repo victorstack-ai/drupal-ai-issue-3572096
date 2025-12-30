@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\ai_ckeditor\Plugin\CKEditor5Plugin;
 
+use Drupal\ai_ckeditor\AiCKEditorPluginBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformState;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
@@ -30,7 +31,7 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
    *
    * @var string[][]
    */
-  const DEFAULT_CONFIGURATION = [
+  const array DEFAULT_CONFIGURATION = [
     'dialog' => [
       'autoresize' => 'min-width: 600px',
       'height' => '750',
@@ -50,7 +51,7 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
   /**
    * AI CKEditor plugin constructor.
    *
-   * @param array $configuration
+   * @param array<string, mixed> $configuration
    *   A configuration array containing information about the plugin instance.
    * @param string $plugin_id
    *   The plugin_id for the plugin instance.
@@ -77,7 +78,7 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): static {
     return new static(
       $configuration,
       $plugin_id,
@@ -89,9 +90,17 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
   }
 
   /**
-   * {@inheritdoc}
+   * Form constructor.
+   *
+   * @param array<string, mixed> $form
+   *   An associative array containing the initial structure of the plugin form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The current state of the form.
+   *
+   * @return array<string, mixed>
+   *   The form structure.
    */
-  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state): array {
     $definitions = $this->pluginManager->getDefinitions();
     if (!$definitions) {
       $form['warning'] = [
@@ -160,30 +169,47 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
       $subform = $form['config']['plugin_config'] ?? [];
       $subform_state = SubformState::createForSubform($subform, $form, $form_state);
       $instance = $this->pluginManager->createInstance($plugin_id, $this->configuration['plugins'][$plugin_id] ?? []);
-      $form['plugins'][$plugin_id] = $form['plugins'][$plugin_id] + $instance->buildConfigurationForm($subform, $subform_state);
+      if ($instance instanceof AiCKEditorPluginBase) {
+        $form['plugins'][$plugin_id] += $instance->buildConfigurationForm($subform, $subform_state);
+      }
     }
 
     return $form;
   }
 
   /**
-   * {@inheritdoc}
+   * Form validation handler.
+   *
+   * @param array<mixed> $form
+   *   An associative array containing the structure of the plugin form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The current state of the form.
    */
-  public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
+  public function validateConfigurationForm(array &$form, FormStateInterface $form_state): void {
     $definitions = $this->pluginManager->getDefinitions();
     // Let the plugins validate their own configuration.
     foreach ($definitions as $plugin_id => $definition) {
       $subform = $form['plugins'][$plugin_id] ?? [];
       $subform_state = SubformState::createForSubform($subform, $form, $form_state);
       $instance = $this->pluginManager->createInstance($plugin_id, $this->configuration['plugins'][$plugin_id] ?? []);
-      $instance->validateConfigurationForm($subform, $subform_state);
+      if ($instance instanceof AiCKEditorPluginBase) {
+        $instance->validateConfigurationForm($subform, $subform_state);
+      }
     }
   }
 
   /**
-   * {@inheritdoc}
+   * The form submission handler.
+   *
+   * @param array<mixed> $form
+   *   An associative array containing the structure of the plugin form as built
+   *   by static::buildConfigurationForm().
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The current state of the form. Calling code should pass on a subform
+   *   state created through
+   *   \Drupal\Core\Form\SubformState::createForSubform().
    */
-  public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
+  public function submitConfigurationForm(array &$form, FormStateInterface $form_state): void {
     $values = $form_state->getValues();
 
     if (!empty($values['dialog'])) {
@@ -198,9 +224,11 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
         $subform = $form['plugins'][$plugin_id] ?? [];
         $subform_state = SubformState::createForSubform($subform, $form, $form_state);
         $instance = $this->pluginManager->createInstance($plugin_id);
-        $instance->submitConfigurationForm($form, $subform_state);
-        $this->configuration['plugins'][$plugin_id] = $instance->getConfiguration();
-        $this->configuration['plugins'][$plugin_id]['enabled'] = (bool) $plugin['enabled'];
+        if ($instance instanceof AiCKEditorPluginBase) {
+          $instance->submitConfigurationForm($form, $subform_state);
+          $this->configuration['plugins'][$plugin_id] = $instance->getConfiguration();
+          $this->configuration['plugins'][$plugin_id]['enabled'] = (bool) $plugin['enabled'];
+        }
       }
     }
 
@@ -208,7 +236,20 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
   }
 
   /**
-   * {@inheritdoc}
+   * Allows a plugin to modify its static configuration.
+   *
+   * @param array<mixed> $static_plugin_config
+   *   The ckeditor5.config entry from the YAML or annotation, if any. If none
+   *   is specified in the YAML or annotation, then the empty array.
+   * @param \Drupal\editor\EditorInterface $editor
+   *   A configured text editor object.
+   *
+   * @return array<mixed>
+   *   Returns the received $static_plugin_config plus dynamic additions or
+   *   alterations.
+   *
+   * @see \Drupal\ckeditor5\Annotation\CKEditor5AspectsOfCKEditor5Plugin::$config
+   * @see \Drupal\ckeditor5\Plugin\CKEditor5PluginDefinition::getCKEditor5Config()
    */
   public function getDynamicPluginConfig(array $static_plugin_config, EditorInterface $editor): array {
     $ai_ckeditor_dialog_url = Url::fromRoute('ai_ckeditor.dialog')
@@ -236,23 +277,24 @@ class AiCKEditor extends CKEditor5PluginDefault implements ContainerFactoryPlugi
 
       // Load the plugin.
       $instance = $this->pluginManager->createInstance($plugin_id, $plugin);
-      // Check the editors each plugin gives back.
-      foreach ($instance->availableEditors() as $id => $label) {
-        $static_plugin_config['ai_ckeditor_ai']['plugins'][$id] = [
-          'enabled' => $plugin['enabled'],
-          'provider' => $plugin['provider'] ?? NULL,
-          'meta' => [
-            'label' => $label,
-            'id' => $id,
-          ],
-        ];
+      if ($instance instanceof AiCKEditorPluginBase) {
+        // Check the editors each plugin gives back.
+        foreach ($instance->availableEditors() as $id => $label) {
+          $static_plugin_config['ai_ckeditor_ai']['plugins'][$id] = [
+            'enabled' => $plugin['enabled'],
+            'provider' => $plugin['provider'] ?? NULL,
+            'meta' => [
+              'label' => $label,
+              'id' => $id,
+            ],
+          ];
+        }
       }
-
     }
 
     if (isset($static_plugin_config['ai_ckeditor_ai']['plugins'])) {
       foreach ($static_plugin_config['ai_ckeditor_ai']['plugins'] as $plugin_id => $plugin) {
-        if ($plugin_id == 'ai_ckeditor_help') {
+        if ($plugin_id === 'ai_ckeditor_help') {
           unset($static_plugin_config['ai_ckeditor_ai']['plugins'][$plugin_id]);
           $static_plugin_config['ai_ckeditor_ai']['plugins'][$plugin_id] = $plugin;
           break;

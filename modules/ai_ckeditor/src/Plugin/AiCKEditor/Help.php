@@ -23,7 +23,7 @@ final class Help extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []) {
+  public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []): array {
     return [
       '#markup' => '<p>' . $this->t('For help and support, please <a href=":href" target="_blank">visit the issue queue.</a>', [':href' => 'https://www.drupal.org/project/issues/ai?categories=All']) . '</p>',
     ];
@@ -32,7 +32,7 @@ final class Help extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function submitCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []) {
+  public function submitCkEditorModalForm(array $form, FormStateInterface $form_state): AjaxResponse {
     $response = new AjaxResponse();
     $response->addCommand(new CloseModalDialogCommand());
     return $response;

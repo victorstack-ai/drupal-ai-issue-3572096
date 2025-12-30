@@ -14,15 +14,14 @@ class InstallAiCKEditorTest extends KernelTestBase {
   /**
    * Modules to enable before running the tests.
    *
-   * @var array
+   * @var array<string>
    */
   protected static $modules = ['system', 'user', 'ckeditor5', 'editor', 'ai'];
 
   /**
    * Tests if the module installs successfully.
    */
-  public function testModuleCanBeEnabled() {
-
+  public function testModuleCanBeEnabled(): void {
     try {
       // Try to enable the module.
       \Drupal::service('module_installer')->install(['ai_ckeditor']);

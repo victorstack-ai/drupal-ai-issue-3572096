@@ -23,7 +23,7 @@ final class ModifyPrompt extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function defaultConfiguration() {
+  public function defaultConfiguration(): array {
     return [
       'provider' => NULL,
     ];
@@ -97,22 +97,14 @@ final class ModifyPrompt extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  protected function getGenerateButtonLabel() {
+  protected function getGenerateButtonLabel(): TranslatableMarkup {
     return $this->t('Modify text');
   }
 
   /**
-   * Generate text callback.
-   *
-   * @param array $form
-   *   The form.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The form state.
-   *
-   * @return mixed
-   *   The result of the AJAX operation.
+   * {@inheritdoc}
    */
-  public function ajaxGenerate(array &$form, FormStateInterface $form_state) {
+  public function ajaxGenerate(array &$form, FormStateInterface $form_state): ?AjaxResponse {
     $values = $form_state->getValues();
 
     try {
@@ -125,14 +117,16 @@ final class ModifyPrompt extends AiCKEditorPluginBase {
       // Add the selected text.
       $prompt .= "\n" . $values['plugin_config']['selected_text'];
 
+      assert(is_array($this->pluginDefinition));
       $response = new AjaxResponse();
       $response->addCommand(new AiRequestCommand($prompt, $values['editor_id'], $this->pluginDefinition['id'], 'ai-ckeditor-response'));
       return $response;
     }
     catch (\Exception $e) {
       $this->loggerFactory->get('ai_ckeditor')->error("There was an error in the 'Modify with a prompt' AI plugin for CKEditor: @error", ['@error' => $e->getMessage()]);
-      return $form['plugin_config']['response_text']['#value'] = 'There was an error processing your request. Please try again.';
+      $form['plugin_config']['response_text']['#value'] = 'There was an error processing your request. Please try again.';
     }
+    return NULL;
   }
 
 }

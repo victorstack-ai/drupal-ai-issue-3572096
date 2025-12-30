@@ -24,7 +24,7 @@ final class Tone extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function defaultConfiguration() {
+  public function defaultConfiguration(): array {
     return [
       'autocreate' => FALSE,
       'provider' => NULL,
@@ -36,7 +36,7 @@ final class Tone extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state): array {
     $vocabularies = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->loadMultiple();
 
     if (empty($vocabularies)) {
@@ -104,28 +104,28 @@ final class Tone extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  protected function getGenerateButtonLabel() {
+  protected function getGenerateButtonLabel(): TranslatableMarkup {
     return $this->t('Change the tone');
   }
 
   /**
    * {@inheritdoc}
    */
-  protected function getSelectedTextLabel() {
+  protected function getSelectedTextLabel(): TranslatableMarkup {
     return $this->t('Selected text to convert');
   }
 
   /**
    * {@inheritdoc}
    */
-  protected function getAiResponseLabel() {
+  protected function getAiResponseLabel(): TranslatableMarkup {
     return $this->t('Suggested conversion');
   }
 
   /**
    * {@inheritdoc}
    */
-  public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
+  public function submitConfigurationForm(array &$form, FormStateInterface $form_state): void {
     $this->configuration['provider'] = $form_state->getValue('provider');
     $this->configuration['autocreate'] = (bool) $form_state->getValue('autocreate');
     $this->configuration['tone_vocabulary'] = $form_state->getValue('tone_vocabulary');
@@ -138,7 +138,7 @@ final class Tone extends AiCKEditorPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []) {
+  public function buildCkEditorModalForm(array $form, FormStateInterface $form_state, array $settings = []): array {
     $form = parent::buildCkEditorModalForm($form, $form_state);
 
     $form['tone'] = [
@@ -169,17 +169,9 @@ final class Tone extends AiCKEditorPluginBase {
   }
 
   /**
-   * Generate text callback.
-   *
-   * @param array $form
-   *   The form.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The form state.
-   *
-   * @return mixed
-   *   The result of the AJAX operation.
+   * {@inheritdoc}
    */
-  public function ajaxGenerate(array &$form, FormStateInterface $form_state) {
+  public function ajaxGenerate(array &$form, FormStateInterface $form_state): ?AjaxResponse {
     $values = $form_state->getValues();
 
     try {
@@ -207,33 +199,15 @@ final class Tone extends AiCKEditorPluginBase {
       $prompt .= "\n\nThe text that we want to change is the following:\n" . $values['plugin_config']['selected_text'];
       $response = new AjaxResponse();
       $values = $form_state->getValues();
+      assert(is_array($this->pluginDefinition));
       $response->addCommand(new AiRequestCommand($prompt, $values['editor_id'], $this->pluginDefinition['id'], 'ai-ckeditor-response'));
       return $response;
     }
     catch (\Exception $e) {
       $this->loggerFactory->get('ai_ckeditor')->error("There was an error in the Tone AI plugin for CKEditor.");
-      return $form['plugin_config']['response_wrapper']['response_text']['#value'] = 'There was an error in the Tone AI plugin for CKEditor.';
+      $form['plugin_config']['response_wrapper']['response_text']['#value'] = 'There was an error in the Tone AI plugin for CKEditor.';
     }
-  }
-
-  /**
-   * Helper function to get all terms as an options array.
-   *
-   * @param string $vid
-   *   The vocabulary ID.
-   *
-   * @return array
-   *   The options array.
-   */
-  protected function getTermOptions(string $vid): array {
-    $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadTree($vid);
-    $options = [];
-
-    foreach ($terms as $term) {
-      $options[$term->tid] = $term->name;
-    }
-
-    return $options;
+    return NULL;
   }
 
 }

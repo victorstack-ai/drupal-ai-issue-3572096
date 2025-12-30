@@ -8,7 +8,7 @@
 /**
  * Add modify prompt configuration and enable the plugin in text formats.
  */
-function ai_ckeditor_update_10001() {
+function ai_ckeditor_update_10001(): void {
   // Add the modify prompt configuration.
   $config = \Drupal::configFactory()->getEditable('ai_ckeditor.settings');
   if (!$config->get('prompts.modify_prompt')) {
