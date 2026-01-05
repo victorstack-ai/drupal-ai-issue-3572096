@@ -129,7 +129,7 @@ final class Tone extends AiCKEditorPluginBase {
     $this->configuration['provider'] = $form_state->getValue('provider');
     $this->configuration['autocreate'] = (bool) $form_state->getValue('autocreate');
     $this->configuration['tone_vocabulary'] = $form_state->getValue('tone_vocabulary');
-    $this->configuration['use_description'] = $form_state->getValue('use_description');
+    $this->configuration['use_description'] = (bool) $form_state->getValue('use_description');
     $newPrompt = $form_state->getValue('prompt');
     $prompts_config = $this->getConfigFactory()->getEditable('ai_ckeditor.settings');
     $prompts_config->set('prompts.tone', $newPrompt)->save();
