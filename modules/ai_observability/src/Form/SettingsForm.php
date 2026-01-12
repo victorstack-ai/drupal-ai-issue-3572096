@@ -7,6 +7,7 @@ use Drupal\ai\Event\PostGenerateResponseEvent;
 use Drupal\ai\Event\PostStreamingResponseEvent;
 use Drupal\ai\Event\ProviderDisabledEvent;
 use Drupal\ai_observability\EventSubscriber\AiEventsSubscriber;
+use Drupal\Core\Config\Schema\Mapping;
 use Drupal\Core\Config\TypedConfigManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -39,14 +40,14 @@ class SettingsForm extends ConfigFormBase {
   /**
    * The typed configuration for settings.
    *
-   * @var \Drupal\Core\Config\Schema\TypedConfigInterface|null
+   * @var \Drupal\Core\Config\Schema\Mapping
    */
-  protected $settingsTyped;
+  protected Mapping $settingsTyped;
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container): static {
     $instance = parent::create(...func_get_args());
     $instance->kernel = $container->get('kernel');
     $instance->configTyped = $container->get('config.typed');
@@ -56,14 +57,17 @@ class SettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function getFormId() {
+  public function getFormId(): string {
     return 'ai_observability_settings';
   }
 
   /**
    * {@inheritdoc}
+   *
+   * @return array<string>
+   *   The config name of the form.
    */
-  protected function getEditableConfigNames() {
+  protected function getEditableConfigNames(): array {
     return [
       self::CONFIG_NAME,
     ];
@@ -71,8 +75,16 @@ class SettingsForm extends ConfigFormBase {
 
   /**
    * {@inheritdoc}
+   *
+   * @param array<string, mixed> $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array<string, mixed>
+   *   The form array.
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
+  public function buildForm(array $form, FormStateInterface $form_state): array {
     $config = $this->config(self::CONFIG_NAME);
 
     $form['description'] = [
@@ -121,7 +133,9 @@ class SettingsForm extends ConfigFormBase {
     ];
 
     foreach (AiEventsSubscriber::SUPPORTED_EVENTS as $event) {
-      $form['logger'][AiEventsSubscriber::CONFIG_KEY_LOG_EVENT_TYPES]['#options'][$event] = $eventDescriptions[$event]['title'];
+      if (isset($form['logger'][AiEventsSubscriber::CONFIG_KEY_LOG_EVENT_TYPES]['#options']) && is_array($form['logger'][AiEventsSubscriber::CONFIG_KEY_LOG_EVENT_TYPES]['#options'])) {
+        $form['logger'][AiEventsSubscriber::CONFIG_KEY_LOG_EVENT_TYPES]['#options'][$event] = $eventDescriptions[$event]['title'];
+      }
       $form['logger'][AiEventsSubscriber::CONFIG_KEY_LOG_EVENT_TYPES][$event]['#description'] = $eventDescriptions[$event]['description'];
     }
     $currentValues = $config->get(AiEventsSubscriber::CONFIG_KEY_LOG_EVENT_TYPES) ?? [];
@@ -165,7 +179,7 @@ class SettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
+  public function validateForm(array &$form, FormStateInterface $form_state): void {
     // Apply form state values transformation on the validation step, instead of
     // the submit, because ConfigFormBase::validateForm() requires the values to
     // be valid to store in the configuration.
@@ -177,7 +191,7 @@ class SettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state): void {
     parent::submitForm($form, $form_state);
 
     // Invalidate the container to ensure subscribers are rebuilt with updated
@@ -188,10 +202,10 @@ class SettingsForm extends ConfigFormBase {
   /**
    * Converts an array of form options into a list of selected values.
    *
-   * @param array $options
+   * @param array<string, mixed> $options
    *   The submitted values from the form.
    *
-   * @return array
+   * @return array<int, string>
    *   An array of values that were checked.
    */
   private static function formOptionsToList(array $options): array {
@@ -206,9 +220,21 @@ class SettingsForm extends ConfigFormBase {
 
   /**
    * Gets the label for a setting from typed settings object.
+   *
+   * @param string $key
+   *   The configuration key.
+   * @param string|null $fallback
+   *   The fallback label if the key is not found.
+   *
+   * @return string
+   *   The setting label.
    */
   private function getSettingLabel(string $key, ?string $fallback = NULL): string {
-    $this->settingsTyped ??= $this->configTyped->get(self::CONFIG_NAME);
+    if (!isset($this->settingsTyped)) {
+      /** @var \Drupal\Core\Config\Schema\Mapping $settingsTyped */
+      $settingsTyped = $this->configTyped->get(self::CONFIG_NAME);
+      $this->settingsTyped = $settingsTyped;
+    }
     try {
       $label = $this->settingsTyped->get($key)->getDataDefinition()->getLabel();
     }

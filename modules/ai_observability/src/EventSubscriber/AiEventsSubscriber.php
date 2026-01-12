@@ -87,7 +87,7 @@ class AiEventsSubscriber implements EventSubscriberInterface {
   /**
    * UUID to log for streaming.
    *
-   * @var array
+   * @var array<string>
    */
   protected $streamingUuids = [];
 
@@ -109,13 +109,14 @@ class AiEventsSubscriber implements EventSubscriberInterface {
   /**
    * {@inheritdoc}
    *
-   * @return array
+   * @return array<string, string>
    *   The post generate response event.
    */
   public static function getSubscribedEvents(): array {
     // We can't read the configuration in this static function, because the
     // Drupal Container is not initialized yet. So, have to subscribe to all
     // supported events.
+    $events = [];
     foreach (self::SUPPORTED_EVENTS as $eventClass) {
       $eventName = $eventClass::EVENT_NAME;
       $events[$eventName] = 'logEvent';
@@ -128,8 +129,11 @@ class AiEventsSubscriber implements EventSubscriberInterface {
    *
    * @param \Drupal\ai\Event\AiProviderRequestBaseEvent|\Drupal\ai\Event\ProviderDisabledEvent $event
    *   The event to log.
+   *
+   * @return void
+   *   Does not return a value.
    */
-  public function logEvent(AiProviderRequestBaseEvent|ProviderDisabledEvent $event) {
+  public function logEvent(AiProviderRequestBaseEvent|ProviderDisabledEvent $event): void {
     if (!in_array(get_class($event), $this->config->get(self::CONFIG_KEY_LOG_EVENT_TYPES))) {
       return;
     }
@@ -137,8 +141,9 @@ class AiEventsSubscriber implements EventSubscriberInterface {
       $this->logger->get(self::LOGGER_NAME)->info('Provider @provider disabled.', [
         '@provider' => $event->getProviderId(),
       ]);
-
+      return;
     }
+
     $logTags = $this->config->get(self::CONFIG_KEY_LOG_TAGS);
     $tags = $event->getTags();
     if (!empty($logTags) && !array_intersect($logTags, $tags)) {
@@ -148,7 +153,10 @@ class AiEventsSubscriber implements EventSubscriberInterface {
     // @todo Generate the context by the event type.
     $context = [
       'metadata' => [
-        'event_name' => $event::EVENT_NAME,
+        // As we checking the definition of the constant and have a fallback,
+        // the "classConstant.notFound" is not actual.
+        // @phpstan-ignore classConstant.notFound
+        'event_name' => defined($event::class . '::EVENT_NAME') ? $event::EVENT_NAME : $event::class,
         'provider' => $event->getProviderId(),
         'operation_type' => $event->getOperationType(),
         'model' => $event->getModelId(),
@@ -166,7 +174,7 @@ class AiEventsSubscriber implements EventSubscriberInterface {
       // @todo Remove the method_exists check when all output types implement
       // the getTokenUsage method and it is added to the OutputInterface.
       if (method_exists($output, 'getTokenUsage')) {
-        $context['metadata']['token_usage'] = $event->getOutput()->getTokenUsage()->toArray();
+        $context['metadata']['token_usage'] = $output->getTokenUsage()->toArray();
       }
     }
 
@@ -201,11 +209,8 @@ class AiEventsSubscriber implements EventSubscriberInterface {
     if ($event instanceof AiProviderResponseBaseEvent) {
       $messagePrefix = 'Response from provider {metadata.provider}';
     }
-    elseif ($event instanceof AiProviderRequestBaseEvent) {
-      $messagePrefix = 'Call provider {metadata.provider}';
-    }
     else {
-      $messagePrefix = 'AI event {metadata.eventName} with provider {metadata.provider}';
+      $messagePrefix = 'Call provider {metadata.provider}';
     }
 
     $messageParts = [
@@ -216,6 +221,7 @@ class AiEventsSubscriber implements EventSubscriberInterface {
       $messageParts['token usage'] = '{metadata.token_usage.total}';
     }
 
+    $messageItems = [];
     foreach ($messageParts as $key => $value) {
       $messageItems[] = "$key: $value";
     }
@@ -230,6 +236,7 @@ class AiEventsSubscriber implements EventSubscriberInterface {
           $messagePlaceholders[] = $placeholder;
         }
       }
+      $replacements = [];
       foreach ($messagePlaceholders as $placeholder) {
         $path = explode('.', $placeholder);
         $value = (string) NestedArray::getValue($context, $path);
@@ -238,7 +245,7 @@ class AiEventsSubscriber implements EventSubscriberInterface {
         $replacements[$placeholderFull] = $fallbackPlaceholder;
         $context[$fallbackPlaceholder] = $value;
       }
-      if (isset($replacements)) {
+      if (!empty($replacements)) {
         $message = strtr($message, $replacements);
       }
     }

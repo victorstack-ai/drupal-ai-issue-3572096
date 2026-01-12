@@ -41,6 +41,12 @@ parameters:
     # Route provider issues should be handled by Symfony/Drupal
     - message: '#Method .*::getRoutes\(\) never returns array so it can be removed from the return type#'
     - message: '#Method .*::getRoutes\(\) return type has no value type specified in iterable type#'
+    # ConfigFormBase issues should be handled by Symfony/Drupal
+    - message: '#Method .*::getEditableConfigNames\(\) return type has no value type specified in iterable type array.#'
+    - message: '#Method .*::buildForm\(\) has parameter \$form with no value type specified in iterable type array.#'
+    - message: '#Method .*::buildForm\(\) return type has no value type specified in iterable type array.#'
+    - message: '#Method .*::submitForm\(\) has parameter \$form with no value type specified in iterable type array.#'
+    - message: '#Method .*::validateForm\(\) has parameter \$form with no value type specified in iterable type array.#'
 
   reportUnmatchedIgnoredErrors: false
   excludePaths:
