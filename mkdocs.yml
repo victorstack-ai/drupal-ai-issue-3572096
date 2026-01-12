@@ -63,6 +63,9 @@ nav:
       - Short-Term Memory: developers/short_term_memory.md
     - Helper Services:
       - Chat History Form Element: developers/chat_history_element.md
+    - Develop an AI Provider:
+      - Getting Started: developers/writing_an_ai_provider.md
+      - Testing a Provider: developers/testing_an_ai_provider.md
     - Develop a third-party module: developers/develop_third_party_module.md
     - Events: developers/events.md
     - DDEV: developers/ddev.md
@@ -73,7 +76,6 @@ nav:
         - Develop an AI API Explorer plugin: developers/ai_api_explorer.md
         - Develop an AI Automators plugin: developers/writing_an_ai_automators_plugin.md
         - AI CKEditor: developers/ck_editor_plugin.md
-        - Develop an AI Provider: developers/writing_an_ai_provider.md
   - Contribute:
     - Getting Started: contribute/index.md
     - Issue Guidelines: contribute/issue_guidelines.md
