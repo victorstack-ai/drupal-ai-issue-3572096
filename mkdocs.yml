@@ -63,6 +63,7 @@ nav:
       - Short-Term Memory: developers/short_term_memory.md
     - Helper Services:
       - Chat History Form Element: developers/chat_history_element.md
+      - Provider Config Schema: developers/provider_config_schema.md
     - Develop an AI Provider:
       - Getting Started: developers/writing_an_ai_provider.md
       - Testing a Provider: developers/testing_an_ai_provider.md
