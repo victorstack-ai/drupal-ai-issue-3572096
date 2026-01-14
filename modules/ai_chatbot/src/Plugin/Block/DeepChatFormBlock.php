@@ -4,6 +4,7 @@ namespace Drupal\ai_chatbot\Plugin\Block;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\NestedArray;
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -11,9 +12,8 @@ use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\Core\Url;
-use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Yaml\Yaml;
 
@@ -155,8 +155,8 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
       'first_message' => '',
       'stream' => FALSE,
       'toggle_state' => 'remember',
-      'width' => 'auto',
-      'height' => '100%',
+      'width' => '500px',
+      'height' => '500px',
       'placement' => 'toolbar',
       'show_structured_results' => FALSE,
       'collapse_minimal' => FALSE,
@@ -293,29 +293,6 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     // Get the available styles.
     $styles = $this->getStyles();
 
-    $form['styling']['style_file'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Style'),
-      '#description' => $this->t('The style of the chat window.'),
-      '#options' => $styles,
-      '#default_value' => $this->configuration['style_file'],
-      '#required' => TRUE,
-    ];
-
-    $form['styling']['width'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Width'),
-      '#description' => $this->t('The width of the chat window.'),
-      '#default_value' => $this->configuration['width'],
-    ];
-
-    $form['styling']['height'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Height'),
-      '#description' => $this->t('The height of the chat window.'),
-      '#default_value' => $this->configuration['height'],
-    ];
-
     $form['styling']['placement'] = [
       '#type' => 'select',
       '#title' => $this->t('Placement'),
@@ -329,11 +306,57 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
       '#default_value' => $this->configuration['placement'],
     ];
 
+    $form['styling']['style_file'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Style'),
+      '#description' => $this->t('The style of the chat window.'),
+      '#options' => $styles,
+      '#default_value' => $this->configuration['style_file'],
+      '#required' => TRUE,
+      // Only show if the placement is not toolbar.
+      '#states' => [
+        'visible' => [
+          ':input[name="settings[styling][placement]"]' => ['!value' => 'toolbar'],
+        ],
+      ],
+    ];
+
+    $form['styling']['width'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Width'),
+      '#description' => $this->t('The width of the chat window.'),
+      '#default_value' => $this->configuration['width'],
+      // Only show if the placement is not toolbar.
+      '#states' => [
+        'visible' => [
+          ':input[name="settings[styling][placement]"]' => ['!value' => 'toolbar'],
+        ],
+      ],
+    ];
+
+    $form['styling']['height'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Height'),
+      '#description' => $this->t('The height of the chat window.'),
+      '#default_value' => $this->configuration['height'],
+      // Only show if the placement is not toolbar.
+      '#states' => [
+        'visible' => [
+          ':input[name="settings[styling][placement]"]' => ['!value' => 'toolbar'],
+        ],
+      ],
+    ];
+
     $form['styling']['collapse_minimal'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Collapsed minimal'),
       '#description' => $this->t('Show a minimal toggle button when minimized.'),
       '#default_value' => $this->configuration['collapse_minimal'],
+      '#states' => [
+        'visible' => [
+          ':input[name="settings[styling][placement]"]' => ['!value' => 'toolbar'],
+        ],
+      ],
     ];
     $form['styling']['show_copy_icon'] = [
       '#type' => 'checkbox',
@@ -496,8 +519,8 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $block['#attached']['drupalSettings']['ai_deepchat']['default_username'] = $user_data['username'];
     $block['#attached']['drupalSettings']['ai_deepchat']['default_avatar'] = $user_data['avatar'];
     $block['#attached']['drupalSettings']['ai_deepchat']['toggle_state'] = $this->configuration['toggle_state'];
-    $block['#attached']['drupalSettings']['ai_deepchat']['width'] = $this->configuration['width'];
-    $block['#attached']['drupalSettings']['ai_deepchat']['height'] = $this->configuration['height'];
+    $block['#attached']['drupalSettings']['ai_deepchat']['width'] = $this->configuration['placement'] == 'toolbar' ? '100%' : $this->configuration['width'];
+    $block['#attached']['drupalSettings']['ai_deepchat']['height'] = $this->configuration['placement'] == 'toolbar' ? 'auto' : $this->configuration['height'];
     $block['#attached']['drupalSettings']['ai_deepchat']['first_message'] = $this->configuration['first_message'];
     $block['#attached']['drupalSettings']['ai_deepchat']['placement'] = $this->configuration['placement'];
     $block['#attached']['drupalSettings']['ai_deepchat']['show_structured_results'] = $this->configuration['show_structured_results'];
@@ -536,7 +559,9 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     if ($style && substr($style, -1) != ';') {
       $style .= '; ';
     }
-    $style .= 'height: ' . $this->configuration['height'] . '; width: ' . $this->configuration['width'] . ';';
+    $height = $this->configuration['placement'] == 'toolbar' ? '100%' : $this->configuration['height'];
+    $width = $this->configuration['placement'] == 'toolbar' ? 'auto' : $this->configuration['width'];
+    $style .= 'height: ' . $height . '; width: ' . $width . ';';
 
     if ($style_parameters) {
       unset($style_parameters['style']);
