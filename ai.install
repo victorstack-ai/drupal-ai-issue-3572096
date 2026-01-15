@@ -101,3 +101,19 @@ function ai_update_10304() {
 function ai_update_10305() {
   \Drupal::service('extension.list.module')->reset();
 }
+
+/**
+ * Create the AI Guardrail and AI Guardrail set configuration entities.
+ */
+function ai_update_10306(): void {
+  $update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type_manager = \Drupal::entityTypeManager();
+  if (!$update_manager->getEntityType('ai_guardrail')) {
+    $entity_type = $entity_type_manager->getDefinition('ai_guardrail');
+    $update_manager->installEntityType($entity_type);
+  }
+  if (!$update_manager->getEntityType('ai_guardrail_set')) {
+    $entity_type = $entity_type_manager->getDefinition('ai_guardrail_set');
+    $update_manager->installEntityType($entity_type);
+  }
+}

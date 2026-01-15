@@ -8,6 +8,8 @@ use Drupal\ai\Event\PostGenerateResponseEvent;
 use Drupal\ai\Event\PostStreamingResponseEvent;
 use Drupal\ai\Event\PreGenerateResponseEvent;
 use Drupal\ai\Event\ProviderDisabledEvent;
+use Drupal\ai\Guardrail\Result\GuardrailResultInterface;
+use Drupal\ai\OperationType\InputInterface;
 use Drupal\ai_observability\Form\SettingsForm;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -166,6 +168,17 @@ class AiEventsSubscriber implements EventSubscriberInterface {
         'tags' => $tags,
       ],
     ];
+
+    if (($input = $event->getInput()) && $input instanceof InputInterface) {
+      $context['metadata']['guardrails'] = array_map(function (GuardrailResultInterface $result) {
+        return [
+          'guardrail' => $result->getGuardrailLabel(),
+          'type' => get_class($result),
+          'context' => $result->getContext(),
+          'message' => $result->getMessage(),
+        ];
+      }, $input->getGuardrailsResults());
+    }
 
     if ($event instanceof AiProviderResponseBaseEvent) {
       $output = $event->getOutput();

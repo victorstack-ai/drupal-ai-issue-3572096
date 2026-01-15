@@ -1,4 +1,7 @@
 services:
+  _defaults:
+    autoconfigure: true
+    autowire: true
   ai.provider:
     class: Drupal\ai\AiProviderPluginManager
     parent: default_plugin_manager
@@ -41,6 +44,10 @@ services:
   plugin.manager.ai_data_type_converter:
     class: Drupal\ai\PluginManager\AiDataTypeConverterPluginManager
     parent: default_plugin_manager
+  Drupal\ai\Guardrail\AiGuardrailPluginManager:
+    class: Drupal\ai\Guardrail\AiGuardrailPluginManager
+    parent: default_plugin_manager
+  plugin.manager.ai_guardrail: '@Drupal\ai\Guardrail\AiGuardrailPluginManager'
   ai.function_call_form_helper:
     class: Drupal\ai\Service\FunctionCalling\PropertyFormBuilder
     arguments: ['@plugin.manager.ai.function_calls']
@@ -60,6 +67,10 @@ services:
     arguments: ['@ai.provider', '@config.factory']
     tags:
       - { name: 'event_subscriber' }
+  Drupal\ai\EventSubscriber\GuardrailsEventSubscriber: ~
+  Drupal\ai\Guardrail\AiGuardrailRepository: ~
+  Drupal\ai\Guardrail\AiGuardrailHelper: ~
+  ai.guardrail_helper: '@Drupal\ai\Guardrail\AiGuardrailHelper'
   ai.tools_library.ui_builder:
     class: Drupal\ai\Service\AiToolsLibraryUiBuilder
     arguments: ['@plugin.manager.ai.function_groups', '@plugin.manager.ai.function_calls', '@module_handler', '@request_stack', '@form_builder']

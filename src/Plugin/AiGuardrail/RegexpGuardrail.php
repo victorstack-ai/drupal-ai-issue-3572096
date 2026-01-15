@@ -1,0 +1,145 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Drupal\ai\Plugin\AiGuardrail;
+
+use Drupal\ai\Attribute\AiGuardrail;
+use Drupal\ai\Guardrail\AiGuardrailPluginBase;
+use Drupal\ai\Guardrail\Result\GuardrailResultInterface;
+use Drupal\ai\Guardrail\Result\PassResult;
+use Drupal\ai\Guardrail\Result\StopResult;
+use Drupal\ai\OperationType\Chat\ChatInput;
+use Drupal\ai\OperationType\Chat\ChatMessage;
+use Drupal\ai\OperationType\InputInterface;
+use Drupal\ai\OperationType\OutputInterface;
+use Drupal\Component\Plugin\ConfigurableInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Plugin\PluginFormInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+
+/**
+ * Plugin implementation of the Regexp guardrail.
+ */
+#[AiGuardrail(
+  id: 'regexp_guardrail',
+  label: new TranslatableMarkup('Regexp Guardrail'),
+  description: new TranslatableMarkup(
+    "Checks if text's content matches a specified regular expression pattern."
+  ),
+)]
+class RegexpGuardrail extends AiGuardrailPluginBase implements ConfigurableInterface, PluginFormInterface {
+
+  use StringTranslationTrait;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function processInput(
+    InputInterface $input,
+  ): GuardrailResultInterface {
+    if (!$input instanceof ChatInput) {
+      return new PassResult('Input is not a chat input, skipping topic restriction.', $this);
+    }
+
+    $messages = $input->getMessages();
+    $last_message = end($messages);
+
+    if (!$last_message instanceof ChatMessage) {
+      return new PassResult('No text message found to analyze.', $this);
+    }
+
+    $text = $last_message->getText();
+    $regexp_pattern = $this->configuration['regexp_pattern'] ?? '';
+    if (empty($regexp_pattern)) {
+      return new PassResult('No regexp pattern configured, skipping check.', $this);
+    }
+    if (preg_match($regexp_pattern, $text)) {
+      $violation_message = $this->configuration['violation_message'] ?? 'The text contains invalid content matching the pattern: @pattern';
+      $violation_message = str_replace('@pattern', $regexp_pattern, $violation_message);
+
+      return new StopResult($violation_message, $this);
+    }
+
+    return new PassResult('Input text passed the regexp guardrail check.', $this);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function processOutput(
+    OutputInterface $output,
+  ): GuardrailResultInterface {
+    // This guardrail only processes input, not output.
+    return new PassResult('Output processing is not applicable for this guardrail.', $this);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getConfiguration(): array {
+    return $this->configuration;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setConfiguration(array $configuration): void {
+    $this->configuration = $configuration;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function defaultConfiguration(): array {
+    return [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function buildConfigurationForm(
+    array $form,
+    FormStateInterface $form_state,
+  ): array {
+    $form['regexp_pattern'] = [
+      '#type' => 'textfield',
+      '#required' => TRUE,
+      '#title' => $this->t('Regexp Pattern'),
+      '#description' => $this->t('The regular expression pattern to match.'),
+      '#default_value' => $this->configuration['regexp_pattern'] ?? '',
+    ];
+
+    $form['violation_message'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Violation Message'),
+      '#default_value' => $this->configuration['violation_message'] ?: 'The text contains invalid content matching the pattern: @pattern',
+      '#description' => $this->t('You can use the placeholder %placeholder to include the pattern used.', [
+        '%placeholder' => '@pattern',
+      ]),
+    ];
+
+    return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateConfigurationForm(
+    array &$form,
+    FormStateInterface $form_state,
+  ): void {
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function submitConfigurationForm(
+    array &$form,
+    FormStateInterface $form_state,
+  ): void {
+    $this->setConfiguration($form_state->getValues());
+  }
+
+}

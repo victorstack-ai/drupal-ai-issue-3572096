@@ -7,3 +7,13 @@ entity.ai_prompt_type.collection:
   title: 'AI Prompt Types'
   route_name: entity.ai_prompt_type.collection
   base_route: entity.ai_prompt.collection
+
+entity.ai_guardrail.collection:
+  title: 'AI Guardrails'
+  route_name: entity.ai_guardrail.collection
+  base_route: entity.ai_guardrail.collection
+
+entity.ai_guardrail_set.collection:
+  title: 'AI Guardrail sets'
+  route_name: entity.ai_guardrail_set.collection
+  base_route: entity.ai_guardrail.collection

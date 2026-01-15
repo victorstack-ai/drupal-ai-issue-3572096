@@ -147,7 +147,7 @@ final class AiAssistantForm extends EntityForm {
         '#access' => TRUE,
       ];
 
-      /** @var \Drupal\ai_agent\Entity\AiAgent $agent_entity */
+      /** @var \Drupal\ai_agents\Entity\AiAgent $agent_entity */
       $agent_entity = $entity->get('ai_agent') ? $this->entityTypeManager->getStorage('ai_agent')->load($entity->get('ai_agent')) : NULL;
     }
 
