@@ -4,130 +4,58 @@ namespace Drupal\ai_observability\EventSubscriber;
 
 use Drupal\ai\Event\AiProviderRequestBaseEvent;
 use Drupal\ai\Event\AiProviderResponseBaseEvent;
-use Drupal\ai\Event\PostGenerateResponseEvent;
-use Drupal\ai\Event\PostStreamingResponseEvent;
-use Drupal\ai\Event\PreGenerateResponseEvent;
 use Drupal\ai\Event\ProviderDisabledEvent;
 use Drupal\ai\Guardrail\Result\GuardrailResultInterface;
 use Drupal\ai\OperationType\InputInterface;
+use Drupal\ai_observability\AiLogEventType;
+use Drupal\ai_observability\AiObservabilityUtils;
 use Drupal\ai_observability\Form\SettingsForm;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Symfony\Component\DependencyInjection\Attribute\AutowireServiceClosure;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * The event that is triggered after a response is generated.
+ * Event subscriber for AI observability logging.
  *
  * @package Drupal\ai_observability\EventSubscriber
  */
-class AiEventsSubscriber implements EventSubscriberInterface {
+class AiLoggingEventSubscriber implements EventSubscriberInterface {
 
   /**
-   * The logger channel name.
-   */
-  const LOGGER_NAME = 'ai_observability';
-
-  const SUPPORTED_EVENTS = [
-    PreGenerateResponseEvent::class,
-    PostStreamingResponseEvent::class,
-    PostGenerateResponseEvent::class,
-    ProviderDisabledEvent::class,
-  ];
-
-  /**
-   * Config settings.
-   */
-  const CONFIG_NAME = 'ai_observability.settings';
-
-  /**
-   * Configuration key for event types to log.
-   */
-  const CONFIG_KEY_LOG_EVENT_TYPES = 'log_event_types';
-
-  /**
-   * Configuration key for logging input.
-   */
-  const CONFIG_KEY_LOG_INPUT = 'log_input';
-
-  /**
-   * Configuration key for logging output.
-   */
-  const CONFIG_KEY_LOG_OUTPUT = 'log_output';
-
-  /**
-   * Configuration key for logging tags.
-   */
-  const CONFIG_KEY_LOG_TAGS = 'log_tags';
-
-  /**
-   * Configuration key for the log fallback mode.
-   */
-  const CONFIG_KEY_FALLBACK_LOG_MESSAGE_MODE = 'fallback_log_message_mode';
-
-  /**
-   * The entity type manager.
+   * Constructs an AiLoggingEventSubscriber object.
    *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The config factory.
+   * @param \Closure(): \Psr\Log\LoggerInterface $loggerClosure
+   *   The logger closure.
    */
-  protected $entityTypeManager;
-
-  /**
-   * The AI settings.
-   *
-   * @var \Drupal\Core\Config\ImmutableConfig
-   */
-  protected $config;
-
-  /**
-   * The module handler.
-   *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
-   */
-  protected $moduleHandler;
-
-  /**
-   * UUID to log for streaming.
-   *
-   * @var array<string>
-   */
-  protected $streamingUuids = [];
-
-  /**
-   * The watchdog logger.
-   *
-   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
-   */
-  protected $logger;
-
-  /**
-   * Constructor.
-   */
-  public function __construct(ConfigFactoryInterface $configFactory, LoggerChannelFactoryInterface $logger) {
-    $this->config = $configFactory->get(SettingsForm::CONFIG_NAME);
-    $this->logger = $logger;
+  public function __construct(
+    protected ConfigFactoryInterface $configFactory,
+    #[AutowireServiceClosure('logger.channel.ai_observability')]
+    protected \Closure $loggerClosure,
+  ) {
   }
 
   /**
    * {@inheritdoc}
    *
    * @return array<string, string>
-   *   The post generate response event.
+   *   The subscribed events.
    */
   public static function getSubscribedEvents(): array {
     // We can't read the configuration in this static function, because the
     // Drupal Container is not initialized yet. So, have to subscribe to all
     // supported events.
     $events = [];
-    foreach (self::SUPPORTED_EVENTS as $eventClass) {
-      $eventName = $eventClass::EVENT_NAME;
-      $events[$eventName] = 'logEvent';
+    foreach (AiLogEventType::supportedEventClasses() as $eventClass) {
+      $events[$eventClass::EVENT_NAME] = 'logEvent';
     }
     return $events;
   }
 
   /**
-   * Log if needed after running an AI request.
+   * Logs AI provider events.
    *
    * @param \Drupal\ai\Event\AiProviderRequestBaseEvent|\Drupal\ai\Event\ProviderDisabledEvent $event
    *   The event to log.
@@ -136,49 +64,48 @@ class AiEventsSubscriber implements EventSubscriberInterface {
    *   Does not return a value.
    */
   public function logEvent(AiProviderRequestBaseEvent|ProviderDisabledEvent $event): void {
-    if (!in_array(get_class($event), $this->config->get(self::CONFIG_KEY_LOG_EVENT_TYPES))) {
+    $config = $this->configFactory->get(SettingsForm::CONFIG_NAME);
+    if (!$config->get(SettingsForm::CONFIG_KEY_LOGGING_ENABLED)) {
       return;
     }
+
+    /** @var \Psr\Log\LoggerInterface $logger */
+    $logger = ($this->loggerClosure)();
     if ($event instanceof ProviderDisabledEvent) {
-      $this->logger->get(self::LOGGER_NAME)->info('Provider @provider disabled.', [
+      $logger->info('Provider @provider disabled.', [
         '@provider' => $event->getProviderId(),
       ]);
       return;
     }
-
-    $logTags = $this->config->get(self::CONFIG_KEY_LOG_TAGS);
+    $logTags = $config->get(SettingsForm::CONFIG_KEY_LOG_TAGS);
     $tags = $event->getTags();
-    if (!empty($logTags) && !array_intersect($logTags, $tags)) {
+    // Skip logging if log tags are set and none of them match event tags.
+    if (
+      !empty($logTags)
+      && !array_intersect($logTags, $tags)
+    ) {
       return;
     }
 
-    // @todo Generate the context by the event type.
     $context = [
       'metadata' => [
         // As we checking the definition of the constant and have a fallback,
         // the "classConstant.notFound" is not actual.
         // @phpstan-ignore classConstant.notFound
-        'event_name' => defined($event::class . '::EVENT_NAME') ? $event::EVENT_NAME : $event::class,
-        'provider' => $event->getProviderId(),
-        'operation_type' => $event->getOperationType(),
-        'model' => $event->getModelId(),
-        'provider_request_id' => $event->getRequestThreadId(),
-        'provider_request_parent_id' => $event->getRequestParentId(),
-        'configuration' => $event->getConfiguration(),
-        'tags' => $tags,
+        'event_name' => $event::EVENT_NAME,
       ],
     ];
 
-    if (($input = $event->getInput()) && $input instanceof InputInterface) {
-      $context['metadata']['guardrails'] = array_map(function (GuardrailResultInterface $result) {
-        return [
-          'guardrail' => $result->getGuardrailLabel(),
-          'type' => get_class($result),
-          'context' => $result->getContext(),
-          'message' => $result->getMessage(),
-        ];
-      }, $input->getGuardrailsResults());
+    if (!empty($tags)) {
+      $context['metadata']['tags'] = $tags;
     }
+
+    $context['metadata']['provider'] = $event->getProviderId();
+    $context['metadata']['operation_type'] = $event->getOperationType();
+    $context['metadata']['model'] = $event->getModelId();
+    $context['metadata']['provider_request_id'] = $event->getRequestThreadId();
+    $context['metadata']['provider_request_parent_id'] = $event->getRequestParentId();
+    $context['metadata']['configuration'] = $event->getConfiguration();
 
     if ($event instanceof AiProviderResponseBaseEvent) {
       $output = $event->getOutput();
@@ -191,19 +118,31 @@ class AiEventsSubscriber implements EventSubscriberInterface {
       }
     }
 
-    if ($this->config->get(self::CONFIG_KEY_LOG_INPUT)) {
-      $context['metadata']['input'] = $event->getInput()->toArray();
+    if ($config->get(SettingsForm::CONFIG_KEY_LOG_INPUT)) {
+      $payload = $event->getInput();
+      if ($payload instanceof InputInterface) {
+        $context['metadata']['input'] = AiObservabilityUtils::summarizeAiPayloadData($payload->toString());
+        $context['metadata']['guardrails'] = array_map(function (GuardrailResultInterface $result) {
+          return [
+            'guardrail' => $result->getGuardrailLabel(),
+            'type' => get_class($result),
+            'context' => $result->getContext(),
+            'message' => $result->getMessage(),
+          ];
+        }, $payload->getGuardrailsResults());
+      }
     }
     if (
-      $this->config->get(self::CONFIG_KEY_LOG_OUTPUT)
-      && method_exists($event, 'getOutput')
+      $config->get(SettingsForm::CONFIG_KEY_LOG_OUTPUT)
+      && $event instanceof AiProviderResponseBaseEvent
     ) {
-      $context['metadata']['output'] = $event->getOutput()->toArray();
+      $payload = $event->getOutput();
+      $payloadStringified = AiObservabilityUtils::aiOutputToString($payload);
+      $context['metadata']['output'] = AiObservabilityUtils::summarizeAiPayloadData($payloadStringified);
     }
 
     $message = $this->prepareLogMessage($event, $context);
-
-    $this->logger->get(self::LOGGER_NAME)->info($message, $context);
+    $logger->info($message, $context);
   }
 
   /**
@@ -219,6 +158,8 @@ class AiEventsSubscriber implements EventSubscriberInterface {
    *   The log message string with placeholders
    */
   protected function prepareLogMessage(AiProviderRequestBaseEvent $event, &$context): string {
+    $config = $this->configFactory->get(SettingsForm::CONFIG_NAME);
+
     if ($event instanceof AiProviderResponseBaseEvent) {
       $messagePrefix = 'Response from provider {metadata.provider}';
     }
@@ -241,7 +182,7 @@ class AiEventsSubscriber implements EventSubscriberInterface {
 
     $message = $messagePrefix . ': ' . implode(', ', $messageItems) . '.';
 
-    if ($this->config->get(self::CONFIG_KEY_FALLBACK_LOG_MESSAGE_MODE)) {
+    if ($config->get(SettingsForm::CONFIG_KEY_FALLBACK_LOG_MESSAGE_MODE)) {
       $messagePlaceholders = [];
       preg_match_all('/\{([^\}]+)\}/', $message, $matches);
       if (!empty($matches[1])) {
