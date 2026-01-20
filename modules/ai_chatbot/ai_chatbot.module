@@ -62,6 +62,14 @@ function ai_chatbot_preprocess_top_bar(&$variables) {
 }
 
 /**
+ * Implements hook_toolbar().
+ */
+#[LegacyHook]
+function ai_chatbot_toolbar() {
+  return \Drupal::service(ChatbotHooks::class)->toolbar();
+}
+
+/**
  * Implements hook_theme_suggestions_HOOK_alter().
  */
 #[LegacyHook]

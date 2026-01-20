@@ -46,14 +46,58 @@ class ChatbotHooks {
       '#type' => 'html_tag',
       '#tag' => 'button',
       '#attributes' => [
-        'class' => ['hidden', 'button--action', 'button--primary', 'button--small', 'button--ai-chatbot'],
+        'class' => ['hidden', 'button--ai-chatbot'],
         'aria-label' => $this->t('Open AI assistant'),
       ],
-      '#value' => $this->t('Assistant'),
       '#weight' => -9999,
     ];
 
     $variables['tools'][] = $ai_chatbot;
+  }
+
+  /**
+   * Implements hook_toolbar().
+   */
+  #[Hook('toolbar')]
+  public function toolbar() {
+    // Check if user has permission.
+    if (!$this->currentUser->hasPermission('access deepchat api')) {
+      return;
+    }
+
+    // Check if any ai_deepchat_block exists on the site.
+    if (!$this->hasDeepChatBlock()) {
+      return;
+    }
+
+    $items = [];
+
+    $items['ai_chatbot'] = [
+      '#type' => 'toolbar_item',
+      'tab' => [
+        '#type' => 'html_tag',
+        '#tag' => 'button',
+        '#value' => $this->t('Assistant'),
+        '#attributes' => [
+          'class' => [
+            'hidden',
+            'toolbar-icon',
+            'toolbar-icon-ai-chatbot',
+            'open-chat',
+            'button--ai-chatbot',
+          ],
+          'aria-pressed' => 'false',
+          'type' => 'button',
+        ],
+      ],
+      '#wrapper_attributes' => [
+        'class' => [
+          'ai-chatbot-toolbar-tab',
+        ],
+      ],
+    ];
+
+    return $items;
   }
 
   /**
