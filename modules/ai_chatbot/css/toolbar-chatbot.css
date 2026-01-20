@@ -207,10 +207,6 @@ body.ai-chatbot-opened .block-ai-deepchat-block {
     box-shadow: none;
   }
 
-  .toolbar-button.close {
-    display: none;
-  }
-
   deep-chat::after {
     content: "";
     position: absolute;
