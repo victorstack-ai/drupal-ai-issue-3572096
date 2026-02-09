@@ -26,6 +26,9 @@ block.settings.ai_deepchat_block:
     first_message:
       type: text
       label: First Message
+    loading_message:
+      type: text
+      label: Loading Message
     stream:
       type: integer
       label: Stream

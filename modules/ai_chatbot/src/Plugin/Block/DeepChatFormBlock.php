@@ -153,6 +153,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
       'use_avatar' => FALSE,
       'default_avatar' => '',
       'first_message' => '',
+      'loading_message' => '',
       'stream' => FALSE,
       'toggle_state' => 'remember',
       'width' => '500px',
@@ -240,6 +241,18 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
       '#title' => $this->t('First Message'),
       '#description' => $this->t('The first message to start things of. Can take markdown.'),
       '#default_value' => $this->configuration['first_message'],
+    ];
+
+    $form['messages']['loading_message'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Loading Message'),
+      '#description' => $this->t('The message shown while generating a response. Leave blank to use the default animated ellipsis. <br> Only shown when Verbose Mode is disabled.'),
+      '#default_value' => $this->configuration['loading_message'] ?? '',
+      '#states' => [
+        'disabled' => [
+          ':input[name="settings[advanced][verbose_mode]"]' => ['checked' => TRUE],
+        ],
+      ],
     ];
 
     $form['messages']['bot_name'] = [
@@ -453,6 +466,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $this->configuration['use_avatar'] = $form_state->getValue('messages')['use_avatar'];
     $this->configuration['default_avatar'] = $form_state->getValue('messages')['default_avatar'];
     $this->configuration['first_message'] = $form_state->getValue('messages')['first_message'];
+    $this->configuration['loading_message'] = $form_state->getValue('messages')['loading_message'] ?? '';
     $this->configuration['style_file'] = $form_state->getValue('styling')['style_file'];
     $this->configuration['width'] = $form_state->getValue('styling')['width'];
     $this->configuration['height'] = $form_state->getValue('styling')['height'];
@@ -529,6 +543,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $block['#attached']['drupalSettings']['ai_deepchat']['messages'] = $this->historicalMessages();
     $block['#attached']['drupalSettings']['ai_deepchat']['session_exists'] = $this->requestStack->getCurrentRequest()->getSession()->isStarted();
     $block['#attached']['drupalSettings']['ai_deepchat']['verbose_mode'] = $this->configuration['verbose_mode'];
+    $block['#attached']['drupalSettings']['ai_deepchat']['loading_message'] = $this->configuration['loading_message'] ?? '';
     $block['#cache']['contexts'][] = 'session.exists';
     return $block;
   }
