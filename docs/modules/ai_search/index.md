@@ -41,7 +41,7 @@ from the Vector Database during a chat.
 The Boost Processors provided can augment a database search or SOLR search to
 greatly improve the relevance of search results. 
 
-Optionally use the `hook_ai_search_boost_results_alter` to re-rank results
+Optionally use the `hook_ai_search_boost_results_alter` to rerank results
 before passing them to the database or SOLR search.
 
 ### Programmatically

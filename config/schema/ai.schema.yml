@@ -33,6 +33,9 @@ ai.settings:
         moderation:
           label: 'Default moderation provider'
           type: ai.default_operation_provider
+        rerank:
+          label: 'Default rerank provider'
+          type: ai.default_operation_provider
         speech_to_text:
           label: 'Default speech to text provider'
           type: ai.default_operation_provider

@@ -287,6 +287,8 @@ embedder
 Embedder
 UNHEX
 Rerank
+reranked
+reranking
 COSIM
 subprompt
 voiceovers
