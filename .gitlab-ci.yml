@@ -32,6 +32,12 @@ variables:
 composer (next major):
   allow_failure: true
 
+phpstan (next major):
+  allow_failure: true
+
+phpunit (next major):
+  allow_failure: true
+
 phpunit (previous major):
   allow_failure: true
   before_script:
