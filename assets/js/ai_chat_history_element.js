@@ -69,11 +69,14 @@
 
       // Handle role changes to show/hide relevant fields
       for (const roleSelect of once('role-change', '.chat-history-role', context)) {
-        roleSelect.addEventListener('change', function() {
-          const chatMessage = this.closest('.chat-message');
+        // Function to update visibility based on role
+        const updateVisibility = function(select) {
+          const chatMessage = select.closest('.chat-message');
+          if (!chatMessage) return;
+
           const toolCallsContainer = chatMessage.querySelector('.tool-calls-container');
           const toolCallIdRef = chatMessage.querySelector('.tool-call-id-reference');
-          
+
           // Hide all role-specific fields first
           if (toolCallsContainer) {
             toolCallsContainer.style.display = 'none';
@@ -81,17 +84,21 @@
           if (toolCallIdRef) {
             toolCallIdRef.closest('.form-item').style.display = 'none';
           }
-          
+
           // Show relevant fields based on selected role
-          if (this.value === 'assistant' && toolCallsContainer) {
+          if (select.value === 'assistant' && toolCallsContainer) {
             toolCallsContainer.style.display = 'block';
-          } else if (this.value === 'tool' && toolCallIdRef) {
+          } else if (select.value === 'tool' && toolCallIdRef) {
             toolCallIdRef.closest('.form-item').style.display = 'block';
           }
+        };
+
+        roleSelect.addEventListener('change', function() {
+          updateVisibility(this);
         });
-        
-        // Trigger change event on page load to set initial visibility
-        roleSelect.dispatchEvent(new Event('change'));
+
+        // Set initial visibility without triggering change event (which would cause AJAX loop)
+        updateVisibility(roleSelect);
       }
 
     }
