@@ -2,6 +2,7 @@
 
 namespace Drupal\ai_chatbot\Plugin\Block;
 
+use Drupal\ai_chatbot\StyleFileResolver;
 use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Access\AccessResult;
@@ -458,6 +459,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
    * {@inheritdoc}
    */
   public function blockSubmit($form, FormStateInterface $form_state) {
+    $styling = (array) ($form_state->getValue('styling') ?? []);
     $this->configuration['ai_assistant'] = $form_state->getValue('ai_assistant');
     $this->configuration['bot_name'] = $form_state->getValue('messages')['bot_name'];
     $this->configuration['bot_image'] = $form_state->getValue('messages')['bot_image'];
@@ -467,12 +469,12 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $this->configuration['default_avatar'] = $form_state->getValue('messages')['default_avatar'];
     $this->configuration['first_message'] = $form_state->getValue('messages')['first_message'];
     $this->configuration['loading_message'] = $form_state->getValue('messages')['loading_message'] ?? '';
-    $this->configuration['style_file'] = $form_state->getValue('styling')['style_file'];
-    $this->configuration['width'] = $form_state->getValue('styling')['width'];
-    $this->configuration['height'] = $form_state->getValue('styling')['height'];
-    $this->configuration['placement'] = $form_state->getValue('styling')['placement'];
-    $this->configuration['collapse_minimal'] = $form_state->getValue('styling')['collapse_minimal'];
-    $this->configuration['show_copy_icon'] = $form_state->getValue('styling')['show_copy_icon'];
+    $this->configuration['style_file'] = $styling['style_file'] ?? $this->getStyleFile();
+    $this->configuration['width'] = $styling['width'];
+    $this->configuration['height'] = $styling['height'];
+    $this->configuration['placement'] = $styling['placement'];
+    $this->configuration['collapse_minimal'] = $styling['collapse_minimal'];
+    $this->configuration['show_copy_icon'] = $styling['show_copy_icon'];
     $this->configuration['stream'] = $form_state->getValue('advanced')['stream'] ?? FALSE;
     $this->configuration['show_structured_results'] = $form_state->getValue('advanced')['show_structured_results'] ?? FALSE;
     $this->configuration['toggle_state'] = $form_state->getValue('advanced')['toggle_state'];
@@ -524,7 +526,7 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $this->configuration['default_username'] = $user_data['username'];
     $this->configuration['default_avatar'] = $user_data['avatar'];
     $block['#settings'] = $this->configuration;
-    $block['#deepchat_settings'] = $this->getDeepChatParameters($this->configuration['style_file']);
+    $block['#deepchat_settings'] = $this->getDeepChatParameters($this->getStyleFile());
     $block['#current_theme'] = 'chatbot-' . $active_theme;
     $block['#attached']['drupalSettings']['ai_deepchat']['assistant_id'] = $this->aiAssistantRunner->getAssistant()->id();
     $block['#attached']['drupalSettings']['ai_deepchat']['thread_id'] = $this->aiAssistantRunner->getThreadsKey();
@@ -546,6 +548,16 @@ class DeepChatFormBlock extends BlockBase implements ContainerFactoryPluginInter
     $block['#attached']['drupalSettings']['ai_deepchat']['loading_message'] = $this->configuration['loading_message'] ?? '';
     $block['#cache']['contexts'][] = 'session.exists';
     return $block;
+  }
+
+  /**
+   * Resolves the style file that should be used for current placement.
+   *
+   * @return string
+   *   The style file key.
+   */
+  protected function getStyleFile(): string {
+    return StyleFileResolver::resolve($this->configuration);
   }
 
   /**
