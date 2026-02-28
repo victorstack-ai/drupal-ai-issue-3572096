@@ -15,7 +15,7 @@ use Drupal\Core\Plugin\PluginFormInterface;
 /**
  * Guardrail form.
  */
-final class AiGuardrailForm extends EntityForm {
+class AiGuardrailForm extends EntityForm {
 
   use AutowireTrait;
 

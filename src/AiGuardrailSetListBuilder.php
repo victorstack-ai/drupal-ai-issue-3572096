@@ -10,7 +10,7 @@ use Drupal\Core\Entity\EntityInterface;
 /**
  * Provides a listing of guardrail sets.
  */
-final class AiGuardrailSetListBuilder extends ConfigEntityListBuilder {
+class AiGuardrailSetListBuilder extends ConfigEntityListBuilder {
 
   /**
    * {@inheritdoc}

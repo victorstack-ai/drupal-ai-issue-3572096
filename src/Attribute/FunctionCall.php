@@ -10,7 +10,7 @@ use Drupal\Component\Plugin\Attribute\Plugin;
  * The ai function call attribute.
  */
 #[\Attribute(\Attribute::TARGET_CLASS)]
-final class FunctionCall extends Plugin {
+class FunctionCall extends Plugin {
 
   /**
    * An attribute to wrap around a function call method.

@@ -22,7 +22,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
   admin_label: new TranslatableMarkup('Setup a VDB Index'),
   entity_types: ['search_api.index.*'],
 )]
-final class SetupVdbIndex implements ConfigActionPluginInterface, ContainerFactoryPluginInterface {
+class SetupVdbIndex implements ConfigActionPluginInterface, ContainerFactoryPluginInterface {
 
   public function __construct(
     private readonly EntityTypeManagerInterface $entityTypeManager,

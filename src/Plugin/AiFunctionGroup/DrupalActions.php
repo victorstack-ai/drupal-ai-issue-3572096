@@ -16,6 +16,6 @@ use Drupal\ai\Service\FunctionCalling\FunctionGroupInterface;
   group_name: new TranslatableMarkup('Drupal Core Actions'),
   description: new TranslatableMarkup('These are the Drupal core actions - they are quite experimental still, so use with caution.'),
 )]
-final class DrupalActions implements FunctionGroupInterface {
+class DrupalActions implements FunctionGroupInterface {
 
 }

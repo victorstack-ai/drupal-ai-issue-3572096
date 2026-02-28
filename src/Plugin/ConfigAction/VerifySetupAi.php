@@ -27,7 +27,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
   admin_label: new TranslatableMarkup('Verify that the wanted AI provider is set up'),
   entity_types: ['*'],
 )]
-final class VerifySetupAi implements ConfigActionPluginInterface, ContainerFactoryPluginInterface {
+class VerifySetupAi implements ConfigActionPluginInterface, ContainerFactoryPluginInterface {
 
   public function __construct(
     private readonly AiProviderPluginManager $aiProviderPluginManager,

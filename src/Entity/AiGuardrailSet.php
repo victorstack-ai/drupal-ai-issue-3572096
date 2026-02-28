@@ -51,7 +51,7 @@ use Drupal\ai\Guardrail\AiGuardrailSetInterface;
  *   }
  * )
  */
-final class AiGuardrailSet extends ConfigEntityBase implements AiGuardrailSetInterface {
+class AiGuardrailSet extends ConfigEntityBase implements AiGuardrailSetInterface {
 
   /**
    * The guardrail set ID.

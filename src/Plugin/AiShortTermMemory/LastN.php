@@ -18,7 +18,7 @@ use Drupal\ai\Base\AiShortTermMemoryPluginBase;
   label: new TranslatableMarkup('Last N'),
   description: new TranslatableMarkup('Last N lets you remove messages in the history, over X amount of threads long.'),
 )]
-final class LastN extends AiShortTermMemoryPluginBase {
+class LastN extends AiShortTermMemoryPluginBase {
 
   use StringTranslationTrait;
 

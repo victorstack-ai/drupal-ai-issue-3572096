@@ -31,7 +31,7 @@ use Symfony\Component\Yaml\Yaml;
   label: new TranslatableMarkup('Agent Memory Summarizer'),
   description: new TranslatableMarkup('This short term memory will summarize history before N messages for agent loops, including tool calling and add it as an extra message.'),
 )]
-final class AgentMemorySummarizer extends AiShortTermMemoryPluginBase implements ContainerFactoryPluginInterface {
+class AgentMemorySummarizer extends AiShortTermMemoryPluginBase implements ContainerFactoryPluginInterface {
 
   use StringTranslationTrait;
 

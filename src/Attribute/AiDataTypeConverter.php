@@ -11,7 +11,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  * The ai_data_type_converter attribute.
  */
 #[\Attribute(\Attribute::TARGET_CLASS)]
-final class AiDataTypeConverter extends AttributeBase {
+class AiDataTypeConverter extends AttributeBase {
 
   /**
    * Constructs a new AiDataTypeConverter instance.

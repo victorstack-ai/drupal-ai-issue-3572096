@@ -15,7 +15,7 @@ use Drupal\ai\Plugin\AiShortTermMemory\AiShortTermMemoryInterface;
 /**
  * AiShortTermMemory plugin manager.
  */
-final class AiShortTermMemoryPluginManager extends DefaultPluginManager {
+class AiShortTermMemoryPluginManager extends DefaultPluginManager {
 
   /**
    * Constructs the object.

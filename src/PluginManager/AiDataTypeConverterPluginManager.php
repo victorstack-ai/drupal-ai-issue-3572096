@@ -14,7 +14,7 @@ use Drupal\ai\Plugin\AiDataTypeConverter\AiDataTypeConverterInterface;
 /**
  * AiDataTypeConverter plugin manager.
  */
-final class AiDataTypeConverterPluginManager extends DefaultPluginManager {
+class AiDataTypeConverterPluginManager extends DefaultPluginManager {
 
   /**
    * The converter plugins.

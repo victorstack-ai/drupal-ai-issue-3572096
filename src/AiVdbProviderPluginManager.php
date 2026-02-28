@@ -14,7 +14,7 @@ use Drupal\Core\Utility\Error;
 /**
  * Vector DB plugin manager.
  */
-final class AiVdbProviderPluginManager extends DefaultPluginManager {
+class AiVdbProviderPluginManager extends DefaultPluginManager {
 
   /**
    * Constructs the object.

@@ -13,7 +13,7 @@ use Drupal\ai\OperationType\Chat\Tools\ToolsFunctionOutputInterface;
 /**
  * Function call plugin manager.
  */
-final class FunctionCallPluginManager extends DefaultPluginManager {
+class FunctionCallPluginManager extends DefaultPluginManager {
 
   /**
    * Constructs the object.

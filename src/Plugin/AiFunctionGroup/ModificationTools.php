@@ -16,5 +16,5 @@ use Drupal\ai\Service\FunctionCalling\FunctionGroupInterface;
   group_name: new TranslatableMarkup('Modification Tools'),
   description: new TranslatableMarkup('These are tools that are meant to provide agents with the possibility to modify content or config on the website.'),
 )]
-final class ModificationTools implements FunctionGroupInterface {
+class ModificationTools implements FunctionGroupInterface {
 }

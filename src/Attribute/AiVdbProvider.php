@@ -11,7 +11,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  * The ai vector database provider attribute.
  */
 #[\Attribute(\Attribute::TARGET_CLASS)]
-final class AiVdbProvider extends AttributeBase {
+class AiVdbProvider extends AttributeBase {
 
   /**
    * Constructs a new AiVdbProvider instance.

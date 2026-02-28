@@ -23,7 +23,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
   admin_label: new TranslatableMarkup('Setup an AI provider'),
   entity_types: ['*'],
 )]
-final class SetupAiProvider implements ConfigActionPluginInterface, ContainerFactoryPluginInterface {
+class SetupAiProvider implements ConfigActionPluginInterface, ContainerFactoryPluginInterface {
 
   public function __construct(
     private readonly ConfigActionPluginInterface $simpleConfigUpdate,

@@ -25,7 +25,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
   admin_label: new TranslatableMarkup('Setup an VDB Server'),
   entity_types: ['search_api.server.*'],
 )]
-final class SetupVdbServer implements ConfigActionPluginInterface, ContainerFactoryPluginInterface {
+class SetupVdbServer implements ConfigActionPluginInterface, ContainerFactoryPluginInterface {
 
   public function __construct(
     private readonly ConfigActionPluginInterface $simpleConfigUpdate,

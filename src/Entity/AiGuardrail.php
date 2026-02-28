@@ -52,7 +52,7 @@ use Drupal\ai\Guardrail\AiGuardrailEntityInterface;
  *   }
  * )
  */
-final class AiGuardrail extends ConfigEntityBase implements AiGuardrailEntityInterface {
+class AiGuardrail extends ConfigEntityBase implements AiGuardrailEntityInterface {
 
   /**
    * The guardrail ID.

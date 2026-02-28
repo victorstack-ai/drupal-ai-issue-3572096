@@ -11,7 +11,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  * The operation type attribute.
  */
 #[\Attribute(\Attribute::TARGET_CLASS)]
-final class OperationType extends AttributeBase {
+class OperationType extends AttributeBase {
 
   /**
    * Constructs a new OperationType instance.

@@ -24,7 +24,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Provides a AI Core form.
  */
-final class AiSetupForm extends FormBase {
+class AiSetupForm extends FormBase {
 
   use StringTranslationTrait;
 

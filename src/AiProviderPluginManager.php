@@ -22,7 +22,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 /**
  * Large Language Model plugin manager.
  */
-final class AiProviderPluginManager extends DefaultPluginManager {
+class AiProviderPluginManager extends DefaultPluginManager {
 
   use StringTranslationTrait;
 

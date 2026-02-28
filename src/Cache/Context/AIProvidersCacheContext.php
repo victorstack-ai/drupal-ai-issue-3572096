@@ -12,7 +12,7 @@ use Drupal\ai\AiVdbProviderPluginManager;
 /**
  * Cache context that uses the existence of AI Provider plugins.
  */
-final class AIProvidersCacheContext implements CalculatedCacheContextInterface {
+class AIProvidersCacheContext implements CalculatedCacheContextInterface {
 
   public function __construct(
     private readonly AiProviderPluginManager $aiProvider,

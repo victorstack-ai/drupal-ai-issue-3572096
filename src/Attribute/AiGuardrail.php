@@ -11,7 +11,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  * The ai_guardrail attribute.
  */
 #[\Attribute(\Attribute::TARGET_CLASS)]
-final class AiGuardrail extends AttributeBase {
+class AiGuardrail extends AttributeBase {
 
   /**
    * Constructs a new AiGuardrail instance.

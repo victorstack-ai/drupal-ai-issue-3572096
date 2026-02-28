@@ -12,7 +12,7 @@ use Drupal\ai\Attribute\AiGuardrail;
 /**
  * AiGuardrail plugin manager.
  */
-final class AiGuardrailPluginManager extends DefaultPluginManager {
+class AiGuardrailPluginManager extends DefaultPluginManager {
 
   /**
    * Constructs the object.

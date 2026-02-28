@@ -11,7 +11,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  * The ai function group attribute.
  */
 #[\Attribute(\Attribute::TARGET_CLASS)]
-final class FunctionGroup extends AttributeBase {
+class FunctionGroup extends AttributeBase {
 
   /**
    * A group to wrap around a function call method.

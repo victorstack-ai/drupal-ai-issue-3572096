@@ -12,7 +12,7 @@ use Drupal\ai\Attribute\FunctionGroup;
 /**
  * Function call plugin manager.
  */
-final class FunctionGroupPluginManager extends DefaultPluginManager {
+class FunctionGroupPluginManager extends DefaultPluginManager {
 
   /**
    * The action manager.

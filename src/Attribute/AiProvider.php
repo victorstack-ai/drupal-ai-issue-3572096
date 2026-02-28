@@ -11,7 +11,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  * The ai provider attribute.
  */
 #[\Attribute(\Attribute::TARGET_CLASS)]
-final class AiProvider extends AttributeBase {
+class AiProvider extends AttributeBase {
 
   /**
    * Constructs a new AiProvider instance.

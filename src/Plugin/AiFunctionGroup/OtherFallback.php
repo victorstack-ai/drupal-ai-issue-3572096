@@ -17,6 +17,6 @@ use Drupal\ai\Service\FunctionCalling\FunctionGroupInterface;
   description: new TranslatableMarkup('These are the tools without any group assigned.'),
   weight: 1000,
 )]
-final class OtherFallback implements FunctionGroupInterface {
+class OtherFallback implements FunctionGroupInterface {
 
 }

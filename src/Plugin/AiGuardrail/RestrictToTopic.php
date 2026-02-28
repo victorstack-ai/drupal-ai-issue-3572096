@@ -36,7 +36,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
     "Checks if text's main topic is specified within a list of valid topics."
   ),
 )]
-final class RestrictToTopic extends AiGuardrailPluginBase implements ConfigurableInterface, PluginFormInterface, ContainerFactoryPluginInterface, NonDeterministicGuardrailInterface, NonStreamableGuardrailInterface {
+class RestrictToTopic extends AiGuardrailPluginBase implements ConfigurableInterface, PluginFormInterface, ContainerFactoryPluginInterface, NonDeterministicGuardrailInterface, NonStreamableGuardrailInterface {
 
   use NeedsAiPluginManagerTrait;
   use StringTranslationTrait;

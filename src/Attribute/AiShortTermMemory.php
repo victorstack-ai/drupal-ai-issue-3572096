@@ -11,7 +11,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  * The short term memory attribute.
  */
 #[\Attribute(\Attribute::TARGET_CLASS)]
-final class AiShortTermMemory extends AttributeBase {
+class AiShortTermMemory extends AttributeBase {
 
   /**
    * Constructs a new AiShortTermMemory instance.
